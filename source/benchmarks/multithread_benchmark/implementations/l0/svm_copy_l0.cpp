@@ -14,6 +14,7 @@
 #include "definitions/svm_copy.h"
 
 #include <gtest/gtest.h>
+#include <mutex>
 #include <shared_mutex>
 #include <thread>
 
