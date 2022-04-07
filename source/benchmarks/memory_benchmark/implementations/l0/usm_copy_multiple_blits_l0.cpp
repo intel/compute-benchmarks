@@ -88,10 +88,16 @@ static TestResult run(const UsmCopyMultipleBlitsArguments &arguments, Statistics
     for (size_t blitterIndex : arguments.blitters.getEnabledBits()) {
         const bool isMainCopyEngine = blitterIndex == 0;
         if (isMainCopyEngine) {
+            if (mainCopyOrdinal == std::numeric_limits<uint32_t>::max()) {
+                return TestResult::DeviceNotCapable;
+            }
             cmdQueueDesc.ordinal = mainCopyOrdinal;
             cmdQueueDesc.index = 0;
             blitSizeAssigner.addMainCopyEngine();
         } else {
+            if (linkCopyOrdinal == std::numeric_limits<uint32_t>::max() || blitterIndex >= queueProperties[linkCopyOrdinal].numQueues) {
+                return TestResult::DeviceNotCapable;
+            }
             cmdQueueDesc.ordinal = linkCopyOrdinal;
             cmdQueueDesc.index = static_cast<uint32_t>(blitterIndex - queueProperties[mainCopyOrdinal].numQueues);
             blitSizeAssigner.addLinkCopyEngine();
