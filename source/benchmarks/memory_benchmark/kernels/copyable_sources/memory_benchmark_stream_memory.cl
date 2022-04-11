@@ -33,6 +33,20 @@ __kernel void triad(const __global STREAM_TYPE *restrict x, const __global STREA
     z[i] = x[i] + y[i] * scalar;
 }
 
+__kernel void remote_triad(const __global STREAM_TYPE *restrict x, const __global STREAM_TYPE *restrict y,
+                    __global STREAM_TYPE *restrict z, STREAM_TYPE scalar, const int remoteAccessFraction) {
+    const int j = get_global_id(0);
+    const int cache_line_id = j /16;
+    const size_t N = get_global_size(0);
+    int i;
+    if(remoteAccessFraction != 0 && cache_line_id % remoteAccessFraction == 0){
+        i = (j+N/2)%N;
+    } else {
+        i = j;
+    }
+    z[i] = x[i] + y[i];
+}
+
 __kernel void stream_3bytesRGBtoY(const __global uchar *restrict x, __global uchar *restrict luminance, float scalar) {
     const int i = get_global_id(0) * 3;
     const int y = get_global_id(0);

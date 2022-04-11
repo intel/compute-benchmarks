@@ -65,6 +65,31 @@ struct PositiveIntegerArgument : IntegerArgumentBase {
     }
 };
 
+struct FractionBaseArgument : IntegerArgumentBase {
+    using IntegerArgumentBase::IntegerArgumentBase;
+
+    operator size_t() const {
+        return static_cast<size_t>(value);
+    }
+
+    FractionBaseArgument &operator=(size_t newValue) {
+        this->value = newValue;
+        markAsParsed();
+        return *this;
+    }
+
+    bool validate() const override {
+        return this->value >= 0;
+    }
+
+  protected:
+    std::string toStringValue() const override {
+        float percentValue = this->value > 0 ? 100 / (float)this->value : 0;
+        std::string stringValue = std::to_string(percentValue);
+        return stringValue.substr(0, stringValue.find(".") + 3) + "%";
+    }
+};
+
 struct NonNegativeIntegerArgument : IntegerArgumentBase {
     using IntegerArgumentBase::IntegerArgumentBase;
 
