@@ -15,11 +15,13 @@ struct RemoteAccessArguments : TestCaseArgumentContainer {
     ByteSizeArgument size;
     BooleanArgument useEvents;
     FractionBaseArgument remoteFraction;
+    PositiveIntegerArgument workItemPackSize;
 
     RemoteAccessArguments()
         : size(*this, "size", "Size of the memory to stream. Must be divisible by datatype size."),
           useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
-          remoteFraction(*this, "remoteFraction", "Fraction of remote memory access. 1 / n") {}
+          remoteFraction(*this, "remoteFraction", "Fraction of remote memory access. 1 / n"),
+          workItemPackSize(*this, "workItemSize", "Number of work items group together for remote check") {}
 };
 
 struct RemoteAccess : TestCase<RemoteAccessArguments> {

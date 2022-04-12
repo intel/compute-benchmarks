@@ -15,7 +15,7 @@
 
 static const inline RegisterTestCase<RemoteAccess> registerTestCase{};
 
-class RemoteAccessTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, bool>> {
+class RemoteAccessTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, bool, size_t>> {
 };
 
 TEST_P(RemoteAccessTest, Test) {
@@ -24,6 +24,7 @@ TEST_P(RemoteAccessTest, Test) {
     args.remoteFraction = std::get<1>(GetParam());
     args.size = std::get<2>(GetParam());
     args.useEvents = std::get<3>(GetParam());
+    args.workItemPackSize = std::get<4>(GetParam());
 
     RemoteAccess test;
     test.run(args);
@@ -35,6 +36,7 @@ INSTANTIATE_TEST_SUITE_P(
     RemoteAccessTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::Values(1, 2, 3, 4, 5, 6, 7, 8, 0),
+        ::testing::Values(1, 2, 3, 4, 5, 6, 7, 8, 10, 20, 50, 100, 0),
         ::testing::Values(1 * gigaByte),
-        ::testing::Values(false, true)));
+        ::testing::Values(false, true),
+        ::testing::Values(1, 2, 4, 8, 16, 32, 64)));

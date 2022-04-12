@@ -30,7 +30,7 @@ static TestResult run(const RemoteAccessArguments &arguments, Statistics &statis
 
     size_t elementSize = sizeof(cl_double);
     const size_t fillValue = 313u;
-    const int64_t scalarValue = -999;
+    const uint32_t scalarValue = arguments.workItemPackSize;
     const bool printBuildInfo = true;
 
     const size_t bufferSize = arguments.size;
@@ -67,7 +67,7 @@ static TestResult run(const RemoteAccessArguments &arguments, Statistics &statis
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(i), sizeof(buffers[i]), &buffers[i]))
     }
 
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(3), elementSize, &scalarValue));
+    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(3), sizeof(cl_uint), &scalarValue));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(4), elementSize, &n_th));
 
     // Query max workgroup size
