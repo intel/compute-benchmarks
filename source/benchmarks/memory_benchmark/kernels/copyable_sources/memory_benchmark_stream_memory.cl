@@ -36,7 +36,7 @@ __kernel void triad(const __global STREAM_TYPE *restrict x, const __global STREA
 __kernel void remote_triad(const __global STREAM_TYPE *restrict x, const __global STREAM_TYPE *restrict y,
                            __global STREAM_TYPE *restrict z, uint workItemGroupSize, const int remoteAccessFraction) {
     const int input_g_id = get_global_id(0);
-    const int cache_line_id = j / workItemGroupSize;
+    const int cache_line_id = input_g_id / workItemGroupSize;
     const size_t gws = get_global_size(0);
     int g_id;
     if (remoteAccessFraction == 0) {
