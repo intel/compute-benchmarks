@@ -13,6 +13,7 @@
 #include "framework/l0/queue_properties.h"
 #include "framework/l0/utility/error.h"
 #include "framework/l0/utility/queue_families_helper.h"
+#include "framework/utility/timer.h"
 
 #include <level_zero/ze_api.h>
 
@@ -94,6 +95,25 @@ struct LevelZero {
 
     uint32_t getKernelTimestampValidBits(DeviceSelection deviceSelection) const { return getDeviceProperties(deviceSelection).kernelTimestampValidBits; }
     uint32_t getKernelTimestampValidBits(ze_device_handle_t deviceHandle) const { return getDeviceProperties(deviceHandle).kernelTimestampValidBits; }
+    uint64_t getKernelTimestampValidBitsMask(ze_device_handle_t deviceHandle) const {
+        return static_cast<uint64_t>(((1ull << getDeviceProperties(deviceHandle).kernelTimestampValidBits) - 1ull));
+    }
+
+    std::chrono::nanoseconds getAbsoluteSubmissionTime(uint64_t truncatedKernelStartTimestamp,
+                                                       uint64_t truncatedDeviceEnqueueTimestamp,
+                                                       const uint64_t timerResolution) {
+        const uint64_t kernelTimestampValidBitsMask = this->getKernelTimestampValidBitsMask(this->device);
+        std::chrono::nanoseconds submissionTime{};
+        if (truncatedKernelStartTimestamp > truncatedDeviceEnqueueTimestamp) {
+            submissionTime =
+                std::chrono::nanoseconds((truncatedKernelStartTimestamp - truncatedDeviceEnqueueTimestamp) * timerResolution);
+        } else {
+            submissionTime =
+                std::chrono::nanoseconds(((kernelTimestampValidBitsMask + 1ull) + truncatedKernelStartTimestamp - truncatedDeviceEnqueueTimestamp) * timerResolution);
+        }
+
+        return submissionTime;
+    }
 
     void initializeImportHostPointerExtension(const ExtensionProperties &extensionProperties);
 

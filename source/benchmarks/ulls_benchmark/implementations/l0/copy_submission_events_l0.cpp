@@ -8,6 +8,7 @@
 #include "framework/l0/levelzero.h"
 #include "framework/l0/utility/queue_families_helper.h"
 #include "framework/test_case/register_test_case.h"
+#include "framework/utility/bit_operations_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/copy_submission_events.h"
@@ -32,6 +33,9 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
     levelzero.commandQueueDesc = queueDesc->desc;
 
     const uint64_t timerResolution = levelzero.getTimerResoultion(levelzero.device);
+    const uint32_t timestampValidBits = levelzero.getTimestampValidBits(levelzero.device);
+    const uint32_t kernelTimestampValidBits = levelzero.getKernelTimestampValidBits(levelzero.device);
+    const uint32_t sharedTimestampValidBits = std::min(timestampValidBits, kernelTimestampValidBits);
 
     const ze_host_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, nullptr, ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED};
     void *hostMemory = nullptr;
@@ -56,9 +60,7 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
-    uint32_t numWaitEvents = 0;
-    ze_event_handle_t hWaitEvents = nullptr;
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, hostMemory, bufferSize, hEvent, numWaitEvents, &hWaitEvents));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, hostMemory, bufferSize, hEvent, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
     // Warmup
@@ -72,8 +74,9 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
     ze_kernel_timestamp_result_t deviceStartTimestamp;
     ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(hEvent, &deviceStartTimestamp));
 
-    uint32_t truncatedDeviceEnqueueTimestamp = static_cast<uint32_t>(deviceEnqueueTimestamp);
-    EXPECT_GT(deviceStartTimestamp.global.kernelStart, truncatedDeviceEnqueueTimestamp);
+    uint64_t truncatedDeviceEnqueueTimestamp = BitHelper::isolateLowerNBits(deviceEnqueueTimestamp, sharedTimestampValidBits);
+    uint64_t truncatedKernelStartTimestamp = BitHelper::isolateLowerNBits(deviceStartTimestamp.global.kernelStart, sharedTimestampValidBits);
+    EXPECT_GT(truncatedKernelStartTimestamp, truncatedDeviceEnqueueTimestamp);
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -84,11 +87,16 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(hEvent, std::numeric_limits<uint64_t>::max()));
 
         ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(hEvent, &deviceStartTimestamp));
-        truncatedDeviceEnqueueTimestamp = static_cast<uint32_t>(deviceEnqueueTimestamp);
+        truncatedDeviceEnqueueTimestamp = BitHelper::isolateLowerNBits(deviceEnqueueTimestamp, sharedTimestampValidBits);
+        truncatedKernelStartTimestamp = BitHelper::isolateLowerNBits(deviceStartTimestamp.global.kernelStart, sharedTimestampValidBits);
 
-        const auto submissionTime = std::chrono::nanoseconds((deviceStartTimestamp.global.kernelStart - truncatedDeviceEnqueueTimestamp) * timerResolution);
+        std::chrono::nanoseconds submissionTime = levelzero.getAbsoluteSubmissionTime(truncatedKernelStartTimestamp,
+                                                                                      truncatedDeviceEnqueueTimestamp,
+                                                                                      timerResolution);
+
         statistics.pushValue(submissionTime, MeasurementUnit::Microseconds, MeasurementType::Gpu);
     }
+
     // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, hostMemory));
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, destination));

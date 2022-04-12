@@ -89,7 +89,10 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
         truncatedDeviceEnqueueTimestamp = BitHelper::isolateLowerNBits(deviceEnqueueTimestamp, sharedTimestampValidBits);
         truncatedKernelStartTimestamp = BitHelper::isolateLowerNBits(kernelTimestamp.global.kernelStart, sharedTimestampValidBits);
 
-        const auto submissionTime = std::chrono::nanoseconds((truncatedKernelStartTimestamp - truncatedDeviceEnqueueTimestamp) * timerResolution);
+        std::chrono::nanoseconds submissionTime = levelzero.getAbsoluteSubmissionTime(truncatedKernelStartTimestamp,
+                                                                                      truncatedDeviceEnqueueTimestamp,
+                                                                                      timerResolution);
+
         statistics.pushValue(submissionTime, MeasurementUnit::Microseconds, MeasurementType::Gpu);
     }
     // Cleanup
