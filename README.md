@@ -57,7 +57,7 @@ cmake --build . --config Release
 ### Binary types
 Each benchmark suite can be built as a single-api binary or as a an all-api binary.
 - Single-api binaries are named like `ulls_benchmark_ocl` and do not load libraries from not used APIs. They are built by default and can be disabled by passing `-DBUILD_SINGLE_API_BINARIES=OFF` to CMake.
-- All-api binaries are named like `ulls_benchamrk` and contain every API supported by the benchmark, which makes them more convenient, but at a risk of introducing some overhead caused by loading unnecessary library. They are *not* built by default and can
+- All-api binaries are named like `ulls_benchamrk` and contain every API supported by the benchmark, which makes them more convenient, but at a risk of introducing some overhead caused by loading unnecessary library. They are *not* built by default and can be enabled by passing `-DBUILD_ALL_API_BINARIES=ON` to CMake.
 
 By default all benchmarks are compiled in all configurations they support. This can be changed with CMake arguments. For example, to disable all-api binaries, run:
 ```
