@@ -14,12 +14,13 @@
 
 static const inline RegisterTestCase<WalkerCompletionLatency> registerTestCase{};
 
-class WalkerCompletionLatencyTest : public ::testing::TestWithParam<Api> {
+class WalkerCompletionLatencyTest : public ::testing::TestWithParam<std::tuple<Api, bool>> {
 };
 
 TEST_P(WalkerCompletionLatencyTest, Test) {
     WalkerCompletionLatencyArguments args{};
-    args.api = GetParam();
+    args.api = std::get<0>(GetParam());
+    args.useFence = std::get<1>(GetParam());
 
     WalkerCompletionLatency test;
     test.run(args);
@@ -28,4 +29,6 @@ TEST_P(WalkerCompletionLatencyTest, Test) {
 INSTANTIATE_TEST_SUITE_P(
     WalkerCompletionLatencyTest,
     WalkerCompletionLatencyTest,
-    ::CommonGtestArgs::allApis());
+    ::testing::Combine(
+        ::CommonGtestArgs::allApis(),
+        ::testing::Values(true, false)));

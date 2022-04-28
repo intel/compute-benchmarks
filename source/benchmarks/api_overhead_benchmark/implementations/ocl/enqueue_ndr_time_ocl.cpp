@@ -45,7 +45,6 @@ static TestResult run(const EnqueueNdrTimeArguments &arguments, Statistics &stat
     if (eventForNdr) {
         ASSERT_CL_SUCCESS(clReleaseEvent(event));
     }
-    ASSERT_CL_SUCCESS(retVal);
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

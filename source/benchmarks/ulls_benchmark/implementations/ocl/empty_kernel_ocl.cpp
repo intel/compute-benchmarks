@@ -33,7 +33,6 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     // Warmup, kernel
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-    ASSERT_CL_SUCCESS(retVal);
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -42,7 +41,7 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
-        ASSERT_CL_SUCCESS(retVal);
+
         statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
     }
 

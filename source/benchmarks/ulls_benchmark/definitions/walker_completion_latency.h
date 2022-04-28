@@ -9,7 +9,11 @@
 
 #include "framework/test_case/test_case.h"
 
-struct WalkerCompletionLatencyArguments : TestCaseArgumentContainer {};
+struct WalkerCompletionLatencyArguments : TestCaseArgumentContainer {
+    BooleanArgument useFence;
+    WalkerCompletionLatencyArguments() : useFence(*this, "useFence", "Use fence during submission and for further completion.") {
+    }
+};
 
 struct WalkerCompletionLatency : TestCase<WalkerCompletionLatencyArguments> {
     using TestCase<WalkerCompletionLatencyArguments>::TestCase;

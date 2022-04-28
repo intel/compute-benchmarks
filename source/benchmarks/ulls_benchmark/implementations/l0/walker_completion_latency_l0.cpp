@@ -57,25 +57,46 @@ static TestResult run(const WalkerCompletionLatencyArguments &arguments, Statist
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
+    const ze_fence_desc_t fenceDesc{ZE_STRUCTURE_TYPE_FENCE_DESC, nullptr, 0};
+    ze_fence_handle_t fence = nullptr;
     // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
+
+    if (arguments.useFence) {
+        ASSERT_ZE_RESULT_SUCCESS(zeFenceCreate(levelzero.commandQueue, &fenceDesc, &fence));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, fence));
+        ASSERT_ZE_RESULT_SUCCESS(zeFenceHostSynchronize(fence, std::numeric_limits<uint64_t>::max()));
+        ASSERT_ZE_RESULT_SUCCESS(zeFenceReset(fence));
+    } else {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
+    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
+        if (arguments.useFence) {
+            ASSERT_ZE_RESULT_SUCCESS(zeFenceReset(fence));
+        }
+
         *volatileBuffer = 0;
         _mm_clflush(buffer);
 
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, arguments.useFence ? fence : nullptr));
         while (*volatileBuffer != 1) {
         }
 
         timer.measureStart();
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
+        if (arguments.useFence) {
+            ASSERT_ZE_RESULT_SUCCESS(zeFenceHostSynchronize(fence, std::numeric_limits<uint64_t>::max()));
+        } else {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
+        }
         timer.measureEnd();
         statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
     }
 
+    if (arguments.useFence) {
+        ASSERT_ZE_RESULT_SUCCESS(zeFenceDestroy(fence));
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, buffer, bufferSize));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));

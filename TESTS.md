@@ -164,7 +164,7 @@ QueuePriorities|Uses queues with different priorities to meassure submission and
 RoundTripSubmission|enqueues kernel which updates system memory location and waits for it with a synchronizing API.|<ul></ul>|:heavy_check_mark:|:heavy_check_mark:|
 UsmSharedFirstCpuAccess|allocates a unified shared memory buffer and measures time to access it on CPU after creation.|<ul><li>--initialPlacement Hint for initial placement of the resource passed to the driver (Any or Host or Device)</li><li>--size Size of the buffer</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
 UsmSharedFirstGpuAccess|allocates a unified shared memory buffer and measures time to access it on GPU after creation.|<ul><li>--initialPlacement Hint for initial placement of the resource passed to the driver (Any or Host or Device)</li><li>--size Size of the buffer</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
-WalkerCompletionLatency|enqueues a kernel writing to system memory and measures time between the moment when update is visible on CPU and the moment when synchronizing call returns|<ul></ul>|:heavy_check_mark:|:heavy_check_mark:|
+WalkerCompletionLatency|enqueues a kernel writing to system memory and measures time between the moment when update is visible on CPU and the moment when synchronizing call returns|<ul><li>--useFence Use fence during submission and for further completion. (0 or 1)</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
 WalkerSubmissionEvents|enqueues an empty kernel with GPU-side profiling and checks delta between queue time and start time.|<ul></ul>|:heavy_check_mark:|:heavy_check_mark:|
 WriteLatency|unblocks event on GPU, then waits for timestamp being written.|<ul></ul>|:heavy_check_mark:|:x:|
 
