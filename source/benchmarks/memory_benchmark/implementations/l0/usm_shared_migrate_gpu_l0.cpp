@@ -23,8 +23,8 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     void *buffer{};
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocShared(levelzero.context, &deviceAllocationDesc, &hostAllocationDesc, arguments.bufferSize, 0, levelzero.device, &buffer));
-    int8_t *bufferInt = static_cast<int8_t *>(buffer);
-    const size_t elementsCount = arguments.bufferSize / sizeof(uint32_t);
+    int32_t *bufferInt = static_cast<int32_t *>(buffer);
+    const size_t elementsCount = arguments.bufferSize / sizeof(int32_t);
 
     // Create kernel
     const auto kernelBinary = FileHelper::loadBinaryFile("memory_benchmark_fill_with_ones.spv");
@@ -45,7 +45,7 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
 
     // Configure dispath parameters
     const uint32_t wgs = 256;
-    const uint32_t wgc = static_cast<uint32_t>(arguments.bufferSize) / wgs;
+    const uint32_t wgc = static_cast<uint32_t>(elementsCount) / wgs;
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, wgs, 1, 1));
     const ze_group_count_t dispatchTraits{wgc, 1, 1};
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
