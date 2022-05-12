@@ -66,16 +66,16 @@ TestResult run(const ReductionArguments5 &arguments, Statistics &statistics) {
     ASSERT_CL_SUCCESS(retVal);
 
     // Prepare data
-    const size_t sizeInBytes = (arguments.numberOfElements + 1) * sizeof(int);
-    auto lastIndexOffset = arguments.numberOfElements * sizeof(int);
-    auto data = std::make_unique<int[]>(arguments.numberOfElements + 1);
-    size_t expectedSum = 0u;
-    size_t value = 0u;
+    const size_t sizeInBytes = (arguments.numberOfElements + 1) * sizeof(int32_t);
+    auto lastIndexOffset = arguments.numberOfElements * sizeof(int32_t);
+    auto data = std::make_unique<int32_t[]>(arguments.numberOfElements + 1);
+    int32_t expectedSum = 0u;
+    int32_t value = 0u;
     for (auto i = 0u; i < arguments.numberOfElements; i++) {
         value++;
         if (value > 4)
             value = 0;
-        data[i] = static_cast<int>(value);
+        data[i] = static_cast<int32_t>(value);
         expectedSum += value;
     }
     data[arguments.numberOfElements] = 0u;
@@ -85,7 +85,7 @@ TestResult run(const ReductionArguments5 &arguments, Statistics &statistics) {
     ASSERT_CL_SUCCESS(retVal);
 
     // Validate results
-    size_t actualSum;
+    int32_t actualSum;
     cl_event profilingEvent{};
     cl_ulong timeNs{};
 
