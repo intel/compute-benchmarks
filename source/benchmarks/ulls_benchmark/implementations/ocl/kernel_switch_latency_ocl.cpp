@@ -23,7 +23,7 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
 
     Timer timer;
     cl_int retVal{};
-    const size_t gws = 1024u;
+    const size_t gws = 1024 * 1024u;
     const size_t lws = 64u;
 
     // Create buffer
