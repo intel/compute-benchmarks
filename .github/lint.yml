@@ -16,12 +16,11 @@ lint:
     excluded:
       - third_party/
     mit_header:
-      contents: |-
+      contents: |
         {comment_begin}
         {comment_char} Copyright (C) %s Intel Corporation
         {comment_char}
         {comment_char} SPDX-License-Identifier: MIT
-        {comment_char}
         {comment_end}
       year_pattern: (\d+)(-\d+)?
       year_constraints:
@@ -39,7 +38,8 @@ lint:
             - \.rc.in$
             - ^Jenkinsfile$
           comment_begin: "/*"
-          comment_end: >1
+          comment_end: |1
+            *
             */
           comment_char: " *"
         bash:
@@ -49,12 +49,14 @@ lint:
             - \.py$
             - \.sh$
           comment_begin: "#"
+          comment_end: "#"
           comment_char: "#"
         bat:
           includes:
             - \.bat$
             - \.cmd$
           comment_begin: "REM"
+          comment_end: "REM"
           comment_char: "REM"
 
   ults-needed:
