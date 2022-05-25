@@ -32,11 +32,7 @@ static TestResult run(const ResourceReassignArguments &arguments, Statistics &st
     size_t size = gws * sizeof(int);
     auto buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, size, nullptr, &retVal);
 
-    const char *source = "__kernel void fill_with_ones(__global int *buffer) { "
-                         "    const int gid = get_global_id(0);"
-                         "    buffer[gid] = 1;"
-                         "}"
-                         "__kernel void stress(__global int *buffer) { "
+    const char *source = "__kernel void stress(__global int *buffer) { "
                          "    const int gid = get_global_id(0);"
                          "    buffer[gid] = 1;"
                          "    for (int i = 0; i < 100; i++) {"
@@ -50,11 +46,8 @@ static TestResult run(const ResourceReassignArguments &arguments, Statistics &st
     cl_program program = clCreateProgramWithSource(opencl.context, 1, &source, &sourceLength, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     ASSERT_CL_SUCCESS(clBuildProgram(program, 1, &opencl.device, nullptr, nullptr, nullptr));
-    cl_kernel fillWithOnes = clCreateKernel(program, "fill_with_ones", &retVal);
-    ASSERT_CL_SUCCESS(retVal);
     cl_kernel stress = clCreateKernel(program, "stress", &retVal);
     ASSERT_CL_SUCCESS(retVal);
-    ASSERT_CL_SUCCESS(clSetKernelArg(fillWithOnes, 0, sizeof(buffer), &buffer));
     ASSERT_CL_SUCCESS(clSetKernelArg(stress, 0, sizeof(buffer), &buffer));
 
     // Warmup
@@ -109,7 +102,6 @@ static TestResult run(const ResourceReassignArguments &arguments, Statistics &st
         ASSERT_CL_SUCCESS(clReleaseCommandQueue(queues[i]));
     }
     ASSERT_CL_SUCCESS(clReleaseKernel(stress));
-    ASSERT_CL_SUCCESS(clReleaseKernel(fillWithOnes));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
 
