@@ -94,13 +94,10 @@ static TestResult run(const ResourceReassignArguments &arguments, Statistics &st
 
         auto value = doubleQueueDiff - singleQueueDiff;
 
-        statistics.pushValue(value, MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(value, MeasurementUnit::Latency, MeasurementType::Cpu);
     }
 
     // Cleanup
-    for (size_t i = 0; i < arguments.queueCount + 1; i++) {
-        ASSERT_CL_SUCCESS(clReleaseCommandQueue(queues[i]));
-    }
     ASSERT_CL_SUCCESS(clReleaseKernel(stress));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
