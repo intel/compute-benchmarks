@@ -168,7 +168,7 @@ static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics
 
     // Benchmark
     Timer timer;
-    const uint64_t timerResolution = levelzero.getTimerResoultion(levelzero.device);
+    const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         for (PerQueueData &queue : queues) {

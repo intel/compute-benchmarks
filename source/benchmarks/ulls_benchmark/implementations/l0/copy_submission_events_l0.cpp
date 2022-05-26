@@ -32,7 +32,7 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
     levelzero.commandQueue = levelzero.createQueue(levelzero.device, queueDesc->desc);
     levelzero.commandQueueDesc = queueDesc->desc;
 
-    const uint64_t timerResolution = levelzero.getTimerResoultion(levelzero.device);
+    const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     const uint32_t timestampValidBits = levelzero.getTimestampValidBits(levelzero.device);
     const uint32_t kernelTimestampValidBits = levelzero.getKernelTimestampValidBits(levelzero.device);
     const uint32_t sharedTimestampValidBits = std::min(timestampValidBits, kernelTimestampValidBits);

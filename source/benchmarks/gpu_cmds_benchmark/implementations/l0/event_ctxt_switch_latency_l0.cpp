@@ -21,7 +21,7 @@ static TestResult run(const EventCtxtSwitchLatencyArguments &arguments, Statisti
     auto cmdQueueFirst = levelzero.commandQueue;
     auto ordinalFirst = queueDescFirst.ordinal;
 
-    const uint64_t timerResolution = levelzero.getTimerResoultion(levelzero.device);
+    const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
     QueueProperties queuePropertiesSecond = QueueProperties::create().setForceEngine(arguments.secondEngine);
     auto queueDescSecond = levelzero.createQueue(queuePropertiesSecond);

@@ -18,7 +18,7 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     // Setup
     LevelZero levelzero;
 
-    const uint64_t timerResolution = levelzero.getTimerResoultion(levelzero.device);
+    const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
     const size_t gws = 1024u;
     const size_t lws = 64u;

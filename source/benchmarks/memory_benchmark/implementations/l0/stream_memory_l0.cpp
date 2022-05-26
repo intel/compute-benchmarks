@@ -38,7 +38,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     const size_t fillValue = 313u;
     const int32_t scalarValue = -999;
     const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize);
-    const uint64_t timerResolution = levelzero.getTimerResoultion(levelzero.device);
+    const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
     // Create module
     const char *kernelFile = useDoubles ? "memory_benchmark_stream_memory_fp64.spv" : "memory_benchmark_stream_memory.spv";

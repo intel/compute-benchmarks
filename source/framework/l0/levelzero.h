@@ -87,8 +87,8 @@ struct LevelZero {
         EXPECT_ZE_RESULT_SUCCESS(zeDeviceGetComputeProperties(deviceHandle, &deviceComputeProperties));
         return deviceComputeProperties;
     }
-    uint64_t getTimerResoultion(DeviceSelection deviceSelection) const { return getDeviceProperties(deviceSelection).timerResolution; }
-    uint64_t getTimerResoultion(ze_device_handle_t deviceHandle) const { return getDeviceProperties(deviceHandle).timerResolution; }
+    uint64_t getTimerResolution(DeviceSelection deviceSelection) const { return getDeviceProperties(deviceSelection).timerResolution; }
+    uint64_t getTimerResolution(ze_device_handle_t deviceHandle) const { return getDeviceProperties(deviceHandle).timerResolution; }
 
     uint32_t getTimestampValidBits(DeviceSelection deviceSelection) const { return getDeviceProperties(deviceSelection).timestampValidBits; }
     uint32_t getTimestampValidBits(ze_device_handle_t deviceHandle) const { return getDeviceProperties(deviceHandle).timestampValidBits; }

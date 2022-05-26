@@ -26,7 +26,7 @@ static TestResult run(const CopyEntireImageArguments &arguments, Statistics &sta
         return TestResult::DeviceNotCapable;
     }
     Timer timer;
-    const uint64_t timerResolution = levelzero.getTimerResoultion(levelzero.device);
+    const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     const auto channelOrder = ImageHelperL0::ChannelOrder::RGBA;
     const auto channelFormat = ImageHelperL0::ChannelFormat::Float;
 

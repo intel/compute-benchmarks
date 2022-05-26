@@ -22,7 +22,7 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
         return TestResult::DeviceNotCapable;
     }
     Timer timer;
-    const uint64_t timerResolution = levelzero.getTimerResoultion(arguments.queuePlacement);
+    const uint64_t timerResolution = levelzero.getTimerResolution(arguments.queuePlacement);
 
     // Create buffers
     void *src{}, *dst{};
