@@ -28,16 +28,15 @@ static TestResult run(const ResourceReassignArguments &arguments, Statistics &st
         queues[i] = opencl.createQueue(QueueProperties::create().setForceEngine(static_cast<Engine>(static_cast<uint32_t>(Engine::Ccs0) + i)));
     }
 
-    size_t gws = 268435456; //2048 * (512 * 8 * 32)
-    size_t size = gws * sizeof(int);
-    auto buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, size, nullptr, &retVal);
+    size_t gws = 512 * 8 * 32;
+    int count = 100;
 
-    const char *source = "__kernel void stress(__global int *buffer) { "
-                         "    const int gid = get_global_id(0);"
-                         "    buffer[gid] = 1;"
-                         "    for (int i = 0; i < 100; i++) {"
-                         "        for (int j = 0; j < i; j++) {"
-                         "            buffer[gid] *= i + j;"
+    const char *source = "__kernel void stress(int count) { "
+                         "    volatile int value = 1;"
+                         "    for (int i = 0; i < count; i++) {"
+                         "        for (int j = 0; j < count; j++) {"
+                         "            value *= (i * j + count + 1);"
+                         "            value /= 2;"
                          "        }"
                          "    }"
                          "}";
@@ -48,7 +47,7 @@ static TestResult run(const ResourceReassignArguments &arguments, Statistics &st
     ASSERT_CL_SUCCESS(clBuildProgram(program, 1, &opencl.device, nullptr, nullptr, nullptr));
     cl_kernel stress = clCreateKernel(program, "stress", &retVal);
     ASSERT_CL_SUCCESS(retVal);
-    ASSERT_CL_SUCCESS(clSetKernelArg(stress, 0, sizeof(buffer), &buffer));
+    ASSERT_CL_SUCCESS(clSetKernelArg(stress, 0, sizeof(count), &count));
 
     // Warmup
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(queues[0], stress, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
@@ -100,7 +99,6 @@ static TestResult run(const ResourceReassignArguments &arguments, Statistics &st
     // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(stress));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
-    ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
 
     return TestResult::Success;
 }
