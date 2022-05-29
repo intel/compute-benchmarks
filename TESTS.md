@@ -145,6 +145,15 @@ MultiProcessComputeSharedBuffer|Creates a number of separate processes for each 
 
 
 
+# p2p_benchmark
+P2P Benchmark is a set of tests aimed at measuring bandwidth and latency of memory transfers between peer devices.
+| Test name | Description | Params | L0 | OCL |
+|-----------|-------------|--------|----|-----|
+UsmCopyMultipleBlits|allocates two unified device memory buffers on separate devices and performs a copy between sections (or chunks) of these using a different copy engine and measures bandwidth. Test first checks for P2P capabilities in the target platform before submitting the copy. Results for each individual blitter engine is measured using GPU-based timings and reported separately. Total bandwidths are calculated by dividing the total buffer size by the worst result from all engines. Division of work among blitters is not always even - if main copy engine is specified (rightmost bit in --bliters argument), it gets a half of the buffer and the rest is divided between remaining copy engines. Otherwise the division is even.|<ul><li>--blitters A bit mask for selecting copy engines</li><li>--dstDeviceId Destination device</li><li>--size Size of the operation processed by each engine</li><li>--srcDeviceId Source device</li></ul>|:heavy_check_mark:|:x:|
+UsmEUCopy|allocates two unified device memory buffers on separate devices, performs a copy between them using a compute engine, and reports bandwidth. Test first checks for P2P capabilities in the target platform before submitting the copy.|<ul><li>--contents Contents of the buffers (Zeros or Random)</li><li>--dstDeviceId Destination device</li><li>--reuseCmdList Command list is reused between iterations (0 or 1)</li><li>--size Size of the buffer</li><li>--srcDeviceId Source device</li><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+
+
+
 # ulls_benchmark
 Ulls Benchmark is a set of tests aimed at measuring Ultra Low Latency Submission (ULLS) performance impact.
 | Test name | Description | Params | L0 | OCL |

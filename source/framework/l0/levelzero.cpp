@@ -32,9 +32,9 @@ LevelZero::LevelZero(const QueueProperties &queueProperties, const ContextProper
     if (rootDeviceIndex >= deviceCount) {
         FATAL_ERROR("Invalid LevelZero device index. deviceIndex=", rootDeviceIndex, " deviceCount=", deviceCount);
     }
-    auto devices = std::make_unique<ze_device_handle_t[]>(deviceCount);
-    EXPECT_ZE_RESULT_SUCCESS(zeDeviceGet(driver, &deviceCount, devices.get()));
-    this->rootDevice = devices[rootDeviceIndex];
+    rootDevices.resize(deviceCount);
+    EXPECT_ZE_RESULT_SUCCESS(zeDeviceGet(driver, &deviceCount, rootDevices.data()));
+    this->rootDevice = rootDevices[rootDeviceIndex];
 
     // Create subDevices if needed
     if (DeviceSelectionHelper::hasAnySubDevice(contextProperties.deviceSelection)) {

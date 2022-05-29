@@ -18,6 +18,8 @@ ze_result_t allocate(UsmMemoryPlacement placement, LevelZero &levelZero, size_t 
 
 ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &levelZero, size_t size, void **buffer);
 
+ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &levelZero, ze_device_handle_t device, size_t size, void **buffer);
+
 ze_result_t deallocate(UsmMemoryPlacement placement, LevelZero &levelZero, void *buffer);
 
 ze_result_t allocate(DeviceSelection placement, LevelZero &levelzero, size_t size, void **outBuffer);

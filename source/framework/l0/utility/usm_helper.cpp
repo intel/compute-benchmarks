@@ -50,6 +50,21 @@ ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &leve
     return allocate(placement, levelZero, size, buffer);
 }
 
+ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &levelZero, ze_device_handle_t device, size_t size, void **buffer) {
+    const ze_host_mem_alloc_desc_t hostAllocDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    const ze_device_mem_alloc_desc_t deviceAllocDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    switch (runtimePlacement) {
+    case UsmRuntimeMemoryPlacement::Device:
+        return zeMemAllocDevice(levelZero.context, &deviceAllocDesc, size, 0, device, buffer);
+    case UsmRuntimeMemoryPlacement::Host:
+        return zeMemAllocHost(levelZero.context, &hostAllocDesc, size, 0, buffer);
+    case UsmRuntimeMemoryPlacement::Shared:
+        return zeMemAllocShared(levelZero.context, &deviceAllocDesc, &hostAllocDesc, size, 0, device, buffer);
+    default:
+        FATAL_ERROR("Unknown placement");
+    }
+}
+
 ze_result_t deallocate(UsmMemoryPlacement placement, LevelZero &levelZero, void *buffer) {
     if (placement == UsmMemoryPlacement::NonUsm) {
         free(buffer);

@@ -121,6 +121,8 @@ struct LevelZero {
     // specified some subDevices in ContextProperties
     void createSubDevices(bool requireSuccess, bool fakeSubDeviceAllowed);
 
+    std::vector<ze_device_handle_t> rootDevices{};
+
   private:
     // Internal fields managed by the LevelZero class
     ze_device_handle_t rootDevice{};
