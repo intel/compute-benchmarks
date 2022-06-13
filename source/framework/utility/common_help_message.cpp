@@ -44,3 +44,7 @@ std::string CommonHelpMessage::atomicDataType() {
 std::string CommonHelpMessage::hostptrBufferReuse() {
     return "How hostptr allocation can be reused due to previous operations";
 }
+
+std::string CommonHelpMessage::writeOperation() {
+    return "Which operation is used, whether write or read";
+}

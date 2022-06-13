@@ -45,6 +45,7 @@ struct LevelZero {
     // Constructors, destructor
     LevelZero() : LevelZero(QueueProperties::create()) {}
     LevelZero(const QueueProperties &queueProperties) : LevelZero(queueProperties, ContextProperties::create()) {}
+    LevelZero(const ContextProperties &contextProperties) : LevelZero(QueueProperties::create(), contextProperties) {}
     LevelZero(const QueueProperties &queueProperties, const ContextProperties &contextProperties)
         : LevelZero(queueProperties, contextProperties, ExtensionProperties::create()) {}
     LevelZero(const QueueProperties &queueProperties, const ContextProperties &contextProperties,

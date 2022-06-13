@@ -21,4 +21,5 @@ struct CommonHelpMessage {
     static std::string measuredCommandsCount();
     static std::string atomicDataType();
     static std::string hostptrBufferReuse();
+    static std::string writeOperation();
 };
