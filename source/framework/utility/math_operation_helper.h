@@ -13,6 +13,7 @@
 struct MathOperationTestData {
     size_t sizeOfDataType;
     size_t loopIterations;
+    size_t operatorApplicationsPerIteration;
     std::byte initialValue[8];
     std::byte otherArgument[8];
     std::byte expectedValue[8];
@@ -37,6 +38,7 @@ inline MathOperationTestData MathOperationHelper::generateTestData(MathOperation
     MathOperationTestData result = {};
     result.sizeOfDataType = sizeof(DataTypeT);
     result.loopIterations = loopIterations;
+    result.operatorApplicationsPerIteration = operationsPerLoop;
     DataTypeT &initialValue = reinterpret_cast<DataTypeT &>(result.initialValue);
     DataTypeT &otherArgument = reinterpret_cast<DataTypeT &>(result.otherArgument);
     DataTypeT &expectedValue = reinterpret_cast<DataTypeT &>(result.expectedValue);

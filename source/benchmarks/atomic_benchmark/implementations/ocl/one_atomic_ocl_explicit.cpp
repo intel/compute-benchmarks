@@ -79,7 +79,9 @@ static TestResult run(const OneAtomicExplicitArguments &arguments, Statistics &s
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        auto totalAtomicOperations = data.loopIterations * data.operatorApplicationsPerIteration;
+        auto timePerAtomicOperation = timer.get() / totalAtomicOperations;
+        statistics.pushValue(timePerAtomicOperation, MeasurementUnit::Nanoseconds, MeasurementType::Cpu);
     }
 
     // Verify

@@ -14,6 +14,7 @@
 enum class MeasurementUnit {
     Unknown,
     Microseconds,
+    Nanoseconds,
     GigabytesPerSecond,
     Latency,
 };
@@ -21,6 +22,8 @@ enum class MeasurementUnit {
 namespace std {
 inline std::string to_string(MeasurementUnit unit) {
     switch (unit) {
+    case MeasurementUnit::Nanoseconds:
+        return "[ns]";
     case MeasurementUnit::Microseconds:
         return "[us]";
     case MeasurementUnit::GigabytesPerSecond:

@@ -30,6 +30,11 @@ void TestCaseStatistics::pushValue(Clock::duration time, MeasurementUnit unit, M
     overrideMeasurementUnit(unit);
 
     switch (unit) {
+    case MeasurementUnit::Nanoseconds: {
+        const Value timeNanoseconds = timeSeconds * 1e9;
+        this->pushValue(timeNanoseconds, description, unit, type);
+        break;
+    }
     case MeasurementUnit::Microseconds: {
         const Value timeMicroseconds = timeSeconds * 1e6;
         this->pushValue(timeMicroseconds, description, unit, type);
