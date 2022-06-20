@@ -46,10 +46,10 @@ static TestResult run(const WriteBufferArguments &arguments, Statistics &statist
 
     // Warmup
     ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, arguments.size, hostptrAlloc.ptr, 0, nullptr, nullptr));
+    ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillBuffer(opencl.commandQueue, buffer, arguments.size, arguments.contents));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillBuffer(opencl.commandQueue, buffer, arguments.size, arguments.contents));
 
         cl_event profilingEvent{};
         cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;
