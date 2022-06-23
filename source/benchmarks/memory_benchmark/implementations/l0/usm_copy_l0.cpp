@@ -70,18 +70,19 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, arguments.size, event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
+    if (arguments.sourcePlacement != UsmMemoryPlacement::NonUsm) {
+        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, source, arguments.size, arguments.contents));
+    }
+    if (arguments.destinationPlacement != UsmMemoryPlacement::NonUsm) {
+        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, destination, arguments.size, arguments.contents));
+    }
+
     // Warmup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        if (arguments.sourcePlacement != UsmMemoryPlacement::NonUsm) {
-            ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, source, arguments.size, arguments.contents));
-        }
-        if (arguments.destinationPlacement != UsmMemoryPlacement::NonUsm) {
-            ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, destination, arguments.size, arguments.contents));
-        }
 
         timer.measureStart();
         if (!arguments.reuseCommandList) {
