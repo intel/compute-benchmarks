@@ -104,6 +104,64 @@ int printPropertiesForAllSubDevices(ze_device_handle_t device, uint32_t numberOf
     return 0;
 }
 
+struct deviceAndProperty {
+    ze_pci_ext_properties_t properties;
+    ze_device_handle_t deviceHandle;
+};
+
+int printDevicesWithTheSameBdfAddress(std::vector<ze_device_handle_t> &devices) {
+    if (devices.size() == 0u) {
+        return 0u;
+    }
+
+    ze_pci_ext_properties_t pciProperties = {};
+    auto counter = 0u;
+    std::vector<deviceAndProperty> properties;
+    properties.resize(devices.size());
+    auto dataIdentifier = 0u;
+
+    for (const auto &device : devices) {
+        properties.at(dataIdentifier).properties.stype = ZE_STRUCTURE_TYPE_PCI_EXT_PROPERTIES;
+        properties.at(dataIdentifier).deviceHandle = device;
+        ze_result_t res = zeDevicePciGetPropertiesExt(device, &properties.at(dataIdentifier++).properties);
+
+        if (res) {
+            std::cerr << "zeDevicePciGetPropertiesExt failed\n";
+            return -1;
+        }
+    }
+
+    //locate devices under the same PCI BUS
+    while (properties.size() > 0u) {
+        auto busId = properties[0].properties.address.bus;
+        auto count = 0u;
+
+        std::vector<ze_device_handle_t> pciDevices;
+
+        for (const auto &property : properties) {
+            if (busId == property.properties.address.bus) {
+                count++;
+                pciDevices.push_back(property.deviceHandle);
+            }
+        }
+        std::cout << " Following number of devices " << count << " have the same PCI bus identifier " << busId << " ze_device_handle_t: ";
+        for (const auto &handle : pciDevices) {
+            std::cout << handle << " ";
+        }
+        std::cout << std::endl;
+        auto iterator = properties.begin();
+        while (iterator != properties.end()) {
+            if (iterator->properties.address.bus == busId) {
+                iterator = properties.erase(iterator);
+            } else {
+                iterator++;
+            }
+        }
+        pciDevices.clear();
+    }
+    return 0u;
+}
+
 int main() {
     Configuration::loadDefaultConfiguration();
 
@@ -138,6 +196,7 @@ int main() {
                 return -1;
             }
         }
+        printDevicesWithTheSameBdfAddress(devices);
     }
 
     return 0;
