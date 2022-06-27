@@ -106,7 +106,7 @@ int printPropertiesForAllSubDevices(ze_device_handle_t device, uint32_t numberOf
 
 struct deviceAndProperty {
     ze_pci_ext_properties_t properties;
-    ze_device_handle_t deviceHandle;
+    uint32_t deviceIndex;
 };
 
 int printDevicesWithTheSameBdfAddress(std::vector<ze_device_handle_t> &devices) {
@@ -122,7 +122,7 @@ int printDevicesWithTheSameBdfAddress(std::vector<ze_device_handle_t> &devices) 
 
     for (const auto &device : devices) {
         properties.at(dataIdentifier).properties.stype = ZE_STRUCTURE_TYPE_PCI_EXT_PROPERTIES;
-        properties.at(dataIdentifier).deviceHandle = device;
+        properties.at(dataIdentifier).deviceIndex = dataIdentifier;
         ze_result_t res = zeDevicePciGetPropertiesExt(device, &properties.at(dataIdentifier++).properties);
 
         if (res) {
@@ -136,17 +136,17 @@ int printDevicesWithTheSameBdfAddress(std::vector<ze_device_handle_t> &devices) 
         auto busId = properties[0].properties.address.bus;
         auto count = 0u;
 
-        std::vector<ze_device_handle_t> pciDevices;
+        std::vector<uint32_t> deviceIdentifiers;
 
         for (const auto &property : properties) {
             if (busId == property.properties.address.bus) {
                 count++;
-                pciDevices.push_back(property.deviceHandle);
+                deviceIdentifiers.push_back(property.deviceIndex);
             }
         }
-        std::cout << " Following number of devices " << count << " have the same PCI bus identifier " << busId << " ze_device_handle_t: ";
-        for (const auto &handle : pciDevices) {
-            std::cout << handle << " ";
+        std::cout << " Following number of devices " << count << " have the same PCI bus identifier " << busId << " Devices: ";
+        for (const auto &handle : deviceIdentifiers) {
+            std::cout << "Device " << handle << " ";
         }
         std::cout << std::endl;
         auto iterator = properties.begin();
@@ -157,7 +157,7 @@ int printDevicesWithTheSameBdfAddress(std::vector<ze_device_handle_t> &devices) 
                 iterator++;
             }
         }
-        pciDevices.clear();
+        deviceIdentifiers.clear();
     }
     return 0u;
 }
