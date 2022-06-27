@@ -106,6 +106,7 @@ int printPropertiesForAllSubDevices(ze_device_handle_t device, uint32_t numberOf
 
 struct deviceAndProperty {
     ze_pci_ext_properties_t properties;
+    ze_device_handle_t deviceHandle;
     uint32_t deviceIndex;
 };
 
@@ -122,6 +123,7 @@ int printDevicesWithTheSameBdfAddress(std::vector<ze_device_handle_t> &devices) 
 
     for (const auto &device : devices) {
         properties.at(dataIdentifier).properties.stype = ZE_STRUCTURE_TYPE_PCI_EXT_PROPERTIES;
+        properties.at(dataIdentifier).deviceHandle = device;
         properties.at(dataIdentifier).deviceIndex = dataIdentifier;
         ze_result_t res = zeDevicePciGetPropertiesExt(device, &properties.at(dataIdentifier++).properties);
 
@@ -132,33 +134,43 @@ int printDevicesWithTheSameBdfAddress(std::vector<ze_device_handle_t> &devices) 
     }
 
     //locate devices under the same PCI BUS
-    while (properties.size() > 0u) {
-        auto busId = properties[0].properties.address.bus;
-        auto count = 0u;
+    std::map<std::string, std::vector<uint32_t>> pciIdentifiers;
 
-        std::vector<uint32_t> deviceIdentifiers;
+    for (const auto &currentPciProp : properties) {
+        auto domainId = currentPciProp.properties.address.domain;
+        auto busId = currentPciProp.properties.address.bus;
+        auto deviceId = currentPciProp.properties.address.device;
+        auto functionId = currentPciProp.properties.address.function;
+        std::ostringstream pciBdf{};
+        pciBdf << std::hex << std::setfill('0') << std::setw(4) << domainId << ":" << std::setw(2) << busId << ":" << std::setw(2) << deviceId << ":" << functionId;
+
+        if (pciIdentifiers.find(pciBdf.str()) != pciIdentifiers.end()) {
+            continue;
+        }
+        std::vector<uint32_t> deviceIndexes{};
 
         for (const auto &property : properties) {
-            if (busId == property.properties.address.bus) {
-                count++;
-                deviceIdentifiers.push_back(property.deviceIndex);
+            if (domainId == property.properties.address.domain &&
+                busId == property.properties.address.bus &&
+                deviceId == property.properties.address.device &&
+                functionId == property.properties.address.function) {
+                deviceIndexes.push_back(property.deviceIndex);
             }
         }
-        std::cout << " Following number of devices " << count << " have the same PCI bus identifier " << busId << " Devices: ";
-        for (const auto &handle : deviceIdentifiers) {
-            std::cout << "Device " << handle << " ";
-        }
-        std::cout << std::endl;
-        auto iterator = properties.begin();
-        while (iterator != properties.end()) {
-            if (iterator->properties.address.bus == busId) {
-                iterator = properties.erase(iterator);
-            } else {
-                iterator++;
-            }
-        }
-        deviceIdentifiers.clear();
+        pciIdentifiers.insert(std::make_pair(pciBdf.str(), deviceIndexes));
     }
+
+    for (auto devicePciIdentifier : pciIdentifiers) {
+        auto pciProp = devicePciIdentifier.first;
+        std::cout << "PCI: " << devicePciIdentifier.first
+                  << "\n";
+        std::cout << "\t|\n";
+        std::cout << "\t|\n";
+        for (const auto &handle : devicePciIdentifier.second) {
+            std::cout << "\t___________ Device " << std::dec << handle << "\n";
+        }
+    }
+
     return 0u;
 }
 
