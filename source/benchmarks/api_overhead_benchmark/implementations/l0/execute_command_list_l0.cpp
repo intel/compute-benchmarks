@@ -56,7 +56,11 @@ static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &
 
     // Warmup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, fence));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
+    if (arguments.useFence) {
+        ASSERT_ZE_RESULT_SUCCESS(zeFenceHostSynchronize(fence, std::numeric_limits<uint64_t>::max()));
+    } else {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
+    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -71,7 +75,11 @@ static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &
             statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
         }
 
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
+        if (arguments.useFence) {
+            ASSERT_ZE_RESULT_SUCCESS(zeFenceHostSynchronize(fence, std::numeric_limits<uint64_t>::max()));
+        } else {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
+        }
         if (arguments.measureCompletionTime) {
             timer.measureEnd();
             statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
