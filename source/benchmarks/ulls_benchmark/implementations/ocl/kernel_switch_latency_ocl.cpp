@@ -82,7 +82,7 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
                 currentSwitchTime = maxSwitchTime;
             }
 
-            switchTime += std::chrono::nanoseconds(start - end);
+            switchTime += std::chrono::nanoseconds(currentSwitchTime);
             maxSwitchTime = std::max(currentSwitchTime, maxSwitchTime);
         }
 
