@@ -71,10 +71,19 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
         timer.measureEnd();
 
         auto switchTime = std::chrono::nanoseconds(0u);
+        cl_ulong maxSwitchTime = 0llu;
         for (auto j = 1u; j < arguments.kernelCount; j++) {
             ASSERT_CL_SUCCESS(clGetEventProfilingInfo(profilingEvents[j - 1], CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr));
             ASSERT_CL_SUCCESS(clGetEventProfilingInfo(profilingEvents[j], CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr));
+
+            auto currentSwitchTime = start - end;
+
+            if (start < end) {
+                currentSwitchTime = maxSwitchTime;
+            }
+
             switchTime += std::chrono::nanoseconds(start - end);
+            maxSwitchTime = std::max(currentSwitchTime, maxSwitchTime);
         }
 
         statistics.pushValue(switchTime / (arguments.kernelCount - 1), MeasurementUnit::Microseconds, MeasurementType::Gpu);

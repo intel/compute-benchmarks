@@ -23,7 +23,7 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     const size_t gws = arguments.workgroupCount * arguments.workgroupSize;
     const size_t lws = arguments.workgroupSize;
 
-    const auto bufferSize = sizeof(cl_int) * arguments.workgroupCount * arguments.workgroupSize;
+    const auto bufferSize = sizeof(cl_int) * arguments.workgroupCount * arguments.workgroupSize * 2;
     cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 

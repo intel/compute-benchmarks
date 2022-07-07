@@ -5,6 +5,7 @@
  *
  */
 
+#include "framework/ocl/intel_product/get_intel_product_ocl.h"
 #include "framework/ocl/opencl.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/file_helper.h"
@@ -22,6 +23,10 @@ static TestResult run(const ResourceReassignArguments &arguments, Statistics &st
     Opencl opencl(queueProperties);
     Timer timer{};
     cl_int retVal{};
+
+    if (getIntelProduct(opencl) == IntelProduct::Unknown) {
+        return TestResult::DeviceNotCapable;
+    }
 
     std::array<cl_command_queue, 4> queues{};
     for (size_t i = 0; i < arguments.queueCount + 1; i++) {
