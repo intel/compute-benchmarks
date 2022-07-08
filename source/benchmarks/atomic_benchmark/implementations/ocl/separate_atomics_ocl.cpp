@@ -58,11 +58,14 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
     cl_kernel kernel = clCreateKernel(program, "separate_atomics", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
+    cl_uint iterations = static_cast<cl_uint>(data.loopIterations);
+    cl_uint atomicsPerCacheline = static_cast<cl_uint>(arguments.atomicsPerCacheline);
+
     // Warmup
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, sizeof(otherArgumentsBuffer), &otherArgumentsBuffer));
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(data.loopIterations), &data.loopIterations));
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 3, sizeof(arguments.atomicsPerCacheline.getSizeOf()), arguments.atomicsPerCacheline.getAddressOf()));
+    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(iterations), &iterations));
+    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 3, sizeof(atomicsPerCacheline), &atomicsPerCacheline));
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
