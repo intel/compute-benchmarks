@@ -66,10 +66,12 @@ static TestResult run(const OneAtomicExplicitArguments &arguments, Statistics &s
     ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, otherArgumentsBuffer, data.otherArgument, data.sizeOfDataType, 0, otherArgumentsBufferSize, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
+    cl_uint iterations = static_cast<cl_uint>(data.loopIterations);
+
     // Warmup
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(atomicBuffer), &atomicBuffer));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, sizeof(otherArgumentsBuffer), &otherArgumentsBuffer));
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(data.loopIterations), &data.loopIterations));
+    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(iterations), &iterations));
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
