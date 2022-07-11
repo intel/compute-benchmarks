@@ -15,13 +15,14 @@
 
 static const inline RegisterTestCase<UsmSharedMigrateGpu> registerTestCase{};
 
-class UsmSharedMigrateGpuTest : public ::testing::TestWithParam<std::tuple<Api, size_t>> {
+class UsmSharedMigrateGpuTest : public ::testing::TestWithParam<std::tuple<Api, size_t, bool>> {
 };
 
 TEST_P(UsmSharedMigrateGpuTest, Test) {
     UsmSharedMigrateGpuArguments args;
     args.api = std::get<0>(GetParam());
     args.bufferSize = std::get<1>(GetParam());
+    args.prefetchMemory = std::get<2>(GetParam());
 
     UsmSharedMigrateGpu test;
     test.run(args);
@@ -33,4 +34,5 @@ INSTANTIATE_TEST_SUITE_P(
     UsmSharedMigrateGpuTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::Values(128 * megaByte, 256 * megaByte)));
+        ::testing::Values(128 * megaByte, 256 * megaByte),
+        ::testing::Values(false, true)));

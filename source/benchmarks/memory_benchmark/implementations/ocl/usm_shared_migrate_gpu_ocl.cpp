@@ -19,7 +19,8 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     Timer timer;
     auto clSharedMemAllocINTEL = (pfn_clSharedMemAllocINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clSharedMemAllocINTEL");
     auto clMemFreeINTEL = (pfn_clMemFreeINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clMemFreeINTEL");
-    if (!clSharedMemAllocINTEL || !clMemFreeINTEL) {
+    auto clEnqueueMigrateMemINTEL = (pfn_clEnqueueMigrateMemINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMigrateMemINTEL");
+    if (!clSharedMemAllocINTEL || !clMemFreeINTEL || !clEnqueueMigrateMemINTEL) {
         return TestResult::DriverFunctionNotFound;
     }
     cl_int retVal{};
@@ -56,6 +57,11 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
 
         // Measure kernel which must migrate the resource to GPU
         timer.measureStart();
+
+        if (arguments.prefetchMemory) {
+            clEnqueueMigrateMemINTEL(opencl.commandQueue, buffer, arguments.bufferSize, 0, 0, nullptr, nullptr);
+        }
+
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();

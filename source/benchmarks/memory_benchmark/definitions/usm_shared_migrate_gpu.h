@@ -12,9 +12,11 @@
 
 struct UsmSharedMigrateGpuArguments : TestCaseArgumentContainer {
     ByteSizeArgument bufferSize;
+    BooleanArgument prefetchMemory;
 
     UsmSharedMigrateGpuArguments()
-        : bufferSize(*this, "size", "Size of the buffer") {}
+        : bufferSize(*this, "size", "Size of the buffer"),
+          prefetchMemory(*this, "prefetch", "Explicitely migrate shared allocation to device associated with command queue") {}
 };
 
 struct UsmSharedMigrateGpu : TestCase<UsmSharedMigrateGpuArguments> {

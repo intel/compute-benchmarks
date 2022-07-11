@@ -72,6 +72,11 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
         }
 
         timer.measureStart();
+
+        if (arguments.prefetchMemory) {
+            zeCommandListAppendMemoryPrefetch(cmdList, bufferInt, arguments.bufferSize);
+        }
+
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
