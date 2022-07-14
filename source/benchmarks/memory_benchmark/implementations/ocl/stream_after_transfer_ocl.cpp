@@ -130,13 +130,13 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
 
-        size_t tranfserSize = arguments.size;
+        size_t transferSize = arguments.size;
         switch (arguments.type) {
         case StreamMemoryType::Scale:
-            tranfserSize *= 2;
+            transferSize *= 2;
             break;
         case StreamMemoryType::Triad:
-            tranfserSize *= 3;
+            transferSize *= 3;
             break;
         default:
             break;
@@ -147,9 +147,9 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
             ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
             ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
 
-            statistics.pushValue(std::chrono::nanoseconds(timeNs), tranfserSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+            statistics.pushValue(std::chrono::nanoseconds(timeNs), transferSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
         } else {
-            statistics.pushValue(timer.get(), tranfserSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+            statistics.pushValue(timer.get(), transferSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
         }
     }
 

@@ -165,13 +165,13 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         }
         timer.measureEnd();
 
-        size_t tranfserSize = arguments.size;
+        size_t transferSize = arguments.size;
         switch (arguments.type) {
         case StreamMemoryType::Scale:
-            tranfserSize *= 2;
+            transferSize *= 2;
             break;
         case StreamMemoryType::Triad:
-            tranfserSize *= 3;
+            transferSize *= 3;
             break;
         default:
             break;
@@ -182,9 +182,9 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
             ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(event, &timestampResult));
             auto commandTime = std::chrono::nanoseconds(timestampResult.global.kernelEnd - timestampResult.global.kernelStart);
             commandTime *= timerResolution;
-            statistics.pushValue(commandTime, tranfserSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+            statistics.pushValue(commandTime, transferSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
         } else {
-            statistics.pushValue(timer.get(), tranfserSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+            statistics.pushValue(timer.get(), transferSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
         }
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }
