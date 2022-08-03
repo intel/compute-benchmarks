@@ -55,6 +55,9 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
+    if (arguments.prefetchMemory) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryPrefetch(cmdList, bufferInt, arguments.bufferSize));
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
@@ -72,11 +75,6 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
         }
 
         timer.measureStart();
-
-        if (arguments.prefetchMemory) {
-            zeCommandListAppendMemoryPrefetch(cmdList, bufferInt, arguments.bufferSize);
-        }
-
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
