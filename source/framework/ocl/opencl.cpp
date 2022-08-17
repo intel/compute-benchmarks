@@ -22,7 +22,7 @@ Opencl::Opencl(const QueueProperties &queueProperties, const ContextProperties &
 
     if (platformIndex == -1) {
         for (uint32_t localPlatformIndex = 0u; localPlatformIndex < numPlatforms; localPlatformIndex++) {
-            if (clGetDeviceIDs(platforms[localPlatformIndex], CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices) == CL_SUCCESS) {
+            if (clGetDeviceIDs(platforms[localPlatformIndex], CL_DEVICE_TYPE_ALL, 0, nullptr, &numDevices) == CL_SUCCESS) {
                 platformIndex = localPlatformIndex;
             }
         }
@@ -35,13 +35,13 @@ Opencl::Opencl(const QueueProperties &queueProperties, const ContextProperties &
     this->platform = platforms[platformIndex];
 
     // Create root device
-    EXPECT_CL_SUCCESS(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices));
+    EXPECT_CL_SUCCESS(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &numDevices));
     const auto deviceIndex = Configuration::get().oclDeviceIndex;
     if (deviceIndex >= numDevices) {
         FATAL_ERROR("Invalid OCL device index. deviceIndex=", deviceIndex, " numDevices=", numDevices);
     }
     auto devices = std::make_unique<cl_device_id[]>(numDevices);
-    EXPECT_CL_SUCCESS(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices.get(), nullptr));
+    EXPECT_CL_SUCCESS(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices.get(), nullptr));
     this->rootDevice = devices[deviceIndex];
 
     // Create sub devices if needed

@@ -63,17 +63,17 @@ static void printAvailableDevices() {
         EXPECT_CL_SUCCESS(clGetPlatformInfo(platform, CL_PLATFORM_NAME, sizeof(bufferString), bufferString, nullptr));
         std::cout << "  Platform: " << bufferString << " ";
         cl_uint numDevices;
-        retVal = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices);
+        retVal = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &numDevices);
         if (retVal != CL_SUCCESS) {
             std::cout << "(no GPU devices found, clGetDeviceIDs returned " << oclErrorToString(retVal) << ")\n";
             continue;
         } else {
-            std::cout << "(" << numDevices << " GPU devices)\n";
+            std::cout << "(" << numDevices << " XPU devices)\n";
         }
 
         // Iterate over devices
         auto devices = std::make_unique<cl_device_id[]>(numDevices);
-        EXPECT_CL_SUCCESS(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices.get(), nullptr));
+        EXPECT_CL_SUCCESS(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices.get(), nullptr));
         for (cl_uint deviceIndex = 0; deviceIndex < numDevices; deviceIndex++) {
             cl_device_id device = devices[deviceIndex];
 

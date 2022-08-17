@@ -30,13 +30,13 @@ std::vector<cl_platform_id> getPlatforms() {
 
 std::vector<cl_device_id> getDevices(cl_platform_id platform) {
     cl_uint numDevices;
-    clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices);
+    clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &numDevices);
     if (numDevices == 0) {
         return {};
     }
 
     std::vector<cl_device_id> devices{numDevices};
-    CL_SUCCESS_OR_ERROR(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices.data(), nullptr), "Querying devices");
+    CL_SUCCESS_OR_ERROR(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices.data(), nullptr), "Querying devices");
     return devices;
 }
 
