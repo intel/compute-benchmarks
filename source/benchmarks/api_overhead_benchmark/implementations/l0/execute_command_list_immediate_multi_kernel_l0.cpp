@@ -48,7 +48,8 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(modules[1], &kernelDescs[1], &kernels[1]));
 
     // Create event
-    uint32_t eventsCount = arguments.amountOfCalls * 2;
+    uint32_t numEventsMultiplier = arguments.addBarrier ? arguments.numKernelsAfterBarrier + 1 : 2;
+    uint32_t eventsCount = arguments.amountOfCalls * numEventsMultiplier;
     ze_event_pool_desc_t eventPoolDesc;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = eventsCount;
@@ -93,16 +94,35 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
+        uint32_t eventId = 0u;
         timer.measureStart();
         for (uint32_t callId = 0u; callId < arguments.amountOfCalls; callId++) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[0], &groupCount0, events[callId * 2], 0, nullptr));
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[1], &groupCount0, events[(callId * 2) + 1], 0, nullptr));
+            eventId = 0u;
+            if (arguments.addBarrier) {
+                uint32_t numKernelsToAdd = (((arguments.numKernelsBeforeBarrier) % 2) == 0) ? arguments.numKernelsBeforeBarrier : arguments.numKernelsBeforeBarrier + 1;
+                for (uint32_t kernelId = 0; kernelId < numKernelsToAdd; kernelId++) {
+                    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[kernelId % 2], &groupCount0, nullptr, 0, nullptr));
+                }
+
+                ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
+
+                numKernelsToAdd = (((arguments.numKernelsAfterBarrier) % 2) == 0) ? arguments.numKernelsAfterBarrier : arguments.numKernelsAfterBarrier + 1;
+                for (uint32_t kernelId = 0; kernelId < numKernelsToAdd; kernelId++) {
+                    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[kernelId % 2], &groupCount0,
+                                                                             events[eventId++], 0, nullptr));
+                }
+            } else {
+                ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[0], &groupCount0,
+                                                                         arguments.addBarrier ? nullptr : events[eventId++], 0, nullptr));
+                ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[1], &groupCount0,
+                                                                         arguments.addBarrier ? nullptr : events[eventId++], 0, nullptr));
+            }
         }
         timer.measureEnd();
         statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
-        for (auto &event : events) {
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
+        for (auto eventUsed = 0u; eventUsed < eventId; eventUsed++) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(events[eventUsed], std::numeric_limits<uint64_t>::max()));
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[eventUsed]));
         }
     }
 
