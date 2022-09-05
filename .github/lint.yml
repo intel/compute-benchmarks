@@ -1,3 +1,6 @@
+use-configs:                
+  - lint/opensource/copyrights   
+  - lint/opensource/banned_words 
 lint:
   clang-format:
     included:
@@ -16,48 +19,17 @@ lint:
     excluded:
       - third_party/
     mit_header:
-      contents: |
-        {comment_begin}
-        {comment_char} Copyright (C) %s Intel Corporation
-        {comment_char}
-        {comment_char} SPDX-License-Identifier: MIT
-        {comment_end}
-      year_pattern: (\d+)(-\d+)?
       year_constraints:
         _default: 2022
       file_types:
-        cpp:
-          includes:
-            - \.cpp$
-            - \.h$
-            - \.inl$
-            - \.hpp$
-            - \.cl$
-            - \.m$
-            - \.h.in$
-            - \.rc.in$
-            - ^Jenkinsfile$
-          comment_begin: "/*"
-          comment_end: |1
-            *
-            */
-          comment_char: " *"
-        bash:
-          includes:
-            - CMakeLists.txt$
-            - \.cmake$
-            - \.py$
-            - \.sh$
-          comment_begin: "#"
-          comment_end: "#"
-          comment_char: "#"
         bat:
-          includes:
-            - \.bat$
-            - \.cmd$
-          comment_begin: "REM"
-          comment_end: "REM"
-          comment_char: "REM"
+          comment_begin: REM
+          comment_end: REM
+          comment_char: REM
+
+  banned_words:
+    exclude:
+      - third_party/
 
   ults-needed:
     disabled: true
