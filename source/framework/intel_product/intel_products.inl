@@ -13,8 +13,8 @@
     INTEL_GEN(Gen11)
     INTEL_GEN(Gen12lp)
     INTEL_GEN(XeHpCore)
-    INTEL_GEN(Gen12_7)
-    INTEL_GEN(Gen12_8)
+    INTEL_GEN(XeHpgCore)
+    INTEL_GEN(XeHpcCore)
 #endif
 
 #ifdef INTEL_PRODUCT
@@ -40,9 +40,9 @@
 
     INTEL_PRODUCT(Xehp,     XeHpCore)
 
-    INTEL_PRODUCT(Dg2,      Gen12_7)
+    INTEL_PRODUCT(Dg2,      XeHpgCore)
 
-    INTEL_PRODUCT(Pvc,      Gen12_8)
+    INTEL_PRODUCT(Pvc,      XeHpcCore)
 #endif
 
 #ifdef INTEL_PRODUCT_ID
