@@ -12,7 +12,7 @@
 #include <CL/sycl.hpp>
 
 namespace SYCL {
-namespace sycl = cl::sycl;
+namespace sycl = ::sycl;
 } // namespace SYCL
 
 using namespace SYCL;

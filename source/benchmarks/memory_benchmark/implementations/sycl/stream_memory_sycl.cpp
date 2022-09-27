@@ -184,7 +184,7 @@ class TriadBenchmark : public StreamMemoryBenchmark {
 
 static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {
     auto device = sycl::device{sycl::default_selector{}};
-    auto queueProperties = sycl::property_list{cl::sycl::property::queue::enable_profiling()};
+    auto queueProperties = sycl::property_list{sycl::property::queue::enable_profiling()};
     sycl::queue queue(device, queueProperties);
 
     Timer timer;

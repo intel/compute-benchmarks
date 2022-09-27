@@ -27,11 +27,9 @@ std::map<sycl::backend, std::string> backendToString{
     {sycl::backend::host, "Host"},
     {sycl::backend::opencl, "OpenCL"},
     {sycl::backend::ext_oneapi_level_zero, "oneAPI Level Zero"},
-    {sycl::backend::level_zero, "Level Zero"},
-    {sycl::backend::cuda, "CUDA"},
+    {sycl::backend::ext_oneapi_cuda, "oneAPI CUDA"},
     {sycl::backend::all, "All"},
-    {sycl::backend::esimd_cpu, "ESIMD CPU"},
-    {sycl::backend::rocm, "ROCm"}};
+    {sycl::backend::ext_intel_esimd_emulator, "ESIMD CPU"}};
 
 void printDeviceInfo() {
     auto device = sycl::device{sycl::default_selector{}};
@@ -59,7 +57,7 @@ void printDeviceInfo() {
 }
 
 static void printAvailableDevices() {
-    std::vector<cl::sycl::device> devices = cl::sycl::device::get_devices();
+    std::vector<sycl::device> devices = sycl::device::get_devices();
 
     if (devices.size() == 0) {
         std::cout << "SYCL devices: NONE";

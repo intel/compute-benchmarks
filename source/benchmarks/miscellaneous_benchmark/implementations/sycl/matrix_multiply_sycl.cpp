@@ -37,7 +37,7 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
     }
 
     auto device = sycl::device{sycl::default_selector{}};
-    auto queueProperties = sycl::property_list{cl::sycl::property::queue::enable_profiling()};
+    auto queueProperties = sycl::property_list{sycl::property::queue::enable_profiling()};
     const size_t totalElements = gws[0] * gws[1] * gws[2];
     sycl::queue queue(device, queueProperties);
     {
