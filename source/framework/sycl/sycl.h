@@ -13,6 +13,17 @@
 
 namespace SYCL {
 namespace sycl = ::sycl;
+
+struct Sycl {
+    sycl::device device;
+    sycl::queue queue;
+
+    Sycl();
+    Sycl(const sycl::device_selector &deviceSelector);
+    Sycl(const sycl::property_list &propertyList);
+    Sycl(const sycl::device_selector &deviceSelector, const sycl::property_list &propertyList);
+    ~Sycl();
+};
 } // namespace SYCL
 
 using namespace SYCL;
