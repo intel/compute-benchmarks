@@ -86,8 +86,8 @@ TestResult run(const ReductionArguments4 &arguments, Statistics &statistics) {
     cl_ulong timeNs2{};
 
     // Warmup kernel
-    const size_t gws = arguments.numberOfElements / 2;
-    const size_t lws = 512u;
+    const size_t gws = arguments.numberOfElements / sizeof(int);
+    const size_t lws = 256u;
     const cl_uint groupCount = static_cast<cl_uint>(gws / lws);
     const size_t dispatchOne = 1u;
 
