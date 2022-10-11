@@ -9,6 +9,11 @@
 #include <chrono>
 #include <cstdio>
 #include <framework/configuration.h>
+#if defined(__ARM_ARCH)
+#include <sse2neon.h>
+#else
+#include <emmintrin.h>
+#endif
 
 class Timer {
   public:
@@ -23,11 +28,16 @@ class Timer {
         if (this->markTimers) {
             printf("\n Timer START \n");
         }
-
+        //make sure that any pending instructions are done and all memory transactions committed.
+        _mm_mfence();
+        _mm_lfence();
         startTime = Clock::now();
     }
 
     void measureEnd() {
+        //make sure that any pending instructions are done and all memory transactions committed.
+        _mm_mfence();
+        _mm_lfence();
         endTime = Clock::now();
         if (this->markTimers) {
             printf("\n Timer END \n");
