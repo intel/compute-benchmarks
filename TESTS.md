@@ -9,6 +9,7 @@ CreateCommandListImmediate|measures time spent in zeCommandListCreateImmediate o
 DestroyCommandList|measures time spent in zeCommandListDestroy on CPU.|<ul><li>--CmdListCount Number of cmdlists to destroy</li></ul>|:heavy_check_mark:|:x:|
 DestroyCommandListImmediate|measures time spent in zeCommandListDestroy on CPU, for immediate cmdlist.|<ul><li>--CmdListCount Number of immediate cmdlists to create</li></ul>|:heavy_check_mark:|:x:|
 DriverGet|measures time spent in driver get call on CPU.|<ul><li>--getDriverCount Whether to measure driver count or driver get (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+DriverGetApiVersion|measures time spent in zeDriverGetApiVersion call on CPU.|<ul></ul>|:heavy_check_mark:|:x:|
 DriverGetProperties|measures time spent in zeDriverGetProperties call on CPU.|<ul></ul>|:heavy_check_mark:|:x:|
 EnqueueNdrNullLws|measures time spent in clEnqueueNDRangeKernel on CPU. Null LWS is provided, which causes driver to calculate it|<ul><li>--event Pass output event to the enqueue call (0 or 1)</li><li>--gws Global work size</li><li>--ooq Use out of order queue (0 or 1)</li><li>--profiling Creating a profiling queue (0 or 1)</li></ul>|:x:|:heavy_check_mark:|
 EnqueueNdrTime|measures time spent in clEnqueueNDRangeKernel on CPU.|<ul><li>--event Pass output event to the enqueue call (0 or 1)</li><li>--ooq Use out of order queue (0 or 1)</li><li>--profiling Creating a profiling queue (0 or 1)</li><li>--wgc Workgroup count</li><li>--wgs Workgroup size</li></ul>|:x:|:heavy_check_mark:|
