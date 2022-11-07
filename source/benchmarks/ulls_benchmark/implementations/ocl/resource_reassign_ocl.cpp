@@ -7,6 +7,7 @@
 
 #include "framework/ocl/intel_product/get_intel_product_ocl.h"
 #include "framework/ocl/opencl.h"
+#include "framework/ocl/utility/queue_families_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
@@ -25,6 +26,10 @@ static TestResult run(const ResourceReassignArguments &arguments, Statistics &st
     cl_int retVal{};
 
     if (getIntelProduct(opencl) == IntelProduct::Unknown) {
+        return TestResult::DeviceNotCapable;
+    }
+
+    if (QueueFamiliesHelper::getQueueCountForEngineGroup(opencl.device, EngineGroup::Compute) < 2) {
         return TestResult::DeviceNotCapable;
     }
 

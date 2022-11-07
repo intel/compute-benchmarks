@@ -6,6 +6,7 @@
  */
 
 #include "framework/ocl/opencl.h"
+#include "framework/ocl/utility/queue_families_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
@@ -22,6 +23,11 @@ static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &sta
     Opencl opencl(queueProperties);
     Timer timer{};
     cl_int retVal{};
+
+    bool singleCcs = QueueFamiliesHelper::getQueueCountForEngineGroup(opencl.device, EngineGroup::Compute) < 2;
+    if (singleCcs && arguments.usePriorities == 0) {
+        return TestResult::DeviceNotCapable;
+    }
 
     const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile("ulls_benchmark_eat_time.cl");
     if (kernelSource.size() == 0) {
@@ -54,7 +60,7 @@ static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &sta
 
         cl_queue_properties highPriorityProperties[] = {
             CL_QUEUE_FAMILY_INTEL, 0u,
-            CL_QUEUE_INDEX_INTEL, 1,
+            CL_QUEUE_INDEX_INTEL, singleCcs ? 0u : 1u,
             CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_HIGH_KHR,
             0};
 
@@ -70,7 +76,7 @@ static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &sta
 
         cl_queue_properties highPriorityProperties[] = {
             CL_QUEUE_FAMILY_INTEL, 0u,
-            CL_QUEUE_INDEX_INTEL, 1,
+            CL_QUEUE_INDEX_INTEL, singleCcs ? 0u : 1u,
             0};
 
         lowPriorityQueue = clCreateCommandQueueWithProperties(opencl.context, opencl.device, lowPriorityProperties, &retVal);

@@ -45,6 +45,17 @@ class QueueFamiliesHelper {
         return nullptr;
     }
 
+    static size_t getQueueCountForEngineGroup(cl_device_id clDevice, EngineGroup engineGroup) {
+        size_t queueCount{0};
+        const auto &families = queryQueueFamilies(clDevice);
+        for (const auto &queueFamilyDesc : families) {
+            if (queueFamilyDesc.type == engineGroup) {
+                queueCount += queueFamilyDesc.queueCount;
+            }
+        }
+        return queueCount;
+    }
+
     static bool validateCapability(cl_command_queue queue, cl_command_queue_capabilities_intel capability) {
         return validateCapability(getQueueCapabilities(queue), capability);
     }
