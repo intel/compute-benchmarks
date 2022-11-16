@@ -19,11 +19,11 @@ inline auto allApis() {
 }
 
 inline auto workgroupCount() {
-    return ::testing::Values(1, 100, 1000, 10000);
+    return ::testing::Values(1, 1000, 10000);
 }
 
 inline auto workgroupSize() {
-    return ::testing::Values(1, 16, 32, 256);
+    return ::testing::Values(1, 32, 256);
 }
 
 inline auto contextDeviceSelections() {

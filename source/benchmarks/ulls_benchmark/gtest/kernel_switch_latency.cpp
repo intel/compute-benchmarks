@@ -34,7 +34,7 @@ INSTANTIATE_TEST_SUITE_P(
     KernelSwitchLatencyTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::Values(8, 16, 32),
+        ::testing::Values(8, 32),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false, true)));

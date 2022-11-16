@@ -33,6 +33,6 @@ INSTANTIATE_TEST_SUITE_P(
     MultiQueueSubmissionTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::Values(2, 4, 8, 16),
-        ::testing::Values(1, 100, 10000),
-        ::testing::Values(1, 32, 256)));
+        ::testing::Values(2, 4, 8),
+        ::testing::Values(1, 1000),
+        ::testing::Values(32, 1024)));
