@@ -78,7 +78,7 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffer, arguments.bufferSize, arguments.contents));
+        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffer, arguments.bufferSize, arguments.contents, false));
 
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));

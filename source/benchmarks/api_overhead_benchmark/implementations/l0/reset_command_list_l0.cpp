@@ -28,7 +28,7 @@ static TestResult run(const ResetCommandListArguments &arguments, Statistics &st
     void *source{}, *destination{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &source));
     if (arguments.sourcePlacement != UsmMemoryPlacement::NonUsm) {
-        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, source, arguments.size, BufferContents::Zeros));
+        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, source, arguments.size, BufferContents::Zeros, false));
     }
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.size, &destination));
 

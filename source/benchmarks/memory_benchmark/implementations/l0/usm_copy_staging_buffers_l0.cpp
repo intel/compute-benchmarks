@@ -54,7 +54,7 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
     if (arguments.dstPlacement == UsmMemoryPlacement::Device) {
         memset(src, 0, arguments.size);
     } else {
-        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, src, arguments.size, BufferContents::Zeros));
+        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, src, arguments.size, BufferContents::Zeros, false));
     }
 
     // Create events

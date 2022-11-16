@@ -67,10 +67,10 @@ static TestResult run(const UsmCopyImmediateArguments &arguments, Statistics &st
 
     // Fill buffer
     if (arguments.sourcePlacement != UsmMemoryPlacement::NonUsm) {
-        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, source, arguments.size, arguments.contents));
+        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, source, arguments.size, arguments.contents, true));
     }
     if (arguments.destinationPlacement != UsmMemoryPlacement::NonUsm) {
-        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, destination, arguments.size, arguments.contents));
+        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, destination, arguments.size, arguments.contents, true));
     }
 
     // Warmup

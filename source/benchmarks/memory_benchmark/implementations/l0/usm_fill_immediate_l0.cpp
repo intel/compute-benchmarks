@@ -79,7 +79,7 @@ static TestResult run(const UsmFillImmediateArguments &arguments, Statistics &st
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffer, arguments.bufferSize, arguments.contents));
+        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffer, arguments.bufferSize, arguments.contents, true));
 
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffer, pattern.get(), arguments.patternSize, arguments.bufferSize, event, 0, nullptr));
