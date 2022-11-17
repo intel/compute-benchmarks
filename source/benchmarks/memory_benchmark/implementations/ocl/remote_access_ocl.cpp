@@ -26,6 +26,14 @@ static TestResult run(const RemoteAccessArguments &arguments, Statistics &statis
     cl_int retVal = {};
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true).setOoq(0);
     Opencl opencl(queueProperties);
+
+    auto subDeviceCount = 0u;
+    const cl_device_partition_property properties[] = {CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN, CL_DEVICE_AFFINITY_DOMAIN_NUMA, 0};
+    clCreateSubDevices(opencl.device, properties, 0u, nullptr, &subDeviceCount);
+    if (subDeviceCount == 0u) {
+        return TestResult::DeviceNotCapable;
+    }
+
     Timer timer;
 
     size_t elementSize = sizeof(cl_double);

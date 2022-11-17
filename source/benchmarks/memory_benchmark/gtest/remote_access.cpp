@@ -36,7 +36,7 @@ INSTANTIATE_TEST_SUITE_P(
     RemoteAccessTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::Values(1, 2, 3, 4, 5, 6, 7, 8, 10, 20, 50, 100, 0),
+        ::testing::Values(1, 2, 4, 6, 8, 10, 20, 50, 100, 0),
         ::testing::Values(1 * gigaByte),
-        ::testing::Values(false, true),
-        ::testing::Values(1, 2, 4, 8, 16, 32, 64)));
+        ::testing::Values(true),
+        ::testing::Values(1, 8, 32, 64)));
