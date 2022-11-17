@@ -12,27 +12,27 @@
 #include "framework/argument/enum/stream_memory_type_argument.h"
 #include "framework/test_case/test_case.h"
 
-struct StreamMemoryArguments : TestCaseArgumentContainer {
+struct StreamMemoryImmediateArguments : TestCaseArgumentContainer {
     StreamMemoryTypeArgument type;
     ByteSizeArgument size;
     BooleanArgument useEvents;
 
-    StreamMemoryArguments()
+    StreamMemoryImmediateArguments()
         : type(*this, "type", "Memory streaming type"),
           size(*this, "size", "Size of the memory to stream. Must be divisible by datatype size."),
           useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
 };
 
-struct StreamMemory : TestCase<StreamMemoryArguments> {
-    using TestCase<StreamMemoryArguments>::TestCase;
+struct StreamMemoryImmediate : TestCase<StreamMemoryImmediateArguments> {
+    using TestCase<StreamMemoryImmediateArguments>::TestCase;
 
     std::string getTestCaseName() const override {
-        return "StreamMemory";
+        return "StreamMemoryImmediate";
     }
 
     std::string getHelp() const override {
-        return "Streams memory inside of kernel in a fashion described by 'type'. Copy means one "
-               "memory location is read from and the second one is written to. Triad means two "
+        return "Streams memory inside of kernel in a fashion described by 'type' using immediate command list. "
+               "Copy means one memory location is read from and the second one is written to. Triad means two "
                "buffers are read and one is written to. In read and write memory is only read or "
                "written to.";
     }

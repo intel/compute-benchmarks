@@ -11,13 +11,13 @@
 #include "framework/utility/memory_constants.h"
 #include "framework/utility/timer.h"
 
-#include "definitions/stream_memory.h"
+#include "definitions/stream_memory_immediate.h"
 
 #include <gtest/gtest.h>
 
 using namespace MemoryConstants;
 
-static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {
+static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistics &statistics) {
     // Setup
     QueueProperties queueProperties = QueueProperties::create();
     ContextProperties contextProperties = ContextProperties::create();
@@ -98,11 +98,11 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, 1u, 1u));
     const ze_group_count_t dispatchTraits{gws / groupSizeX, 1u, 1u};
 
-    // Create command list
+    // Create an immediate command list
     ze_command_list_handle_t cmdList;
-    ze_command_list_desc_t cmdListDesc{};
-    cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
+    ze_command_queue_desc_t commandQueueDesc = levelzero.commandQueueDesc;
+    commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
     // Create event
     ze_event_pool_flags_t eventPoolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -125,28 +125,22 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     for (auto i = 0u; i < buffersCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffers[i], &fillValue, sizeof(fillValue), bufferSizes[i], event, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<int>(i), sizeof(buffers[i]), &buffers[i]));
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), sizeof(scalarValue), &scalarValue));
 
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, 0));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListReset(cmdList));
-
-    // Enqueue kernel to command list
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
-
     // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
+    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
+    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         // Launch kernel
         timer.measureStart();
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, 0));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
 
         size_t transferSize = arguments.size;
@@ -186,4 +180,4 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<StreamMemory> registerTestCase(run, Api::L0);
+static RegisterTestCaseImplementation<StreamMemoryImmediate> registerTestCase(run, Api::L0);
