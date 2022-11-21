@@ -44,6 +44,11 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     for (auto elementIndex = 0u; elementIndex < elementsCount; elementIndex++) {
         buffer[elementIndex] = 0;
     }
+
+    if (arguments.prefetchMemory) {
+        ASSERT_CL_SUCCESS(clEnqueueMigrateMemINTEL(opencl.commandQueue, buffer, arguments.bufferSize, 0, 0, nullptr, nullptr));
+    }
+
     const auto gws = elementsCount;
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
@@ -59,7 +64,7 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
         timer.measureStart();
 
         if (arguments.prefetchMemory) {
-            clEnqueueMigrateMemINTEL(opencl.commandQueue, buffer, arguments.bufferSize, 0, 0, nullptr, nullptr);
+            ASSERT_CL_SUCCESS(clEnqueueMigrateMemINTEL(opencl.commandQueue, buffer, arguments.bufferSize, 0, 0, nullptr, nullptr));
         }
 
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
