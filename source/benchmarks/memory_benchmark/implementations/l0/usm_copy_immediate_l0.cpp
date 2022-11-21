@@ -48,10 +48,14 @@ static TestResult run(const UsmCopyImmediateArguments &arguments, Statistics &st
     }
 
     // Create event
+    ze_event_pool_flags_t eventPoolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    if (arguments.useEvents) {
+        eventPoolFlags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    }
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.flags = eventPoolFlags;
     eventPoolDesc.count = 1;
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
     ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
@@ -81,14 +85,20 @@ static TestResult run(const UsmCopyImmediateArguments &arguments, Statistics &st
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
+        timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, arguments.size, event, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
+        timer.measureEnd();
 
-        ze_kernel_timestamp_result_t timestampResult{};
-        ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(event, &timestampResult));
-        auto commandTime = std::chrono::nanoseconds(timestampResult.global.kernelEnd - timestampResult.global.kernelStart);
-        commandTime *= timerResolution;
-        statistics.pushValue(commandTime, arguments.size, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+        if (arguments.useEvents) {
+            ze_kernel_timestamp_result_t timestampResult{};
+            ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(event, &timestampResult));
+            auto commandTime = std::chrono::nanoseconds(timestampResult.global.kernelEnd - timestampResult.global.kernelStart);
+            commandTime *= timerResolution;
+            statistics.pushValue(commandTime, arguments.size, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+        } else {
+            statistics.pushValue(timer.get(), arguments.size, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+        }
 
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }

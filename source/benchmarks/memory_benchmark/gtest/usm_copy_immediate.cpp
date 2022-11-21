@@ -14,7 +14,7 @@ static const inline RegisterTestCase<UsmCopyImmediate> registerTestCase{};
 
 #include <gtest/gtest.h>
 
-class UsmCopyImmediateTest : public ::testing::TestWithParam<std::tuple<UsmMemoryPlacement, UsmMemoryPlacement, size_t, BufferContents, bool>> {
+class UsmCopyImmediateTest : public ::testing::TestWithParam<std::tuple<UsmMemoryPlacement, UsmMemoryPlacement, size_t, BufferContents, bool, bool>> {
 };
 
 TEST_P(UsmCopyImmediateTest, Test) {
@@ -25,6 +25,7 @@ TEST_P(UsmCopyImmediateTest, Test) {
     args.size = std::get<2>(GetParam());
     args.contents = std::get<3>(GetParam());
     args.forceBlitter = std::get<4>(GetParam());
+    args.useEvents = std::get<5>(GetParam());
 
     UsmCopyImmediate test;
     test.run(args);
@@ -39,4 +40,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(UsmMemoryPlacementArgument::enumValues),
         ::testing::Values(128 * megaByte, 512 * megaByte),
         ::testing::Values(BufferContents::Zeros),
-        ::testing::Values(false, true)));
+        ::testing::Values(false, true),
+        ::testing::Values(false)));

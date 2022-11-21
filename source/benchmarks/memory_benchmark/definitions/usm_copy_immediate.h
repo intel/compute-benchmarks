@@ -19,13 +19,15 @@ struct UsmCopyImmediateArguments : TestCaseArgumentContainer {
     ByteSizeArgument size;
     BufferContentsArgument contents;
     BooleanArgument forceBlitter;
+    BooleanArgument useEvents;
 
     UsmCopyImmediateArguments()
         : sourcePlacement(*this, "src", "Placement of the source buffer"),
           destinationPlacement(*this, "dst", "Placement of the destination buffer"),
           size(*this, "size", "Size of the buffer"),
           contents(*this, "contents", "Contents of the buffers"),
-          forceBlitter(*this, "forceBlitter", CommonHelpMessage::forceBlitter()) {}
+          forceBlitter(*this, "forceBlitter", CommonHelpMessage::forceBlitter()),
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
 };
 
 struct UsmCopyImmediate : TestCase<UsmCopyImmediateArguments> {
