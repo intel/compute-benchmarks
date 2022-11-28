@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 static const inline RegisterTestCase<SeparateAtomics> registerTestCase{};
 
-class SeparateAtomicsTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, size_t, CommonGtestArgs::EnqueueSize>> {
+class SeparateAtomicsTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, size_t, CommonGtestArgs::EnqueueSize, bool>> {
 };
 
 TEST_P(SeparateAtomicsTest, Test) {
@@ -25,6 +25,7 @@ TEST_P(SeparateAtomicsTest, Test) {
     args.atomicsPerCacheline = std::get<2>(GetParam());
     args.workgroupCount = std::get<3>(GetParam()).workgroupCount;
     args.workgroupSize = std::get<3>(GetParam()).workgroupSize;
+    args.useEvents = std::get<4>(GetParam());
 
     if (args.atomicsPerCacheline > args.workgroupCount * args.workgroupSize) {
         GTEST_SKIP();
@@ -41,4 +42,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(DataType::Float, DataType::Int32),
         ::CommonGtestArgs::allAtomicMathOperations(),
         ::testing::Values(1, 4),
-        ::CommonGtestArgs::enqueueSizesForAtomics()));
+        ::CommonGtestArgs::enqueueSizesForAtomics(),
+        ::testing::Values(true)));

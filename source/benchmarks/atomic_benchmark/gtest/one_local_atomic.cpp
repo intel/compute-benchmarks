@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 static const inline RegisterTestCase<OneLocalAtomic> registerTestCase{};
 
-class OneLocalAtomicTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, size_t>> {
+class OneLocalAtomicTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, size_t, bool>> {
 };
 
 TEST_P(OneLocalAtomicTest, Test) {
@@ -23,6 +23,7 @@ TEST_P(OneLocalAtomicTest, Test) {
     args.dataType = std::get<0>(GetParam());
     args.atomicOperation = std::get<1>(GetParam());
     args.workgroupSize = std::get<2>(GetParam());
+    args.useEvents = std::get<3>(GetParam());
 
     OneLocalAtomic test;
     test.run(args);
@@ -34,4 +35,5 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(DataType::Float, DataType::Int32),
         ::CommonGtestArgs::allAtomicMathOperations(),
-        ::testing::Values(1, 64, 256)));
+        ::testing::Values(1, 64, 256),
+        ::testing::Values(true)));

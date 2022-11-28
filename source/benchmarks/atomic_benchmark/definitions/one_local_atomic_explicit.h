@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,13 +21,15 @@ struct OneLocalAtomicExplicitArguments : TestCaseArgumentContainer {
     AtomicScopeArgument scope;
     AtomicMemoryOrderArgument memoryOrder;
     PositiveIntegerArgument workgroupSize;
+    BooleanArgument useEvents;
 
     OneLocalAtomicExplicitArguments()
         : dataType(*this, "type", CommonHelpMessage::atomicDataType()),
           atomicOperation(*this, "op", "Atomic operation to perform"),
           scope(*this, "scope", "Memory scope of an atomic operation"),
           memoryOrder(*this, "order", "Memory order of an atomic operation"),
-          workgroupSize(*this, "wgs", "Work group size") {}
+          workgroupSize(*this, "wgs", "Work group size"),
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
 };
 
 struct OneLocalAtomicExplicit : TestCase<OneLocalAtomicExplicitArguments> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,13 +20,15 @@ struct SeparateAtomicsArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument atomicsPerCacheline;
     PositiveIntegerArgument workgroupCount;
     PositiveIntegerArgument workgroupSize;
+    BooleanArgument useEvents;
 
     SeparateAtomicsArguments()
         : dataType(*this, "type", CommonHelpMessage::atomicDataType()),
           atomicOperation(*this, "op", "Atomic operation to perform"),
           atomicsPerCacheline(*this, "atomicsPerCacheline", "Number of used addresses occupying a single cacheline (this causes operations to be serialized)"),
           workgroupCount(*this, "wgc", "Work group count"),
-          workgroupSize(*this, "wgs", "Work group size") {}
+          workgroupSize(*this, "wgs", "Work group size"),
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
 
     bool validateArgumentsExtra() const override {
         if (atomicsPerCacheline > workgroupCount * workgroupSize) {

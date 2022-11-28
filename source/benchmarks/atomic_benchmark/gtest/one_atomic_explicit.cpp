@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 static const inline RegisterTestCase<OneAtomicExplicit> registerTestCase{};
 
-class OneAtomicExplicitTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, AtomicScope, AtomicMemoryOrder, CommonGtestArgs::EnqueueSize>> {
+class OneAtomicExplicitTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, AtomicScope, AtomicMemoryOrder, CommonGtestArgs::EnqueueSize, bool>> {
 };
 
 TEST_P(OneAtomicExplicitTest, Test) {
@@ -26,6 +26,7 @@ TEST_P(OneAtomicExplicitTest, Test) {
     args.memoryOrder = std::get<3>(GetParam());
     args.workgroupCount = std::get<4>(GetParam()).workgroupCount;
     args.workgroupSize = std::get<4>(GetParam()).workgroupSize;
+    args.useEvents = std::get<5>(GetParam());
 
     OneAtomicExplicit test;
     test.run(args);
@@ -39,4 +40,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::allAtomicMathOperations(),
         ::testing::ValuesIn(AtomicScopeHelper::allValues),
         ::testing::ValuesIn(AtomicMemoryOrderHelper::allValues),
-        ::CommonGtestArgs::enqueueSizesForAtomics()));
+        ::CommonGtestArgs::enqueueSizesForAtomics(),
+        ::testing::Values(true)));

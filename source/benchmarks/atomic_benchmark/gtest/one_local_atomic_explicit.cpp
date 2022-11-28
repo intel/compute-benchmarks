@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 static const inline RegisterTestCase<OneLocalAtomicExplicit> registerTestCase{};
 
-class OneLocalAtomicExplicitTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, AtomicScope, AtomicMemoryOrder, size_t>> {
+class OneLocalAtomicExplicitTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, AtomicScope, AtomicMemoryOrder, size_t, bool>> {
 };
 
 TEST_P(OneLocalAtomicExplicitTest, Test) {
@@ -25,6 +25,7 @@ TEST_P(OneLocalAtomicExplicitTest, Test) {
     args.scope = std::get<2>(GetParam());
     args.memoryOrder = std::get<3>(GetParam());
     args.workgroupSize = std::get<4>(GetParam());
+    args.useEvents = std::get<5>(GetParam());
 
     OneLocalAtomicExplicit test;
     test.run(args);
@@ -38,4 +39,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::allAtomicMathOperations(),
         ::testing::ValuesIn(AtomicScopeHelper::allValues),
         ::testing::ValuesIn(AtomicMemoryOrderHelper::allValues),
-        ::testing::Values(1, 64, 256)));
+        ::testing::Values(1, 64, 256),
+        ::testing::Values(true)));

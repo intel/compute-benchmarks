@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 static const inline RegisterTestCase<OneAtomic> registerTestCase{};
 
-class OneAtomicTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, CommonGtestArgs::EnqueueSize>> {
+class OneAtomicTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, CommonGtestArgs::EnqueueSize, bool>> {
 };
 
 TEST_P(OneAtomicTest, Test) {
@@ -24,6 +24,7 @@ TEST_P(OneAtomicTest, Test) {
     args.atomicOperation = std::get<1>(GetParam());
     args.workgroupCount = std::get<2>(GetParam()).workgroupCount;
     args.workgroupSize = std::get<2>(GetParam()).workgroupSize;
+    args.useEvents = std::get<3>(GetParam());
 
     OneAtomic test;
     test.run(args);
@@ -35,4 +36,5 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(DataType::Float, DataType::Int32),
         ::CommonGtestArgs::allAtomicMathOperations(),
-        ::CommonGtestArgs::enqueueSizesForAtomics()));
+        ::CommonGtestArgs::enqueueSizesForAtomics(),
+        ::testing::Values(true)));

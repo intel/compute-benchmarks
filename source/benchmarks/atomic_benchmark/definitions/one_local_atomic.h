@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,13 @@ struct OneLocalAtomicArguments : TestCaseArgumentContainer {
     DataTypeArgument dataType;
     AtomicMathOperationArgument atomicOperation;
     PositiveIntegerArgument workgroupSize;
+    BooleanArgument useEvents;
 
     OneLocalAtomicArguments()
         : dataType(*this, "type", CommonHelpMessage::atomicDataType()),
           atomicOperation(*this, "op", "Atomic operation to perform"),
-          workgroupSize(*this, "wgs", "Work group size") {}
+          workgroupSize(*this, "wgs", "Work group size"),
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
 };
 
 struct OneLocalAtomic : TestCase<OneLocalAtomicArguments> {

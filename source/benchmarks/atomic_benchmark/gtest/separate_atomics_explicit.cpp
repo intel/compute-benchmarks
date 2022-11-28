@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 static const inline RegisterTestCase<SeparateAtomicsExplicit> registerTestCase{};
 
-class SeparateAtomicsExplicitTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, size_t, AtomicScope, AtomicMemoryOrder, CommonGtestArgs::EnqueueSize>> {
+class SeparateAtomicsExplicitTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, size_t, AtomicScope, AtomicMemoryOrder, CommonGtestArgs::EnqueueSize, bool>> {
 };
 
 TEST_P(SeparateAtomicsExplicitTest, Test) {
@@ -27,6 +27,7 @@ TEST_P(SeparateAtomicsExplicitTest, Test) {
     args.memoryOrder = std::get<4>(GetParam());
     args.workgroupCount = std::get<5>(GetParam()).workgroupCount;
     args.workgroupSize = std::get<5>(GetParam()).workgroupSize;
+    args.useEvents = std::get<6>(GetParam());
 
     if (args.atomicsPerCacheline > args.workgroupCount * args.workgroupSize) {
         GTEST_SKIP();
@@ -45,4 +46,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1, 4),
         ::testing::ValuesIn(AtomicScopeHelper::allValues),
         ::testing::ValuesIn(AtomicMemoryOrderHelper::allValues),
-        ::CommonGtestArgs::enqueueSizesForAtomics()));
+        ::CommonGtestArgs::enqueueSizesForAtomics(),
+        ::testing::Values(true)));

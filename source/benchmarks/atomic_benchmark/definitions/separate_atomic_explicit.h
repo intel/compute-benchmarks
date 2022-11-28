@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ struct SeparateAtomicsExplicitArguments : TestCaseArgumentContainer {
     AtomicMemoryOrderArgument memoryOrder;
     PositiveIntegerArgument workgroupCount;
     PositiveIntegerArgument workgroupSize;
+    BooleanArgument useEvents;
 
     SeparateAtomicsExplicitArguments()
         : dataType(*this, "type", CommonHelpMessage::atomicDataType()),
@@ -32,7 +33,8 @@ struct SeparateAtomicsExplicitArguments : TestCaseArgumentContainer {
           scope(*this, "scope", "Memory scope of an atomic operation"),
           memoryOrder(*this, "order", "Memory order of an atomic operation"),
           workgroupCount(*this, "wgc", "Work group count"),
-          workgroupSize(*this, "wgs", "Work group size") {}
+          workgroupSize(*this, "wgs", "Work group size"),
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
 
     bool validateArgumentsExtra() const override {
         if (atomicsPerCacheline > workgroupCount * workgroupSize) {
