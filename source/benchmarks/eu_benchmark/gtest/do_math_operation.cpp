@@ -14,7 +14,7 @@
 
 static const inline RegisterTestCase<DoMathOperation> registerTestCase{};
 
-class DoMathOperationTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, CommonGtestArgs::EnqueueSize>> {
+class DoMathOperationTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, CommonGtestArgs::EnqueueSize, bool>> {
 };
 
 TEST_P(DoMathOperationTest, Test) {
@@ -24,6 +24,7 @@ TEST_P(DoMathOperationTest, Test) {
     args.operation = std::get<1>(GetParam());
     args.workgroupCount = std::get<2>(GetParam()).workgroupCount;
     args.workgroupSize = std::get<2>(GetParam()).workgroupSize;
+    args.useEvents = std::get<3>(GetParam());
 
     DoMathOperation test;
     test.run(args);
@@ -35,4 +36,5 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(DataType::Float, DataType::Int32),
         ::testing::ValuesIn(NormalMathOperationArgument::enumValues),
-        ::CommonGtestArgs::enqueueSizesForAtomics()));
+        ::CommonGtestArgs::enqueueSizesForAtomics(),
+        ::testing::Values(true)));

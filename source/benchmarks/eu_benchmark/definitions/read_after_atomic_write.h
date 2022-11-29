@@ -17,11 +17,13 @@ struct ReadAfterAtomicWriteArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument workgroupSize;
     BooleanArgument atomic;
     BooleanArgument shuffleRead;
+    BooleanArgument useEvents;
 
     ReadAfterAtomicWriteArguments()
         : workgroupSize(*this, "wgs", "Workgroup size"),
           atomic(*this, "atomic", "If true, write to global memory will be atomic."),
-          shuffleRead(*this, "shuffleRead", "If true, each thread will write and read different memory cell. Otherwise it will be the same one.") {}
+          shuffleRead(*this, "shuffleRead", "If true, each thread will write and read different memory cell. Otherwise it will be the same one."),
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
 };
 
 struct ReadAfterAtomicWrite : TestCase<ReadAfterAtomicWriteArguments> {

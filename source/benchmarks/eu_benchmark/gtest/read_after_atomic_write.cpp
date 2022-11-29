@@ -14,7 +14,7 @@
 
 static const inline RegisterTestCase<ReadAfterAtomicWrite> registerTestCase{};
 
-class ReadAfterAtomicWriteTest : public ::testing::TestWithParam<std::tuple<size_t, bool, bool>> {
+class ReadAfterAtomicWriteTest : public ::testing::TestWithParam<std::tuple<size_t, bool, bool, bool>> {
 };
 
 TEST_P(ReadAfterAtomicWriteTest, Test) {
@@ -23,6 +23,7 @@ TEST_P(ReadAfterAtomicWriteTest, Test) {
     args.workgroupSize = std::get<0>(GetParam());
     args.atomic = std::get<1>(GetParam());
     args.shuffleRead = std::get<2>(GetParam());
+    args.useEvents = std::get<3>(GetParam());
 
     ReadAfterAtomicWrite test;
     test.run(args);
@@ -34,4 +35,5 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(64, 128, 256, 512),
         ::testing::Values(false, true),
-        ::testing::Values(false, true)));
+        ::testing::Values(false, true),
+        ::testing::Values(true)));

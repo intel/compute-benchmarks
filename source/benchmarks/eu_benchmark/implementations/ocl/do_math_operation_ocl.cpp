@@ -6,6 +6,7 @@
  */
 
 #include "framework/ocl/opencl.h"
+#include "framework/ocl/utility/profiling_helper.h"
 #include "framework/ocl/utility/program_helper_ocl.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/compiler_options_builder.h"
@@ -63,7 +64,7 @@ std::string getCompilerOptions(DataType dataType, MathOperation operation) {
 }
 
 static TestResult run(const DoMathOperationArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
@@ -76,7 +77,10 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
     }
 
     // Setup
-    Opencl opencl{};
+    QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents);
+    Opencl opencl(queueProperties);
+    cl_event profilingEvent{};
+    cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;
     Timer timer{};
     cl_int retVal{};
 
@@ -108,16 +112,26 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, data.sizeOfDataType, data.otherArgument));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(data.loopIterations), &data.loopIterations));
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
+    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
+    if (eventForEnqueue) {
+        ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
+    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
+        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        if (eventForEnqueue) {
+            cl_ulong timeNs{};
+            ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
+            ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
+            statistics.pushValue(std::chrono::nanoseconds(timeNs), typeSelector.getUnit(), typeSelector.getType());
+        } else {
+            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        }
     }
 
     // Verify

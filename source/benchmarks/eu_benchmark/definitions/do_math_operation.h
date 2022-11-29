@@ -18,12 +18,14 @@ struct DoMathOperationArguments : TestCaseArgumentContainer {
     NormalMathOperationArgument operation;
     PositiveIntegerArgument workgroupCount;
     PositiveIntegerArgument workgroupSize;
+    BooleanArgument useEvents;
 
     DoMathOperationArguments()
         : dataType(*this, "type", CommonHelpMessage::atomicDataType()),
           operation(*this, "op", "Math operation to perform"),
           workgroupCount(*this, "wgc", "Work group count"),
-          workgroupSize(*this, "wgs", "Work group size") {}
+          workgroupSize(*this, "wgs", "Work group size"),
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
 };
 
 struct DoMathOperation : TestCase<DoMathOperationArguments> {
