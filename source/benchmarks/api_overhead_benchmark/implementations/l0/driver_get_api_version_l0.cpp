@@ -27,8 +27,8 @@ static TestResult run(const DriverGetApiVersionArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeDriverGet(&driverCount, drivers.data()));
 
     // Warmup
-    ze_api_version_t driverApiVersion;
-    ASSERT_ZE_RESULT_SUCCESS(zeDriverGetApiVersion(drivers[0], &driverApiVersion));
+    ze_api_version_t driverApiVersionWarmUp;
+    ASSERT_ZE_RESULT_SUCCESS(zeDriverGetApiVersion(drivers[0], &driverApiVersionWarmUp));
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {

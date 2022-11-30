@@ -38,7 +38,7 @@ static TestResult run(const RemoteAccessArguments &arguments, Statistics &statis
 
     size_t elementSize = sizeof(cl_double);
     const size_t fillValue = 313u;
-    const uint32_t scalarValue = arguments.workItemPackSize;
+    const uint32_t scalarValue = static_cast<uint32_t>(arguments.workItemPackSize);
     const bool printBuildInfo = true;
 
     const size_t bufferSize = arguments.size;

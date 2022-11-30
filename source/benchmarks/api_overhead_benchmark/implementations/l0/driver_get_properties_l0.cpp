@@ -27,8 +27,8 @@ static TestResult run(const DriverGetPropertiesArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeDriverGet(&driverCount, drivers.data()));
 
     // Warmup
-    ze_driver_properties_t driverProperties{};
-    ASSERT_ZE_RESULT_SUCCESS(zeDriverGetProperties(drivers[0], &driverProperties));
+    ze_driver_properties_t driverPropertiesWarmUp{};
+    ASSERT_ZE_RESULT_SUCCESS(zeDriverGetProperties(drivers[0], &driverPropertiesWarmUp));
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {

@@ -69,7 +69,7 @@ static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &st
     ze_kernel_handle_t kernels[kernelCount];
     for (auto i = 0u; i < kernelCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernels[i]));
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernels[i], arguments.wgs, 1u, 1u));
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernels[i], static_cast<uint32_t>(arguments.wgs), 1u, 1u));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[i], 0, sizeof(operations), &operations));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[i], 1, sizeof(buffers[i]), &buffers[i]));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[i], 2, slmSizes[i], nullptr));
@@ -85,8 +85,8 @@ static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &st
 
     std::vector<ze_event_handle_t> profilingEvents(kernelCount);
 
-    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
-    ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(hEventPool, &eventDesc, &profilingEvents[0]));
+    ze_event_desc_t eventDescWarmUp = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
+    ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(hEventPool, &eventDescWarmUp, &profilingEvents[0]));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[0], &dispatchTraits, profilingEvents[0], 0, nullptr));
 
     for (auto i = 1u; i < kernelCount; i++) {

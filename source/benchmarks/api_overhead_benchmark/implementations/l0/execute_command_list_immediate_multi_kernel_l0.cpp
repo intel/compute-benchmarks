@@ -48,8 +48,8 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(modules[1], &kernelDescs[1], &kernels[1]));
 
     // Create event
-    uint32_t numEventsMultiplier = arguments.addBarrier ? arguments.numKernelsAfterBarrier + 1 : 2;
-    uint32_t eventsCount = arguments.amountOfCalls * numEventsMultiplier;
+    uint32_t numEventsMultiplier = arguments.addBarrier ? static_cast<uint32_t>(arguments.numKernelsAfterBarrier + 1) : 2u;
+    uint32_t eventsCount = static_cast<uint32_t>(arguments.amountOfCalls) * numEventsMultiplier;
     ze_event_pool_desc_t eventPoolDesc;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = eventsCount;
@@ -71,7 +71,7 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
 
     // Configure kernel
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernels[0], 1u, 1u, 1u));
-    int kernelOperationsCount = arguments.kernelExecutionTime * 4;
+    int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime * 4);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[0], 0, sizeof(int), &kernelOperationsCount));
     const ze_group_count_t groupCount0{1, 1, 1};
 
@@ -99,14 +99,14 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
         for (uint32_t callId = 0u; callId < arguments.amountOfCalls; callId++) {
             eventId = 0u;
             if (arguments.addBarrier) {
-                uint32_t numKernelsToAdd = (((arguments.numKernelsBeforeBarrier) % 2) == 0) ? arguments.numKernelsBeforeBarrier : arguments.numKernelsBeforeBarrier + 1;
+                uint32_t numKernelsToAdd = (((arguments.numKernelsBeforeBarrier) % 2) == 0) ? static_cast<uint32_t>(arguments.numKernelsBeforeBarrier) : static_cast<uint32_t>(arguments.numKernelsBeforeBarrier) + 1;
                 for (uint32_t kernelId = 0; kernelId < numKernelsToAdd; kernelId++) {
                     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[kernelId % 2], &groupCount0, nullptr, 0, nullptr));
                 }
 
                 ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
 
-                numKernelsToAdd = (((arguments.numKernelsAfterBarrier) % 2) == 0) ? arguments.numKernelsAfterBarrier : arguments.numKernelsAfterBarrier + 1;
+                numKernelsToAdd = (((arguments.numKernelsAfterBarrier) % 2) == 0) ? static_cast<uint32_t>(arguments.numKernelsAfterBarrier) : static_cast<uint32_t>(arguments.numKernelsAfterBarrier + 1);
                 for (uint32_t kernelId = 0; kernelId < numKernelsToAdd; kernelId++) {
                     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[kernelId % 2], &groupCount0,
                                                                              events[eventId++], 0, nullptr));

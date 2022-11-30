@@ -23,7 +23,7 @@ static TestResult run(const BestWalkerSubmissionImmediateMultiCmdlistsArguments 
     // Create events
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = arguments.cmdlistCount;
+    eventPoolDesc.count = static_cast<uint32_t>(arguments.cmdlistCount);
     ze_event_pool_handle_t eventPool;
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
     ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
@@ -83,7 +83,7 @@ static TestResult run(const BestWalkerSubmissionImmediateMultiCmdlistsArguments 
     }
 
     // Benchmark
-    for (auto i = 0u; i < arguments.iterations; i++) {
+    for (auto j = 0u; j < arguments.iterations; j++) {
         for (auto i = 0u; i < arguments.cmdlistCount; i++) {
             *volatileBuffers[i] = 0;
             _mm_clflush(buffers[i]);
