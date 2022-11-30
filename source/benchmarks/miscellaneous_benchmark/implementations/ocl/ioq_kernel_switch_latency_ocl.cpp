@@ -59,7 +59,11 @@ static TestResult run(const IoqKernelSwitchLatencyArguments &arguments, Statisti
     for (auto i = 0u; i < arguments.iterations; ++i) {
         timer.measureStart();
         for (auto j = 0u; j < arguments.kernelCount; ++j) {
-            ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, &profilingEvents[j]));
+            if (arguments.useEvents && j >= 1) {
+                ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 1, &profilingEvents[j - 1], &profilingEvents[j]));
+            } else {
+                ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, &profilingEvents[j]));
+            }
         }
 
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));

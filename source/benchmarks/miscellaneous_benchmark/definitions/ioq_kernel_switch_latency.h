@@ -15,9 +15,11 @@
 
 struct IoqKernelSwitchLatencyArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument kernelCount;
+    BooleanArgument useEvents;
 
     IoqKernelSwitchLatencyArguments()
-        : kernelCount(*this, "kernelCount", "Count of kernels") {}
+        : kernelCount(*this, "kernelCount", "Count of kernels"),
+          useEvents(*this, "useEvents", "Use events to synchronize between kernels") {}
 };
 
 struct IoqKernelSwitchLatency : TestCase<IoqKernelSwitchLatencyArguments> {
