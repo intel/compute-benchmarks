@@ -20,8 +20,8 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    const size_t gws = 1024u;
-    const size_t lws = 64u;
+    const size_t gws = 1024 * 1024 * 128;
+    const size_t lws = 256u;
 
     // Create output buffer
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
