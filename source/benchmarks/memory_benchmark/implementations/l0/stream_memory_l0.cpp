@@ -92,7 +92,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
 
     // Query maximum group size
-    const uint32_t groupSizeX = levelzero.getDeviceComputeProperties().maxGroupSizeX;
+    const uint32_t groupSizeX = std::min(levelzero.getDeviceComputeProperties().maxGroupSizeX, gws);
 
     // Configure kernel group size
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, 1u, 1u));

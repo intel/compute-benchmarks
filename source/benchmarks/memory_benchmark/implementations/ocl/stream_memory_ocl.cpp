@@ -96,7 +96,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     // Warm up
     const size_t globalWorkSize = arguments.size / elementSize;
-    const size_t localWorkSize = maxWorkgroupSize;
+    const size_t localWorkSize = std::min(maxWorkgroupSize, globalWorkSize);
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
