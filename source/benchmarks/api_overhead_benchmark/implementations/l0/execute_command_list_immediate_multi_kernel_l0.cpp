@@ -97,7 +97,6 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
         uint32_t eventId = 0u;
         timer.measureStart();
         for (uint32_t callId = 0u; callId < arguments.amountOfCalls; callId++) {
-            eventId = 0u;
             if (arguments.addBarrier) {
                 uint32_t numKernelsToAdd = (((arguments.numKernelsBeforeBarrier) % 2) == 0) ? static_cast<uint32_t>(arguments.numKernelsBeforeBarrier) : static_cast<uint32_t>(arguments.numKernelsBeforeBarrier) + 1;
                 for (uint32_t kernelId = 0; kernelId < numKernelsToAdd; kernelId++) {
