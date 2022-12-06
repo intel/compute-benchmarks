@@ -17,6 +17,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const UnmapBufferArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     if (arguments.compressed && arguments.noIntelExtensions) {
         return TestResult::DeviceNotCapable;
     }
@@ -60,7 +67,7 @@ static TestResult run(const UnmapBufferArguments &arguments, Statistics &statist
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
 
-        statistics.pushValue(timer.get(), arguments.size, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));

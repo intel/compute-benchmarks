@@ -13,6 +13,13 @@
 #include "definitions/queue_memcpy.h"
 
 static TestResult run(const QueueMemcpyArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     Sycl sycl{sycl::gpu_selector{}};
     Timer timer;
@@ -40,7 +47,7 @@ static TestResult run(const QueueMemcpyArguments &arguments, Statistics &statist
         sycl.queue.memcpy(destination, source, arguments.size).wait();
         timer.measureEnd();
 
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup

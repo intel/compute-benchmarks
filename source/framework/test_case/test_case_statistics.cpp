@@ -75,6 +75,13 @@ void TestCaseStatistics::pushValue(Clock::duration time, uint64_t size, Measurem
     }
 }
 
+void TestCaseStatistics::pushUnitAndType(MeasurementUnit unit, MeasurementType type) {
+    overrideMeasurementUnit(unit);
+
+    this->noopSample.unit = unit;
+    this->noopSample.type = type;
+}
+
 bool TestCaseStatistics::isEmpty() const {
     for (auto &samplesEntry : samplesMap) {
         if (samplesEntry.second.vector.size() != 0) {
@@ -149,7 +156,8 @@ void TestCaseStatistics::printStatisticsHeader(Configuration::PrintType printTyp
     const auto columnCount = ColumnInfo::getColumnCount();
     switch (printType) {
     case Configuration::PrintType::DefaultWithVerbose:
-    case Configuration::PrintType::Default: {
+    case Configuration::PrintType::Default:
+    case Configuration::PrintType::Noop: {
         for (const ColumnInfo &column : columns) {
             std::cout << std::setw(column.width) << column.label;
         }
@@ -191,6 +199,9 @@ void TestCaseStatistics::printStatistics(const std::string &testCaseName) const 
         printStatisticsDefault(testCaseName);
         printStatisticsVerbose();
         break;
+    case Configuration::PrintType::Noop:
+        printStatisticsNoop(testCaseName);
+        break;
     case Configuration::PrintType::Csv:
         printStatisticsCsv(testCaseName);
         break;
@@ -221,6 +232,21 @@ void TestCaseStatistics::printStatisticsDefault(const std::string &testCaseName)
 
         isFirst = false;
     }
+}
+
+void TestCaseStatistics::printStatisticsNoop(const std::string &testCaseName) const {
+    const auto columns = ColumnInfo::getColumns();
+
+    // Calculate left padding assuming Type and Label are the last two columns
+    size_t paddingLeft = 0;
+    for (size_t i = 1; i < columns.size() - 1; i++) {
+        paddingLeft += columns[i].width;
+    }
+
+    std::cout << std::setw(columns.front().width) << testCaseName;
+    std::cout << std::setw(paddingLeft) << std::to_string(this->noopSample.type);
+    std::cout << std::setw(columns.back().width) << std::to_string(this->noopSample.unit);
+    std::cout << std::endl;
 }
 
 void TestCaseStatistics::printStatisticsCsv(const std::string &testCaseName) const {
@@ -263,7 +289,8 @@ void TestCaseStatistics::printStatisticsString(const std::string &testCaseName, 
     const auto columnCount = ColumnInfo::getColumnCount();
     switch (printType) {
     case Configuration::PrintType::DefaultWithVerbose:
-    case Configuration::PrintType::Default: {
+    case Configuration::PrintType::Default:
+    case Configuration::PrintType::Noop: {
         std::cout << std::setw(columns[0].width) << testCaseName;
         const size_t maxStringWidth = columns[1].width + columns[2].width + columns[3].width;
         std::cout << std::setw(maxStringWidth) << message;

@@ -16,6 +16,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const UsmFillImmediateArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     if (arguments.usmMemoryPlacement == UsmMemoryPlacement::NonUsmMapped) {
         return TestResult::ApiNotCapable;
     }
@@ -91,9 +98,9 @@ static TestResult run(const UsmFillImmediateArguments &arguments, Statistics &st
             ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(event, &timestampResult));
             auto commandTime = std::chrono::nanoseconds(timestampResult.global.kernelEnd - timestampResult.global.kernelStart);
             commandTime *= timerResolution;
-            statistics.pushValue(commandTime, arguments.bufferSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+            statistics.pushValue(commandTime, arguments.bufferSize, typeSelector.getUnit(), typeSelector.getType());
         } else {
-            statistics.pushValue(timer.get(), arguments.bufferSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+            statistics.pushValue(timer.get(), arguments.bufferSize, typeSelector.getUnit(), typeSelector.getType());
         }
 
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));

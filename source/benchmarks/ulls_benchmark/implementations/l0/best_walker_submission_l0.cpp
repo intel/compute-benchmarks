@@ -16,6 +16,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     LevelZero levelzero;
     constexpr static auto bufferSize = 4096u;
     Timer timer;
@@ -73,7 +80,7 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
         timer.measureEnd();
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, buffer, bufferSize));

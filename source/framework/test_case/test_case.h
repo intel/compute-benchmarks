@@ -104,6 +104,8 @@ class TestCase : public TestCaseBase {
         if (testResult == TestResult::Success) {
             DEVELOPER_WARNING_IF(!statistics.isFull(), "test did not generate as many values as expected");
             statistics.printStatistics(testCaseNameWithConfig);
+        } else if (testResult == TestResult::Nooped) {
+            statistics.printStatistics(testCaseNameWithConfig);
         } else {
             const auto &testResultInfo = TestResultHelper::getTestResultInfo(testResult);
 
@@ -163,11 +165,6 @@ class TestCase : public TestCaseBase {
         // Check if test case name with config is not too long
         if (!Configuration::get().dumpCommandLines && !arguments.isSingleTestMode) {
             printTestCaseNameLengthWarning(testCaseNameWithConfig);
-        }
-
-        // Noop if required
-        if (Configuration::get().noop) {
-            return TestResult::Nooped;
         }
 
         // Run the test

@@ -29,6 +29,7 @@ struct Configuration : ArgumentContainer {
         Default,
         DefaultWithVerbose,
         Csv,
+        Noop
     } printType = PrintType::Default;
 
     static bool parseArgumentsForConfiguration(CommandLineArguments &arguments);
@@ -72,3 +73,7 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument returnSubmissionTimeInsteadOfWorkloadTime;
     BooleanFlagArgument markTimers;
 };
+
+inline bool isNoopRun() {
+    return Configuration::get().noop;
+}

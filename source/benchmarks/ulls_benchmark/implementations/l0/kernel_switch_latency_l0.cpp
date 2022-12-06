@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     LevelZero levelzero;
 
@@ -124,7 +131,7 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
 
                 switchTime += std::chrono::nanoseconds((laterKernelTimestamp.global.kernelStart - earlierKernelTimestamp.global.kernelEnd) * timerResolution);
             }
-            statistics.pushValue(switchTime / (arguments.kernelCount - 1), MeasurementUnit::Microseconds, MeasurementType::Gpu);
+            statistics.pushValue(switchTime / (arguments.kernelCount - 1), typeSelector.getUnit(), typeSelector.getType());
             for (auto j = 0u; j < arguments.kernelCount; j++) {
                 ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
             }
@@ -157,7 +164,7 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
 
                 switchTime += std::chrono::nanoseconds((laterKernelTimestamp.global.kernelStart - earlierKernelTimestamp.global.kernelEnd) * timerResolution);
             }
-            statistics.pushValue(switchTime / (arguments.kernelCount - 1), MeasurementUnit::Microseconds, MeasurementType::Gpu);
+            statistics.pushValue(switchTime / (arguments.kernelCount - 1), typeSelector.getUnit(), typeSelector.getType());
             for (auto j = 0u; j < arguments.kernelCount; j++) {
                 ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
             }

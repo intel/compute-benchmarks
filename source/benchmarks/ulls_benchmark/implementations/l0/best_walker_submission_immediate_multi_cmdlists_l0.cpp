@@ -16,6 +16,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const BestWalkerSubmissionImmediateMultiCmdlistsArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     LevelZero levelzero{QueueProperties::create().disable()};
     constexpr static auto bufferSize = 4096u;
     Timer timer;
@@ -103,7 +110,7 @@ static TestResult run(const BestWalkerSubmissionImmediateMultiCmdlistsArguments 
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(events[i], std::numeric_limits<uint64_t>::max()));
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[i]));
         }
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup

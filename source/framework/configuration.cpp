@@ -95,6 +95,9 @@ bool Configuration::parseArgumentsForConfiguration(CommandLineArguments &argumen
     if (configuration->verbose) {
         configuration->printType = Configuration::PrintType::DefaultWithVerbose;
     }
+    if (configuration->noop) {
+        configuration->printType = Configuration::PrintType::Noop;
+    }
 
     return true;
 }

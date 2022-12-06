@@ -17,6 +17,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create();
 
@@ -104,7 +111,7 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
         }
 
         timer.measureEnd();
-        statistics.pushValue(timer.get(), arguments.size, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), typeSelector.getType());
 
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }

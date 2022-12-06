@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const IoqKernelSwitchLatencyArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     queueProperties.setOoq(false);
@@ -85,7 +92,7 @@ static TestResult run(const IoqKernelSwitchLatencyArguments &arguments, Statisti
             return TestResult::Error;
         }
 
-        statistics.pushValue(switchTime / validSwitchTimeValueCount, MeasurementUnit::Microseconds, MeasurementType::Gpu);
+        statistics.pushValue(switchTime / validSwitchTimeValueCount, typeSelector.getUnit(), typeSelector.getType());
 
         for (auto j = 0u; j < arguments.kernelCount; ++j) {
             ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvents[j]));

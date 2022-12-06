@@ -14,6 +14,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const EmptyKernelArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     Opencl opencl;
     Timer timer;
@@ -42,7 +49,7 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
 
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup

@@ -43,6 +43,12 @@ static TestResult verifyCopyEngineExists() {
 }
 
 static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
 
     // Verify copy queue exists
     if (auto ret = verifyCopyEngineExists(); ret != TestResult::Success) {
@@ -96,7 +102,7 @@ static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, fence));
         if (!arguments.measureCompletionTime) {
             timer.measureEnd();
-            statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         }
 
         if (arguments.useFence) {
@@ -106,7 +112,7 @@ static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &
         }
         if (arguments.measureCompletionTime) {
             timer.measureEnd();
-            statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         }
     }
 

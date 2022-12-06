@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const UsmBidirectionalCopyArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     ContextProperties contextProperties = ContextProperties::create().create().setDeviceSelection(DeviceSelection::Tile0 | DeviceSelection::Tile1).allowCreationFail();
     LevelZero levelzero(contextProperties);
     if (levelzero.context == nullptr) {
@@ -85,7 +92,7 @@ static TestResult run(const UsmBidirectionalCopyArguments &arguments, Statistics
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(tile1CmdQueue, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
 
-        statistics.pushValue(timer.get(), arguments.size * 2, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), arguments.size * 2, typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Evict buffers

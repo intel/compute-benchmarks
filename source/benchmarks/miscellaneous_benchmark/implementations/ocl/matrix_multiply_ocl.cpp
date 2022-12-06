@@ -13,6 +13,13 @@
 #include "definitions/matrix_multiply.h"
 
 static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     Opencl opencl(queueProperties);
     cl_int retVal;
@@ -104,7 +111,7 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
         ASSERT_CL_SUCCESS(clWaitForEvents(1, &profilingEvent));
         ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
         ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-        statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes * 3, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, "bw");
+        statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes * 3, typeSelector.getUnit(), typeSelector.getType(), "bw");
     }
 
     ASSERT_CL_SUCCESS(clReleaseMemObject(bufferX));

@@ -18,6 +18,13 @@
 #include <thread>
 
 static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     Opencl opencl(queueProperties);
@@ -113,7 +120,7 @@ static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &sta
         ASSERT_CL_SUCCESS(clFinish(highPriorityQueue));
         timer.measureEnd();
         ASSERT_CL_SUCCESS(retVal);
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         ASSERT_CL_SUCCESS(clFinish(lowPriorityQueue));
         std::this_thread::sleep_for(std::chrono::milliseconds(arguments.sleepTime));
     }

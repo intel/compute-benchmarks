@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     LevelZero levelzero(queueProperties);
@@ -104,7 +111,7 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
             ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(queues[j], std::numeric_limits<uint64_t>::max()));
         }
         timer.measureEnd();
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));

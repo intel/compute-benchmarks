@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     queueProperties.setOoq(true);
@@ -86,7 +93,7 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
             maxSwitchTime = std::max(currentSwitchTime, maxSwitchTime);
         }
 
-        statistics.pushValue(switchTime / (arguments.kernelCount - 1), MeasurementUnit::Microseconds, MeasurementType::Gpu);
+        statistics.pushValue(switchTime / (arguments.kernelCount - 1), typeSelector.getUnit(), typeSelector.getType());
 
         for (auto j = 0u; j < arguments.kernelCount; j++) {
             ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvents[j]));

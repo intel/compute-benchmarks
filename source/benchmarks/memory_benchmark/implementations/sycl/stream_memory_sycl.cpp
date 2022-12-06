@@ -183,6 +183,13 @@ class TriadBenchmark : public StreamMemoryBenchmark {
 };
 
 static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     auto device = sycl::device{sycl::default_selector{}};
     auto queueProperties = sycl::property_list{sycl::property::queue::enable_profiling()};
     sycl::queue queue(device, queueProperties);
@@ -242,9 +249,9 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
             auto startTime = event.get_profiling_info<sycl::info::event_profiling::command_start>();
             auto endTime = event.get_profiling_info<sycl::info::event_profiling::command_end>();
             auto timeNs = endTime - startTime;
-            statistics.pushValue(std::chrono::nanoseconds(timeNs), benchmark->transferSize(), MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+            statistics.pushValue(std::chrono::nanoseconds(timeNs), benchmark->transferSize(), typeSelector.getUnit(), typeSelector.getType());
         } else {
-            statistics.pushValue(timer.get(), benchmark->transferSize(), MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+            statistics.pushValue(timer.get(), benchmark->transferSize(), typeSelector.getUnit(), typeSelector.getType());
         }
     }
     return TestResult::Success;

@@ -14,6 +14,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const NewResourcesWithGpuAccessArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     Opencl opencl;
     Timer timer;
@@ -61,7 +68,7 @@ static TestResult run(const NewResourcesWithGpuAccessArguments &arguments, Stati
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
         ASSERT_CL_SUCCESS(retVal);
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
 
         // Store buffer used in this iteration to avoid reuse
         ASSERT_CL_SUCCESS(clReleaseMemObject(previousBuffer));

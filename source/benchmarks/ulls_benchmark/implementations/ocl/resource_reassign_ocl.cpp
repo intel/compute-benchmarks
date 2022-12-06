@@ -19,6 +19,13 @@
 #include <thread>
 
 static TestResult run(const ResourceReassignArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Latency, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     Opencl opencl(queueProperties);
@@ -103,7 +110,7 @@ static TestResult run(const ResourceReassignArguments &arguments, Statistics &st
 
         auto value = doubleQueueDiff - singleQueueDiff;
 
-        statistics.pushValue(value, MeasurementUnit::Latency, MeasurementType::Cpu);
+        statistics.pushValue(value, typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup

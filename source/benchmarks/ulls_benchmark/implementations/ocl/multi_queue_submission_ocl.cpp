@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     Opencl opencl(queueProperties);
@@ -63,7 +70,7 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
             ASSERT_CL_SUCCESS(clFinish(queues[i]));
         }
         timer.measureEnd();
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup

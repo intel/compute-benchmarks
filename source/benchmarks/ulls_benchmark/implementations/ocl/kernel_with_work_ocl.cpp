@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const KernelWithWorkArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     Opencl opencl;
 
@@ -58,7 +65,7 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
 
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         if (arguments.usedIds == WorkItemIdUsage::AtomicPerWorkgroup) {
             uint32_t returnedValue[2] = {0u};
             clEnqueueReadBuffer(opencl.commandQueue, buffer, true, 0u, 8u, &returnedValue, 0u, nullptr, nullptr);

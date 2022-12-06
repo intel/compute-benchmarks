@@ -17,6 +17,13 @@
 using namespace MemoryConstants;
 
 static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     QueueProperties queueProperties = QueueProperties::create();
     ContextProperties contextProperties = ContextProperties::create();
@@ -116,7 +123,7 @@ static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &st
         ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(profilingEvents[1], &laterKernelTimestamp));
         auto switchTime = std::chrono::nanoseconds((laterKernelTimestamp.global.kernelStart - earlierKernelTimestamp.global.kernelEnd) * timerResolution);
 
-        statistics.pushValue(switchTime, MeasurementUnit::Microseconds, MeasurementType::Gpu);
+        statistics.pushValue(switchTime, typeSelector.getUnit(), typeSelector.getType());
 
         for (auto j = 0u; j < kernelCount; j++) {
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));

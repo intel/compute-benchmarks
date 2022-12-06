@@ -18,6 +18,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     Opencl opencl(queueProperties);
@@ -111,7 +118,7 @@ static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics
 
             ASSERT_CL_SUCCESS(clReleaseEvent(queue.event));
             timeNs = end - start;
-            statistics.pushValue(std::chrono::nanoseconds(timeNs), arguments.size, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, queue.name);
+            statistics.pushValue(std::chrono::nanoseconds(timeNs), arguments.size, typeSelector.getUnit(), typeSelector.getType(), queue.name);
 
             startGpuTime = std::min(std::chrono::nanoseconds(start), startGpuTime);
             endGpuTime = std::max(std::chrono::nanoseconds(end), endGpuTime);
@@ -119,8 +126,8 @@ static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics
 
         // Report total results
         const uint64_t totalSize = arguments.size * queues.size();
-        statistics.pushValue(endGpuTime - startGpuTime, totalSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, "Total (Gpu)");
-        statistics.pushValue(timer.get(), totalSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu, "Total (Cpu)");
+        statistics.pushValue(endGpuTime - startGpuTime, totalSize, typeSelector.getUnit(), typeSelector.getType(), "Total (Gpu)");
+        statistics.pushValue(timer.get(), totalSize, typeSelector.getUnit(), MeasurementType::Cpu, "Total (Cpu)");
     }
 
     ASSERT_CL_SUCCESS(UsmHelperOcl::deallocate(dstAlloc));

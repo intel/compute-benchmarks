@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const MultiProcessComputeSharedBufferArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     ContextProperties contexProperties = ContextProperties::create().setDeviceSelection(arguments.deviceSelection).createSingleFakeSubDeviceIfNeeded();
     QueueProperties queueProperties = QueueProperties::create().disable();
@@ -66,8 +73,8 @@ static TestResult run(const MultiProcessComputeSharedBufferArguments &arguments,
         return result;
     }
     const bool pushIndividualProcessesMeasurements = (processes.size() > 1);
-    processes.pushMeasurementsToStatistics(arguments.iterations, statistics, MeasurementUnit::Microseconds,
-                                           MeasurementType::Cpu, pushIndividualProcessesMeasurements, true);
+    processes.pushMeasurementsToStatistics(arguments.iterations, statistics, typeSelector.getUnit(),
+                                           typeSelector.getType(), pushIndividualProcessesMeasurements, true);
 
     // Free allocated buffers
     for (const auto &bufferForSubDevice : buffersForSubDevices) {

@@ -22,6 +22,13 @@ struct _st_container {
 };
 
 static TestResult run(const ExecuteCommandListWithIndirectAccessArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     LevelZero levelzero;
     Timer timer;
@@ -96,7 +103,7 @@ static TestResult run(const ExecuteCommandListWithIndirectAccessArguments &argum
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         timer.measureEnd();
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
         EXPECT_EQ(arguments.IndirectAllocationsAmount, *wrappedIndirectAllocations.at(0)->value);

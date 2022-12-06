@@ -18,6 +18,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const OneAtomicArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Nanoseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     Opencl opencl{};
     Timer timer{};
@@ -73,7 +80,7 @@ static TestResult run(const OneAtomicArguments &arguments, Statistics &statistic
         timer.measureEnd();
         auto totalAtomicOperations = data.loopIterations * data.operatorApplicationsPerIteration;
         auto timePerAtomicOperation = timer.get() / totalAtomicOperations;
-        statistics.pushValue(timePerAtomicOperation, MeasurementUnit::Nanoseconds, MeasurementType::Cpu);
+        statistics.pushValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Verify

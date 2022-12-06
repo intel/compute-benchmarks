@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const KernelWithWorkImmediateArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     if (arguments.usedIds == WorkItemIdUsage::AtomicPerWorkgroup) {
         return TestResult::NoImplementation;
     }
@@ -75,7 +82,7 @@ static TestResult run(const KernelWithWorkImmediateArguments &arguments, Statist
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, event, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }
 

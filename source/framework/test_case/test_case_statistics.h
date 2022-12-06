@@ -29,6 +29,7 @@ class TestCaseStatistics : public Statistics {
 
     void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, const std::string &description = "") override;
     void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, const std::string &description = "") override;
+    void pushUnitAndType(MeasurementUnit unit, MeasurementType type) override;
 
     bool isEmpty() const override;
     bool isFull() const override;
@@ -43,11 +44,13 @@ class TestCaseStatistics : public Statistics {
     static void overrideMeasurementUnit(MeasurementUnit &unit);
     void pushValue(Value value, const std::string &description, MeasurementUnit unit, MeasurementType type);
     void printStatisticsDefault(const std::string &testCaseName) const;
+    void printStatisticsNoop(const std::string &testCaseName) const;
     void printStatisticsCsv(const std::string &testCaseName) const;
     void printStatisticsVerbose() const;
 
     const Configuration::PrintType printType;
     SamplesMap samplesMap = {};
+    Samples noopSample = {};
     bool reachedInfinity = false;
 
     struct Metrics;

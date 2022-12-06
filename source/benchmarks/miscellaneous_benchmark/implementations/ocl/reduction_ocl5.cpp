@@ -13,6 +13,13 @@
 #include "definitions/reduction5.h"
 
 TestResult run(const ReductionArguments5 &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     Opencl opencl(queueProperties);
     cl_int retVal;
@@ -107,8 +114,8 @@ TestResult run(const ReductionArguments5 &arguments, Statistics &statistics) {
 
     ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
     ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-    statistics.pushValue(std::chrono::nanoseconds{timeNs}, MeasurementUnit::Microseconds, MeasurementType::Gpu, "time");
-    statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, "bw");
+    statistics.pushValue(std::chrono::nanoseconds{timeNs}, typeSelector.getUnit(), typeSelector.getType(), "time");
+    statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes, MeasurementUnit::GigabytesPerSecond, typeSelector.getType(), "bw");
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -120,8 +127,8 @@ TestResult run(const ReductionArguments5 &arguments, Statistics &statistics) {
 
         ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
         if (i + 1 < arguments.iterations) {
-            statistics.pushValue(std::chrono::nanoseconds{timeNs}, MeasurementUnit::Microseconds, MeasurementType::Gpu, "time");
-            statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, "bw");
+            statistics.pushValue(std::chrono::nanoseconds{timeNs}, typeSelector.getUnit(), typeSelector.getType(), "time");
+            statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes, MeasurementUnit::GigabytesPerSecond, typeSelector.getType(), "bw");
         }
     }
 

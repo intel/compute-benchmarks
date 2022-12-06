@@ -21,6 +21,13 @@
 using namespace MemoryConstants;
 
 static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     if (arguments.compressed && arguments.noIntelExtensions) {
         return TestResult::DeviceNotCapable;
     }
@@ -197,7 +204,7 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
         cl_ulong timeNs{};
         ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(evt, timeNs));
         const size_t totalAccessedMemory = (numHwThreads * threadTileSizeInSubgroup * numOfLoops);
-        statistics.pushValue(std::chrono::nanoseconds(timeNs), totalAccessedMemory, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+        statistics.pushValue(std::chrono::nanoseconds(timeNs), totalAccessedMemory, typeSelector.getUnit(), typeSelector.getType());
         ASSERT_CL_SUCCESS(clReleaseEvent(evt));
     }
 

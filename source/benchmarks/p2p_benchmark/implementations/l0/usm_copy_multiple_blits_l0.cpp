@@ -16,6 +16,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const UsmP2PCopyMultipleBlitsArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     LevelZero levelzero(QueueProperties::create(),
                         ContextProperties::create());
     if (levelzero.commandQueue == nullptr) {
@@ -212,12 +219,12 @@ static TestResult run(const UsmP2PCopyMultipleBlitsArguments &arguments, Statist
             auto commandTime = endTime - startTime;
             startGpuTime = std::min(startTime, startGpuTime);
             endGpuTime = std::max(endTime, endGpuTime);
-            statistics.pushValue(commandTime, queue.copySize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, queue.name);
+            statistics.pushValue(commandTime, queue.copySize, typeSelector.getUnit(), typeSelector.getType(), queue.name);
         }
 
         // Report total results
-        statistics.pushValue(endGpuTime - startGpuTime, arguments.size, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, "Total (Gpu)");
-        statistics.pushValue(timer.get(), arguments.size, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu, "Total (Cpu)");
+        statistics.pushValue(endGpuTime - startGpuTime, arguments.size, typeSelector.getUnit(), typeSelector.getType(), "Total (Gpu)");
+        statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), MeasurementType::Cpu, "Total (Cpu)");
     }
 
     for (PerQueueData &queue : queues) {

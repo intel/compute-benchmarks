@@ -14,6 +14,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const EnqueueNdrNullLwsArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useProfiling).setOoq(arguments.useOoq);
     Opencl opencl(queueProperties);
@@ -47,7 +54,7 @@ static TestResult run(const EnqueueNdrNullLwsArguments &arguments, Statistics &s
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, nullptr, 0, nullptr, eventForNdr));
         timer.measureEnd();
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         if (eventForNdr) {
             ASSERT_CL_SUCCESS(clReleaseEvent(event));
         }

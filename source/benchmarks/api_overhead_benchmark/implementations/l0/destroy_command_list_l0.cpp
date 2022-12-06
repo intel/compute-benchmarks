@@ -14,6 +14,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const DestroyCommandListArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     LevelZero levelzero;
     Timer timer;
@@ -47,7 +54,7 @@ static TestResult run(const DestroyCommandListArguments &arguments, Statistics &
         }
         timer.measureEnd();
 
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
     return TestResult::Success;
 }

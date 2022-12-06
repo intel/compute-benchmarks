@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const EventCtxtSwitchLatencyArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     QueueProperties queuePropertiesFirst = QueueProperties::create().setForceEngine(arguments.firstEngine);
     LevelZero levelzero(queuePropertiesFirst, ContextProperties::create());
     auto queueDescFirst = levelzero.commandQueueDesc;
@@ -105,7 +112,7 @@ static TestResult run(const EventCtxtSwitchLatencyArguments &arguments, Statisti
         auto commandTime = std::chrono::nanoseconds(*endTimestamp - *beginTimestamp);
         commandTime *= timerResolution;
         commandTime /= arguments.measuredCommands;
-        statistics.pushValue(commandTime, MeasurementUnit::Microseconds, MeasurementType::Gpu);
+        statistics.pushValue(commandTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdListFirst));

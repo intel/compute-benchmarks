@@ -16,6 +16,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     const DeviceSelection queuePlacement = DeviceSelectionHelper::withoutHost(arguments.bufferPlacement);
     ContextProperties contextProperties = ContextProperties::create().create().setDeviceSelection(arguments.contextPlacement).allowCreationFail();
     QueueProperties queueProperties = QueueProperties::create().setDeviceSelection(queuePlacement).allowCreationFail();
@@ -81,7 +88,7 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
 
-        statistics.pushValue(timer.get(), arguments.bufferSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), arguments.bufferSize, typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));

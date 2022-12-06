@@ -16,6 +16,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const UsmImmediateCopyCopyMultipleBlitsArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     if (arguments.sourcePlacement == UsmMemoryPlacement::NonUsmMapped ||
         arguments.destinationPlacement == UsmMemoryPlacement::NonUsmMapped) {
         return TestResult::ApiNotCapable;
@@ -180,12 +187,12 @@ static TestResult run(const UsmImmediateCopyCopyMultipleBlitsArguments &argument
             auto commandTime = endTime - startTime;
             startGpuTime = std::min(startTime, startGpuTime);
             endGpuTime = std::max(endTime, endGpuTime);
-            statistics.pushValue(commandTime, list.copySize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, list.name);
+            statistics.pushValue(commandTime, list.copySize, typeSelector.getUnit(), typeSelector.getType(), list.name);
         }
 
         // Report total results
-        statistics.pushValue(endGpuTime - startGpuTime, arguments.size, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, "Total (Gpu)");
-        statistics.pushValue(timer.get(), arguments.size, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu, "Total (Cpu)");
+        statistics.pushValue(endGpuTime - startGpuTime, arguments.size, typeSelector.getUnit(), typeSelector.getType(), "Total (Gpu)");
+        statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), MeasurementType::Cpu, "Total (Cpu)");
 
         for (PerListData &list : lists) {
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(list.event));

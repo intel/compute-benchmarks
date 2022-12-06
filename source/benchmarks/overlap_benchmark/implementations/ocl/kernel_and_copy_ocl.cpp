@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const KernelAndCopyArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     if (arguments.noIntelExtensions && arguments.useCopyQueue) {
         return TestResult::DeviceNotCapable;
     }
@@ -121,7 +128,7 @@ static TestResult run(const KernelAndCopyArguments &arguments, Statistics &stati
             ASSERT_CL_SUCCESS(clFinish(queueForCopy));
         }
         timer.measureEnd();
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup

@@ -22,6 +22,13 @@
 #include <numeric>
 
 static TestResult run(const SlmTrafficArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Latency, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     if (arguments.writeDirection == true) {
         return TestResult::DeviceNotCapable;
     }
@@ -236,7 +243,7 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
             size_t maxInAllThreads = *std::max_element(vecPerThreadMax.begin(), vecPerThreadMax.end());
             std::cout << "[" << i << "] Average Latency " << static_cast<size_t>(std::accumulate(vecPerThreadAverages.begin(), vecPerThreadAverages.end(), (size_t)0) / vecPerThreadAverages.size()) << " [clk]  min: " << minInAllThreads << " [clk]  max: " << maxInAllThreads << " [clk] (SLM uint4 load.slm.d32)" << std::endl;
         }
-        statistics.pushValue(averageLatency, MeasurementUnit::Latency, MeasurementType::Gpu);
+        statistics.pushValue(averageLatency, typeSelector.getUnit(), typeSelector.getType());
 
         cl_ulong timeNs{};
         ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(evt, timeNs));

@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true).setForceEngine(arguments.engine).allowCreationFail();
     Opencl opencl(queueProperties);
@@ -50,7 +57,7 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
         ASSERT_CL_SUCCESS(clGetEventProfilingInfo(profilingEvent, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queued, nullptr));
         ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
         const auto submissionTime = std::chrono::nanoseconds(start - queued);
-        statistics.pushValue(submissionTime, MeasurementUnit::Microseconds, MeasurementType::Gpu);
+        statistics.pushValue(submissionTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup

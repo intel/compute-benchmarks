@@ -19,6 +19,13 @@
 using Clock = std::chrono::high_resolution_clock;
 
 static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     QueueProperties queueProperties;
     queueProperties.disable();
@@ -94,7 +101,7 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
                                                                                       truncatedDeviceEnqueueTimestamp,
                                                                                       timerResolution);
 
-        statistics.pushValue(submissionTime, MeasurementUnit::Microseconds, MeasurementType::Gpu);
+        statistics.pushValue(submissionTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup

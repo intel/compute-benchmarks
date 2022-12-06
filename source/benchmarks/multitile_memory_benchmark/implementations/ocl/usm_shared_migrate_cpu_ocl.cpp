@@ -17,6 +17,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     const DeviceSelection queuePlacement = DeviceSelectionHelper::withoutHost(arguments.bufferPlacement);
     QueueProperties queueProperties = QueueProperties::create().setDeviceSelection(queuePlacement).allowCreationFail();
@@ -73,7 +80,7 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
         }
         timer.measureEnd();
 
-        statistics.pushValue(timer.get(), arguments.bufferSize, MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), arguments.bufferSize, typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));

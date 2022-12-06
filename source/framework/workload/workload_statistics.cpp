@@ -33,6 +33,8 @@ void WorkloadStatistics::pushValue([[maybe_unused]] Clock::duration time,
     FATAL_ERROR("Not implemented");
 }
 
+void WorkloadStatistics::pushUnitAndType([[maybe_unused]] MeasurementUnit unit, [[maybe_unused]] MeasurementType type) {}
+
 bool WorkloadStatistics::isEmpty() const {
     return samplesCount == 0;
 }

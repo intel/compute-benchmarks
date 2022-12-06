@@ -19,6 +19,13 @@
 using Clock = std::chrono::high_resolution_clock;
 
 static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     LevelZero levelzero;
 
@@ -93,7 +100,7 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
                                                                                       truncatedDeviceEnqueueTimestamp,
                                                                                       timerResolution);
 
-        statistics.pushValue(submissionTime, MeasurementUnit::Microseconds, MeasurementType::Gpu);
+        statistics.pushValue(submissionTime, typeSelector.getUnit(), typeSelector.getType());
     }
     // Cleanup
 

@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Setup
     Opencl opencl;
     Timer timer;
@@ -64,7 +71,7 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
         while (*volatileHostMemory != 1) {
         }
         timer.measureEnd();
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup

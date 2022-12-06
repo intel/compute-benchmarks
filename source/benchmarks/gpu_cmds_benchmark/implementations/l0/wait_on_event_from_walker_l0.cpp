@@ -72,6 +72,13 @@ struct TestResourcesForWaitOnWalker {
 };
 
 static TestResult run(const WaitOnEventFromWalkerArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     LevelZero levelzero;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
@@ -100,7 +107,7 @@ static TestResult run(const WaitOnEventFromWalkerArguments &arguments, Statistic
         auto commandTime = std::chrono::nanoseconds(*endTimestamp - *beginTimestamp);
         commandTime *= timerResolution;
         commandTime /= arguments.measuredCommands;
-        statistics.pushValue(commandTime, MeasurementUnit::Microseconds, MeasurementType::Gpu);
+        statistics.pushValue(commandTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, buffer, bufferSize));

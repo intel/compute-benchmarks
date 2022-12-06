@@ -21,10 +21,28 @@ class Statistics {
 
     virtual void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, const std::string &description = "") = 0;
     virtual void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, const std::string &description = "") = 0;
+    virtual void pushUnitAndType(MeasurementUnit unit, MeasurementType type) = 0;
 
     virtual bool isEmpty() const = 0;
     virtual bool isFull() const = 0;
 
   protected:
     const size_t maxSamplesCount = 0;
+};
+
+class MeasurementFields {
+  public:
+    MeasurementFields(MeasurementUnit unit, MeasurementType type) : unit{unit}, type{type} {};
+
+    MeasurementUnit getUnit() const {
+        return unit;
+    }
+
+    MeasurementType getType() const {
+        return type;
+    }
+
+  private:
+    MeasurementUnit unit{MeasurementUnit::Unknown};
+    MeasurementType type{MeasurementType::Unknown};
 };

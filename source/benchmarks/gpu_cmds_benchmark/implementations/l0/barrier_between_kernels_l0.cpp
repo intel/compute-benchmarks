@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     LevelZero levelzero;
     levelzero.createSubDevices(false, true);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
@@ -141,7 +148,7 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
         }
 
         commandTime *= timerResolution;
-        statistics.pushValue(commandTime, MeasurementUnit::Microseconds, MeasurementType::Gpu);
+        statistics.pushValue(commandTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));

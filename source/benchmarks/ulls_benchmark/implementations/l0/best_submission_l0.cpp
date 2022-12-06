@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const BestSubmissionArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     LevelZero levelzero;
     constexpr static auto bufferSize = 4096u;
     constexpr uint64_t timestampInitial = 0xffffffffu;
@@ -49,7 +56,7 @@ static TestResult run(const BestSubmissionArguments &arguments, Statistics &stat
         while (*volatileBuffer == timestampInitial) {
         }
         timer.measureEnd();
-        statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
     }

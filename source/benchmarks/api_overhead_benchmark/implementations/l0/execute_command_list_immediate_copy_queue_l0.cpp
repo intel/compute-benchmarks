@@ -15,6 +15,12 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
 
     // Setup
     Timer timer;
@@ -102,14 +108,14 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
 
         if (!arguments.measureCompletionTime) {
             timer.measureEnd();
-            statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         }
 
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
 
         if (arguments.measureCompletionTime) {
             timer.measureEnd();
-            statistics.pushValue(timer.get(), MeasurementUnit::Microseconds, MeasurementType::Cpu);
+            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         }
 
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));

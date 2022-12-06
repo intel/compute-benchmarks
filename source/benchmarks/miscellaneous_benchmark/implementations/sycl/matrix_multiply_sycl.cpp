@@ -12,6 +12,13 @@
 #include "definitions/matrix_multiply.h"
 
 static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
+
     // Prepare data
     const size_t sizeInElements = arguments.numberOfElementsX * arguments.numberOfElementsY * arguments.numberOfElementsZ;
     const size_t sizeInBytes = sizeInElements * sizeof(int);
@@ -67,7 +74,7 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
             auto endTime = profileEvent.get_profiling_info<sycl::info::event_profiling::command_end>();
             auto timeNs = endTime - startTime;
 
-            statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes * 3, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, "bw");
+            statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes * 3, typeSelector.getUnit(), typeSelector.getType(), "bw");
         }
     }
     if (!std::equal(std::begin(resultsFromRun), std::end(resultsFromRun), std::begin(results), std::end(results))) {
