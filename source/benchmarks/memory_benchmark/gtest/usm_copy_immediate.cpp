@@ -37,8 +37,8 @@ INSTANTIATE_TEST_SUITE_P(
     UsmCopyImmediateTest,
     ::testing::Combine(
         ::testing::ValuesIn(UsmMemoryPlacementArgument::enumValues),
-        ::testing::ValuesIn(UsmMemoryPlacementArgument::enumValues),
-        ::testing::Values(128 * megaByte, 512 * megaByte),
+        ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
+        ::testing::Values(512 * megaByte),
         ::testing::Values(BufferContents::Zeros),
         ::testing::Values(false, true),
         ::testing::Values(false)));
