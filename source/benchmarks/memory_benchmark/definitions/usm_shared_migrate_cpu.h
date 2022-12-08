@@ -28,6 +28,6 @@ struct UsmSharedMigrateCpu : TestCase<UsmSharedMigrateCpuArguments> {
     }
 
     std::string getHelp() const override {
-        return "allocates a unified shared memory buffer and measures time to migrate it from GPU to CPU";
+        return "allocates a unified shared memory buffer and measures bandwidth for kernel that must migrate resource from GPU to CPU";
     }
 };

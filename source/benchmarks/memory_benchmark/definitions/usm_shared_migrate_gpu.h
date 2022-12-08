@@ -16,7 +16,7 @@ struct UsmSharedMigrateGpuArguments : TestCaseArgumentContainer {
 
     UsmSharedMigrateGpuArguments()
         : bufferSize(*this, "size", "Size of the buffer"),
-          prefetchMemory(*this, "prefetch", "Explicitely migrate shared allocation to device associated with command queue") {}
+          prefetchMemory(*this, "prefetch", "Explicitly migrate shared allocation to device associated with command queue") {}
 };
 
 struct UsmSharedMigrateGpu : TestCase<UsmSharedMigrateGpuArguments> {
@@ -27,6 +27,6 @@ struct UsmSharedMigrateGpu : TestCase<UsmSharedMigrateGpuArguments> {
     }
 
     std::string getHelp() const override {
-        return "allocates a unified shared memory buffer and measures time to migrate it from CPU to GPU";
+        return "allocates a unified shared memory buffer and measures bandwidth for kernel that must migrate resource from CPU to GPU";
     }
 };
