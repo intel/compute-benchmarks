@@ -18,12 +18,14 @@ struct KernelWithWorkArgumentsSplit : TestCaseArgumentContainer {
     PositiveIntegerArgument workgroupCount;
     PositiveIntegerArgument workgroupSize;
     PositiveIntegerArgument splitSize;
+    BooleanArgument useEvents;
 
     KernelWithWorkArgumentsSplit()
         : usedIds(*this, "usedIds", "Which of the get_global_id() and get_local_id() calls will be used in the kernel"),
           workgroupCount(*this, "wgc", "Workgroup count"),
           workgroupSize(*this, "wgs", "Workgroup size (aka local work size)"),
-          splitSize(*this, "split", "How many times kernel is split)") {}
+          splitSize(*this, "split", "How many times kernel is split"),
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
 };
 
 struct KernelWithWorkSplit : TestCase<KernelWithWorkArgumentsSplit> {

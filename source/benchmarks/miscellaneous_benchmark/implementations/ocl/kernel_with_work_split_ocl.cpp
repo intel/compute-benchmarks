@@ -6,6 +6,7 @@
  */
 
 #include "framework/ocl/opencl.h"
+#include "framework/ocl/utility/profiling_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
@@ -17,7 +18,7 @@
 #define PROVIDE_PROFLING_DETAILS 0
 
 static TestResult run(const KernelWithWorkArgumentsSplit &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
@@ -25,7 +26,9 @@ static TestResult run(const KernelWithWorkArgumentsSplit &arguments, Statistics 
     }
 
     // Setup
-    Opencl opencl;
+    QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents);
+    std::vector<cl_event> profilingEvents(arguments.splitSize);
+    Opencl opencl(queueProperties);
     Timer timer;
     cl_int retVal{};
 
@@ -52,22 +55,36 @@ static TestResult run(const KernelWithWorkArgumentsSplit &arguments, Statistics 
 
     // Warmup, kernel
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
+    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, arguments.useEvents ? &profilingEvents[0] : nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
     ASSERT_CL_SUCCESS(retVal);
+    if (arguments.useEvents) {
+        ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvents[0]))
+    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         for (uint32_t splitId = 0u; splitId < arguments.splitSize; splitId++) {
             globalWorkOffset = splitId * arguments.workgroupSize * workgorupsInOneSplit;
-            ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, &globalWorkOffset, &gws, &lws, 0, nullptr, nullptr));
+            ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, &globalWorkOffset, &gws, &lws, 0, nullptr, arguments.useEvents ? &profilingEvents[splitId] : nullptr));
         }
-
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
-
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        if (arguments.useEvents) {
+            cl_ulong timeNs{};
+            cl_ulong start{};
+            cl_ulong end{};
+            ASSERT_CL_SUCCESS(clGetEventProfilingInfo(profilingEvents.front(), CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr));
+            ASSERT_CL_SUCCESS(clGetEventProfilingInfo(profilingEvents.back(), CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr));
+            for (uint32_t splitId = 0u; splitId < arguments.splitSize; splitId++) {
+                ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvents[splitId]))
+            }
+            timeNs = end - start;
+            statistics.pushValue(std::chrono::nanoseconds(timeNs), typeSelector.getUnit(), typeSelector.getType());
+        } else {
+            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        }
     }
 
     // Cleanup
