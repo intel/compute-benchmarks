@@ -41,4 +41,4 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(BufferContents::Zeros),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
-        ::testing::Values(false)));
+        ::testing::Values(true)));

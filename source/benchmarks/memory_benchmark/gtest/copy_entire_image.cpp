@@ -49,4 +49,4 @@ INSTANTIATE_TEST_SUITE_P(
             ImageSize(512, 512, 64) // 3D
             ),
         ::testing::Values(false),
-        ::testing::Values(false)));
+        ::testing::Values(true)));

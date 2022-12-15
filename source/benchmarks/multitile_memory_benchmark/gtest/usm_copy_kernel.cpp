@@ -46,4 +46,4 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::usmDeviceSelections(),
         ::CommonGtestArgs::usmDeviceSelections(),
         ::testing::Values(512 * megaByte),
-        ::testing::Values(false)));
+        ::testing::Values(true)));
