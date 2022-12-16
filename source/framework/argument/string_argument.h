@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,7 @@ struct StringArgument : Argument {
 
     void parseImpl(const std::string &valueToParse) override {
         this->value = valueToParse;
+        this->isValid = true;
     }
 
     std::string value = {};

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -27,6 +27,8 @@ endfunction()
 
 add_subdirectory(single_queue_workload_l0)
 add_subdirectory(single_queue_workload_shared_buffer_l0)
+add_subdirectory(immediate_cmdlist_copy_workload_l0)
+add_subdirectory(immediate_cmdlist_walker_submission_workload_l0)
 if (BUILD_HELLO_WORLD)
     add_subdirectory(hello_world_template_workload_ocl)
     add_subdirectory(hello_world_workload_ocl)
