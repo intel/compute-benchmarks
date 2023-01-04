@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,7 +133,7 @@ int printDevicesWithTheSameBdfAddress(std::vector<ze_device_handle_t> &devices) 
         }
     }
 
-    //locate devices under the same PCI BUS
+    // locate devices under the same PCI BUS
     std::map<std::string, std::vector<uint32_t>> pciIdentifiers;
 
     for (const auto &currentPciProp : properties) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,7 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
         dst = new char[arguments.size];
     }
 
-    //create staging buffers
+    // create staging buffers
     std::vector<void *> usmHost(arguments.chunks);
     for (auto i = 0u; i < arguments.chunks; i++) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Host, levelzero, offset, &usmHost[i]));

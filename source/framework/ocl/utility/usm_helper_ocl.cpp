@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ cl_int UsmHelperOcl::deallocate(Alloc &alloc) {
         retVal = alloc.usm.clMemFreeINTEL(alloc.context, alloc.ptr);
         break;
     case UsmMemoryPlacement::NonUsm:
-        delete[](static_cast<uint8_t *>(alloc.ptr));
+        delete[] (static_cast<uint8_t *>(alloc.ptr));
         break;
     case UsmMemoryPlacement::NonUsmMapped:
         CL_SUCCESS_OR_RETURN(clEnqueueUnmapMemObject(alloc.mappedData.queue, alloc.mappedData.memObject, alloc.ptr, 0, nullptr, nullptr));

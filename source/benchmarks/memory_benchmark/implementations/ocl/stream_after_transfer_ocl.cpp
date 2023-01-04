@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,12 +119,12 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     for (auto i = 0u; i < arguments.iterations; i++) {
-        //clean caches
+        // clean caches
         const size_t cleanCacheWorkSize = cleanerSize / elementSize;
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, cacheCleaner, 1, nullptr, &cleanCacheWorkSize, &localWorkSize, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
-        //emit transfers
+        // emit transfers
         for (auto bufferId = 0u; bufferId < buffersCount; bufferId++) {
             ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, buffers[bufferId], true, 0u, bufferSizes[bufferId], data.get(), 0u, nullptr, nullptr));
         }

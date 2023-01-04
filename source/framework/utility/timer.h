@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,14 +28,14 @@ class Timer {
         if (this->markTimers) {
             printf("\n Timer START \n");
         }
-        //make sure that any pending instructions are done and all memory transactions committed.
+        // make sure that any pending instructions are done and all memory transactions committed.
         _mm_mfence();
         _mm_lfence();
         startTime = Clock::now();
     }
 
     void measureEnd() {
-        //make sure that any pending instructions are done and all memory transactions committed.
+        // make sure that any pending instructions are done and all memory transactions committed.
         _mm_mfence();
         _mm_lfence();
         endTime = Clock::now();

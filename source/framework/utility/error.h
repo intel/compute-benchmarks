@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,12 +13,12 @@
 #include <sstream>
 
 template <typename... Args>
-inline void printToOstream(std::ostream &stream, Args &&... args) {
+inline void printToOstream(std::ostream &stream, Args &&...args) {
     (stream << ... << args);
 }
 
 template <typename... Args>
-inline void printMessageLine(const char *label, Args &&... args) {
+inline void printMessageLine(const char *label, Args &&...args) {
     static_assert(sizeof...(args) > 0, "A textual message of the FATAL_ERROR is required");
     printToOstream(std::cerr, label, ": ", std::forward<Args>(args)...);
     std::cerr << std::endl;

@@ -5,10 +5,10 @@ components:
     revision: v4279
     fetch_tags: true
     type: git
-  clang-format:
+  benchmarks-clang-format:
     branch: clang-format
     dest_dir: tools/clang-format
-    revision: 10.0.0-2
+    revision: 15.0.6
     type: git
 converter: 1
 version: '1'
