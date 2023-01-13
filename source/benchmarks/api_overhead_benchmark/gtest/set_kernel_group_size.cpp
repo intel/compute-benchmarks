@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,13 +14,12 @@
 
 static const inline RegisterTestCase<SetKernelGroupSize> registerTestCase{};
 
-class SetKernelGroupSizeTest : public ::testing::TestWithParam<size_t> {
-};
+class SetKernelGroupSizeTest : public ::testing::TestWithParam<bool> {};
 
 TEST_P(SetKernelGroupSizeTest, Test) {
     SetKernelGroupSizeArguments args{};
     args.api = Api::L0;
-    args.workDim = GetParam();
+    args.asymmetricLocalWorkSize = GetParam();
 
     SetKernelGroupSize test;
     test.run(args);
@@ -29,4 +28,4 @@ TEST_P(SetKernelGroupSizeTest, Test) {
 INSTANTIATE_TEST_SUITE_P(
     SetKernelGroupSizeTest,
     SetKernelGroupSizeTest,
-    ::testing::Values(1, 2, 3));
+    ::testing::Values(false, true));

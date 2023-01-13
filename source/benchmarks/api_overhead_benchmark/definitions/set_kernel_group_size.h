@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,10 @@
 #include "framework/test_case/test_case.h"
 
 struct SetKernelGroupSizeArguments : TestCaseArgumentContainer {
-    PositiveIntegerArgument workDim;
+    BooleanArgument asymmetricLocalWorkSize;
 
     SetKernelGroupSizeArguments()
-        : workDim(*this, "workDim", "Number of dimensions") {}
+        : asymmetricLocalWorkSize(*this, "asymmetricLocalWorkSize", "Use asymmetric local workSize") {}
 };
 
 struct SetKernelGroupSize : TestCase<SetKernelGroupSizeArguments> {

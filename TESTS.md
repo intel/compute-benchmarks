@@ -31,7 +31,7 @@ KernelSetArgumentValueImmediate|measures time spent in zeKernelSetArgumentValue 
 LifecycleCommandList|measures time spent in zeCommandListCreate + Close + Execute on CPU.|<ul><li>--CmdListCount Number of cmdlists to create</li><li>--CopyOnly Create copy only cmdlist (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
 ResetCommandList|measures time spent in zeCommandListReset on CPU.|<ul><li>--CopyOnly Create copy only cmdlist (0 or 1)</li><li>--size Size of the buffer</li><li>--sourcePlacement Placement of the source buffer (Device or Host or Shared or non-USM or non-USM-imported or non-USM-mapped)</li></ul>|:heavy_check_mark:|:x:|
 SetKernelArgSvmPointer|measures time spent in clSetKernelArgSVMPointer on CPU.|<ul><li>--allocationSize Size of svm allocations, in bytes</li><li>--allocationsCount Number of allocations</li><li>--reallocate Allocations will be freed and allocated again between setKernelArgs (0 or 1)</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
-SetKernelGroupSize|measures time spent in zeKernelSetGroupSize on CPU.|<ul><li>--workDim Number of dimensions</li></ul>|:heavy_check_mark:|:x:|
+SetKernelGroupSize|measures time spent in zeKernelSetGroupSize on CPU.|<ul><li>--asymmetricLocalWorkSize Use asymmetric local workSize (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
 UsmMemoryAllocation|measures time spent in USM memory allocation APIs.|<ul><li>--size Size to allocate</li><li>--type Type of memory being allocated (Device or Host or Shared)</li></ul>|:heavy_check_mark:|:x:|
 
 

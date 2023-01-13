@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ static TestResult run(const SetKernelGroupSizeArguments &arguments, Statistics &
     Timer timer;
 
     // Create kernel
-    auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_empty_kernel.spv");
+    auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_write_sum_local.spv");
     if (spirvModule.size() == 0) {
         return TestResult::KernelNotFound;
     }
@@ -40,7 +40,7 @@ static TestResult run(const SetKernelGroupSizeArguments &arguments, Statistics &
     moduleDesc.inputSize = spirvModule.size();
     ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "empty";
+    kernelDesc.pKernelName = "write_sum_local";
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
 
     // Warmup
@@ -48,20 +48,17 @@ static TestResult run(const SetKernelGroupSizeArguments &arguments, Statistics &
     uint32_t groupSizeY{};
     uint32_t groupSizeZ{};
 
-    switch (arguments.workDim) {
-    case 1:
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(kernel, 512, 1u, 1u, &groupSizeX, &groupSizeY, &groupSizeZ));
-        break;
-    case 2:
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(kernel, 32u, 16u, 1u, &groupSizeX, &groupSizeY, &groupSizeZ));
-        break;
-    case 3:
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(kernel, 8u, 8u, 8u, &groupSizeX, &groupSizeY, &groupSizeZ));
-        break;
-    default:
-        return TestResult::InvalidArgs;
+    if (arguments.asymmetricLocalWorkSize) {
+        groupSizeX = 5u;
+        groupSizeY = 5u;
+        groupSizeZ = 5u;
+    } else {
+        groupSizeX = 4u;
+        groupSizeY = 4u;
+        groupSizeZ = 4u;
     }
 
+    // Warmup
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
 
     // Benchmark
