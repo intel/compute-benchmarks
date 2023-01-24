@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ struct CopyBufferRect : TestCase<CopyBufferRectArguments> {
     }
 
     std::string getHelp() const override {
-        return "allocates two OpenCL buffers and measures rectangle copy bandwidth betweem them. "
+        return "allocates two OpenCL buffers and measures rectangle copy bandwidth between them. "
                "Buffers will be placed in device memory, if it's available.";
     }
 };
