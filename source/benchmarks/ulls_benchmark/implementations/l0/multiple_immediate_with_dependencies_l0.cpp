@@ -87,6 +87,8 @@ static TestResult run(const MultipleImmediateCmdListsWithDependenciesArguments &
     }
     for (auto i = 0u; i < totalEventCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(events[i], std::numeric_limits<uint64_t>::max()));
+    }
+    for (auto i = 0u; i < totalEventCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[i]));
     }
 
