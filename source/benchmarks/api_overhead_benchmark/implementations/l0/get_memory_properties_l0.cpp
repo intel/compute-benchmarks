@@ -26,19 +26,20 @@ static TestResult run(const GetMemoryPropertiesArguments &arguments, Statistics 
     LevelZero levelzero;
     Timer timer;
 
-    std::vector<int32_t *> allocations(arguments.AllocationsCount);
+    std::vector<void *> allocations;
+    allocations.reserve(arguments.AllocationsCount);
 
     for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
         const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
         void *ptr = nullptr;
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, sizeof(int32_t), 4u, levelzero.device, &ptr));
-        allocations.push_back((int32_t *)ptr);
+        allocations.push_back(ptr);
     }
 
     // Warmup
     ze_memory_allocation_properties_t properties{};
     for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
-        zeMemGetAllocProperties(levelzero.context, allocations[i], &properties, nullptr);
+        ASSERT_ZE_RESULT_SUCCESS(zeMemGetAllocProperties(levelzero.context, allocations[i], &properties, nullptr));
     }
 
     // Benchmark
@@ -47,7 +48,7 @@ static TestResult run(const GetMemoryPropertiesArguments &arguments, Statistics 
         timer.measureStart();
         for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
             ze_memory_allocation_properties_t properties{};
-            zeMemGetAllocProperties(levelzero.context, allocations[i], &properties, nullptr);
+            ASSERT_ZE_RESULT_SUCCESS(zeMemGetAllocProperties(levelzero.context, allocations[i], &properties, nullptr));
         }
         timer.measureEnd();
 
