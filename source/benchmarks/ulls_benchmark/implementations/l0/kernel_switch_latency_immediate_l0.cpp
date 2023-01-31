@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     }
 
     // Setup
-    LevelZero levelzero;
+    LevelZero levelzero(QueueProperties::create().disable());
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 

@@ -62,7 +62,7 @@ static TestResult getEngineInfo(std::vector<EngineInfo> &supportedEngineInfo, Le
 
 static TestResult run(const MultiProcessImmediateCmdlistCompletionArguments &arguments, Statistics &statistics) {
     // Setup
-    LevelZero levelzero;
+    LevelZero levelzero(QueueProperties::create().disable());
 
     std::vector<EngineInfo> supportedEngineInfo{};
     std::string engineGroup = static_cast<const std::string &>(arguments.engineGroup);

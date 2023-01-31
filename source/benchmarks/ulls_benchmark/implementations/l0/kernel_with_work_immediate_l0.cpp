@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ static TestResult run(const KernelWithWorkImmediateArguments &arguments, Statist
         return TestResult::NoImplementation;
     }
     // Setup
-    LevelZero levelzero;
+    LevelZero levelzero(QueueProperties::create().disable());
     Timer timer;
 
     // Create output buffer
