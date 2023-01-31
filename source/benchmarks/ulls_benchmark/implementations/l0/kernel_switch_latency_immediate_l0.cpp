@@ -23,7 +23,7 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     }
 
     // Setup
-    LevelZero levelzero;
+    LevelZero levelzero(QueueProperties::create().disable());
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 

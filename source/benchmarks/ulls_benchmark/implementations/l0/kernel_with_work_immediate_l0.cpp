@@ -26,7 +26,7 @@ static TestResult run(const KernelWithWorkImmediateArguments &arguments, Statist
         return TestResult::NoImplementation;
     }
     // Setup
-    LevelZero levelzero;
+    LevelZero levelzero(QueueProperties::create().disable());
     Timer timer;
 
     // Create output buffer

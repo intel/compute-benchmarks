@@ -23,7 +23,7 @@ static TestResult run(const EmptyKernelImmediateArguments &arguments, Statistics
     }
 
     // Setup
-    LevelZero levelzero;
+    LevelZero levelzero(QueueProperties::create().disable());
     Timer timer;
 
     // Create kernel
