@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ static TestResult run(const ResourceReassignArguments &arguments, Statistics &st
         return TestResult::DeviceNotCapable;
     }
 
-    if (QueueFamiliesHelper::getQueueCountForEngineGroup(opencl.device, EngineGroup::Compute) < 2) {
+    if (QueueFamiliesHelper::getQueueCountForEngineGroup(opencl.device, EngineGroup::Compute) < (arguments.queueCount + 1)) {
         return TestResult::DeviceNotCapable;
     }
 
