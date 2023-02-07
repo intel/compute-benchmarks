@@ -35,7 +35,6 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     void *buffer = nullptr;
     const auto bufferSize = sizeof(uint32_t) * gws;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffer));
-    ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, buffer, bufferSize));
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("ulls_benchmark_write_one_global_ids.spv");
@@ -114,7 +113,6 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
-    ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, buffer, bufferSize));
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffer));
     for (auto &hEvent : profilingEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(hEvent));

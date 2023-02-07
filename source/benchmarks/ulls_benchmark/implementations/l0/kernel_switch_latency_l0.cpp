@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     void *buffer = nullptr;
     const auto bufferSize = sizeof(uint32_t) * gws;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffer));
-    ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, buffer, bufferSize));
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile(selectKernel(WorkItemIdUsage::Global, "spv"));
@@ -174,7 +173,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
-    ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, buffer, bufferSize));
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffer));
     for (auto &hEvent : profilingEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(hEvent));
