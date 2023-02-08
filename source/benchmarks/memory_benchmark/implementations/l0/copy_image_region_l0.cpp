@@ -6,16 +6,16 @@
  */
 
 #include "framework/l0/levelzero.h"
-#include "framework/l0/utility/buffer_contents_helper_l0.h"
+#include "framework/l0/utility/image_helper_l0.h"
 #include "framework/l0/utility/usm_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/timer.h"
 
-#include "definitions/usm_copy_region.h"
+#include "definitions/copy_image_region.h"
 
 #include <gtest/gtest.h>
 
-static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &statistics) {
+static TestResult run(const CopyImageRegionArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (isNoopRun()) {
@@ -23,41 +23,43 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
         return TestResult::Nooped;
     }
 
-    if (arguments.sourcePlacement == UsmMemoryPlacement::NonUsmMapped ||
-        arguments.destinationPlacement == UsmMemoryPlacement::NonUsmMapped) {
-        return TestResult::ApiNotCapable;
-    }
-
     // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).allowCreationFail();
-    ContextProperties contextProperties = ContextProperties::create();
-    ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(
-        (arguments.sourcePlacement == UsmMemoryPlacement::NonUsmImported ||
-         arguments.destinationPlacement == UsmMemoryPlacement::NonUsmImported));
-
-    LevelZero levelzero(queueProperties, contextProperties, extensionProperties);
+    LevelZero levelzero(queueProperties);
     if (levelzero.commandQueue == nullptr) {
         return TestResult::DeviceNotCapable;
     }
-
+    if (!ImageHelperL0::validateImageDimensions(levelzero.device, arguments.size)) {
+        return TestResult::DeviceNotCapable;
+    }
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
+    const auto channelOrder = ImageHelperL0::ChannelOrder::RGBA;
+    const auto channelFormat = ImageHelperL0::ChannelFormat::Float;
 
-    // Create buffers
-    void *source{}, *destination{};
-    const ze_copy_region_t reg = {(uint32_t)arguments.origin[0], (uint32_t)arguments.origin[1], (uint32_t)arguments.origin[2], (uint32_t)arguments.region[0], (uint32_t)arguments.region[1], (uint32_t)arguments.region[2]};
-
-    ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &source));
-    ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.destinationPlacement, levelzero, arguments.size, &destination));
+    // Create image
+    ze_image_desc_t imageDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
+    imageDesc.type = ImageHelperL0::getL0ImageTypeFromDimensions(arguments.size);
+    imageDesc.format = ImageHelperL0::getImageFormat(channelOrder, channelFormat);
+    imageDesc.width = static_cast<uint32_t>(arguments.size[0]);
+    imageDesc.height = static_cast<uint32_t>(arguments.size[1]);
+    imageDesc.depth = static_cast<uint32_t>(arguments.size[2]);
+    imageDesc.arraylevels = 1u;
+    ze_image_handle_t srcImage = {};
+    ASSERT_ZE_RESULT_SUCCESS(zeImageCreate(levelzero.context, levelzero.device, &imageDesc, &srcImage));
+    ze_image_handle_t dstImage = {};
+    ASSERT_ZE_RESULT_SUCCESS(zeImageCreate(levelzero.context, levelzero.device, &imageDesc, &dstImage));
+    const size_t imageSizeInBytes = ImageHelperL0::getImageSizeInBytes(channelOrder, channelFormat, arguments.size);
+    const ze_image_region_t reg = {0u, 0u, 0u, (uint32_t)arguments.size[0], (uint32_t)arguments.size[1], (uint32_t)arguments.size[2]};
 
     // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
+    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     ze_event_pool_flags_t eventPoolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     if (arguments.useEvents) {
         eventPoolFlags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
     }
-    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = eventPoolFlags;
     eventPoolDesc.count = 1;
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
@@ -73,19 +75,14 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
 
     // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopyRegion(cmdList, destination, &reg, arguments.region[0], arguments.region[0] * arguments.region[1],
-                                                                 source, &reg, arguments.region[0], arguments.region[0] * arguments.region[1],
-                                                                 event, 0, nullptr));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendImageCopyRegion(cmdList, dstImage, srcImage, &reg, &reg, event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-
         timer.measureStart();
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopyRegion(cmdList, destination, &reg, arguments.region[0], arguments.region[0] * arguments.region[1],
-                                                                     source, &reg, arguments.region[0], arguments.region[0] * arguments.region[1],
-                                                                     event, 0, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendImageCopyRegion(cmdList, dstImage, srcImage, &reg, &reg, event, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
 
@@ -94,11 +91,10 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
             ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(event, &timestampResult));
             auto commandTime = std::chrono::nanoseconds(timestampResult.global.kernelEnd - timestampResult.global.kernelStart);
             commandTime *= timerResolution;
-            statistics.pushValue(commandTime, arguments.size, typeSelector.getUnit(), typeSelector.getType());
+            statistics.pushValue(commandTime, imageSizeInBytes, typeSelector.getUnit(), typeSelector.getType());
         } else {
-            statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), typeSelector.getType());
+            statistics.pushValue(timer.get(), imageSizeInBytes, typeSelector.getUnit(), typeSelector.getType());
         }
-
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }
 
@@ -107,10 +103,9 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
 
-    ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.sourcePlacement, levelzero, source));
-    ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.destinationPlacement, levelzero, destination));
-
+    ASSERT_ZE_RESULT_SUCCESS(zeImageDestroy(srcImage));
+    ASSERT_ZE_RESULT_SUCCESS(zeImageDestroy(dstImage));
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<UsmCopyRegion> registerTestCase(run, Api::L0);
+static RegisterTestCaseImplementation<CopyImageRegion> registerTestCase(run, Api::L0);
