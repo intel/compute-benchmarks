@@ -40,7 +40,7 @@ static TestResult run(const UsmConcurrentCopyArguments &arguments, Statistics &s
     // Create events
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = 2u;
+    eventPoolDesc.count = 3u;
     ze_event_pool_handle_t eventPool;
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
     ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
@@ -49,10 +49,15 @@ static TestResult run(const UsmConcurrentCopyArguments &arguments, Statistics &s
 
     ze_event_handle_t h2dEvent;
     ze_event_handle_t d2hEvent;
+    ze_event_handle_t waitEvent;
 
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &h2dEvent));
     eventDesc.index = 1u;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &d2hEvent));
+    eventDesc.index = 2u;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &waitEvent));
 
     ze_command_list_handle_t h2dCommandList;
     ze_command_list_handle_t d2hCommandList;
@@ -70,21 +75,24 @@ static TestResult run(const UsmConcurrentCopyArguments &arguments, Statistics &s
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.size, &device2));
 
     // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(h2dCommandList, device1, host1, arguments.size, h2dEvent, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(d2hCommandList, host2, device2, arguments.size, d2hEvent, 0, nullptr));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(h2dCommandList, device1, host1, arguments.size, h2dEvent, 1, &waitEvent));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(d2hCommandList, host2, device2, arguments.size, d2hEvent, 1, &waitEvent));
 
+    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(waitEvent));
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(h2dEvent, std::numeric_limits<uint64_t>::max()));
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(d2hEvent, std::numeric_limits<uint64_t>::max()));
 
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(h2dEvent));
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(d2hEvent));
+    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(waitEvent));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(h2dCommandList, device1, host1, arguments.size, h2dEvent, 1, &waitEvent));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(d2hCommandList, host2, device2, arguments.size, d2hEvent, 1, &waitEvent));
         timer.measureStart();
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(h2dCommandList, device1, host1, arguments.size, h2dEvent, 0, nullptr));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(d2hCommandList, host2, device2, arguments.size, d2hEvent, 0, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(waitEvent));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(h2dEvent, std::numeric_limits<uint64_t>::max()));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(d2hEvent, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
@@ -92,6 +100,7 @@ static TestResult run(const UsmConcurrentCopyArguments &arguments, Statistics &s
         statistics.pushValue(timer.get(), arguments.size * 2, typeSelector.getUnit(), typeSelector.getType());
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(h2dEvent));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(d2hEvent));
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(waitEvent));
     }
 
     // Cleanup
