@@ -106,6 +106,7 @@ static TestResult run(const UsmConcurrentCopyArguments &arguments, Statistics &s
     // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(h2dCommandList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(d2hCommandList));
+    ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(waitEvent));
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(h2dEvent));
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(d2hEvent));
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
