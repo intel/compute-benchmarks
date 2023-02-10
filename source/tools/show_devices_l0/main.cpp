@@ -43,7 +43,7 @@ int printAvailableEngines(ze_device_handle_t device, uint32_t numberOfTabs) {
 }
 
 int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
-    ze_device_properties_t deviceProperties;
+    ze_device_properties_t deviceProperties = {};
     ze_result_t res = zeDeviceGetProperties(device, &deviceProperties);
     if (res != ZE_RESULT_SUCCESS) {
         std::cerr << "zeDeviceGetProperties failed\n";
@@ -105,7 +105,7 @@ int printPropertiesForAllSubDevices(ze_device_handle_t device, uint32_t numberOf
 }
 
 struct deviceAndProperty {
-    ze_pci_ext_properties_t properties;
+    ze_pci_ext_properties_t properties = {};
     ze_device_handle_t deviceHandle;
     uint32_t deviceIndex;
 };
