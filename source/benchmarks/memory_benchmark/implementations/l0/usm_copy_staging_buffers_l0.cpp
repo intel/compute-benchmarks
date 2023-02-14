@@ -43,11 +43,9 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
 
     if (arguments.dstPlacement == UsmMemoryPlacement::Device) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.size, reinterpret_cast<void **>(&dst)));
-        ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, dst, arguments.size));
         src = new char[arguments.size];
     } else if (arguments.dstPlacement == UsmMemoryPlacement::Host) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.size, reinterpret_cast<void **>(&src)));
-        ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, src, arguments.size));
         dst = new char[arguments.size];
     }
 
@@ -55,7 +53,6 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
     std::vector<void *> usmHost(arguments.chunks);
     for (auto i = 0u; i < arguments.chunks; i++) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Host, levelzero, offset, &usmHost[i]));
-        ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, usmHost[i], offset));
     }
 
     if (arguments.dstPlacement == UsmMemoryPlacement::Device) {
@@ -121,17 +118,14 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     if (arguments.dstPlacement == UsmMemoryPlacement::Device) {
-        ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, dst, arguments.size));
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(UsmMemoryPlacement::Device, levelzero, dst));
         delete[] src;
     } else {
-        ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, src, arguments.size));
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(UsmMemoryPlacement::Device, levelzero, src));
         delete[] dst;
     }
 
     for (auto i = 0u; i < arguments.chunks; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, usmHost[i], offset));
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(UsmMemoryPlacement::Host, levelzero, usmHost[i]));
     }
     return TestResult::Success;

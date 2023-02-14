@@ -48,13 +48,6 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &source));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.destinationPlacement, levelzero, arguments.size, &destination));
 
-    if (arguments.sourcePlacement != UsmMemoryPlacement::NonUsm) {
-        ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, source, arguments.size));
-    }
-    if (arguments.destinationPlacement != UsmMemoryPlacement::NonUsm) {
-        ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, destination, arguments.size));
-    }
-
     // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
@@ -112,14 +105,6 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
         } else {
             statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), typeSelector.getType());
         }
-    }
-
-    // Evict buffers
-    if (arguments.destinationPlacement != UsmMemoryPlacement::NonUsm) {
-        ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, destination, arguments.size));
-    }
-    if (arguments.sourcePlacement != UsmMemoryPlacement::NonUsm) {
-        ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, source, arguments.size));
     }
 
     // Cleanup

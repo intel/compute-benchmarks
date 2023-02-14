@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
     // Create buffer
     void *buffer{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.usmMemoryPlacement, levelzero, arguments.bufferSize, &buffer));
-    ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, buffer, arguments.bufferSize));
 
     // Create event
     ze_event_pool_handle_t eventPool{};
@@ -67,8 +66,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
     if (arguments.usmMemoryPlacement == UsmMemoryPlacement::NonUsmImported) {
         ASSERT_ZE_RESULT_SUCCESS(levelzero.importHostPointer.importExternalPointer(
             levelzero.driver, pattern.get(), arguments.patternSize));
-        ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device,
-                                                             pattern.get(), arguments.patternSize));
     }
 
     // Create command list
@@ -103,9 +100,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
         }
     }
 
-    // Evict buffer
-    ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, buffer, arguments.bufferSize));
-
     // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     if (arguments.useEvents) {
@@ -114,8 +108,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
     }
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.usmMemoryPlacement, levelzero, buffer));
     if (arguments.usmMemoryPlacement == UsmMemoryPlacement::NonUsmImported) {
-        ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device,
-                                                      pattern.get(), arguments.patternSize));
         ASSERT_ZE_RESULT_SUCCESS(levelzero.importHostPointer.releaseExternalPointer(
             levelzero.driver, pattern.get()));
     }

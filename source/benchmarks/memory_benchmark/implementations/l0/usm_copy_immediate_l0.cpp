@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,13 +46,6 @@ static TestResult run(const UsmCopyImmediateArguments &arguments, Statistics &st
     void *source{}, *destination{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &source));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.destinationPlacement, levelzero, arguments.size, &destination));
-
-    if (arguments.sourcePlacement != UsmMemoryPlacement::NonUsm) {
-        ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, source, arguments.size));
-    }
-    if (arguments.destinationPlacement != UsmMemoryPlacement::NonUsm) {
-        ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, destination, arguments.size));
-    }
 
     // Create event
     ze_event_pool_flags_t eventPoolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -108,14 +101,6 @@ static TestResult run(const UsmCopyImmediateArguments &arguments, Statistics &st
         }
 
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
-    }
-
-    // Evict buffers
-    if (arguments.destinationPlacement != UsmMemoryPlacement::NonUsm) {
-        ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, destination, arguments.size));
-    }
-    if (arguments.sourcePlacement != UsmMemoryPlacement::NonUsm) {
-        ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, source, arguments.size));
     }
 
     // Cleanup

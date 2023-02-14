@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,10 +66,6 @@ static TestResult run(const CopyEntireImageArguments &arguments, Statistics &sta
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
     }
 
-    // Make buffers resident
-    ASSERT_ZE_RESULT_SUCCESS(zeContextMakeImageResident(levelzero.context, levelzero.device, srcImage));
-    ASSERT_ZE_RESULT_SUCCESS(zeContextMakeImageResident(levelzero.context, levelzero.device, dstImage));
-
     // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
@@ -99,10 +95,6 @@ static TestResult run(const CopyEntireImageArguments &arguments, Statistics &sta
             statistics.pushValue(timer.get(), imageSizeInBytes, typeSelector.getUnit(), typeSelector.getType());
         }
     }
-
-    // Evict buffers
-    ASSERT_ZE_RESULT_SUCCESS(zeContextEvictImage(levelzero.context, levelzero.device, srcImage));
-    ASSERT_ZE_RESULT_SUCCESS(zeContextEvictImage(levelzero.context, levelzero.device, dstImage));
 
     // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
