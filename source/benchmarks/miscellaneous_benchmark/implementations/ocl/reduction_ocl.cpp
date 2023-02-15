@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,14 @@ static TestResult run(const ReductionArguments &arguments, Statistics &statistic
 
     // Prepare data
     const size_t sizeInBytes = arguments.numberOfElements * sizeof(int32_t);
+
+    size_t maxAllocSize = {};
+    clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(maxAllocSize), &maxAllocSize, nullptr);
+
+    if (sizeInBytes > maxAllocSize) {
+        return TestResult::DeviceNotCapable;
+    }
+
     auto data = std::make_unique<int32_t[]>(arguments.numberOfElements);
     int32_t expectedSum = 0u;
     int32_t value = 0u;
