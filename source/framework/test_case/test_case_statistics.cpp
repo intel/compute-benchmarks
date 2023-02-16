@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,8 +65,8 @@ void TestCaseStatistics::pushValue(Clock::duration time, uint64_t size, Measurem
         break;
     }
     case MeasurementUnit::GigabytesPerSecond: {
-        const Value sizeInGigabytes = size / (1024 * 1024 * 1024.0);
-        const Value bandwidth = sizeInGigabytes / timeSeconds;
+        const Value timeNanoseconds = timeSeconds * 1e9;
+        const Value bandwidth = size / timeNanoseconds; // Bytes/Nanoseconds = Gigabytes/Seconds
         this->pushValue(bandwidth, description, unit, type);
         break;
     }
