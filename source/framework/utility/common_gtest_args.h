@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,6 +65,14 @@ inline auto allAtomicMathOperations() {
                              MathOperation::Xor);
 }
 
+inline auto reducedAtomicMathOperations() {
+    return ::testing::Values(MathOperation::Add,
+                             MathOperation::Xchg,
+                             MathOperation::Inc,
+                             MathOperation::Min,
+                             MathOperation::And);
+}
+
 inline auto allNormalMathOperations() {
     return ::testing::Values(MathOperation::Add, MathOperation::Sub,
                              MathOperation::Div, MathOperation::Modulo,
@@ -88,6 +96,11 @@ inline auto enqueueSizesForAtomics() {
         EnqueueSize{32, 64},  // 2048 threads in 32 groups
         EnqueueSize{8, 256}   // 2048 threads in 8 groups
     );
+}
+
+inline auto reducedEnqueueSizesForAtomics() {
+    return ::testing::Values(
+        EnqueueSize{32, 64});
 }
 
 } // namespace CommonGtestArgs

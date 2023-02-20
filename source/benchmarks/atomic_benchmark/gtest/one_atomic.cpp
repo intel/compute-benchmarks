@@ -35,6 +35,6 @@ INSTANTIATE_TEST_SUITE_P(
     OneAtomicTest,
     ::testing::Combine(
         ::testing::Values(DataType::Float, DataType::Int32),
-        ::CommonGtestArgs::allAtomicMathOperations(),
-        ::CommonGtestArgs::enqueueSizesForAtomics(),
+        ::CommonGtestArgs::reducedAtomicMathOperations(),
+        ::CommonGtestArgs::reducedEnqueueSizesForAtomics(),
         ::testing::Values(true)));

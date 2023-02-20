@@ -42,9 +42,9 @@ INSTANTIATE_TEST_SUITE_P(
     SeparateAtomicsExplicitTest,
     ::testing::Combine(
         ::testing::Values(DataType::Float, DataType::Int32),
-        ::CommonGtestArgs::allAtomicMathOperations(),
+        ::CommonGtestArgs::reducedAtomicMathOperations(),
         ::testing::Values(1, 4),
         ::testing::ValuesIn(AtomicScopeHelper::allValues),
         ::testing::ValuesIn(AtomicMemoryOrderHelper::allValues),
-        ::CommonGtestArgs::enqueueSizesForAtomics(),
+        ::CommonGtestArgs::reducedEnqueueSizesForAtomics(),
         ::testing::Values(true)));

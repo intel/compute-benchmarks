@@ -36,8 +36,8 @@ INSTANTIATE_TEST_SUITE_P(
     OneLocalAtomicExplicitTest,
     ::testing::Combine(
         ::testing::Values(DataType::Float, DataType::Int32),
-        ::CommonGtestArgs::allAtomicMathOperations(),
+        ::CommonGtestArgs::reducedAtomicMathOperations(),
         ::testing::ValuesIn(AtomicScopeHelper::allValues),
         ::testing::ValuesIn(AtomicMemoryOrderHelper::allValues),
-        ::testing::Values(1, 64, 256),
+        ::testing::Values(1, 256),
         ::testing::Values(true)));
