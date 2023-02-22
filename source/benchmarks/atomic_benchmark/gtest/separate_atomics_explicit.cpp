@@ -5,8 +5,10 @@
  *
  */
 
+#include "framework/enum/test_type.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
+#include "framework/utility/test_type_skip.h"
 
 #include "definitions/separate_atomic_explicit.h"
 
@@ -14,7 +16,7 @@
 
 static const inline RegisterTestCase<SeparateAtomicsExplicit> registerTestCase{};
 
-class SeparateAtomicsExplicitTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, size_t, AtomicScope, AtomicMemoryOrder, CommonGtestArgs::EnqueueSize, bool>> {
+class SeparateAtomicsExplicitTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, size_t, AtomicScope, AtomicMemoryOrder, CommonGtestArgs::EnqueueSize, bool, TestType>> {
 };
 
 TEST_P(SeparateAtomicsExplicitTest, Test) {
@@ -33,6 +35,11 @@ TEST_P(SeparateAtomicsExplicitTest, Test) {
         GTEST_SKIP();
     }
 
+    const auto testType = std::get<7>(GetParam());
+    if (isTestSkipped(Configuration::get().extended, testType)) {
+        GTEST_SKIP();
+    }
+
     SeparateAtomicsExplicit test;
     test.run(args);
 }
@@ -47,4 +54,18 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(AtomicScopeHelper::allValues),
         ::testing::ValuesIn(AtomicMemoryOrderHelper::allValues),
         ::CommonGtestArgs::reducedEnqueueSizesForAtomics(),
-        ::testing::Values(true)));
+        ::testing::Values(true),
+        ::testing::Values(TestType::Regular)));
+
+INSTANTIATE_TEST_SUITE_P(
+    SeparateAtomicsExplicitExtendedTest,
+    SeparateAtomicsExplicitTest,
+    ::testing::Combine(
+        ::testing::Values(DataType::Float, DataType::Int32),
+        ::CommonGtestArgs::allAtomicMathOperations(),
+        ::testing::Values(1, 4),
+        ::testing::ValuesIn(AtomicScopeHelper::allValues),
+        ::testing::ValuesIn(AtomicMemoryOrderHelper::allValues),
+        ::CommonGtestArgs::enqueueSizesForAtomics(),
+        ::testing::Values(true),
+        ::testing::Values(TestType::Extended)));

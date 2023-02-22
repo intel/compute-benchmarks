@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,8 @@ Configuration::Configuration()
       argFilter(*this, "argFilter", "filter tests by their arguments"),
       testFilter(*this, "testFilter", "filter tests by their names"),
       returnSubmissionTimeInsteadOfWorkloadTime(*this, "forceSubmissionProfiling", "Overrides profiling to return submission time instead of workload time"),
-      markTimers(*this, "markTimers", "Provides prints around Timer Start & End") {
+      markTimers(*this, "markTimers", "Provides prints around Timer Start & End"),
+      extended(*this, "extended", "Run the benchmark with extended parameters") {
 
     // Diagnostic params
     help = false;
@@ -73,6 +74,9 @@ Configuration::Configuration()
     argFilter = std::vector<std::string>();
     testFilter = std::vector<std::string>();
     returnSubmissionTimeInsteadOfWorkloadTime = false;
+
+    // Test specific params
+    extended = false;
 }
 
 bool Configuration::parseArgumentsForConfiguration(CommandLineArguments &arguments) {
