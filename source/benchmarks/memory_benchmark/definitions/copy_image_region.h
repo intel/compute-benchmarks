@@ -32,6 +32,6 @@ struct CopyImageRegion : TestCase<CopyImageRegionArguments> {
     }
 
     std::string getHelp() const override {
-        return "allocates two image objects and measures region copy bandwidth between them using immediate command list.";
+        return "allocates two image objects and measures region copy bandwidth between them using immediate command list for Level Zero and command queue for OpenCL.";
     }
 };
