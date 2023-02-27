@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ struct QueueProperties {
         if (this->profiling) {
             properties[1] |= CL_QUEUE_PROFILING_ENABLE;
         }
-        if (this->ooq == 1 || (this->ooq == -1 && Configuration::get().oclUseOOQ)) {
+        if (this->ooq == 1 || (this->ooq == -1 && Configuration::get().useOOQ)) {
             properties[1] |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
         }
         if (this->selectedEngine != Engine::Unknown) {

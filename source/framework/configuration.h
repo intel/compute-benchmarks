@@ -47,7 +47,7 @@ struct Configuration : ArgumentContainer {
     // OCL params
     IntegerArgument oclPlatformIndex;
     NonNegativeIntegerArgument oclDeviceIndex;
-    BooleanArgument oclUseOOQ;
+    BooleanArgument useOOQ;
 
     // L0 params
     NonNegativeIntegerArgument l0DriverIndex;

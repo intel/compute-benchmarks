@@ -18,7 +18,7 @@ Configuration::Configuration()
       generateDocs(*this, "generateDocs", "Generate .md file describing available tests"),
       oclPlatformIndex(*this, "oclPlatformIndex", "OpenCL platform index"),
       oclDeviceIndex(*this, "oclDeviceIndex", "OpenCL device index inside the platform"),
-      oclUseOOQ(*this, "oclUseOOQ", "Use out of order queue if it is supported"),
+      useOOQ(*this, "useOOQ", "Use out of order queue if it is supported"),
       l0DriverIndex(*this, "l0DriverIndex", "LevelZero driver index"),
       l0DeviceIndex(*this, "l0DeviceIndex", "LevelZero device index inside the driver"),
       test(*this, "test", "Selects particular test for execution. All arguments of the test must be provided"),
@@ -50,11 +50,13 @@ Configuration::Configuration()
     // OCL params
     oclPlatformIndex = -1;
     oclDeviceIndex = 0;
-    oclUseOOQ = true;
 
     // L0 params
     l0DriverIndex = 0;
     l0DeviceIndex = 0;
+
+    // OCL & SYCL params
+    useOOQ = true;
 
     // Api agnostic params
     test = "";
