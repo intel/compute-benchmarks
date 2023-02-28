@@ -30,10 +30,19 @@ FlushTime|measures time spent in clEnqueueNDRangeKernel on CPU.|<ul><li>--event 
 GetMemoryProperties|measures time spent in zeMemGetAllocProperties on CPU when driver is queried for memory properties.|<ul><li>--AmountOfUsmAllocations Amount of USM allocations that are present in system</li></ul>|:heavy_check_mark:|:x:|
 KernelSetArgumentValueImmediate|measures time spent in zeKernelSetArgumentValue for immediate arguments on CPU.|<ul><li>--argSize Kernel argument size in bytes</li></ul>|:heavy_check_mark:|:x:|
 LifecycleCommandList|measures time spent in zeCommandListCreate + Close + Execute on CPU.|<ul><li>--CmdListCount Number of cmdlists to create</li><li>--CopyOnly Create copy only cmdlist (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+PhysicalMemCreate|measures time spent in zePhysicalMemCreate on CPU.|<ul><li>--reserveSize Size in bytes to be reserved</li></ul>|:heavy_check_mark:|:x:|
+PhysicalMemDestroy|measures time spent in zePhysicalMemDestroy on CPU.|<ul></ul>|:heavy_check_mark:|:x:|
 ResetCommandList|measures time spent in zeCommandListReset on CPU.|<ul><li>--CopyOnly Create copy only cmdlist (0 or 1)</li><li>--size Size of the buffer</li><li>--sourcePlacement Placement of the source buffer (Device or Host or Shared or non-USM or non-USM-imported or non-USM-mapped)</li></ul>|:heavy_check_mark:|:x:|
 SetKernelArgSvmPointer|measures time spent in clSetKernelArgSVMPointer on CPU.|<ul><li>--allocationSize Size of svm allocations, in bytes</li><li>--allocationsCount Number of allocations</li><li>--reallocate Allocations will be freed and allocated again between setKernelArgs (0 or 1)</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
 SetKernelGroupSize|measures time spent in zeKernelSetGroupSize on CPU.|<ul><li>--asymmetricLocalWorkSize Use asymmetric local workSize (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
 UsmMemoryAllocation|measures time spent in USM memory allocation APIs.|<ul><li>--size Size to allocate</li><li>--type Type of memory being allocated (Device or Host or Shared)</li></ul>|:heavy_check_mark:|:x:|
+VirtualMemFree|measures time spent in zeVirtualMemFree on CPU.|<ul><li>--freeSize Size in bytes to be freed</li></ul>|:heavy_check_mark:|:x:|
+VirtualMemGetAccessAttrib|measures time spent in zeVirtualMemGetAccessAttribute on CPU.|<ul><li>--size Size in bytes to get the access attribute</li></ul>|:heavy_check_mark:|:x:|
+VirtualMemMap|measures time spent in zeVirtualMemMap on CPU.|<ul><li>--accessType Access type. Either 'ReadWrite' or 'ReadOnly'</li><li>--reserveSize Size in bytes to be reserved</li><li>--useOffset Use offset to map into physical memory (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+VirtualMemQueryPageSize|measures time spent in zeVirtualMemQueryPageSize on CPU.|<ul></ul>|:heavy_check_mark:|:x:|
+VirtualMemReserve|measures time spent in zeVirtualMemReserve on CPU.|<ul><li>--reserveSize Size in bytes to be reserved</li><li>--useNull Flag to decide whether Null to be used for start of region (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+VirtualMemSetAccessAttrib|measures time spent in zeVirtualMemSetAccessAttribute on CPU.|<ul><li>--accessType Access type to set. Either 'ReadWrite', 'ReadOnly' or 'None'</li><li>--size Size in bytes to set the access attribute</li></ul>|:heavy_check_mark:|:x:|
+VirtualMemUnMap|measures time spent in zeVirtualMemUnMap on CPU.|<ul><li>--reserveSize Size in bytes to be unmapped</li></ul>|:heavy_check_mark:|:x:|
 
 
 
