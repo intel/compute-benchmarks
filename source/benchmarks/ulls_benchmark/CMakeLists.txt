@@ -4,4 +4,4 @@
 # SPDX-License-Identifier: MIT
 #
 
-add_benchmark(ulls_benchmark ocl l0 sycl all)
+add_benchmark(ulls_benchmark ocl l0 sycl omp all)

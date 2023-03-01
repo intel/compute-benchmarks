@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -86,6 +86,10 @@ if(BUILD_SYCL)
         string(REPLACE "<CMAKE_CXX_COMPILER>" "${SYCL_PROXY} <CMAKE_CXX_COMPILER>" CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
         set(CMAKE_CXX_COMPILER_LAUNCHER "${SYCL_PROXY}")
     endif()
+endif()
+
+if(BUILD_OMP)
+    set(CMAKE_CXX_COMPILER "icpx")
 endif()
 
 add_subdirectory(source)

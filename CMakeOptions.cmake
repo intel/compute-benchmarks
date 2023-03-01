@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -23,6 +23,7 @@ benchmark_option_group("Flags for selecting targets to be built")
 benchmark_option(BUILD_L0 ON)
 benchmark_option(BUILD_OCL ON)
 benchmark_option(BUILD_SYCL OFF)
+benchmark_option(BUILD_OMP OFF)
 if(BUILD_SYCL AND MSVC)
     set(BUILD_SYCL OFF)
     message(WARNING "Building SYCL benchmarks is disabled on Windows because of incompatibility of the dynamically-linked Visual C++ Runtime, required for DPC++, with GootleTest")

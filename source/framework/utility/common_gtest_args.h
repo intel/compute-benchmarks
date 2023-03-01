@@ -15,7 +15,7 @@
 
 namespace CommonGtestArgs {
 inline auto allApis() {
-    return ::testing::Values(Api::OpenCL, Api::L0, Api::SYCL);
+    return ::testing::Values(Api::OpenCL, Api::L0, Api::SYCL, Api::OMP);
 }
 
 inline auto workgroupCount() {
