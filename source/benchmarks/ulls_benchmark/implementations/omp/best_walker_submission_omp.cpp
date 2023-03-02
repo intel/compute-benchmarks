@@ -13,6 +13,28 @@
 
 #include <omp.h>
 
+void writeOne(volatile uint64_t *buffer, Timer *timer) {
+    if (timer) {
+        timer->measureStart();
+    }
+
+#pragma omp target teams distribute parallel for nowait
+    {
+        for (int i = 0; i < 1; ++i) {
+            *buffer = 1u;
+        }
+    }
+
+    while (*buffer != 1u) {
+    }
+
+    if (timer) {
+        timer->measureEnd();
+    }
+
+#pragma omp taskwait
+}
+
 static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
@@ -30,30 +52,13 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     volatile auto buffer = static_cast<uint64_t *>(omp_target_alloc_host(sizeof(uint64_t), deviceId));
 
     // Warmup
-#pragma omp target teams distribute parallel for
-    for (int i = 0; i < 1; ++i) {
-        *buffer = 1u;
-    }
+    writeOne(buffer, nullptr);
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         *buffer = 0u;
 
-        timer.measureStart();
-
-#pragma omp target teams distribute parallel for nowait
-        {
-            for (int i = 0; i < 1; ++i) {
-                *buffer = 1u;
-            }
-        }
-
-        while (*buffer != 1u) {
-        }
-
-        timer.measureEnd();
-
-#pragma omp taskwait
+        writeOne(buffer, &timer);
 
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
