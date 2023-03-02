@@ -14,14 +14,17 @@
 #include <omp.h>
 
 void writeOne(volatile uint64_t *buffer, Timer *timer) {
-    if (timer) {
-        timer->measureStart();
-    }
-
-#pragma omp target teams distribute parallel for nowait
+#pragma omp task
     {
-        for (int i = 0; i < 1; ++i) {
-            *buffer = 1u;
+        if (timer) {
+            timer->measureStart();
+        }
+
+#pragma omp target teams distribute parallel for
+        {
+            for (int i = 0; i < 1; ++i) {
+                *buffer = 1u;
+            }
         }
     }
 
