@@ -42,6 +42,28 @@ int printAvailableEngines(ze_device_handle_t device, uint32_t numberOfTabs) {
     return 0;
 }
 
+std::string parseCaps(ze_memory_access_cap_flags_t flags) {
+    std::string capsToReturn = "";
+    if (flags & ZE_MEMORY_ACCESS_CAP_FLAG_RW) {
+        capsToReturn += "ZE_MEMORY_ACCESS_CAP_FLAG_RW ";
+    }
+    if (flags & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC) {
+        capsToReturn += "ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC ";
+    }
+    if (flags & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT) {
+        capsToReturn += "ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT ";
+    }
+    if (flags & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC) {
+        capsToReturn += "ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC ";
+    }
+
+    if (flags == 0u) {
+        capsToReturn += "UNSUPPORTED ";
+    }
+
+    return capsToReturn;
+}
+
 int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
     ze_device_properties_t deviceProperties = {};
     ze_result_t res = zeDeviceGetProperties(device, &deviceProperties);
@@ -68,6 +90,20 @@ int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
         std::cout << static_cast<uint32_t>(deviceProperties.uuid.id[i]) << " ";
     }
     std::cout << "\n";
+    ze_device_memory_access_properties_t memoryAccessCapabilities = {};
+
+    res = zeDeviceGetMemoryAccessProperties(device, &memoryAccessCapabilities);
+
+    if (res != ZE_RESULT_SUCCESS) {
+        std::cerr << "zeDeviceGetProperties failed\n";
+        return -1;
+    }
+    std::cout << tabDelimiter << "Memory access capabilities: \n";
+    std::cout << tabDelimiter << "\thost: " << parseCaps(memoryAccessCapabilities.hostAllocCapabilities) << "\n";
+    std::cout << tabDelimiter << "\tdevice: " << parseCaps(memoryAccessCapabilities.deviceAllocCapabilities) << "\n";
+    std::cout << tabDelimiter << "\tshared single device: " << parseCaps(memoryAccessCapabilities.sharedSingleDeviceAllocCapabilities) << "\n";
+    std::cout << tabDelimiter << "\tshared cross device: " << parseCaps(memoryAccessCapabilities.sharedCrossDeviceAllocCapabilities) << "\n";
+    std::cout << tabDelimiter << "\tshared system caps: " << parseCaps(memoryAccessCapabilities.sharedSystemAllocCapabilities) << "\n";
 
     return 0;
 }
