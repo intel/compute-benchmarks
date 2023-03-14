@@ -196,6 +196,7 @@ Ulls Benchmark is a set of tests aimed at measuring Ultra Low Latency Submission
 | Test name | Description | Params | L0 | OCL |
 |-----------|-------------|--------|----|-----|
 BestSubmission|enqueues a system memory write via PIPE_CONTROL and measures when update becomes visible on the CPU.|<ul></ul>|:heavy_check_mark:|:x:|
+BestWalkerNthCommandListSubmission|enqueues single kernel on n command lists, which updates system memory location and then busy-loops on CPU until the update of the kernel of nth command list becomes visible. This is L0 only test.|<ul><li>--CmdListCount Command list count</li></ul>|:heavy_check_mark:|:x:|
 BestWalkerNthSubmission|enqueues n kernels, which updates system memory location and then busy-loops on CPU until the update of nth kernel becomes visible.|<ul><li>--KernelCount Kernel count</li></ul>|:heavy_check_mark:|:x:|
 BestWalkerNthSubmissionImmediate|enqueues n kernels, which updates system memory location and then busy-loops on CPU until the update of nth kernel becomes visible. Kernel is enqueued using low-latency immediate command list, so the test is LevelZero-specific.|<ul><li>--KernelCount Kernel count</li></ul>|:heavy_check_mark:|:x:|
 BestWalkerSubmission|enqueues kernel, which updates system memory location and then busy-loops on CPU until the update becomes visible.|<ul></ul>|:heavy_check_mark:|:heavy_check_mark:|

@@ -10,25 +10,26 @@
 #include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
-#include "definitions/best_walker_nth_submission.h"
+#include "definitions/best_walker_nth_commandlist_submission.h"
 
 #include <emmintrin.h>
 #include <gtest/gtest.h>
 
-struct KernelSet {
+struct CmdListSet {
     void *buffer = nullptr;
+    ze_command_list_handle_t cmdList = nullptr;
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t kernel = nullptr;
 };
 
-static TestResult run(const BestWalkerNthSubmissionArguments &arguments, Statistics &statistics) {
+static TestResult run(const BestWalkerNthCommandListSubmissionArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
     }
-    if (arguments.kernelCount == 0) {
+    if (arguments.cmdListCount == 0) {
         return TestResult::InvalidArgs;
     }
 
@@ -36,7 +37,8 @@ static TestResult run(const BestWalkerNthSubmissionArguments &arguments, Statist
     constexpr static auto bufferSize = 4096u;
     Timer timer;
 
-    std::vector<KernelSet> kernels(arguments.kernelCount);
+    std::vector<CmdListSet> cmdListData(arguments.cmdListCount);
+    std::vector<ze_command_list_handle_t> cmdLists(arguments.cmdListCount);
 
     const ze_host_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, nullptr, ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED};
 
@@ -57,35 +59,37 @@ static TestResult run(const BestWalkerNthSubmissionArguments &arguments, Statist
     const ze_group_count_t groupCount{1, 1, 1};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
-    ze_command_list_handle_t cmdList;
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
     void *buffer = nullptr;
     volatile uint64_t *volatileBuffer = nullptr;
 
-    for (uint32_t i = 0; i < arguments.kernelCount; i++) {
+    for (uint32_t i = 0; i < arguments.cmdListCount; i++) {
+        ze_command_list_handle_t cmdList{};
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
+        cmdListData[i].cmdList = cmdList;
+        cmdLists[i] = cmdList;
+
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &allocationDesc, bufferSize, 0, &buffer));
-        kernels[i].buffer = buffer;
+        cmdListData[i].buffer = buffer;
         volatileBuffer = static_cast<uint64_t *>(buffer);
 
         ze_module_handle_t module{};
         ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-        kernels[i].module = module;
+        cmdListData[i].module = module;
 
         ze_kernel_handle_t kernel{};
         ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
-        kernels[i].kernel = kernel;
+        cmdListData[i].kernel = kernel;
 
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1, 1, 1));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
     }
 
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
-
     // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, arguments.cmdListCount, cmdLists.data(), nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
 
     // Benchmark
@@ -94,7 +98,7 @@ static TestResult run(const BestWalkerNthSubmissionArguments &arguments, Statist
         _mm_clflush(buffer);
 
         timer.measureStart();
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, arguments.cmdListCount, cmdLists.data(), nullptr));
         while (*volatileBuffer != 1) {
         }
         timer.measureEnd();
@@ -103,14 +107,14 @@ static TestResult run(const BestWalkerNthSubmissionArguments &arguments, Statist
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    for (uint32_t i = 0; i < arguments.kernelCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernels[i].kernel));
-        ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(kernels[i].module));
-        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, kernels[i].buffer));
+    for (uint32_t i = 0; i < arguments.cmdListCount; i++) {
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(cmdListData[i].kernel));
+        ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(cmdListData[i].module));
+        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, cmdListData[i].buffer));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdListData[i].cmdList));
     }
 
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<BestWalkerNthSubmission> registerTestCase(run, Api::L0);
+static RegisterTestCaseImplementation<BestWalkerNthCommandListSubmission> registerTestCase(run, Api::L0);

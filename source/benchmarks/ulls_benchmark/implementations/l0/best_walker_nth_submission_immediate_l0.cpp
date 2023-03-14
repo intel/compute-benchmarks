@@ -29,6 +29,9 @@ static TestResult run(const BestWalkerNthSubmissionImmediateArguments &arguments
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
     }
+    if (arguments.kernelCount == 0) {
+        return TestResult::InvalidArgs;
+    }
 
     LevelZero levelzero{QueueProperties::create().disable()};
     constexpr static auto bufferSize = 4096u;
