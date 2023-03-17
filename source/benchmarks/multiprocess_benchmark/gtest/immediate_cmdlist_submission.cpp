@@ -5,7 +5,7 @@
  *
  */
 
-#include "definitions/multiprocess_immediate_cmdlist_submission.h"
+#include "definitions/immediate_cmdlist_submission.h"
 
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"

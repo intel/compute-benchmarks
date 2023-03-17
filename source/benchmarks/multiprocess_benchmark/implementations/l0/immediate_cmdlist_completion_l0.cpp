@@ -9,7 +9,7 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/process_group.h"
 
-#include "definitions/multiprocess_immediate_cmdlist_completion.h"
+#include "definitions/immediate_cmdlist_completion.h"
 
 #include <gtest/gtest.h>
 
