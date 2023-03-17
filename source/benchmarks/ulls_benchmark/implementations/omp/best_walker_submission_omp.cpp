@@ -13,29 +13,11 @@
 
 #include <omp.h>
 
-void writeOne(volatile uint64_t *buffer, Timer *timer) {
-#pragma omp task
+void writeOne(uint64_t *buffer) {
+#pragma omp target nowait
     {
-        if (timer) {
-            timer->measureStart();
-        }
-
-#pragma omp target teams distribute parallel for
-        {
-            for (int i = 0; i < 1; ++i) {
-                *buffer = 1u;
-            }
-        }
+        *buffer = 1u;
     }
-
-    while (*buffer != 1u) {
-    }
-
-    if (timer) {
-        timer->measureEnd();
-    }
-
-#pragma omp taskwait
 }
 
 static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics &statistics) {
@@ -48,21 +30,30 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
 
     // Setup
     SetEnvRAII("OMP_TARGET_OFFLOAD", "MANDATORY");
+    SetEnvRAII("LIBOMPTARGET_LEVEL_ZERO_COMMAND_MODE", "async");
     auto deviceId = omp_get_default_device();
     Timer timer;
 
     // Create buffer
-    volatile auto buffer = static_cast<uint64_t *>(omp_target_alloc_host(sizeof(uint64_t), deviceId));
+    auto buffer = static_cast<uint64_t *>(omp_target_alloc_host(sizeof(uint64_t), deviceId));
 
     // Warmup
-    writeOne(buffer, nullptr);
+    writeOne(buffer);
+#pragma omp taskwait
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         *buffer = 0u;
 
-        writeOne(buffer, &timer);
+        timer.measureStart();
 
+        writeOne(buffer);
+        while (*static_cast<volatile uint64_t *>(buffer) != 1u) {
+        }
+
+        timer.measureEnd();
+
+#pragma omp taskwait
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
