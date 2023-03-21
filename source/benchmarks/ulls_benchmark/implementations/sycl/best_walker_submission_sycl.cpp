@@ -26,16 +26,16 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     auto size = 1u;
 
     // Create buffer
-    auto buffer = sycl::malloc_host<uint64_t>(size, sycl.queue);
+    auto buffer = sycl::malloc_host<uint32_t>(size, sycl.queue);
     volatile auto volatileBuffer = buffer;
 
     // Create kernel
-    const auto writeOne = [buffer](auto i) {
-        buffer[0] = 1u;
+    const auto writeOne = [buffer]() {
+        *buffer = 1u;
     };
 
     // Warmup
-    sycl.queue.parallel_for(size, writeOne).wait();
+    sycl.queue.single_task(writeOne).wait();
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -43,7 +43,7 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
 
         timer.measureStart();
 
-        sycl.queue.parallel_for(size, writeOne);
+        sycl.queue.single_task(writeOne);
         while (*volatileBuffer != 1u) {
         }
 
