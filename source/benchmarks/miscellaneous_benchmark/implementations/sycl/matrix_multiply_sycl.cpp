@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,10 +43,8 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
         }
     }
 
-    auto device = sycl::device{sycl::default_selector{}};
-    auto queueProperties = sycl::property_list{sycl::property::queue::enable_profiling()};
+    Sycl sycl{sycl::property::queue::enable_profiling{}};
     const size_t totalElements = gws[0] * gws[1] * gws[2];
-    sycl::queue queue(device, queueProperties);
     {
         sycl::buffer<int32_t, 1> dataXBuf(dataX.data(), sycl::range<1>{totalElements});
         sycl::buffer<int32_t, 1> dataYBuf(dataY.data(), sycl::range<1>{totalElements});
@@ -65,10 +63,10 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
         };
 
         // Warm-up
-        queue.submit(commandList).wait();
+        sycl.queue.submit(commandList).wait();
 
         for (auto i = 0u; i < arguments.iterations; i++) {
-            auto profileEvent = queue.submit(commandList);
+            auto profileEvent = sycl.queue.submit(commandList);
             profileEvent.wait();
             auto startTime = profileEvent.get_profiling_info<sycl::info::event_profiling::command_start>();
             auto endTime = profileEvent.get_profiling_info<sycl::info::event_profiling::command_end>();

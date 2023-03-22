@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -190,12 +190,10 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         return TestResult::Nooped;
     }
 
-    auto device = sycl::device{sycl::default_selector{}};
-    auto queueProperties = sycl::property_list{sycl::property::queue::enable_profiling()};
-    sycl::queue queue(device, queueProperties);
+    Sycl sycl{sycl::property::queue::enable_profiling{}};
 
     Timer timer;
-    bool useDoubles = device.has(sycl::aspect::fp64);
+    bool useDoubles = sycl.device.has(sycl::aspect::fp64);
 
     const size_t elementSize = useDoubles ? sizeof(double) : sizeof(float);
     const size_t fillValue = 313u;
@@ -236,13 +234,13 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     }
 
     // Warm-up
-    auto event = benchmark->run(queue);
+    auto event = benchmark->run(sycl.queue);
     event.wait();
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
-        auto event = benchmark->run(queue);
+        auto event = benchmark->run(sycl.queue);
         event.wait();
         timer.measureEnd();
         if (arguments.useEvents) {

@@ -18,10 +18,5 @@ Sycl::Sycl(const sycl::device_selector &deviceSelector) : device(deviceSelector)
     }
 }
 
-Sycl::Sycl(const sycl::property_list &propertyList) : Sycl(sycl::gpu_selector{}, propertyList) {}
-
-Sycl::Sycl(const sycl::device_selector &deviceSelector, const sycl::property_list &propertyList) : device(deviceSelector),
-                                                                                                   queue(device, propertyList) {}
-
 Sycl::~Sycl() {}
 } // namespace SYCL
