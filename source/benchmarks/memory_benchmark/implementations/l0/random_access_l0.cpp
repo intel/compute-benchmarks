@@ -49,8 +49,24 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
     LevelZero levelzero;
     Timer timer;
 
+    const uint32_t workGroupSize = 10 * MemoryConstants::megaByte;
+    const uint32_t threadsPerWorkGroup = 1 * MemoryConstants::kiloByte;
     const size_t srcBufferAccessElementSize = sizeof(uint32_t);
     const size_t offsetAccessBytesPerThread = sizeof(uint32_t);
+
+    ze_device_memory_properties_t memProperties{};
+    memProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES;
+    memProperties.pNext = nullptr;
+    uint32_t memPropertiesount = 0;
+    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetMemoryProperties(levelzero.device, &memPropertiesount, nullptr));
+    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetMemoryProperties(levelzero.device, &memPropertiesount, &memProperties));
+
+    // Consider the 3 allocations used in the benchmark and additional size due to alignment requirements
+    const uint64_t maxMemoryRequiredByBenchmark = arguments.allocationSize + workGroupSize * offsetAccessBytesPerThread + 1 +
+                                                  arguments.alignment * 3u;
+    if (memPropertiesount == 0 || memProperties.totalSize < maxMemoryRequiredByBenchmark) {
+        return TestResult::DeviceNotCapable;
+    }
 
     if ((arguments.allocationSize / srcBufferAccessElementSize) > pow(2, offsetAccessBytesPerThread * 8u)) {
         return TestResult::InvalidArgs;
@@ -59,8 +75,6 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
     // Create buffer
     const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-    const uint32_t workGroupSize = 10 * MemoryConstants::megaByte;
-    const uint32_t threadsPerWorkGroup = 1 * MemoryConstants::kiloByte;
 
     void *srcBuffer{}, *offsetBuffer{}, *result;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, arguments.allocationSize, arguments.alignment, levelzero.device, &srcBuffer));

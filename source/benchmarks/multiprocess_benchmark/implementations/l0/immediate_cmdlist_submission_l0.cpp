@@ -52,7 +52,7 @@ static TestResult run(const MultiProcessImmediateCmdlistSubmissionArguments &arg
 
     const auto numberOfSupportedEngines = supportedEngineInfo.size();
     if (supportedEngineInfo.size() * arguments.processesPerEngine > arguments.numberOfProcesses) {
-        return TestResult::InvalidArgs;
+        return TestResult::DeviceNotCapable;
     }
 
     // Prepare processes
