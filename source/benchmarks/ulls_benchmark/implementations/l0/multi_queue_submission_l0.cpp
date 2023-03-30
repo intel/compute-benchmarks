@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,10 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
     QueueProperties queueProperties = QueueProperties::create().disable();
     LevelZero levelzero(queueProperties);
     Timer timer;
+
+    if (arguments.workgroupSize > levelzero.getDeviceComputeProperties().maxTotalGroupSize) {
+        return TestResult::DeviceNotCapable;
+    }
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("ulls_benchmark_write_one_global_ids.spv");
