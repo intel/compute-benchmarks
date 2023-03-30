@@ -13,8 +13,8 @@
 
 #include <omp.h>
 
-void writeOne(uint64_t *buffer) {
-#pragma omp target nowait
+void writeOne(uint32_t *buffer) {
+#pragma omp target
     {
         *buffer = 1u;
     }
@@ -35,26 +35,36 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     Timer timer;
 
     // Create buffer
-    auto buffer = static_cast<uint64_t *>(omp_target_alloc_host(sizeof(uint64_t), deviceId));
+    auto buffer = static_cast<uint32_t *>(omp_target_alloc_host(sizeof(uint32_t), deviceId));
+    volatile auto volatileBuffer = buffer;
 
     // Warmup
     writeOne(buffer);
-#pragma omp taskwait
 
     // Benchmark
-    for (auto i = 0u; i < arguments.iterations; i++) {
-        *buffer = 0u;
+#pragma omp parallel num_threads(2)
+    {
+        const auto threadId = omp_get_thread_num();
 
-        timer.measureStart();
+        for (auto i = 0u; i < arguments.iterations; i++) {
+            if (threadId == 0) {
+                *buffer = 0u;
 
-        writeOne(buffer);
-        while (*static_cast<volatile uint64_t *>(buffer) != 1u) {
+                timer.measureStart();
+            }
+#pragma omp barrier
+            if (threadId == 0) {
+                while (*volatileBuffer != 1u) {
+                }
+
+                timer.measureEnd();
+
+                statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+            } else {
+                writeOne(buffer);
+            }
+#pragma omp barrier
         }
-
-        timer.measureEnd();
-
-#pragma omp taskwait
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup
