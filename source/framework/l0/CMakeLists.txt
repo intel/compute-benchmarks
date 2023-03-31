@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,7 +10,6 @@ endif()
 
 # Get libraries and headers for the SDK
 find_package(LevelZero QUIET)
-set(LevelZero_FOUND OFF)
 if(NOT ${LevelZero_FOUND})
     set(ADDITIONAL_PATH "${CMAKE_SOURCE_DIR}/third_party/level-zero-sdk")
     message(STATUS "Level Zero installation not found. Trying ${ADDITIONAL_PATH}")
