@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ struct IntegerArgumentBase : Argument {
     }
 
     void parseImpl(const std::string &valueToParse) override {
-        this->value = std::atoi(valueToParse.c_str());
+        this->value = std::atol(valueToParse.c_str());
     }
 
     int64_t value = 0u;
@@ -159,7 +159,7 @@ struct ByteSizeArgument : PositiveIntegerArgument {
             }
         }
 
-        this->value = std::atoi(valueWithoutUnit.c_str());
+        this->value = std::atol(valueWithoutUnit.c_str());
         this->value *= unitMultipliers[currentUnit];
     }
 };
