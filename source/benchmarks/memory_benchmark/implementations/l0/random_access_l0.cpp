@@ -54,17 +54,23 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
     const size_t srcBufferAccessElementSize = sizeof(uint32_t);
     const size_t offsetAccessBytesPerThread = sizeof(uint32_t);
 
+    ze_device_properties_t deviceProperties{};
+    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetProperties(levelzero.device, &deviceProperties));
+    if (deviceProperties.maxMemAllocSize < arguments.allocationSize) {
+        return TestResult::DeviceNotCapable;
+    }
+
     ze_device_memory_properties_t memProperties{};
     memProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES;
     memProperties.pNext = nullptr;
-    uint32_t memPropertiesount = 0;
-    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetMemoryProperties(levelzero.device, &memPropertiesount, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetMemoryProperties(levelzero.device, &memPropertiesount, &memProperties));
+    uint32_t memPropertiesCount = 0;
+    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetMemoryProperties(levelzero.device, &memPropertiesCount, nullptr));
+    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetMemoryProperties(levelzero.device, &memPropertiesCount, &memProperties));
 
     // Consider the 3 allocations used in the benchmark and additional size due to alignment requirements
     const uint64_t maxMemoryRequiredByBenchmark = arguments.allocationSize + workGroupSize * offsetAccessBytesPerThread + 1 +
                                                   arguments.alignment * 3u;
-    if (memPropertiesount == 0 || memProperties.totalSize < maxMemoryRequiredByBenchmark) {
+    if (memPropertiesCount == 0 || memProperties.totalSize < maxMemoryRequiredByBenchmark) {
         return TestResult::DeviceNotCapable;
     }
 
