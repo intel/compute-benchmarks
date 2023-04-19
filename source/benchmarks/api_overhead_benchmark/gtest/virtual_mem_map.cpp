@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<VirtualMemMap> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<VirtualMemMap> registerTestCase{};
 
 class VirtualMemMapTest : public ::testing::TestWithParam<std::tuple<size_t, bool, std::string>> {
 };

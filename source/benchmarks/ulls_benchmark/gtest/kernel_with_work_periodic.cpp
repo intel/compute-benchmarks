@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<KernelWithWorkPeriodic> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<KernelWithWorkPeriodic> registerTestCase{};
 
 class KernelWithWorkPeriodicSubmissionTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t>> {
 };

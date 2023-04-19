@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<PhysicalMemDestroy> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<PhysicalMemDestroy> registerTestCase{};
 
 class PhysicalMemDestroyTest : public ::testing::TestWithParam<size_t> {
 };

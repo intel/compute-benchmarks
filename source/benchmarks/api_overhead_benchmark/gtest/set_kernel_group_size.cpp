@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<SetKernelGroupSize> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<SetKernelGroupSize> registerTestCase{};
 
 class SetKernelGroupSizeTest : public ::testing::TestWithParam<bool> {};
 

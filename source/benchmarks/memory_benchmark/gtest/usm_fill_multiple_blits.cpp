@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<UsmFillMultipleBlits> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<UsmFillMultipleBlits> registerTestCase{};
 
 class UsmFillMultipleBlitsTest : public ::testing::TestWithParam<std::tuple<Api, UsmMemoryPlacement, size_t, size_t, BufferContents, std::bitset<9>>> {
 };

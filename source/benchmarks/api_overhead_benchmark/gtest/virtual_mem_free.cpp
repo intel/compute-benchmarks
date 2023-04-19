@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<VirtualMemFree> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<VirtualMemFree> registerTestCase{};
 
 class VirtualMemFreeTest : public ::testing::TestWithParam<size_t> {
 };

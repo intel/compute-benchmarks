@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ static TestResult run(const QueueMemcpyArguments &arguments, Statistics &statist
     }
 
     // Setup
-    Sycl sycl{sycl::gpu_selector{}};
+    Sycl sycl{sycl::device{sycl::gpu_selector_v}};
     Timer timer;
 
     // Create buffers
@@ -57,4 +57,4 @@ static TestResult run(const QueueMemcpyArguments &arguments, Statistics &statist
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<QueueMemcpy> registerTestCase(run, Api::SYCL);
+[[maybe_unused]] static RegisterTestCaseImplementation<QueueMemcpy> registerTestCase(run, Api::SYCL);

@@ -11,7 +11,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<VirtualMemQueryPageSize> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<VirtualMemQueryPageSize> registerTestCase{};
 
 class VirtualMemQueryPageSizeTest : public ::testing::TestWithParam<size_t> {
 };

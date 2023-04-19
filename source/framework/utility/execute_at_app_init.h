@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,6 @@ struct ExecuteAtAppInit {
 };
 
 #define EXECUTE_AT_APP_INIT_WITH_ID(identifier) \
-    static ExecuteAtAppInit EXECUTE_AT_APP_INIT_##identifier##_object = []()
+    [[maybe_unused]] static ExecuteAtAppInit EXECUTE_AT_APP_INIT_##identifier##_object = []()
 
 #define EXECUTE_AT_APP_INIT EXECUTE_AT_APP_INIT_WITH_ID(default)

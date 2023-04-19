@@ -82,4 +82,4 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<MatrixMultiply> registerTestCase(run, Api::SYCL);
+[[maybe_unused]] static RegisterTestCaseImplementation<MatrixMultiply> registerTestCase(run, Api::SYCL);

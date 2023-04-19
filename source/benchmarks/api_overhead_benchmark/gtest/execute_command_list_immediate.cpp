@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<ExecuteCommandListImmediate> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<ExecuteCommandListImmediate> registerTestCase{};
 
 class ExecuteCommandListImmediateTest : public ::testing::TestWithParam<std::tuple<bool, size_t, bool, size_t, bool>> {
 };

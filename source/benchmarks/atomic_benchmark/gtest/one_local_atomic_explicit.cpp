@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<OneLocalAtomicExplicit> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<OneLocalAtomicExplicit> registerTestCase{};
 
 class OneLocalAtomicExplicitTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, AtomicScope, AtomicMemoryOrder, size_t, bool, TestType>> {
 };

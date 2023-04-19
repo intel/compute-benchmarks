@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,17 +15,17 @@ endif()
 set(_CXX_COMPILER ${CMAKE_CXX_COMPILER})
 set(_CXX_COMPILER_ID ${CMAKE_CXX_COMPILER_ID})
 set(_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-set(CMAKE_CXX_COMPILER "dpcpp")
+set(CMAKE_CXX_COMPILER "icpx")
 set(CMAKE_CXX_COMPILER_ID "IntelLLVM")
 
 set(SYCL_INCLUDE_DIR ${INTEL_COMPILER_ROOT}/linux/include)
 set(SYCL_LIBRARY_DIR ${INTEL_COMPILER_ROOT}/linux/lib)
 
-find_package(IntelDPCPP) 
-if(NOT ${IntelDPCPP_FOUND})
-    message(WARNING "Intel DPCPP installation not found")
+find_package(IntelSYCL) 
+if(NOT ${IntelSYCL_FOUND})
+    message(WARNING "Intel SYCL installation not found")
 else()
-    message(STATUS "Intel DPCPP installation found")
+    message(STATUS "Intel SYCL installation found")
     string(REGEX REPLACE " $" "" SYCL_FLAGS "${SYCL_FLAGS}")
     
     set(SYCL_FOUND TRUE)
@@ -33,7 +33,7 @@ else()
     set(SYCL_LFLAGS "${SYCL_CFLAGS} -lsycl" CACHE STRING "SYCL Linker Flags")
     set(SYCL_INCLUDE_DIR "${SYCL_INCLUDE_DIR}" CACHE PATH "SYCL Inlcude Directory")
 
-    set(SYCL_PROXY "${CMAKE_SOURCE_DIR}/scripts/dpcpp-proxy.sh" CACHE STRING "SYCL Compiler Proxy")
+    set(SYCL_PROXY "${CMAKE_SOURCE_DIR}/scripts/icpx-proxy.sh" CACHE STRING "SYCL Compiler Proxy")
 endif()
 
 set(CMAKE_CXX_COMPILER ${_CXX_COMPILER})

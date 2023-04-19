@@ -11,7 +11,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<ModuleCreateSpv> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<ModuleCreateSpv> registerTestCase{};
 
 class ModuleCreateSpvTest : public ::testing::TestWithParam<std::tuple<std::string>> {
 };

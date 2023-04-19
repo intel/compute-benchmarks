@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<MultiProcessImmediateCmdlistSubmission> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<MultiProcessImmediateCmdlistSubmission> registerTestCase{};
 
 class MultiProcessImmediateCmdlistSubmissionLatencyTest : public ::testing::TestWithParam<std::tuple<uint32_t, uint32_t>> {
 };

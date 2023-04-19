@@ -11,7 +11,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<GetMemoryProperties> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<GetMemoryProperties> registerTestCase{};
 
 class GetMemoryPropertiesTest : public ::testing::TestWithParam<size_t> {
 };

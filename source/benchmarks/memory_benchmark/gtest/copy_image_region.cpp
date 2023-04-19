@@ -15,7 +15,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<CopyImageRegion> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<CopyImageRegion> registerTestCase{};
 
 using Tuple = ThreeComponentUintArgument::TupleType;
 class CopyImageRegionTest : public ::testing::TestWithParam<std::tuple<Api, Tuple, bool, bool>> {

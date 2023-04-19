@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<BestWalkerNthSubmission> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<BestWalkerNthSubmission> registerTestCase{};
 
 class BestWalkerNthSubmissionTest : public ::testing::TestWithParam<std::tuple<size_t>> {
 };

@@ -13,7 +13,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<MultiProcessComputeSharedBuffer> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<MultiProcessComputeSharedBuffer> registerTestCase{};
 
 class MultiProcessComputeSharedBufferTest : public ::testing::TestWithParam<std::tuple<Api, DeviceSelection, size_t, size_t, bool>> {
 };

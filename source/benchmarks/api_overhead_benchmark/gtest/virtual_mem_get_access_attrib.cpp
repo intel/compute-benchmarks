@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<VirtualMemGetAccessAttrib> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<VirtualMemGetAccessAttrib> registerTestCase{};
 
 class VirtualMemGetAccessAttribTest : public ::testing::TestWithParam<size_t> {
 };

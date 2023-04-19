@@ -13,7 +13,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<RandomAccess> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<RandomAccess> registerTestCase{};
 
 class RandomAccessTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, std::string, size_t>> {
 };

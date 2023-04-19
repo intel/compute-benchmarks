@@ -10,7 +10,7 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
 #include "framework/utility/memory_constants.h"
-static const inline RegisterTestCase<UsmCopyRegion> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<UsmCopyRegion> registerTestCase{};
 
 #include <gtest/gtest.h>
 

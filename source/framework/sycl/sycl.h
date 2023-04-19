@@ -19,13 +19,14 @@ struct Sycl {
     sycl::queue queue;
 
     Sycl();
-    Sycl(const sycl::device_selector &deviceSelector);
+    Sycl(const sycl::device &device);
 
     template <typename... PropT, typename = typename std::enable_if_t<(sycl::is_property<PropT>::value && ...)>>
-    Sycl(PropT... properties) : Sycl(sycl::gpu_selector{}, properties...) {}
+    Sycl(PropT... properties) : Sycl(sycl::device{sycl::gpu_selector_v}, properties...) {}
 
     template <typename... PropT, typename = typename std::enable_if_t<(sycl::is_property<PropT>::value && ...)>>
-    Sycl(const sycl::device_selector &deviceSelector, PropT... properties) : device(deviceSelector) {
+    Sycl(const sycl::device &device, PropT... properties) {
+        this->device = device;
         if (Configuration::get().useOOQ) {
             queue = sycl::queue(device, sycl::property_list{properties...});
         } else {

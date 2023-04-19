@@ -21,7 +21,7 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     }
 
     // Setup
-    Sycl sycl{sycl::gpu_selector{}};
+    Sycl sycl{sycl::device{sycl::gpu_selector_v}};
     Timer timer;
     auto size = 1u;
 
@@ -59,4 +59,4 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<BestWalkerSubmission> registerTestCase(run, Api::SYCL);
+[[maybe_unused]] static RegisterTestCaseImplementation<BestWalkerSubmission> registerTestCase(run, Api::SYCL);

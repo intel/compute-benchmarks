@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
 #include "framework/utility/memory_constants.h"
-static const inline RegisterTestCase<UsmCopy> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<UsmCopy> registerTestCase{};
 
 #include <gtest/gtest.h>
 

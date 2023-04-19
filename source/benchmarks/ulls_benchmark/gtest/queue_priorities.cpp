@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<QueuePriorities> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<QueuePriorities> registerTestCase{};
 
 class QueuePrioritiesTest : public ::testing::TestWithParam<std::tuple<Api, size_t, bool, size_t, size_t, size_t>> {
 };

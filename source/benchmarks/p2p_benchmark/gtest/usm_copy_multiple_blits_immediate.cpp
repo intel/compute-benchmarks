@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<UsmImmediateCopyMultipleBlits> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<UsmImmediateCopyMultipleBlits> registerTestCase{};
 
 class UsmImmediateCopyMultipleBlitsTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, size_t, std::bitset<9>>> {
 };

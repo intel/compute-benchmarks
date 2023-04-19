@@ -22,14 +22,14 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     }
 
     // Setup
-    Sycl sycl{sycl::gpu_selector{}};
+    Sycl sycl{sycl::device{sycl::gpu_selector_v}};
     Timer timer;
     const size_t gws = arguments.workgroupCount * arguments.workgroupSize;
     const size_t lws = arguments.workgroupSize;
     sycl::nd_range<1> range(gws, lws);
 
     // Create kernel
-    const auto empty = [=](auto i) {};
+    const auto empty = [=]([[maybe_unused]] auto i) {};
 
     // Warmup
     sycl.queue.parallel_for(range, empty).wait();
@@ -47,4 +47,4 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<EmptyKernel> registerTestCase(run, Api::SYCL);
+[[maybe_unused]] static RegisterTestCaseImplementation<EmptyKernel> registerTestCase(run, Api::SYCL);

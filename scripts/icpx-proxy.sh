@@ -1,19 +1,19 @@
 #!/bin/env bash
 
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-# substitute first argument with dpcpp
+# substitute first argument with icpx
 # if the command line contains -fsycl,
 # otherwise run as is
 
 set -e
 
 if [[ " $@ " =~ .*\ -fsycl\ .* ]]; then
-    dpcpp "${@:2}"
+    icpx "${@:2}"
 else
     "$@"
 fi

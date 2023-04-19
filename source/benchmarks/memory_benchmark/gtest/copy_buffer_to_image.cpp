@@ -15,7 +15,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<CopyBufferToImage> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<CopyBufferToImage> registerTestCase{};
 
 using ImageSize = ThreeComponentUintArgument::TupleType;
 class CopyBufferToImageTest : public ::testing::TestWithParam<std::tuple<Api, ImageSize, UsmMemoryPlacement, size_t, bool, bool>> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<CopyEntireImage> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<CopyEntireImage> registerTestCase{};
 
 using ImageSize = ThreeComponentUintArgument::TupleType;
 class CopyEntireImageTest : public ::testing::TestWithParam<std::tuple<Api, ImageSize, bool, bool>> {

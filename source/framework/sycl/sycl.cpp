@@ -8,9 +8,10 @@
 #include "sycl.h"
 
 namespace SYCL {
-Sycl::Sycl() : Sycl(sycl::gpu_selector{}) {}
+Sycl::Sycl() : Sycl(sycl::device{sycl::gpu_selector_v}) {}
 
-Sycl::Sycl(const sycl::device_selector &deviceSelector) : device(deviceSelector) {
+Sycl::Sycl(const sycl::device &device) {
+    this->device = device;
     if (Configuration::get().useOOQ) {
         queue = sycl::queue(device);
     } else {

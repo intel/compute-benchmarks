@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<ImmediateCommandListCompletion> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<ImmediateCommandListCompletion> registerTestCase{};
 
 class ImmediateCommandListCompletionLatencyTest : public ::testing::TestWithParam<std::tuple<uint32_t, uint32_t, std::string, uint32_t, std::bitset<maxNumberOfEngines>>> {
 };

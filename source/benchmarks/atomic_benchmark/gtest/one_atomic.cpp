@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<OneAtomic> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<OneAtomic> registerTestCase{};
 
 class OneAtomicTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, CommonGtestArgs::EnqueueSize, bool, TestType>> {
 };

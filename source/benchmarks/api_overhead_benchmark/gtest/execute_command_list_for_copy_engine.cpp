@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<ExecuteCommandListForCopyEngine> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<ExecuteCommandListForCopyEngine> registerTestCase{};
 
 class ExecuteCommandListForCopyEngineTest : public ::testing::TestWithParam<std::tuple<bool, bool>> {
 };

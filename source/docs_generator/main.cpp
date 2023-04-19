@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,8 +45,8 @@ int main(int argc, char **argv) {
     for (const BenchmarkInstance &benchmarkInstance : benchmarkInstances) {
         Benchmark &benchmark = benchmarks[benchmarkInstance.baseName];
         locations.insert(benchmarkInstance.location);
-        assignAndValidate(benchmark.baseName, benchmarkInstance.baseName, " setting base name from benchmark instance");
-        assignAndValidate(benchmark.location, benchmarkInstance.location, " setting location from benchmark instance");
+        assignAndValidate(benchmark.baseName, benchmarkInstance.baseName, "setting base name from benchmark instance");
+        assignAndValidate(benchmark.location, benchmarkInstance.location, "setting location from benchmark instance");
         benchmark.instances.push_back(&benchmarkInstance);
     }
 

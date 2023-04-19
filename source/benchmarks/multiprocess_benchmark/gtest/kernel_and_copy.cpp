@@ -11,7 +11,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<KernelAndCopy> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<KernelAndCopy> registerTestCase{};
 
 class KernelAndCopyTest : public ::testing::TestWithParam<std::tuple<bool, bool, bool, bool>> {
 };

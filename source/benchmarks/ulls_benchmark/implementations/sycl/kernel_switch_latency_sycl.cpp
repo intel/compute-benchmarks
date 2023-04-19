@@ -60,4 +60,4 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<KernelSwitchLatency> registerTestCase(run, Api::SYCL);
+[[maybe_unused]] static RegisterTestCaseImplementation<KernelSwitchLatency> registerTestCase(run, Api::SYCL);

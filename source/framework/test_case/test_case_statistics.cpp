@@ -127,7 +127,7 @@ void TestCaseStatistics::pushValue(Value value, const std::string &description, 
     }
 
     samples.vector.push_back(value);
-    if (std::isinf(value)) {
+    if (value >= std::numeric_limits<double>::max()) {
         this->reachedInfinity = true;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<KernelWithEvent> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<KernelWithEvent> registerTestCase{};
 
 class KernelWithEventTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, size_t, bool, bool, bool>> {
 };

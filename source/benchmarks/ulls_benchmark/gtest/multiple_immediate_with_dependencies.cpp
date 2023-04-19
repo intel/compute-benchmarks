@@ -11,7 +11,7 @@
 
 #include <gtest/gtest.h>
 
-static const inline RegisterTestCase<MultipleImmediateCmdListsWithDependencies> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<MultipleImmediateCmdListsWithDependencies> registerTestCase{};
 
 class MultipleImmediateCmdListsWithDependenciesTests : public ::testing::TestWithParam<std::tuple<Api, size_t>> {
 };

@@ -39,6 +39,7 @@ class ReadBenchmark : public StreamMemoryBenchmark {
             const size_t bufferSize = this->buffer.size();
             auto x = this->deviceBuffer.template get_access<sycl::access_mode::read>(cgh);
             auto dummyOutput = this->dummyOutputBuf.template get_access<sycl::access_mode::discard_write>(cgh);
+            FloatingPointType dummyValue = 0.37221;
 
             cgh.parallel_for<ReadKernel<FloatingPointType>>(
                 sycl::range<1>{bufferSize},
@@ -46,7 +47,7 @@ class ReadBenchmark : public StreamMemoryBenchmark {
                     FloatingPointType value = x[item];
 
                     // A trick to ensure compiler won't optimize away the read
-                    if (value == 0.37221) {
+                    if (value == dummyValue) {
                         dummyOutput[0] = value;
                     }
                 });
@@ -255,4 +256,4 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<StreamMemory> registerTestCase(run, Api::SYCL);
+[[maybe_unused]] static RegisterTestCaseImplementation<StreamMemory> registerTestCase(run, Api::SYCL);
