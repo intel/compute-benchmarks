@@ -37,6 +37,13 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
     const auto channelOrder = ImageHelperL0::ChannelOrder::RGBA;
     const auto channelFormat = ImageHelperL0::ChannelFormat::Float;
 
+    ze_device_properties_t deviceProperties{};
+    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetProperties(levelzero.device, &deviceProperties));
+    const size_t imageSizeInBytes = ImageHelperL0::getImageSizeInBytes(channelOrder, channelFormat, arguments.size);
+    if (deviceProperties.maxMemAllocSize < 2 * imageSizeInBytes) {
+        return TestResult::DeviceNotCapable;
+    }
+
     // Create image
     ze_image_desc_t imageDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
     imageDesc.type = ImageHelperL0::getL0ImageTypeFromDimensions(arguments.size);
@@ -49,7 +56,6 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
     ASSERT_ZE_RESULT_SUCCESS(zeImageCreate(levelzero.context, levelzero.device, &imageDesc, &srcImage));
     ze_image_handle_t dstImage = {};
     ASSERT_ZE_RESULT_SUCCESS(zeImageCreate(levelzero.context, levelzero.device, &imageDesc, &dstImage));
-    const size_t imageSizeInBytes = ImageHelperL0::getImageSizeInBytes(channelOrder, channelFormat, arguments.size);
     const ze_image_region_t reg = {0u, 0u, 0u, (uint32_t)arguments.size[0], (uint32_t)arguments.size[1], (uint32_t)arguments.size[2]};
 
     // Create event

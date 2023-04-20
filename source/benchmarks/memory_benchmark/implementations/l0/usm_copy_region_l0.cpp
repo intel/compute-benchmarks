@@ -46,7 +46,7 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
     // Create buffers
     void *source{}, *destination{};
     const ze_copy_region_t reg = {(uint32_t)arguments.origin[0], (uint32_t)arguments.origin[1], (uint32_t)arguments.origin[2], (uint32_t)arguments.region[0], (uint32_t)arguments.region[1], (uint32_t)arguments.region[2]};
-
+    auto copySize = arguments.region[0] * arguments.region[1] * arguments.region[2];
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &source));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.destinationPlacement, levelzero, arguments.size, &destination));
 
@@ -94,9 +94,9 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
             ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(event, &timestampResult));
             auto commandTime = std::chrono::nanoseconds(timestampResult.global.kernelEnd - timestampResult.global.kernelStart);
             commandTime *= timerResolution;
-            statistics.pushValue(commandTime, arguments.size, typeSelector.getUnit(), typeSelector.getType());
+            statistics.pushValue(commandTime, copySize, typeSelector.getUnit(), typeSelector.getType());
         } else {
-            statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), typeSelector.getType());
+            statistics.pushValue(timer.get(), copySize, typeSelector.getUnit(), typeSelector.getType());
         }
 
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
