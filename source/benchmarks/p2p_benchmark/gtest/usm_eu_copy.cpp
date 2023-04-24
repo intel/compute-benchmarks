@@ -10,9 +10,10 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
 #include "framework/utility/memory_constants.h"
-[[maybe_unused]] static const inline RegisterTestCase<UsmEUCopy> registerTestCase{};
 
 #include <gtest/gtest.h>
+
+[[maybe_unused]] static const inline RegisterTestCase<UsmEUCopy> registerTestCase{};
 
 class UsmEUCopyTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, size_t, BufferContents, bool, bool>> {
 };

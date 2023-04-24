@@ -31,7 +31,7 @@ std::map<sycl::backend, std::string> backendToString{
     {sycl::backend::ext_intel_esimd_emulator, "ESIMD CPU"}};
 
 void printDeviceInfo() {
-    auto device = sycl::device{sycl::default_selector_v};
+    auto device = sycl::device{sycl::gpu_selector_v};
     auto platform = device.get_platform();
 
     auto driverVersion = device.get_info<sycl::info::device::driver_version>();

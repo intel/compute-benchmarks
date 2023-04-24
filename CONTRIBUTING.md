@@ -13,8 +13,8 @@ A good way to add new benchmarks is to mimic the existing ones and tweak them to
 1. Select binary, that suits you benchmark, for example `memory_benchmark`
 2. Select name for you benchmark, for example `TwoWayTransfer`.
 3. Add definition file of your benchmark as source/benchmarks/`memory_benchmark`/definitions/`TwoWayTransfer`.h. This file specifies generic info about your test - its name, description and parameters
-4. Add test registration file as source/benchmarks/`memory_benchmark`/gtest/`TwoWayTransfer`.cpp. This file registers your test, so the framework knowns about it and it can be run.
-5. Add implementation file as source/benchmarks/`memory_benchmark`/implementations/ocl/`TwoWayTransfer`_ocl.cpp. This file is contains the actual implementation of your test. Substittue *ocl* with *l0* for LevelZero implementation. Each test *can* be implemented in more than one API.
+4. Add test registration file as source/benchmarks/`memory_benchmark`/gtest/`TwoWayTransfer`.cpp. This file registers your test, so the framework knows about it and it can be run.
+5. Add implementation file as source/benchmarks/`memory_benchmark`/implementations/ocl/`TwoWayTransfer`_ocl.cpp. This file is contains the actual implementation of your test. Substitute *ocl* with *l0* for LevelZero implementation. Each test *can* be implemented in more than one API.
 6. Regenerate documentation (see below).
 
 ### Generating documentation
