@@ -13,7 +13,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<ExecuteCommandListImmediateCopyQueue> registerTestCase{};
 
-class ExecuteCommandListImmediateCopyQueueTest : public ::testing::TestWithParam<std::tuple<bool, bool>> {
+class ExecuteCommandListImmediateCopyQueueTest : public ::testing::TestWithParam<std::tuple<bool, bool, UsmMemoryPlacement, UsmMemoryPlacement, size_t>> {
 };
 
 TEST_P(ExecuteCommandListImmediateCopyQueueTest, Test) {
@@ -21,13 +21,21 @@ TEST_P(ExecuteCommandListImmediateCopyQueueTest, Test) {
     args.api = Api::L0;
     args.isCopyOnly = std::get<0>(GetParam());
     args.measureCompletionTime = std::get<1>(GetParam());
+    args.sourcePlacement = std::get<2>(GetParam());
+    args.destinationPlacement = std::get<3>(GetParam());
+    args.size = std::get<4>(GetParam());
     ExecuteCommandListImmediateCopyQueue test;
     test.run(args);
 }
+
+constexpr static size_t megaByte = 1024 * 1024;
 
 INSTANTIATE_TEST_SUITE_P(
     ExecuteCommandListImmediateCopyQueueTest,
     ExecuteCommandListImmediateCopyQueueTest,
     ::testing::Combine(
         ::testing::Values(true, false),
-        ::testing::Values(false, true)));
+        ::testing::Values(false, true),
+        ::testing::ValuesIn(UsmMemoryPlacementArgument::enumValues),
+        ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
+        ::testing::Values(512 * megaByte)));
