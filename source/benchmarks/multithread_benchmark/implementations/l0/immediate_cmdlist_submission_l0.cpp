@@ -22,7 +22,7 @@
 struct ThreadSpecificData {
     ze_command_list_handle_t cmdList{};
     ze_event_handle_t event{};
-    void *hostMemory;
+    void *hostMemory = nullptr;
     Timer timer{};
     ze_kernel_handle_t kernel{};
 };
@@ -91,7 +91,7 @@ static TestResult run(const ImmediateCommandListSubmissionArguments &arguments, 
 
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = arguments.numberOfThreads;
+    eventPoolDesc.count = static_cast<uint32_t>(arguments.numberOfThreads);
     ze_event_pool_handle_t eventPool{};
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
 
@@ -136,17 +136,17 @@ static TestResult run(const ImmediateCommandListSubmissionArguments &arguments, 
     for (auto i = 0u; i < 5; i++) {
         std::unique_lock lock(barrier);
         std::vector<std::unique_ptr<std::thread>> threads;
-        for (auto i = 0u; i < arguments.numberOfThreads; i++) {
+        for (auto j = 0u; j < arguments.numberOfThreads; ++j) {
             threads.push_back(std::unique_ptr<std::thread>(
-                new std::thread(issueToImmediateCmdList, &threadData[i], &barrier)));
+                new std::thread(issueToImmediateCmdList, &threadData[j], &barrier)));
         }
         lock.unlock();
-        for (auto i = 0u; i < arguments.numberOfThreads; i++) {
-            threads[i]->join();
+        for (auto j = 0u; j < arguments.numberOfThreads; ++j) {
+            threads[j]->join();
         }
 
-        for (auto i = 0u; i < arguments.numberOfThreads; i++) {
-            zeEventHostReset(threadData[i].event);
+        for (auto j = 0u; j < arguments.numberOfThreads; ++j) {
+            zeEventHostReset(threadData[j].event);
         }
     }
 

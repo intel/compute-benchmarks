@@ -41,7 +41,7 @@ static TestResult run(const BestWalkerNthSubmissionImmediateArguments &arguments
 
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = arguments.kernelCount;
+    eventPoolDesc.count = static_cast<uint32_t>(arguments.kernelCount);
     ze_event_pool_handle_t eventPool;
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
 
@@ -110,26 +110,26 @@ static TestResult run(const BestWalkerNthSubmissionImmediateArguments &arguments
         _mm_clflush(buffer);
 
         timer.measureStart();
-        for (uint32_t i = 0; i < arguments.kernelCount; i++) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[i].kernel, &groupCount, kernels[i].event, 0, nullptr));
+        for (uint32_t j = 0; j < arguments.kernelCount; ++j) {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[j].kernel, &groupCount, kernels[j].event, 0, nullptr));
         }
         while (*volatileBuffer != 1) {
         }
         timer.measureEnd();
 
-        for (uint32_t i = 0; i < arguments.kernelCount; i++) {
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(kernels[i].event, std::numeric_limits<uint64_t>::max()));
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(kernels[i].event));
+        for (uint32_t j = 0; j < arguments.kernelCount; ++j) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(kernels[j].event, std::numeric_limits<uint64_t>::max()));
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(kernels[j].event));
         }
 
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    for (uint32_t i = 0; i < arguments.kernelCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernels[i].kernel));
-        ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(kernels[i].module));
-        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, kernels[i].buffer));
-        ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(kernels[i].event));
+    for (uint32_t j = 0; j < arguments.kernelCount; ++j) {
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernels[j].kernel));
+        ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(kernels[j].module));
+        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, kernels[j].buffer));
+        ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(kernels[j].event));
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));

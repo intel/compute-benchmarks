@@ -60,12 +60,12 @@ static TestResult getEngineInfo(std::vector<EngineInfo> &supportedEngineInfo, Le
 
     for (uint32_t i = 0; i < queueGroupPropertiesCount; i++) {
         if (engineGroup.compare("Compute") == 0) {
-            if ((queueGroupProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) == ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) {
+            if (queueGroupProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) {
                 insertToEngineInfoList(queueGroupProperties[i].numQueues, i);
             }
         } else {
             // Use all Copy Engines (main and link)
-            if (queueGroupProperties[i].flags == ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) {
+            if (queueGroupProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) {
                 insertToEngineInfoList(queueGroupProperties[i].numQueues, i);
             }
         }
@@ -108,7 +108,7 @@ static TestResult run(const ImmediateCommandListCompletionArguments &arguments, 
 
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = arguments.numberOfThreads;
+    eventPoolDesc.count = static_cast<uint32_t>(arguments.numberOfThreads);
     ze_event_pool_handle_t eventPool{};
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
 
@@ -125,7 +125,7 @@ static TestResult run(const ImmediateCommandListCompletionArguments &arguments, 
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &threadData[i].event));
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Host, levelzero, arguments.copySize, &threadData[i].hostSrcMemory));
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.copySize, &threadData[i].deviceDstMemory));
-        threadData[i].maxMemoryAllocSize = arguments.copySize;
+        threadData[i].maxMemoryAllocSize = static_cast<uint32_t>(arguments.copySize);
     }
 
     std::shared_mutex barrier;
@@ -133,17 +133,17 @@ static TestResult run(const ImmediateCommandListCompletionArguments &arguments, 
     for (auto i = 0u; i < 5; i++) {
         std::unique_lock lock(barrier);
         std::vector<std::unique_ptr<std::thread>> threads;
-        for (auto i = 0u; i < arguments.numberOfThreads; i++) {
+        for (auto j = 0u; j < arguments.numberOfThreads; ++j) {
             threads.push_back(std::unique_ptr<std::thread>(
-                new std::thread(issueToImmediateCmdList, &threadData[i], &barrier)));
+                new std::thread(issueToImmediateCmdList, &threadData[j], &barrier)));
         }
         lock.unlock();
-        for (auto i = 0u; i < arguments.numberOfThreads; i++) {
-            threads[i]->join();
+        for (auto j = 0u; j < arguments.numberOfThreads; ++j) {
+            threads[j]->join();
         }
 
-        for (auto i = 0u; i < arguments.numberOfThreads; i++) {
-            zeEventHostReset(threadData[i].event);
+        for (auto j = 0u; j < arguments.numberOfThreads; ++j) {
+            zeEventHostReset(threadData[j].event);
         }
     }
 

@@ -73,8 +73,8 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
 
     // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopyRegion(cmdList, destination, &reg, arguments.region[0], arguments.region[0] * arguments.region[1],
-                                                                 source, &reg, arguments.region[0], arguments.region[0] * arguments.region[1],
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopyRegion(cmdList, destination, &reg, static_cast<uint32_t>(arguments.region[0]), static_cast<uint32_t>(arguments.region[0] * arguments.region[1]),
+                                                                 source, &reg, static_cast<uint32_t>(arguments.region[0]), static_cast<uint32_t>(arguments.region[0] * arguments.region[1]),
                                                                  event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
@@ -83,8 +83,8 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         timer.measureStart();
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopyRegion(cmdList, destination, &reg, arguments.region[0], arguments.region[0] * arguments.region[1],
-                                                                     source, &reg, arguments.region[0], arguments.region[0] * arguments.region[1],
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopyRegion(cmdList, destination, &reg, static_cast<uint32_t>(arguments.region[0]), static_cast<uint32_t>(arguments.region[0] * arguments.region[1]),
+                                                                     source, &reg, static_cast<uint32_t>(arguments.region[0]), static_cast<uint32_t>(arguments.region[0] * arguments.region[1]),
                                                                      event, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();

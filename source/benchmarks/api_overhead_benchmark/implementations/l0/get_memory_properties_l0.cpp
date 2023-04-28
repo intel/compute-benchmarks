@@ -46,9 +46,8 @@ static TestResult run(const GetMemoryPropertiesArguments &arguments, Statistics 
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         timer.measureStart();
-        for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
-            ze_memory_allocation_properties_t properties{};
-            ASSERT_ZE_RESULT_SUCCESS(zeMemGetAllocProperties(levelzero.context, allocations[i], &properties, nullptr));
+        for (int64_t j = 0; j < arguments.AllocationsCount; ++j) {
+            ASSERT_ZE_RESULT_SUCCESS(zeMemGetAllocProperties(levelzero.context, allocations[j], &properties, nullptr));
         }
         timer.measureEnd();
 

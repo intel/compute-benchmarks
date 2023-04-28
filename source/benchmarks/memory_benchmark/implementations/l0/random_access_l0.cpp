@@ -87,13 +87,13 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, 1, arguments.alignment, levelzero.device, &result));
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocShared(levelzero.context, &deviceAllocationDesc, &hostAllocationDesc, workGroupSize * offsetAccessBytesPerThread, arguments.alignment, levelzero.device, &offsetBuffer));
 
-    const double maxPossibleAccessIndex = (arguments.allocationSize / srcBufferAccessElementSize) - 1;
+    const double maxPossibleAccessIndex = static_cast<double>((arguments.allocationSize / srcBufferAccessElementSize) - 1);
 
     // Prepare Offset bufffer
     uint32_t *randBuff = reinterpret_cast<uint32_t *>(offsetBuffer);
     std::random_device randomDevice;
     std::mt19937 generator(randomDevice());
-    std::uniform_int_distribution<uint32_t> distr(0, maxPossibleAccessIndex - 1);
+    std::uniform_int_distribution<uint32_t> distr(0, static_cast<uint32_t>(maxPossibleAccessIndex) - 1);
     for (auto index = 0u; index < workGroupSize; index++) {
         randBuff[index] = distr(generator);
     }
@@ -125,8 +125,8 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
     const std::string accessModeArg = static_cast<const std::string &>(arguments.accessMode);
     const uint32_t accessMode = getAccessMode(accessModeArg);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 3, sizeof(accessMode), &accessMode));
-    const uint32_t randomAccessRange = arguments.randomAccessRange;
-    const uint32_t maxAccessIndex = std::min<uint32_t>(randomAccessRange, 100u) * maxPossibleAccessIndex / 100.0;
+    const uint32_t randomAccessRange = static_cast<uint32_t>(arguments.randomAccessRange);
+    const uint32_t maxAccessIndex = std::min<uint32_t>(randomAccessRange, 100u) * static_cast<uint32_t>(maxPossibleAccessIndex / 100.0);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 4, sizeof(maxAccessIndex), &maxAccessIndex));
 
     // Create command list

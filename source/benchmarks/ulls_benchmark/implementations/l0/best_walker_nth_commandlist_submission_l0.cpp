@@ -89,7 +89,7 @@ static TestResult run(const BestWalkerNthCommandListSubmissionArguments &argumen
     }
 
     // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, arguments.cmdListCount, cmdLists.data(), nullptr));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, static_cast<uint32_t>(arguments.cmdListCount), cmdLists.data(), nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
 
     // Benchmark
@@ -98,7 +98,7 @@ static TestResult run(const BestWalkerNthCommandListSubmissionArguments &argumen
         _mm_clflush(buffer);
 
         timer.measureStart();
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, arguments.cmdListCount, cmdLists.data(), nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, static_cast<uint32_t>(arguments.cmdListCount), cmdLists.data(), nullptr));
         while (*volatileBuffer != 1) {
         }
         timer.measureEnd();
