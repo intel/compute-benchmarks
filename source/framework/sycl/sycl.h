@@ -20,6 +20,7 @@ struct Sycl {
 
     Sycl();
     Sycl(const sycl::device &device);
+    Sycl(const sycl::device &device, bool useOOQ);
 
     template <typename... PropT, typename = typename std::enable_if_t<(sycl::is_property<PropT>::value && ...)>>
     Sycl(PropT... properties) : Sycl(sycl::device{sycl::gpu_selector_v}, properties...) {}
