@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,6 +78,8 @@ MathOperationTestData MathOperationHelper::generateTestData(DataType dataType, M
         return MathOperationHelper::generateTestData<float>(operation, loopIterations, operationsPerLoop, totalThreadsCount);
     case DataType::Int32:
         return MathOperationHelper::generateTestData<int32_t>(operation, loopIterations, operationsPerLoop, totalThreadsCount);
+    case DataType::Int64:
+        return MathOperationHelper::generateTestData<int64_t>(operation, loopIterations, operationsPerLoop, totalThreadsCount);
     default:
         FATAL_ERROR("Invalid data type");
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,6 @@ struct DataTypeArgument : EnumArgument<DataTypeArgument, DataType> {
 
     const static inline std::string enumName = "data type";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
-    const static inline EnumType enumValues[2] = {EnumType::Int32, EnumType::Float};
-    const static inline std::string enumValuesNames[2] = {"Int32", "Float"};
+    const static inline EnumType enumValues[3] = {EnumType::Int32, EnumType::Int64, EnumType::Float};
+    const static inline std::string enumValuesNames[3] = {"Int32", "Int64", "Float"};
 };
