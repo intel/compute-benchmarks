@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,10 @@ static TestResult run(const UsmSharedMigrateGpuForFillArguments &arguments, Stat
 
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).allowCreationFail();
     LevelZero levelzero(queueProperties);
+    if (nullptr == levelzero.commandQueue) {
+        return TestResult::DeviceNotCapable;
+    }
+
     Timer timer;
 
     // Create buffers
