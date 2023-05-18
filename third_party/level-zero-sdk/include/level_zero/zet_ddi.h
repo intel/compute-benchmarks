@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  *
  * @file zet_ddi.h
- * @version v1.4-r1.4.1
+ * @version v1.6-r1.6.3
  *
  */
 #ifndef _ZET_DDI_H
@@ -231,6 +231,51 @@ typedef ze_result_t (ZE_APICALL *zet_pfnGetKernelProcAddrTable_t)(
     );
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zetMetricGet 
+typedef ze_result_t (ZE_APICALL *zet_pfnMetricGet_t)(
+    zet_metric_group_handle_t,
+    uint32_t*,
+    zet_metric_handle_t*
+    );
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zetMetricGetProperties 
+typedef ze_result_t (ZE_APICALL *zet_pfnMetricGetProperties_t)(
+    zet_metric_handle_t,
+    zet_metric_properties_t*
+    );
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Table of Metric functions pointers
+typedef struct _zet_metric_dditable_t
+{
+    zet_pfnMetricGet_t                                          pfnGet;
+    zet_pfnMetricGetProperties_t                                pfnGetProperties;
+} zet_metric_dditable_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Exported function for filling application's Metric table
+///        with current process' addresses
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_VERSION
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zetGetMetricProcAddrTable(
+    ze_api_version_t version,                       ///< [in] API version requested
+    zet_metric_dditable_t* pDdiTable                ///< [in,out] pointer to table of DDI function pointers
+    );
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zetGetMetricProcAddrTable
+typedef ze_result_t (ZE_APICALL *zet_pfnGetMetricProcAddrTable_t)(
+    ze_api_version_t,
+    zet_metric_dditable_t*
+    );
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Function-pointer for zetMetricGroupGet 
 typedef ze_result_t (ZE_APICALL *zet_pfnMetricGroupGet_t)(
     zet_device_handle_t,
@@ -301,10 +346,20 @@ typedef ze_result_t (ZE_APICALL *zet_pfnMetricGroupCalculateMultipleMetricValues
     );
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zetMetricGroupGetGlobalTimestampsExp 
+typedef ze_result_t (ZE_APICALL *zet_pfnMetricGroupGetGlobalTimestampsExp_t)(
+    zet_metric_group_handle_t,
+    ze_bool_t,
+    uint64_t*,
+    uint64_t*
+    );
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Table of MetricGroupExp functions pointers
 typedef struct _zet_metric_group_exp_dditable_t
 {
     zet_pfnMetricGroupCalculateMultipleMetricValuesExp_t        pfnCalculateMultipleMetricValuesExp;
+    zet_pfnMetricGroupGetGlobalTimestampsExp_t                  pfnGetGlobalTimestampsExp;
 } zet_metric_group_exp_dditable_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -327,51 +382,6 @@ zetGetMetricGroupExpProcAddrTable(
 typedef ze_result_t (ZE_APICALL *zet_pfnGetMetricGroupExpProcAddrTable_t)(
     ze_api_version_t,
     zet_metric_group_exp_dditable_t*
-    );
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Function-pointer for zetMetricGet 
-typedef ze_result_t (ZE_APICALL *zet_pfnMetricGet_t)(
-    zet_metric_group_handle_t,
-    uint32_t*,
-    zet_metric_handle_t*
-    );
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Function-pointer for zetMetricGetProperties 
-typedef ze_result_t (ZE_APICALL *zet_pfnMetricGetProperties_t)(
-    zet_metric_handle_t,
-    zet_metric_properties_t*
-    );
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Table of Metric functions pointers
-typedef struct _zet_metric_dditable_t
-{
-    zet_pfnMetricGet_t                                          pfnGet;
-    zet_pfnMetricGetProperties_t                                pfnGetProperties;
-} zet_metric_dditable_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Exported function for filling application's Metric table
-///        with current process' addresses
-///
-/// @returns
-///     - ::ZE_RESULT_SUCCESS
-///     - ::ZE_RESULT_ERROR_UNINITIALIZED
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
-///     - ::ZE_RESULT_ERROR_UNSUPPORTED_VERSION
-ZE_DLLEXPORT ze_result_t ZE_APICALL
-zetGetMetricProcAddrTable(
-    ze_api_version_t version,                       ///< [in] API version requested
-    zet_metric_dditable_t* pDdiTable                ///< [in,out] pointer to table of DDI function pointers
-    );
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Function-pointer for zetGetMetricProcAddrTable
-typedef ze_result_t (ZE_APICALL *zet_pfnGetMetricProcAddrTable_t)(
-    ze_api_version_t,
-    zet_metric_dditable_t*
     );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -699,6 +709,15 @@ typedef ze_result_t (ZE_APICALL *zet_pfnDebugWriteRegisters_t)(
     );
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zetDebugGetThreadRegisterSetProperties 
+typedef ze_result_t (ZE_APICALL *zet_pfnDebugGetThreadRegisterSetProperties_t)(
+    zet_debug_session_handle_t,
+    ze_device_thread_t,
+    uint32_t*,
+    zet_debug_regset_properties_t*
+    );
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Table of Debug functions pointers
 typedef struct _zet_debug_dditable_t
 {
@@ -713,6 +732,7 @@ typedef struct _zet_debug_dditable_t
     zet_pfnDebugGetRegisterSetProperties_t                      pfnGetRegisterSetProperties;
     zet_pfnDebugReadRegisters_t                                 pfnReadRegisters;
     zet_pfnDebugWriteRegisters_t                                pfnWriteRegisters;
+    zet_pfnDebugGetThreadRegisterSetProperties_t                pfnGetThreadRegisterSetProperties;
 } zet_debug_dditable_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -746,9 +766,9 @@ typedef struct _zet_dditable_t
     zet_command_list_dditable_t         CommandList;
     zet_module_dditable_t               Module;
     zet_kernel_dditable_t               Kernel;
+    zet_metric_dditable_t               Metric;
     zet_metric_group_dditable_t         MetricGroup;
     zet_metric_group_exp_dditable_t     MetricGroupExp;
-    zet_metric_dditable_t               Metric;
     zet_metric_streamer_dditable_t      MetricStreamer;
     zet_metric_query_pool_dditable_t    MetricQueryPool;
     zet_metric_query_dditable_t         MetricQuery;
