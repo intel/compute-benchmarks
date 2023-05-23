@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,13 +16,16 @@ struct ExecuteCommandListImmediateArguments : TestCaseArgumentContainer {
     BooleanArgument measureCompletionTime;
     BooleanArgument useBarrierSynchronization;
     PositiveIntegerArgument kernelExecutionTime;
+    BooleanFlagArgument useEventForHostSync;
 
     ExecuteCommandListImmediateArguments()
         : useProfiling(*this, "UseProfiling", "Pass a profiling ze_event_t to the API call"),
           amountOfCalls(*this, "CallsCount", "amount of calls that is being meassured"),
           measureCompletionTime(*this, "MeasureCompletionTime", "Measures time taken to complete the submission (default is to measure only Immediate call)"),
           useBarrierSynchronization(*this, "useBarrierSynchronization", "Uses barrier synchronization instead of waiting for event from last kernel"),
-          kernelExecutionTime(*this, "KernelExecutionTime", "How long a single kernel executes, in us") {}
+          kernelExecutionTime(*this, "KernelExecutionTime", "How long a single kernel executes, in us"),
+          useEventForHostSync(*this, "UseEventForHostSync",
+                              "If true, use events to synchronize with host. If false, use zeCommandListHostSynchronize") {}
 };
 
 struct ExecuteCommandListImmediate : TestCase<ExecuteCommandListImmediateArguments> {

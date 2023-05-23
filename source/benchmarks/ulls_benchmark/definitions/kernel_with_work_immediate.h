@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,14 @@ struct KernelWithWorkImmediateArguments : TestCaseArgumentContainer {
     WorkItemIdUsageArgument usedIds;
     PositiveIntegerArgument workgroupCount;
     PositiveIntegerArgument workgroupSize;
+    BooleanFlagArgument useEventForHostSync;
 
     KernelWithWorkImmediateArguments()
         : usedIds(*this, "usedIds", "Which of the get_global_id() and get_local_id() calls will be used in the kernel"),
           workgroupCount(*this, "wgc", "Workgroup count"),
-          workgroupSize(*this, "wgs", "Workgroup size (aka local work size)") {}
+          workgroupSize(*this, "wgs", "Workgroup size (aka local work size)"),
+          useEventForHostSync(*this, "UseEventForHostSync",
+                              "If true, use events to synchronize with host.If false, use zeCommandListHostSynchronize") {}
 };
 
 struct KernelWithWorkImmediate : TestCase<KernelWithWorkImmediateArguments> {

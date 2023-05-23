@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelWithWorkImmediate> registerTestCase{};
 
-class KernelWithWorkSubmissionImmediateTest : public ::testing::TestWithParam<std::tuple<WorkItemIdUsage, size_t, size_t>> {
+class KernelWithWorkSubmissionImmediateTest : public ::testing::TestWithParam<std::tuple<WorkItemIdUsage, size_t, size_t, bool>> {
 };
 
 TEST_P(KernelWithWorkSubmissionImmediateTest, Test) {
@@ -23,6 +23,7 @@ TEST_P(KernelWithWorkSubmissionImmediateTest, Test) {
     args.usedIds = std::get<0>(GetParam());
     args.workgroupCount = std::get<1>(GetParam());
     args.workgroupSize = std::get<2>(GetParam());
+    args.useEventForHostSync = std::get<3>(GetParam());
 
     KernelWithWorkImmediate test;
     test.run(args);
@@ -34,4 +35,5 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(WorkItemIdUsage::None, WorkItemIdUsage::Global, WorkItemIdUsage::Local, WorkItemIdUsage::AtomicPerWorkgroup),
         ::CommonGtestArgs::workgroupCount(),
-        ::CommonGtestArgs::workgroupSize()));
+        ::CommonGtestArgs::workgroupSize(),
+        ::testing::Values(true, false)));

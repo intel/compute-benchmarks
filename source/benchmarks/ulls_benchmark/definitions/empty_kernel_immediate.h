@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,10 +13,13 @@
 struct EmptyKernelImmediateArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument workgroupCount;
     PositiveIntegerArgument workgroupSize;
+    BooleanFlagArgument useEventForHostSync;
 
     EmptyKernelImmediateArguments()
         : workgroupCount(*this, "wgc", "Workgroup count"),
-          workgroupSize(*this, "wgs", "Workgroup size (aka local work size)") {}
+          workgroupSize(*this, "wgs", "Workgroup size (aka local work size)"),
+          useEventForHostSync(*this, "UseEventForHostSync",
+                              "If true, use events to synchronize with host.If false, use zeCommandListHostSynchronize") {}
 };
 
 struct EmptyKernelImmediate : TestCase<EmptyKernelImmediateArguments> {

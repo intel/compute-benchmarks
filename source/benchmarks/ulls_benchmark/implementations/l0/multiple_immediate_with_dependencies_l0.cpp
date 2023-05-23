@@ -106,8 +106,14 @@ static TestResult run(const MultipleImmediateCmdListsWithDependenciesArguments &
             }
         }
 
-        for (auto i = 0u; i < totalEventCount; i++) {
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(events[i], std::numeric_limits<uint64_t>::max()));
+        if (arguments.useEventForHostSync) {
+            for (auto i = 0u; i < totalEventCount; i++) {
+                ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(events[i], std::numeric_limits<uint64_t>::max()));
+            }
+        } else {
+            for (auto i = 0u; i < arguments.cmdlistCount; i++) {
+                ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdLists[i], std::numeric_limits<uint64_t>::max()));
+            }
         }
         timer.measureEnd();
         for (auto i = 0u; i < totalEventCount; i++) {

@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<EmptyKernelImmediate> registerTestCase{};
 
-class EmptyKernelSubmissionImmediateTest : public ::testing::TestWithParam<std::tuple<size_t, size_t>> {
+class EmptyKernelSubmissionImmediateTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, bool>> {
 };
 
 TEST_P(EmptyKernelSubmissionImmediateTest, Test) {
@@ -22,6 +22,7 @@ TEST_P(EmptyKernelSubmissionImmediateTest, Test) {
     args.api = Api::L0;
     args.workgroupCount = std::get<0>(GetParam());
     args.workgroupSize = std::get<1>(GetParam());
+    args.useEventForHostSync = std::get<2>(GetParam());
 
     EmptyKernelImmediate test;
     test.run(args);
@@ -32,4 +33,5 @@ INSTANTIATE_TEST_SUITE_P(
     EmptyKernelSubmissionImmediateTest,
     ::testing::Combine(
         ::CommonGtestArgs::workgroupCount(),
-        ::CommonGtestArgs::workgroupSize()));
+        ::CommonGtestArgs::workgroupSize(),
+        ::testing::Values(true, false)));

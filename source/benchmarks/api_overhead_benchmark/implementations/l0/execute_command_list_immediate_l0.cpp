@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,11 +95,17 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
             timer.measureEnd();
             statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         }
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
+
+        if (arguments.useEventForHostSync) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
+        } else {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
+        }
         if (arguments.measureCompletionTime) {
             timer.measureEnd();
             statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         }
+        ASSERT_ZE_RESULT_SUCCESS(zeEventQueryStatus(event));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
