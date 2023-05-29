@@ -14,13 +14,13 @@
 #include "framework/utility/memory_constants.h"
 #include "framework/utility/timer.h"
 
-#include "definitions/remote_access.h"
+#include "definitions/full_remote_access.h"
 
 #include <gtest/gtest.h>
 
 using namespace MemoryConstants;
 
-static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &statistics) {
+static TestResult run(const FullRemoteAccessMemoryArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (isNoopRun()) {
@@ -41,36 +41,34 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
     }
 
     Timer timer;
+    const uint64_t fillValue = 0xffffffffffffffff;
 
-    size_t elementSize = sizeof(cl_double);
-    const size_t fillValue = 313u;
-    const uint32_t scalarValue = static_cast<uint32_t>(arguments.workItemPackSize);
-    const size_t n_th = arguments.remoteFraction;
+    const size_t bufferSize = arguments.size;
+    const size_t elementSize = arguments.elementSize;
+    const size_t workItems = arguments.workItems;
+    const bool blockAccess = arguments.blockAccess;
+
+    const uint32_t bufferLength = bufferSize / elementSize;
+    const uint32_t iterations = bufferLength / workItems;
 
     // Create kernel-specific buffers
     const char *kernelName = {};
-    const size_t bufferSize = arguments.size;
-    cl_mem buffers[3] = {};
+    cl_mem buffers[2] = {};
     size_t buffersCount = {};
-    size_t bufferSizes[3] = {bufferSize, bufferSize, bufferSize};
+    size_t bufferSizes[2] = {bufferSize, bufferSize};
 
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        kernelName = "remote_read";
+        kernelName = blockAccess ? "full_remote_block_read" : "full_remote_scatter_read";
         buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
         bufferSizes[buffersCount] = elementSize;
         buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, elementSize, nullptr, &retVal);
         break;
     case StreamMemoryType::Write:
-        kernelName = "remote_write";
+        kernelName = blockAccess ? "full_remote_block_write" : "full_remote_scatter_write";
         buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
         break;
     case StreamMemoryType::Triad:
-        kernelName = "remote_triad";
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
-        break;
     case StreamMemoryType::Scale:
         return TestResult::NoImplementation;
     default:
@@ -79,7 +77,18 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
 
     // Create kernel
     CompilerOptionsBuilder compilerOptions;
-    compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "double");
+    compilerOptions.addDefinitionKeyValue("ELEMENT_SIZE", elementSize);
+    if (elementSize == 1)
+        compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "char");
+    else if (elementSize == 2)
+        compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "short");
+    else if (elementSize == 4)
+        compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "int");
+    else if (elementSize == 8)
+        compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "long");
+    else
+        return TestResult::InvalidArgs;
+
     const char *programName = "memory_benchmark_stream_memory.cl";
     cl_program program{};
     if (auto result = ProgramHelperOcl::buildProgramFromSourceFile(opencl.context, opencl.device, programName, compilerOptions.str().c_str(), program); result != TestResult::Success) {
@@ -95,20 +104,20 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
     ASSERT_CL_SUCCESS(retVal);
 
     for (auto i = 0u; i < buffersCount; i++) {
-        ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, buffers[i], &fillValue, sizeof(fillValue), 0, bufferSizes[i], 0, nullptr, nullptr));
+        ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, buffers[i], &fillValue, elementSize, 0, bufferSizes[i], 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(i), sizeof(buffers[i]), &buffers[i]))
     }
-
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount), sizeof(scalarValue), &scalarValue));
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount + 1), sizeof(n_th), &n_th));
+    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount), sizeof(cl_uint), &bufferLength));
+    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount + 1), sizeof(cl_uint), &iterations));
 
     // Query max workgroup size
     size_t maxWorkgroupSize = {};
     clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(maxWorkgroupSize), &maxWorkgroupSize, nullptr);
 
     // Warm up
-    const size_t globalWorkSize = arguments.size / elementSize;
-    const size_t localWorkSize = maxWorkgroupSize;
+    const size_t globalWorkSize = workItems;
+    const size_t localWorkSize = workItems > maxWorkgroupSize ? maxWorkgroupSize : workItems;
+
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
@@ -122,16 +131,6 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
         timer.measureEnd();
 
         size_t transferSize = bufferSize;
-        switch (arguments.type) {
-        case StreamMemoryType::Scale:
-            transferSize *= 2;
-            break;
-        case StreamMemoryType::Triad:
-            transferSize *= 3;
-            break;
-        default:
-            break;
-        }
 
         if (eventForEnqueue) {
             cl_ulong timeNs{};
@@ -153,4 +152,4 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<RemoteAccessMemory> registerTestCase(run, Api::OpenCL);
+static RegisterTestCaseImplementation<FullRemoteAccessMemory> registerTestCase(run, Api::OpenCL);

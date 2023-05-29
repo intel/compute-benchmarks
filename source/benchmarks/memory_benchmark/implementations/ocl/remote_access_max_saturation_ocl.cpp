@@ -14,13 +14,13 @@
 #include "framework/utility/memory_constants.h"
 #include "framework/utility/timer.h"
 
-#include "definitions/remote_access.h"
+#include "definitions/remote_access_max_saturation.h"
 
 #include <gtest/gtest.h>
 
 using namespace MemoryConstants;
 
-static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &statistics) {
+static TestResult run(const RemoteAccessMaxSaturationArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (isNoopRun()) {
@@ -45,37 +45,14 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
     size_t elementSize = sizeof(cl_double);
     const size_t fillValue = 313u;
     const uint32_t scalarValue = static_cast<uint32_t>(arguments.workItemPackSize);
+
+    const size_t bufferSize = arguments.size;
     const size_t n_th = arguments.remoteFraction;
+    const uint32_t writesPerWorkgroup = arguments.writesPerWorkgroup;
 
     // Create kernel-specific buffers
-    const char *kernelName = {};
-    const size_t bufferSize = arguments.size;
-    cl_mem buffers[3] = {};
-    size_t buffersCount = {};
-    size_t bufferSizes[3] = {bufferSize, bufferSize, bufferSize};
-
-    switch (arguments.type) {
-    case StreamMemoryType::Read:
-        kernelName = "remote_read";
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
-        bufferSizes[buffersCount] = elementSize;
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, elementSize, nullptr, &retVal);
-        break;
-    case StreamMemoryType::Write:
-        kernelName = "remote_write";
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
-        break;
-    case StreamMemoryType::Triad:
-        kernelName = "remote_triad";
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
-        break;
-    case StreamMemoryType::Scale:
-        return TestResult::NoImplementation;
-    default:
-        FATAL_ERROR("Unknown StreamMemoryType");
-    }
+    const char *kernelName = "remote_max_saturation";
+    cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
 
     // Create kernel
     CompilerOptionsBuilder compilerOptions;
@@ -85,22 +62,20 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
     if (auto result = ProgramHelperOcl::buildProgramFromSourceFile(opencl.context, opencl.device, programName, compilerOptions.str().c_str(), program); result != TestResult::Success) {
         size_t numBytes = 0;
         ASSERT_CL_SUCCESS(clGetProgramBuildInfo(program, opencl.device, CL_PROGRAM_BUILD_LOG, 0, NULL, &numBytes));
-        auto buffer = std::make_unique<char[]>(numBytes);
-        ASSERT_CL_SUCCESS(clGetProgramBuildInfo(program, opencl.device, CL_PROGRAM_BUILD_LOG, numBytes, buffer.get(), &numBytes));
-        std::cout << buffer.get() << std::endl;
+        auto logBuffer = std::make_unique<char[]>(numBytes);
+        ASSERT_CL_SUCCESS(clGetProgramBuildInfo(program, opencl.device, CL_PROGRAM_BUILD_LOG, numBytes, logBuffer.get(), &numBytes));
+        std::cout << logBuffer.get() << std::endl;
 
         return result;
     }
     cl_kernel kernel = clCreateKernel(program, kernelName, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    for (auto i = 0u; i < buffersCount; i++) {
-        ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, buffers[i], &fillValue, sizeof(fillValue), 0, bufferSizes[i], 0, nullptr, nullptr));
-        ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(i), sizeof(buffers[i]), &buffers[i]))
-    }
-
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount), sizeof(scalarValue), &scalarValue));
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount + 1), sizeof(n_th), &n_th));
+    ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, buffer, &fillValue, sizeof(fillValue), 0, bufferSize, 0, nullptr, nullptr));
+    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(0), sizeof(buffer), &buffer))
+    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(1), sizeof(cl_uint), &scalarValue));
+    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(2), elementSize, &n_th));
+    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(3), sizeof(cl_uint), &writesPerWorkgroup));
 
     // Query max workgroup size
     size_t maxWorkgroupSize = {};
@@ -109,6 +84,11 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
     // Warm up
     const size_t globalWorkSize = arguments.size / elementSize;
     const size_t localWorkSize = maxWorkgroupSize;
+
+    if (writesPerWorkgroup > localWorkSize) {
+        return TestResult::DeviceNotCapable;
+    }
+
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
@@ -121,17 +101,7 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
 
-        size_t transferSize = bufferSize;
-        switch (arguments.type) {
-        case StreamMemoryType::Scale:
-            transferSize *= 2;
-            break;
-        case StreamMemoryType::Triad:
-            transferSize *= 3;
-            break;
-        default:
-            break;
-        }
+        size_t transferSize = bufferSize / localWorkSize * writesPerWorkgroup;
 
         if (eventForEnqueue) {
             cl_ulong timeNs{};
@@ -145,12 +115,10 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
     }
 
     // Cleanup
-    for (size_t i = 0; i < buffersCount; i++) {
-        ASSERT_CL_SUCCESS(clReleaseMemObject(buffers[i]));
-    }
+    ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<RemoteAccessMemory> registerTestCase(run, Api::OpenCL);
+static RegisterTestCaseImplementation<RemoteAccessMaxSaturation> registerTestCase(run, Api::OpenCL);
