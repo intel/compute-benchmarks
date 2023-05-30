@@ -120,7 +120,7 @@ static TestResult prepareWorkForBlitters(std::vector<PerBlitterWorkInfo> &blitte
         blitterWorkInfos.push_back(info);
 
         eventIndex++;
-        totalSize -= localSize;
+        totalSize -= static_cast<uint32_t>(localSize);
         engineCount--;
     }
     return TestResult::Success;
@@ -212,13 +212,13 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
     std::vector<PerBlitterWorkInfo> blitterWorkInfos;
 
     result = prepareWorkForBlitters(blitterWorkInfos, true, arguments.h2dBlitters, mainCopyOrdinal, linkCopyOrdinal,
-                                    queueProperties, h2dTransferBuffers.hostBuffer, h2dTransferBuffers.deviceBuffer, arguments.size,
+                                    queueProperties, h2dTransferBuffers.hostBuffer, h2dTransferBuffers.deviceBuffer, static_cast<uint32_t>(arguments.size),
                                     eventPool, eventIndex, levelzero);
     if (result != TestResult::Success) {
         return result;
     }
     result = prepareWorkForBlitters(blitterWorkInfos, false, arguments.d2hBlitters, mainCopyOrdinal, linkCopyOrdinal,
-                                    queueProperties, d2hTransferBuffers.deviceBuffer, d2hTransferBuffers.hostBuffer, arguments.size,
+                                    queueProperties, d2hTransferBuffers.deviceBuffer, d2hTransferBuffers.hostBuffer, static_cast<uint32_t>(arguments.size),
                                     eventPool, eventIndex, levelzero);
     if (result != TestResult::Success) {
         return result;

@@ -12,13 +12,15 @@
 #include "framework/test_case/test_case.h"
 
 struct QueueInOrderMemcpyArguments : TestCaseArgumentContainer {
+    BooleanArgument isCopyOnly;
     UsmMemoryPlacementArgument sourcePlacement;
     UsmMemoryPlacementArgument destinationPlacement;
     ByteSizeArgument size;
     PositiveIntegerArgument count;
 
     QueueInOrderMemcpyArguments()
-        : sourcePlacement(*this, "sourcePlacement", "Placement of the source buffer"),
+        : isCopyOnly(*this, "IsCopyOnly", "If true, Copy Engine is selected. If false, Compute Engine is selected"),
+          sourcePlacement(*this, "sourcePlacement", "Placement of the source buffer"),
           destinationPlacement(*this, "destinationPlacement", "Placement of the destination buffer"),
           size(*this, "size", "Size of memory allocation"),
           count(*this, "count", "Number of memcpy operations") {}

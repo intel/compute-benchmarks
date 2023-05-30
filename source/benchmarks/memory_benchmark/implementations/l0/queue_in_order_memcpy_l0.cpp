@@ -23,7 +23,13 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
     }
 
     // Setup
-    LevelZero levelzero;
+    QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.isCopyOnly).allowCreationFail();
+    ContextProperties contextProperties = ContextProperties::create();
+    ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(
+        (arguments.sourcePlacement == UsmMemoryPlacement::NonUsmImported ||
+         arguments.destinationPlacement == UsmMemoryPlacement::NonUsmImported));
+
+    LevelZero levelzero(queueProperties, contextProperties, extensionProperties);
     if (levelzero.commandQueue == nullptr) {
         return TestResult::DeviceNotCapable;
     }
@@ -37,7 +43,7 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
     // Create events
     ze_event_pool_handle_t eventPool{};
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
-    eventPoolDesc.count = arguments.count;
+    eventPoolDesc.count = static_cast<uint32_t>(arguments.count);
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
     std::vector<ze_event_handle_t> events;
     for (auto j = 0u; j < arguments.count; ++j) {
@@ -67,9 +73,9 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
             zeEventHostReset(event);
         }
         timer.measureStart();
-        ze_event_handle_t signalEvent = events[0];
+        signalEvent = events[0];
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, arguments.size, signalEvent, 0, nullptr));
-        ze_event_handle_t waitEvent = signalEvent;
+        waitEvent = signalEvent;
         for (auto j = 1u; j < arguments.count; ++j) {
             signalEvent = events[j];
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, arguments.size, signalEvent, 1, &waitEvent));
