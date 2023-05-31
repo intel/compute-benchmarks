@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<QueueInOrderMemcpy> registerTestCase{};
 
-class QueueInOrderMemcpyTest : public ::testing::TestWithParam<std::tuple<Api, UsmMemoryPlacement, UsmMemoryPlacement, size_t, size_t>> {};
+class QueueInOrderMemcpyTest : public ::testing::TestWithParam<std::tuple<Api, UsmMemoryPlacement, UsmMemoryPlacement, size_t, size_t, bool>> {};
 
 TEST_P(QueueInOrderMemcpyTest, Test) {
     QueueInOrderMemcpyArguments args{};
@@ -23,6 +23,7 @@ TEST_P(QueueInOrderMemcpyTest, Test) {
     args.destinationPlacement = std::get<2>(GetParam());
     args.size = std::get<3>(GetParam());
     args.count = std::get<4>(GetParam());
+    args.isCopyOnly = std::get<5>(GetParam());
     QueueInOrderMemcpy test;
     test.run(args);
 }
@@ -35,4 +36,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Shared, UsmMemoryPlacement::Device),
         ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Shared, UsmMemoryPlacement::Device),
         ::testing::Values(1 * MemoryConstants::megaByte),
-        ::testing::Values(10)));
+        ::testing::Values(10),
+        ::testing::Values(true, false)));
