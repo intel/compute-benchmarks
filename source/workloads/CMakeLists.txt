@@ -25,6 +25,7 @@ function(add_workload TARGET_NAME API)
     setup_output_directory(${TARGET_NAME})
 endfunction()
 
+add_subdirectory(init_workload_l0)
 add_subdirectory(single_queue_workload_l0)
 add_subdirectory(single_queue_workload_shared_buffer_l0)
 add_subdirectory(immediate_cmdlist_copy_workload_l0)
