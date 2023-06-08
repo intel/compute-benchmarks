@@ -12,6 +12,9 @@ function(add_workload TARGET_NAME API)
     if (BUILD_FOR_PUBLISHING)
         set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/workloads/${BASE_TARGET_NAME})
     endif()
+    if (HAVE_SYS_PIDFD_GETFD AND HAVE_SYS_PIDFD_OPEN)
+        target_compile_definitions(${TARGET_NAME} PUBLIC USE_PIDFD)
+    endif()
 
     # Add sources
     add_sources_to_benchmark(${TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR})
@@ -26,6 +29,7 @@ function(add_workload TARGET_NAME API)
 endfunction()
 
 add_subdirectory(init_workload_l0)
+add_subdirectory(heat3d_workload_l0)
 add_subdirectory(single_queue_workload_l0)
 add_subdirectory(single_queue_workload_shared_buffer_l0)
 add_subdirectory(immediate_cmdlist_copy_workload_l0)

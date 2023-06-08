@@ -7,6 +7,7 @@
 cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR)
 project(ComputeBenchmarks)
 include(CMakeOptions.cmake)
+include(CheckSymbolExists)
 set(PREDEFINED_TARGETS_FOLDER "CustomTargets")
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -91,6 +92,9 @@ endif()
 if(BUILD_OMP)
     set(CMAKE_CXX_COMPILER "icpx")
 endif()
+
+check_symbol_exists(SYS_pidfd_getfd "sys/syscall.h" HAVE_SYS_PIDFD_GETFD)
+check_symbol_exists(SYS_pidfd_open "sys/syscall.h" HAVE_SYS_PIDFD_OPEN)
 
 add_subdirectory(source)
 set_directory_properties(PROPERTIES VS_STARTUP_PROJECT ulls_benchmark_ocl)

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -25,6 +25,10 @@ endif()
 # Export all symbols on VS builds (so __dllexport is not required)
 if (MSVC)
     set_target_properties(${TARGET_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
+
+if (HAVE_SYS_PIDFD_GETFD AND HAVE_SYS_PIDFD_OPEN)
+    target_compile_definitions(${TARGET_NAME} PUBLIC USE_PIDFD)
 endif()
 
 # Additional setup

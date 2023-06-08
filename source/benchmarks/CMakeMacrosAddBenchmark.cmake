@@ -72,6 +72,9 @@ function (add_benchmark_for_api BASE_TARGET_NAME APPEND_API_TO_TARGET_NAME REGIS
     else()
         target_compile_definitions(${TARGET_NAME} PUBLIC BENCHMARK_VERSION="")
     endif()
+    if (HAVE_SYS_PIDFD_GETFD AND HAVE_SYS_PIDFD_OPEN)
+        target_compile_definitions(${TARGET_NAME} PUBLIC USE_PIDFD)
+    endif()
 
     # API agnostic sources
     set(API_AGNOSTIC_SOURCE_DIRECTORIES
