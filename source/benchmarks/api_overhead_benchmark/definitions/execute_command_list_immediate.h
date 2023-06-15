@@ -16,7 +16,7 @@ struct ExecuteCommandListImmediateArguments : TestCaseArgumentContainer {
     BooleanArgument measureCompletionTime;
     BooleanArgument useBarrierSynchronization;
     PositiveIntegerArgument kernelExecutionTime;
-    BooleanFlagArgument useEventForHostSync;
+    BooleanArgument useEventForHostSync;
 
     ExecuteCommandListImmediateArguments()
         : useProfiling(*this, "UseProfiling", "Pass a profiling ze_event_t to the API call"),
