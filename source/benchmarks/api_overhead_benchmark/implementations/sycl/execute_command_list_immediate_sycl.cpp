@@ -43,7 +43,7 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
         timer.measureEnd();
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
-    sycl.queue.parallel_for(range, empty).wait();
+    sycl.queue.wait();
 
     return TestResult::Success;
 }
