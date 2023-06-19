@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,7 +69,7 @@ static TestResult run(const SetKernelArgSvmPointerArguments &arguments, Statisti
 
     // Warmup
     for (auto i = 0u; i < arguments.allocationsCount; ++i) {
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[i], 0, arguments.noIntelExtensions, &allocations[i]));
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[i], 0, sizeof(void *), &allocations[i]));
     }
 
     // Reallocate if argument is set
@@ -84,7 +84,7 @@ static TestResult run(const SetKernelArgSvmPointerArguments &arguments, Statisti
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         for (auto j = 0u; j < arguments.allocationsCount; ++j) {
-            ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[j], 0, arguments.noIntelExtensions, &allocations[j]));
+            ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[j], 0, sizeof(void *), &allocations[j]));
         }
         timer.measureEnd();
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
