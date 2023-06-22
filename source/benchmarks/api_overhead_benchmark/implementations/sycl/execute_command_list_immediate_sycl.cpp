@@ -37,9 +37,13 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
+        for (auto iteration = 0u; iteration < arguments.amountOfCalls; iteration++) {
+            sycl.queue.parallel_for(range, empty);
+        }
 
-        sycl.queue.parallel_for(range, empty);
-
+        if (arguments.measureCompletionTime) {
+            sycl.queue.wait();
+        }
         timer.measureEnd();
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
