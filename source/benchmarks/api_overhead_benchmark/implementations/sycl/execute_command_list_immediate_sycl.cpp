@@ -32,17 +32,30 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
     const auto empty = [=]([[maybe_unused]] auto i) {};
 
     // Warmup
-    sycl.queue.parallel_for(range, empty).wait();
+    auto event = sycl.queue.parallel_for(range, empty);
+    if (arguments.useEventForHostSync) {
+        event.wait();
+    } else {
+        sycl.queue.wait();
+    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         for (auto iteration = 0u; iteration < arguments.amountOfCalls; iteration++) {
-            sycl.queue.parallel_for(range, empty);
+            if (arguments.useEventForHostSync) {
+                event = sycl.queue.parallel_for(range, event, empty);
+            } else {
+                sycl.queue.parallel_for(range, empty);
+            }
         }
 
         if (arguments.measureCompletionTime) {
-            sycl.queue.wait();
+            if (arguments.useEventForHostSync) {
+                event.wait();
+            } else {
+                sycl.queue.wait();
+            }
         }
         timer.measureEnd();
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
