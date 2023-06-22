@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,11 +52,12 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, 0, hostMemory));
     const size_t gws = 1;
     const size_t lws = 1;
+
+    // Warmup
+    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
+    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
+
     for (auto i = 0u; i < arguments.iterations; i++) {
-        // Warmup, kernel
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
-        ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-        ASSERT_CL_SUCCESS(retVal);
 
         // Reset value
         *volatileHostMemory = 0;
@@ -66,7 +67,6 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFlush(opencl.commandQueue));
-        ASSERT_CL_SUCCESS(retVal);
 
         while (*volatileHostMemory != 1) {
         }
