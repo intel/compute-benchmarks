@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,6 +105,14 @@ static TestResult run(const KernelSetArgumentValueImmediateArguments &arguments,
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
+        if (arguments.differentValues) {
+            ++kernelArgument8.values[1];
+            ++kernelArgument64.values[15];
+            ++kernelArgument256.values[63];
+            ++kernelArgument512.values[127];
+            ++kernelArgument1024.values[255];
+            ++kernelArgument2048.values[511];
+        }
         switch (arguments.argumentSize) {
         case 8:
             timer.measureStart();

@@ -13,13 +13,14 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelSetArgumentValueImmediate> registerTestCase{};
 
-class KernelSetArgumentValueImmediateTest : public ::testing::TestWithParam<size_t> {
+class KernelSetArgumentValueImmediateTest : public ::testing::TestWithParam<std::tuple<bool, size_t>> {
 };
 
 TEST_P(KernelSetArgumentValueImmediateTest, Test) {
     KernelSetArgumentValueImmediateArguments args{};
     args.api = Api::L0;
-    args.argumentSize = GetParam();
+    args.differentValues = std::get<0>(GetParam());
+    args.argumentSize = std::get<1>(GetParam());
 
     KernelSetArgumentValueImmediate test;
     test.run(args);
@@ -28,4 +29,6 @@ TEST_P(KernelSetArgumentValueImmediateTest, Test) {
 INSTANTIATE_TEST_SUITE_P(
     KernelSetArgumentValueImmediateTest,
     KernelSetArgumentValueImmediateTest,
-    ::testing::Values(8, 64, 256, 512, 1024, 2048));
+    ::testing::Combine(
+        ::testing::Bool(),
+        ::testing::Values(8, 64, 256, 512, 1024, 2048)));

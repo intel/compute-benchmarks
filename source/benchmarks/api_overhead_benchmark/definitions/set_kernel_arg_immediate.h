@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,11 @@
 
 struct KernelSetArgumentValueImmediateArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument argumentSize;
+    BooleanArgument differentValues;
 
     KernelSetArgumentValueImmediateArguments()
-        : argumentSize(*this, "argSize", "Kernel argument size in bytes") {}
+        : argumentSize(*this, "argSize", "Kernel argument size in bytes"),
+          differentValues(*this, "differentValues", "Use different values for arguments each iteration") {}
 };
 
 struct KernelSetArgumentValueImmediate : TestCase<KernelSetArgumentValueImmediateArguments> {
