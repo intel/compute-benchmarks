@@ -12,7 +12,7 @@
 
 struct MultipleImmediateCmdListsWithDependenciesArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument cmdlistCount;
-    BooleanFlagArgument useEventForHostSync;
+    BooleanArgument useEventForHostSync;
     MultipleImmediateCmdListsWithDependenciesArguments()
         : cmdlistCount(*this, "cmdlistCount", "Count of command lists"),
           useEventForHostSync(*this, "UseEventForHostSync",

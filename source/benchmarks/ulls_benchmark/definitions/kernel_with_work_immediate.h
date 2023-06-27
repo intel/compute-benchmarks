@@ -17,7 +17,7 @@ struct KernelWithWorkImmediateArguments : TestCaseArgumentContainer {
     WorkItemIdUsageArgument usedIds;
     PositiveIntegerArgument workgroupCount;
     PositiveIntegerArgument workgroupSize;
-    BooleanFlagArgument useEventForHostSync;
+    BooleanArgument useEventForHostSync;
 
     KernelWithWorkImmediateArguments()
         : usedIds(*this, "usedIds", "Which of the get_global_id() and get_local_id() calls will be used in the kernel"),

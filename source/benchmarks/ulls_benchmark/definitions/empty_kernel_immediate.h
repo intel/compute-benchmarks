@@ -13,7 +13,7 @@
 struct EmptyKernelImmediateArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument workgroupCount;
     PositiveIntegerArgument workgroupSize;
-    BooleanFlagArgument useEventForHostSync;
+    BooleanArgument useEventForHostSync;
 
     EmptyKernelImmediateArguments()
         : workgroupCount(*this, "wgc", "Workgroup count"),
