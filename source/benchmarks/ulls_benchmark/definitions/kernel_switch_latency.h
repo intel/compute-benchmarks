@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,12 +15,14 @@
 
 struct KernelSwitchLatencyArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument kernelCount;
+    PositiveIntegerArgument kernelExecutionTime;
     BooleanArgument flushBetweenEnqueues;
     BooleanArgument barrier;
     BooleanArgument hostVisible;
 
     KernelSwitchLatencyArguments()
         : kernelCount(*this, "kernelCount", "Count of kernels"),
+          kernelExecutionTime(*this, "kernelExecutionTime", "Approximately how long a single kernel executes, in us"),
           flushBetweenEnqueues(*this, "flush", "Flush between kernels"),
           barrier(*this, "barrier", "synchronization with barrier instead of events"),
           hostVisible(*this, "hostVisible", "events are with host visible flag") {}

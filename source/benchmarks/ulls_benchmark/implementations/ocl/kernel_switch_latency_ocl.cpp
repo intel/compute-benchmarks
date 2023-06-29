@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,13 +33,8 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     const size_t gws = 1024 * 1024u;
     const size_t lws = 64u;
 
-    // Create buffer
-    const auto bufferSize = sizeof(cl_int) * gws;
-    cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
-    ASSERT_CL_SUCCESS(retVal);
-
     // Create kernel
-    const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile(selectKernel(WorkItemIdUsage::Global, "cl"));
+    const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile("ulls_benchmark_eat_time.cl");
     if (kernelSource.size() == 0) {
         return TestResult::KernelNotFound;
     }
@@ -48,11 +43,12 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     cl_program program = clCreateProgramWithSource(opencl.context, 1, &source, &sourceLength, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     ASSERT_CL_SUCCESS(clBuildProgram(program, 1, &opencl.device, nullptr, nullptr, nullptr));
-    cl_kernel kernel = clCreateKernel(program, "write_one", &retVal);
+    cl_kernel kernel = clCreateKernel(program, "eat_time", &retVal);
     ASSERT_CL_SUCCESS(retVal);
+    const int kernelOperationsCount = std::max(0, static_cast<int>(arguments.kernelExecutionTime * 1.75));
 
     // Warmup, kernel
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
+    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(int), &kernelOperationsCount));
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
     ASSERT_CL_SUCCESS(retVal);
@@ -103,7 +99,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
-    ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
     return TestResult::Success;
 }
 

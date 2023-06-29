@@ -27,17 +27,11 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    const size_t gws = 1024 * 1024 * 128;
-    const size_t lws = 256u;
-
-    // Create output buffer
-    const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-    void *buffer = nullptr;
-    const auto bufferSize = sizeof(uint32_t) * gws;
-    ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffer));
+    const size_t gws = 1024u;
+    const size_t lws = 64u;
 
     // Create kernel
-    auto spirvModule = FileHelper::loadBinaryFile("ulls_benchmark_write_one_global_ids.spv");
+    auto spirvModule = FileHelper::loadBinaryFile("ulls_benchmark_eat_time.spv");
     if (spirvModule.size() == 0) {
         return TestResult::KernelNotFound;
     }
@@ -49,10 +43,11 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     moduleDesc.inputSize = spirvModule.size();
     ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "write_one";
+    kernelDesc.pKernelName = "eat_time";
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(lws), 1u, 1u));
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
+    int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime * 8);
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
 
     // Create command list and append kernel
     const ze_group_count_t groupCount{static_cast<uint32_t>(gws / lws), 1u, 1u};
@@ -82,7 +77,7 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(hEventPool, &eventDesc, &profilingEvents[i]));
     }
 
-    for (auto iteartion = 0u; iteartion < arguments.iterations; iteartion++) {
+    for (auto iteration = 0u; iteration < arguments.iterations; ++iteration) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, profilingEvents[0], 0, nullptr));
         for (auto j = 1u; j < arguments.kernelCount; j++) {
             if (arguments.barrier) {
@@ -113,7 +108,6 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
-    ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffer));
     for (auto &hEvent : profilingEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(hEvent));
     }
