@@ -63,6 +63,14 @@ SeparateAtomicsExplicit|enqueues kernel performing an atomic operation on differ
 
 
 
+# emu_benchmark
+Emulation Benchmark is a set of tests aimed at measuring performance of emulated math operations performed in kernels.
+| Test name | Description | Params | L0 | OCL |
+|-----------|-------------|--------|----|-----|
+Int64Div|enqueues kernel performing an int64 division emulation|<ul><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li><li>--wgc Work group count</li><li>--wgs Work group size</li></ul>|:x:|:heavy_check_mark:|
+
+
+
 # eu_benchmark
 EU Benchmark is a set of tests aimed at measuring performance of calculations performed in kernels.
 | Test name | Description | Params | L0 | OCL |
