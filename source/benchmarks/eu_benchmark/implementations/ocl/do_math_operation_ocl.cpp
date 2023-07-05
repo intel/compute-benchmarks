@@ -60,10 +60,6 @@ std::string getCompilerOptions(DataType dataType, MathOperation operation) {
         FATAL_ERROR("Invalid math operation");
     }
 
-    if (operation == MathOperation::Div && dataType == DataType::Int64) {
-        options.addMacro("INT64_DIV", {}, "");
-    }
-
     return options.str();
 }
 
@@ -141,16 +137,7 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
     // Verify
     std::byte result[8] = {};
     ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, data.sizeOfDataType, result, 0, nullptr, nullptr));
-    const void *expectedValue = &data.expectedValue;
-
-    // By repeating int64 division by 2 over and over we end up with int32 values.
-    // To keep operands in int64 boundaries, test resets value every 32 operations
-    // (divisions). This also resets value at the end of the test.
-    if (arguments.operation == MathOperation::Div && arguments.dataType == DataType::Int64) {
-        expectedValue = &data.initialValue;
-    }
-
-    if (std::memcmp(result, expectedValue, data.sizeOfDataType) != 0) {
+    if (std::memcmp(result, data.expectedValue, data.sizeOfDataType) != 0) {
         return TestResult::VerificationFail;
     }
 
