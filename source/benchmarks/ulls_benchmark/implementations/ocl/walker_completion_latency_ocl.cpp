@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,8 @@ static TestResult run(const WalkerCompletionLatencyArguments &arguments, Statist
     }
 
     // Setup
-    Opencl opencl;
+    QueueProperties queueProperties = QueueProperties::create().setOoq(!arguments.inOrderQueue);
+    Opencl opencl(queueProperties);
     Timer timer;
     auto clHostMemAllocINTEL = (pfn_clHostMemAllocINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clHostMemAllocINTEL");
     auto clMemFreeINTEL = (pfn_clMemFreeINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clMemFreeINTEL");

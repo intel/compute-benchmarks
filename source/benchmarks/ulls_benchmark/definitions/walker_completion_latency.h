@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,10 @@
 
 struct WalkerCompletionLatencyArguments : TestCaseArgumentContainer {
     BooleanArgument useFence;
-    WalkerCompletionLatencyArguments() : useFence(*this, "useFence", "Use fence during submission and for further completion.") {
+    BooleanArgument inOrderQueue;
+    WalkerCompletionLatencyArguments()
+        : useFence(*this, "useFence", "Use fence during submission and for further completion."),
+          inOrderQueue(*this, "inOrderQueue", "If set use IOQ, otherwise OOQ. Applicable only for OCL.") {
     }
 };
 

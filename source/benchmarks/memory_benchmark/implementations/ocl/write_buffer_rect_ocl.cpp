@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,8 @@ static TestResult run(const WriteBufferRectArguments &arguments, Statistics &sta
     }
 
     // Setup
-    Opencl opencl;
+    QueueProperties queueProperties = QueueProperties::create().setOoq(!arguments.inOrderQueue);
+    Opencl opencl(queueProperties);
     Timer timer;
     cl_int retVal;
 

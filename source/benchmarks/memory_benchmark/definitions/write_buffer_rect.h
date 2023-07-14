@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@ struct WriteBufferRectArguments : TestCaseArgumentContainer {
     ThreeComponentSizeArgument region;
     ByteSizeArgument rPitch;
     ByteSizeArgument sPitch;
+    BooleanArgument inOrderQueue;
 
     WriteBufferRectArguments()
         : size(*this, "size", "Size of the buffer"),
@@ -26,7 +27,8 @@ struct WriteBufferRectArguments : TestCaseArgumentContainer {
           origin(*this, "origin", "Origin of the rectangle"),
           region(*this, "region", "Size of the rectangle"),
           rPitch(*this, "rPitch", "Row pitch of the rectangle"),
-          sPitch(*this, "sPitch", "Silice pitch of the rectangle") {}
+          sPitch(*this, "sPitch", "Silice pitch of the rectangle"),
+          inOrderQueue(*this, "inOrderQueue", "If set use IOQ, otherwise OOQ. Applicable only for OCL.") {}
 };
 
 struct WriteBufferRect : TestCase<WriteBufferRectArguments> {
