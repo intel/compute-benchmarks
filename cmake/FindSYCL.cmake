@@ -28,6 +28,10 @@ else()
     message(STATUS "Intel SYCL installation found")
     string(REGEX REPLACE " $" "" SYCL_FLAGS "${SYCL_FLAGS}")
     
+    if(BUILD_SYCL_WITH_CUDA)
+        set(SYCL_FLAGS "${SYCL_FLAGS} -fsycl-targets=nvptx64-nvidia-cuda,spir64")
+    endif()
+
     set(SYCL_FOUND TRUE)
     set(SYCL_CFLAGS "${SYCL_FLAGS}" CACHE STRING "SYCL Compiler Flags")
     set(SYCL_LFLAGS "${SYCL_CFLAGS} -lsycl" CACHE STRING "SYCL Linker Flags")

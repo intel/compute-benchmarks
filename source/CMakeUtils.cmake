@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -31,7 +31,7 @@ endfunction()
 function(setup_warning_options TARGET_NAME)
     target_compile_options(${TARGET_NAME} PRIVATE
       $<$<CXX_COMPILER_ID:MSVC>:/W4>
-      $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Wno-missing-field-initializers>
+      $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Wno-missing-field-initializers -Wno-unknown-cuda-version>
     )
 
     if(NOT ALLOW_WARNINGS)
