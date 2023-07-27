@@ -13,13 +13,14 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<ExecuteCommandListWithIndirectAccess> registerTestCase{};
 
-class ExecuteCommandListTestWithIndirectAccessTest : public ::testing::TestWithParam<size_t> {
+class ExecuteCommandListTestWithIndirectAccessTest : public ::testing::TestWithParam<std::tuple<size_t, bool>> {
 };
 
 TEST_P(ExecuteCommandListTestWithIndirectAccessTest, Test) {
     ExecuteCommandListWithIndirectAccessArguments args{};
     args.api = Api::L0;
-    args.IndirectAllocationsAmount = GetParam();
+    args.IndirectAllocationsAmount = std::get<0>(GetParam());
+    args.AllocateMemory = std::get<1>(GetParam());
 
     ExecuteCommandListWithIndirectAccess test;
     test.run(args);
@@ -28,4 +29,6 @@ TEST_P(ExecuteCommandListTestWithIndirectAccessTest, Test) {
 INSTANTIATE_TEST_SUITE_P(
     ExecuteCommandListTestWithIndirectAccessTest,
     ExecuteCommandListTestWithIndirectAccessTest,
-    ::testing::Values(10u, 100u, 1000u));
+    ::testing::Combine(
+        ::testing::Values(10u, 100u, 1000u),
+        ::testing::Values(false, true)));

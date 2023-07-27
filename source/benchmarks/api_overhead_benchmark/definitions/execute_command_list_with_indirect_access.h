@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,11 @@
 
 struct ExecuteCommandListWithIndirectAccessArguments : TestCaseArgumentContainer {
     IntegerArgument IndirectAllocationsAmount;
+    BooleanArgument AllocateMemory;
 
     ExecuteCommandListWithIndirectAccessArguments()
-        : IndirectAllocationsAmount(*this, "AmountOfIndirectAllocations", "Amount of indirect allocations that are present in system") {}
+        : IndirectAllocationsAmount(*this, "AmountOfIndirectAllocations", "Amount of indirect allocations that are present in system"),
+          AllocateMemory(*this, "AllocateMemory", "If set then prior to measurement new allocation is done and made resident.") {}
 };
 
 struct ExecuteCommandListWithIndirectAccess : TestCase<ExecuteCommandListWithIndirectAccessArguments> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,6 +99,13 @@ static TestResult run(const ExecuteCommandListWithIndirectAccessArguments &argum
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
+        void *temporaryPtr = nullptr;
+
+        if (arguments.AllocateMemory) {
+            const ze_device_mem_alloc_desc_t deviceAllocationDescriptor{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+            ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDescriptor, 4u, 4u, levelzero.device, &temporaryPtr));
+            ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, temporaryPtr, 4u));
+        }
 
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
@@ -108,6 +115,10 @@ static TestResult run(const ExecuteCommandListWithIndirectAccessArguments &argum
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
         EXPECT_EQ(arguments.IndirectAllocationsAmount, *wrappedIndirectAllocations.at(0)->value);
         *wrappedIndirectAllocations.at(0)->value = 0;
+
+        if (arguments.AllocateMemory) {
+            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, temporaryPtr));
+        }
     }
 
     // Cleanup
