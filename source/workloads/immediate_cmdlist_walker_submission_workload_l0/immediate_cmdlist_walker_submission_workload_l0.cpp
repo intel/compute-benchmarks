@@ -47,8 +47,8 @@ TestResult run(const ImmediateCmdListWalkerSubmissionArguments &arguments, Stati
     ze_command_queue_desc_t commandQueueDesc = {};
     commandQueueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    commandQueueDesc.ordinal = arguments.ordinal;
-    commandQueueDesc.index = arguments.engineIndex;
+    commandQueueDesc.ordinal = static_cast<uint32_t>(arguments.ordinal);
+    commandQueueDesc.index = static_cast<uint32_t>(arguments.engineIndex);
 
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
