@@ -9,5 +9,6 @@
 
 enum class TestType {
     Regular,
-    Extended
+    Extended,
+    ReducedSizeCAL
 };

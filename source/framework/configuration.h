@@ -75,6 +75,7 @@ struct Configuration : ArgumentContainer {
 
     // Test specific params
     BooleanFlagArgument extended;
+    BooleanFlagArgument reducedSizeCAL;
 };
 
 inline bool isNoopRun() {

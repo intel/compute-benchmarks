@@ -39,7 +39,8 @@ Configuration::Configuration()
       testFilter(*this, "testFilter", "filter tests by their names"),
       returnSubmissionTimeInsteadOfWorkloadTime(*this, "forceSubmissionProfiling", "Overrides profiling to return submission time instead of workload time"),
       markTimers(*this, "markTimers", "Provides prints around Timer Start & End"),
-      extended(*this, "extended", "Run the benchmark with extended parameters") {
+      extended(*this, "extended", "Run the benchmark with extended parameters"),
+      reducedSizeCAL(*this, "reducedSizeCAL", "Run benchmark with lower buffer size") {
 
     // Diagnostic params
     help = false;

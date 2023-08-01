@@ -7,14 +7,16 @@
 
 #include "definitions/execute_command_list_immediate_copy_queue.h"
 
+#include "framework/enum/test_type.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
+#include "framework/utility/test_type_skip.h"
 
 #include <gtest/gtest.h>
 
 [[maybe_unused]] static const inline RegisterTestCase<ExecuteCommandListImmediateCopyQueue> registerTestCase{};
 
-class ExecuteCommandListImmediateCopyQueueTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, UsmMemoryPlacement, UsmMemoryPlacement, size_t>> {
+class ExecuteCommandListImmediateCopyQueueTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, UsmMemoryPlacement, UsmMemoryPlacement, size_t, TestType>> {
 };
 
 TEST_P(ExecuteCommandListImmediateCopyQueueTest, Test) {
@@ -25,6 +27,12 @@ TEST_P(ExecuteCommandListImmediateCopyQueueTest, Test) {
     args.sourcePlacement = std::get<3>(GetParam());
     args.destinationPlacement = std::get<4>(GetParam());
     args.size = std::get<5>(GetParam());
+
+    const auto testType = std::get<6>(GetParam());
+    if (isTestSkipped(Configuration::get().reducedSizeCAL, testType)) {
+        GTEST_SKIP();
+    }
+
     ExecuteCommandListImmediateCopyQueue test;
     test.run(args);
 }
@@ -40,4 +48,17 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
-        ::testing::Values(512 * megaByte)));
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(TestType::Regular)));
+
+INSTANTIATE_TEST_SUITE_P(
+    ExecuteCommandListImmediateCopyQueueTestWithLowerSize,
+    ExecuteCommandListImmediateCopyQueueTest,
+    ::testing::Combine(
+        ::CommonGtestArgs::allApis(),
+        ::testing::Values(true, false),
+        ::testing::Values(false, true),
+        ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
+        ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
+        ::testing::Values(128 * megaByte),
+        ::testing::Values(TestType::ReducedSizeCAL)));
