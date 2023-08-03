@@ -6,14 +6,14 @@
 # SPDX-License-Identifier: MIT
 #
 
-# substitute first argument with icpx
+# substitute first argument with SYCL compiler name
 # if the command line contains -fsycl,
 # otherwise run as is
 
 set -e
 
 if [[ " $@ " =~ .*\ -fsycl\ .* ]]; then
-    icpx "${@:2}"
+    @SYCL_COMPILER@ "${@:2}"
 else
     "$@"
 fi
