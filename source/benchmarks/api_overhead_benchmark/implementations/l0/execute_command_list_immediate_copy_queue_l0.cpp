@@ -58,6 +58,9 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
     // Create an immediate command list
     ze_command_list_handle_t cmdList{};
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, queueProperties.selectedEngine);
+    if (arguments.useIoq) {
+        commandQueueDesc->desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
 
     // Warmup

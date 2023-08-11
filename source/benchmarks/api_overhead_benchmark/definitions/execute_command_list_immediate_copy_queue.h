@@ -17,13 +17,15 @@ struct ExecuteCommandListImmediateCopyQueueArguments : TestCaseArgumentContainer
     UsmMemoryPlacementArgument sourcePlacement;
     UsmMemoryPlacementArgument destinationPlacement;
     ByteSizeArgument size;
+    BooleanArgument useIoq;
 
     ExecuteCommandListImmediateCopyQueueArguments()
         : isCopyOnly(*this, "IsCopyOnly", "If true, Copy Engine is selected. If false, Compute Engine is selected"),
           measureCompletionTime(*this, "MeasureCompletionTime", "Measures time taken to complete the submission (default is to measure only Immediate call)"),
           sourcePlacement(*this, "src", "Placement of the source buffer"),
           destinationPlacement(*this, "dst", "Placement of the destination buffer"),
-          size(*this, "size", "Size of the buffer") {}
+          size(*this, "size", "Size of the buffer"),
+          useIoq(*this, "ioq", "Use In order queue") {}
 };
 
 struct ExecuteCommandListImmediateCopyQueue : TestCase<ExecuteCommandListImmediateCopyQueueArguments> {

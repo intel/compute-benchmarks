@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,11 @@
 
 struct DestroyCommandListImmediateArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument cmdListCount;
+    BooleanArgument useIoq;
 
     DestroyCommandListImmediateArguments()
-        : cmdListCount(*this, "CmdListCount", "Number of immediate cmdlists to create") {}
+        : cmdListCount(*this, "CmdListCount", "Number of immediate cmdlists to create"),
+          useIoq(*this, "ioq", "Use In order queue") {}
 };
 
 struct DestroyCommandListImmediate : TestCase<DestroyCommandListImmediateArguments> {

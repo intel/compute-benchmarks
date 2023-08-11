@@ -13,7 +13,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<ExecuteCommandListImmediateMultiKernel> registerTestCase{};
 
-class ExecuteCommandListImmediateMultiKernelTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, bool, size_t, size_t>> {
+class ExecuteCommandListImmediateMultiKernelTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, bool, size_t, size_t, bool>> {
 };
 
 TEST_P(ExecuteCommandListImmediateMultiKernelTest, Test) {
@@ -24,6 +24,7 @@ TEST_P(ExecuteCommandListImmediateMultiKernelTest, Test) {
     args.addBarrier = std::get<2>(GetParam());
     args.numKernelsBeforeBarrier = std::get<3>(GetParam());
     args.numKernelsAfterBarrier = std::get<4>(GetParam());
+    args.useIoq = std::get<5>(GetParam());
 
     ExecuteCommandListImmediateMultiKernel test;
     test.run(args);
@@ -37,4 +38,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1u, 10u, 100u),
         ::testing::Values(false, true),
         ::testing::Values(2u),
-        ::testing::Values(2u)));
+        ::testing::Values(2u),
+        ::testing::Values(false, true)));

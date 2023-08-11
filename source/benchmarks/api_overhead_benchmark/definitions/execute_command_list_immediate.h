@@ -17,6 +17,7 @@ struct ExecuteCommandListImmediateArguments : TestCaseArgumentContainer {
     BooleanArgument useBarrierSynchronization;
     PositiveIntegerArgument kernelExecutionTime;
     BooleanArgument useEventForHostSync;
+    BooleanArgument useIoq;
 
     ExecuteCommandListImmediateArguments()
         : useProfiling(*this, "UseProfiling", "Pass a profiling ze_event_t to the API call"),
@@ -25,7 +26,8 @@ struct ExecuteCommandListImmediateArguments : TestCaseArgumentContainer {
           useBarrierSynchronization(*this, "useBarrierSynchronization", "Uses barrier synchronization instead of waiting for event from last kernel"),
           kernelExecutionTime(*this, "KernelExecutionTime", "How long a single kernel executes, in us"),
           useEventForHostSync(*this, "UseEventForHostSync",
-                              "If true, use events to synchronize with host. If false, use zeCommandListHostSynchronize") {}
+                              "If true, use events to synchronize with host. If false, use zeCommandListHostSynchronize"),
+          useIoq(*this, "ioq", "Use In order queue") {}
 };
 
 struct ExecuteCommandListImmediate : TestCase<ExecuteCommandListImmediateArguments> {

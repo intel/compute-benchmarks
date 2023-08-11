@@ -16,7 +16,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<ExecuteCommandListImmediateCopyQueue> registerTestCase{};
 
-class ExecuteCommandListImmediateCopyQueueTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, UsmMemoryPlacement, UsmMemoryPlacement, size_t, TestType>> {
+class ExecuteCommandListImmediateCopyQueueTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, UsmMemoryPlacement, UsmMemoryPlacement, size_t, bool, TestType>> {
 };
 
 TEST_P(ExecuteCommandListImmediateCopyQueueTest, Test) {
@@ -27,8 +27,9 @@ TEST_P(ExecuteCommandListImmediateCopyQueueTest, Test) {
     args.sourcePlacement = std::get<3>(GetParam());
     args.destinationPlacement = std::get<4>(GetParam());
     args.size = std::get<5>(GetParam());
+    args.useIoq = std::get<6>(GetParam());
 
-    const auto testType = std::get<6>(GetParam());
+    const auto testType = std::get<7>(GetParam());
     if (isTestSkipped(Configuration::get().reducedSizeCAL, testType)) {
         GTEST_SKIP();
     }
@@ -49,6 +50,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
         ::testing::Values(512 * megaByte),
+        ::testing::Values(false, true),
         ::testing::Values(TestType::Regular)));
 
 INSTANTIATE_TEST_SUITE_P(
@@ -61,4 +63,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
         ::testing::Values(128 * megaByte),
+        ::testing::Values(false, true),
         ::testing::Values(TestType::ReducedSizeCAL)));

@@ -28,6 +28,9 @@ static TestResult run(const AppendWaitOnEventsImmediateArguments &arguments, Sta
 
     // create command list
     ze_command_queue_desc_t commandQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    if (arguments.useIoq) {
+        commandQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    }
     ze_command_list_handle_t commandList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &commandList));
 

@@ -13,13 +13,14 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<CreateCommandListImmediate> registerTestCase{};
 
-class CreateCommandListImmediateTest : public ::testing::TestWithParam<size_t> {
+class CreateCommandListImmediateTest : public ::testing::TestWithParam<std::tuple<size_t, bool>> {
 };
 
 TEST_P(CreateCommandListImmediateTest, Test) {
     CreateCommandListImmediateArguments args{};
     args.api = Api::L0;
-    args.cmdListCount = GetParam();
+    args.cmdListCount = std::get<0>(GetParam());
+    args.useIoq = std::get<1>(GetParam());
     CreateCommandListImmediate test;
     test.run(args);
 }
@@ -27,4 +28,6 @@ TEST_P(CreateCommandListImmediateTest, Test) {
 INSTANTIATE_TEST_SUITE_P(
     CreateCommandListImmediateTest,
     CreateCommandListImmediateTest,
-    ::testing::Values(100, 1000));
+    ::testing::Combine(
+        ::testing::Values(false, true),
+        ::testing::Values(100, 1000)));

@@ -68,6 +68,9 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
     const ze_group_count_t groupCount{1, 1, 1};
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    if (arguments.useIoq) {
+        commandQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    }
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,11 @@
 
 struct CreateCommandListImmediateArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument cmdListCount;
+    BooleanArgument useIoq;
 
     CreateCommandListImmediateArguments()
-        : cmdListCount(*this, "CmdListCount", "Number of cmdlists to create") {}
+        : cmdListCount(*this, "CmdListCount", "Number of cmdlists to create"),
+          useIoq(*this, "ioq", "Use In order queue") {}
 };
 
 struct CreateCommandListImmediate : TestCase<CreateCommandListImmediateArguments> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,10 @@
 
 struct AppendWaitOnEventsImmediateArguments : TestCaseArgumentContainer {
     BooleanArgument eventSignaled;
+    BooleanArgument useIoq;
 
-    AppendWaitOnEventsImmediateArguments() : eventSignaled(*this, "eventSignaled", "Event is already signaled before zeCommandListAppendWaitOnEvents call") {}
+    AppendWaitOnEventsImmediateArguments() : eventSignaled(*this, "eventSignaled", "Event is already signaled before zeCommandListAppendWaitOnEvents call"),
+                                             useIoq(*this, "ioq", "Use In order queue") {}
 };
 
 struct AppendWaitOnEventsImmediate : TestCase<AppendWaitOnEventsImmediateArguments> {
