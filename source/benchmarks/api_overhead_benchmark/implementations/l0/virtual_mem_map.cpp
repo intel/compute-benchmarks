@@ -22,52 +22,50 @@ static size_t getPageAlignedSize(size_t requestedSize, size_t pageSize) {
     }
 }
 
-static TestResult doVirtualMemMap(LevelZero &levelzero, const VirtualMemMapArguments &arguments, Timer &timer) {
+static TestResult prepareVirtualMemoryMaps(LevelZero &levelzero, const size_t reserveSize,
+                                           std::vector<void *> &reservedMemlist,
+                                           std::vector<ze_physical_mem_handle_t> &physicalMemoryHandleList,
+                                           const uint32_t iterationCount) {
 
-    size_t pageSize = 0;
-    size_t reserveSize = arguments.reserveSize;
-    ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemQueryPageSize(levelzero.context, levelzero.device,
-                                                       arguments.reserveSize, &pageSize));
-    reserveSize = getPageAlignedSize(reserveSize, pageSize);
+    reservedMemlist.clear();
+    physicalMemoryHandleList.clear();
 
-    // Allocate Physical Memory handle
-    ze_physical_mem_desc_t physDesc = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr};
-    physDesc.size = reserveSize;
-    ze_physical_mem_handle_t physicalMemoryHandle;
-    ASSERT_ZE_RESULT_SUCCESS(zePhysicalMemCreate(levelzero.context, levelzero.device, &physDesc, &physicalMemoryHandle));
+    for (uint32_t i = 0; i < iterationCount; i++) {
+        void *virtualMem = nullptr;
+        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemReserve(levelzero.context, nullptr, reserveSize, &virtualMem));
+        EXPECT_NE(virtualMem, static_cast<void *>(nullptr));
+        reservedMemlist.push_back(virtualMem);
 
-    // Use 2x allocation size for virtual memory
-    uint64_t alignedOffset = 0;
-    if (arguments.useOffset != 0) {
-        alignedOffset = reserveSize;
-        reserveSize *= 2;
+        // Allocate Physical Memory handle
+        ze_physical_mem_desc_t physDesc = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr};
+        physDesc.size = reserveSize;
+        ze_physical_mem_handle_t physicalMemoryHandle{};
+        ASSERT_ZE_RESULT_SUCCESS(zePhysicalMemCreate(levelzero.context, levelzero.device, &physDesc, &physicalMemoryHandle));
+        physicalMemoryHandleList.push_back(physicalMemoryHandle);
     }
 
-    // Reserve virtual Memory
-    void *virtualMem = nullptr;
-    ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemReserve(levelzero.context, nullptr, reserveSize, &virtualMem));
-    EXPECT_NE(virtualMem, static_cast<void *>(nullptr));
+    return TestResult::Success;
+}
 
-    // Handle access type
-    ze_memory_access_attribute_t accessType = ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE;
-    std::string accessTypeString = static_cast<const std::string &>(arguments.accessType);
-    if (accessTypeString == "ReadOnly") {
-        accessType = ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY;
-    } else if (accessTypeString == "None") {
-        accessType = ZE_MEMORY_ACCESS_ATTRIBUTE_NONE;
+static TestResult cleanupVirtualMemoryMaps(LevelZero &levelzero,
+                                           std::vector<void *> &reservedMemlist,
+                                           std::vector<ze_physical_mem_handle_t> &physicalMemoryHandleList,
+                                           const size_t reserveSize) {
+
+    for (auto &virtualMem : reservedMemlist) {
+        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemUnmap(levelzero.context, virtualMem, reserveSize));
     }
 
-    timer.measureStart();
-    ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemMap(levelzero.context, virtualMem, reserveSize,
-                                             physicalMemoryHandle, alignedOffset,
-                                             accessType));
-    timer.measureEnd();
+    for (auto &virtualMem : reservedMemlist) {
+        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemFree(levelzero.context, virtualMem, reserveSize));
+    }
 
-    // Cleanup
-    ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemUnmap(levelzero.context, virtualMem, reserveSize));
-    ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemFree(levelzero.context, virtualMem, reserveSize));
-    ASSERT_ZE_RESULT_SUCCESS(zePhysicalMemDestroy(levelzero.context, physicalMemoryHandle));
+    for (auto &physicalMemoryHandle : physicalMemoryHandleList) {
+        ASSERT_ZE_RESULT_SUCCESS(zePhysicalMemDestroy(levelzero.context, physicalMemoryHandle));
+    }
 
+    reservedMemlist.clear();
+    physicalMemoryHandleList.clear();
     return TestResult::Success;
 }
 
@@ -81,21 +79,65 @@ static TestResult run(const VirtualMemMapArguments &arguments, Statistics &stati
 
     // Setup
     LevelZero levelzero;
-    Timer timer;
+    size_t pageSize = 0;
+    size_t reserveSize = arguments.reserveSize;
+    ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemQueryPageSize(levelzero.context, levelzero.device,
+                                                       arguments.reserveSize, &pageSize));
+    reserveSize = getPageAlignedSize(reserveSize, pageSize);
+
+    // Use 2x allocation size for virtual memory
+    uint64_t alignedOffset = 0;
+    if (arguments.useOffset != 0) {
+        alignedOffset = reserveSize;
+        reserveSize *= 2;
+    }
+
+    // Handle access type
+    ze_memory_access_attribute_t accessType = ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE;
+    std::string accessTypeString = static_cast<const std::string &>(arguments.accessType);
+    if (accessTypeString == "ReadOnly") {
+        accessType = ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY;
+    } else if (accessTypeString == "None") {
+        accessType = ZE_MEMORY_ACCESS_ATTRIBUTE_NONE;
+    }
+
+    std::vector<void *> reservedMemlist{};
+    std::vector<ze_physical_mem_handle_t> physicalMemoryHandleList{};
 
     // Warmup
-    auto status = doVirtualMemMap(levelzero, arguments, timer);
+    const uint32_t warmupIterationCount = 5;
+    auto status = prepareVirtualMemoryMaps(levelzero, reserveSize, reservedMemlist, physicalMemoryHandleList, warmupIterationCount);
+    if (status != TestResult::Success) {
+        return status;
+    }
+    for (auto i = 0u; i < warmupIterationCount; i++) {
+        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemMap(levelzero.context, reservedMemlist[i], reserveSize,
+                                                 physicalMemoryHandleList[i], alignedOffset,
+                                                 accessType));
+    }
+
+    status = cleanupVirtualMemoryMaps(levelzero, reservedMemlist, physicalMemoryHandleList, reserveSize);
     if (status != TestResult::Success) {
         return status;
     }
 
     // Benchmark
+    Timer timer;
+    status = prepareVirtualMemoryMaps(levelzero, reserveSize, reservedMemlist, physicalMemoryHandleList, arguments.iterations);
+    if (status != TestResult::Success) {
+        return status;
+    }
     for (auto i = 0u; i < arguments.iterations; i++) {
-        status = doVirtualMemMap(levelzero, arguments, timer);
-        if (status != TestResult::Success) {
-            return status;
-        }
+        timer.measureStart();
+        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemMap(levelzero.context, reservedMemlist[i], reserveSize,
+                                                 physicalMemoryHandleList[i], alignedOffset,
+                                                 accessType));
+        timer.measureEnd();
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+    }
+    status = cleanupVirtualMemoryMaps(levelzero, reservedMemlist, physicalMemoryHandleList, reserveSize);
+    if (status != TestResult::Success) {
+        return status;
     }
 
     return TestResult::Success;
