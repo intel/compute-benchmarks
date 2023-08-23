@@ -27,7 +27,7 @@ static TestResult run(const CommandListHostSynchronizeArguments &arguments, Stat
     Timer timer;
 
     // Create event
-    ze_event_pool_handle_t eventPool;
+    ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     if (arguments.useBarrierBeforeSync) {
         ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};

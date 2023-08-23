@@ -15,8 +15,8 @@
 #include <thread>
 
 struct ImmediateCmdListWalkerSubmissionArguments : WorkloadArgumentContainer {
-    IntegerArgument ordinal;
-    IntegerArgument engineIndex;
+    Uint32Argument ordinal;
+    Uint32Argument engineIndex;
 
     ImmediateCmdListWalkerSubmissionArguments()
         : ordinal(*this, "ordinal", "ordinal of engine group to be used"),

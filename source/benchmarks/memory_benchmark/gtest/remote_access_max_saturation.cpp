@@ -15,7 +15,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<RemoteAccessMaxSaturation> registerTestCase{};
 
-class RemoteAccessMaxSaturationTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, bool, size_t, size_t>> {
+class RemoteAccessMaxSaturationTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, bool, size_t, uint32_t>> {
 };
 
 TEST_P(RemoteAccessMaxSaturationTest, Test) {
@@ -41,4 +41,4 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1 * gigaByte),
         ::testing::Values(true),
         ::testing::Values(64),
-        ::testing::Values(1, 4, 8, 16, 32, 64, 128, 256, 512, 1024)));
+        ::testing::Values(1u, 4u, 8u, 16u, 32u, 64u, 128u, 256u, 512u, 1024u)));

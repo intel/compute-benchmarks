@@ -48,8 +48,8 @@ static TestResult run(const FullRemoteAccessMemoryArguments &arguments, Statisti
     const size_t workItems = arguments.workItems;
     const bool blockAccess = arguments.blockAccess;
 
-    const uint32_t bufferLength = bufferSize / elementSize;
-    const uint32_t iterations = bufferLength / workItems;
+    const auto bufferLength = bufferSize / elementSize;
+    const auto iterations = bufferLength / workItems;
 
     // Create kernel-specific buffers
     const char *kernelName = {};

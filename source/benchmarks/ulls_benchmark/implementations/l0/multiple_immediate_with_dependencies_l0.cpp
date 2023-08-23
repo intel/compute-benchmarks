@@ -117,7 +117,7 @@ static TestResult run(const MultipleImmediateCmdListsWithDependenciesArguments &
     // Benchmark
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
         timer.measureStart();
-        auto result = runSingleIteration(arguments, cmdLists, kernels, events, submissionsPerQueue);
+        result = runSingleIteration(arguments, cmdLists, kernels, events, submissionsPerQueue);
         if (result != TestResult::Success) {
             return result;
         }

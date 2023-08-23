@@ -12,8 +12,8 @@
 #include "framework/workload/register_workload.h"
 
 struct ImmediateCmdListCopyWorkloadArguments : WorkloadArgumentContainer {
-    IntegerArgument ordinal;
-    IntegerArgument engineIndex;
+    Uint32Argument ordinal;
+    Uint32Argument engineIndex;
     PositiveIntegerArgument copySize;
 
     ImmediateCmdListCopyWorkloadArguments()

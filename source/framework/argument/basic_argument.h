@@ -10,6 +10,29 @@
 #include "framework/argument/abstract/argument.h"
 #include "framework/utility/string_utils.h"
 
+struct Unsigned32BitArgumentBase : Argument {
+    using Argument::Argument;
+
+    uint32_t getSizeOf() const {
+        return sizeof(value);
+    }
+
+    const uint32_t *getAddressOf() const {
+        return &value;
+    }
+
+  protected:
+    std::string toStringValue() const override {
+        return std::to_string(this->value);
+    }
+
+    void parseImpl(const std::string &valueToParse) override {
+        this->value = std::atoi(valueToParse.c_str());
+    }
+
+    uint32_t value = 0u;
+};
+
 struct IntegerArgumentBase : Argument {
     using Argument::Argument;
 
@@ -41,6 +64,20 @@ struct IntegerArgument : IntegerArgumentBase {
     }
 
     IntegerArgument &operator=(int64_t newValue) {
+        this->value = newValue;
+        markAsParsed();
+        return *this;
+    }
+};
+
+struct Uint32Argument : Unsigned32BitArgumentBase {
+    using Unsigned32BitArgumentBase::Unsigned32BitArgumentBase;
+
+    operator uint32_t() const {
+        return value;
+    }
+
+    Uint32Argument &operator=(uint32_t newValue) {
         this->value = newValue;
         markAsParsed();
         return *this;

@@ -16,7 +16,7 @@ struct RemoteAccessMaxSaturationArguments : TestCaseArgumentContainer {
     BooleanArgument useEvents;
     FractionBaseArgument remoteFraction;
     PositiveIntegerArgument workItemPackSize;
-    PositiveIntegerArgument writesPerWorkgroup;
+    Uint32Argument writesPerWorkgroup;
 
     RemoteAccessMaxSaturationArguments()
         : size(*this, "size", "Size of the memory to stream. Must be divisible by datatype size."),
