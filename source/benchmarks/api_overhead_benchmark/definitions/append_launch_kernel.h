@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,11 +14,13 @@ struct AppendLaunchKernelArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument workgroupCount;
     IntegerArgument workgroupSize;
     BooleanArgument useEvent;
+    Uint32Argument appendCount;
 
     AppendLaunchKernelArguments()
         : workgroupCount(*this, "wgc", "Workgroup count"),
           workgroupSize(*this, "wgs", "Workgroup size, pass 0 to make the driver calculate it during enqueue"),
-          useEvent(*this, "event", "Pass output event to the enqueue call") {}
+          useEvent(*this, "event", "Pass output event to the enqueue call"),
+          appendCount(*this, "appendCount", "Number of appends to run") {}
 };
 
 struct AppendLaunchKernel : TestCase<AppendLaunchKernelArguments> {

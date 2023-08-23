@@ -13,7 +13,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<AppendLaunchKernel> registerTestCase{};
 
-class AppendLaunchKernelTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, bool>> {
+class AppendLaunchKernelTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, bool, uint32_t>> {
 };
 
 TEST_P(AppendLaunchKernelTest, Test) {
@@ -22,6 +22,7 @@ TEST_P(AppendLaunchKernelTest, Test) {
     args.workgroupCount = std::get<0>(GetParam());
     args.workgroupSize = std::get<1>(GetParam());
     args.useEvent = std::get<2>(GetParam());
+    args.appendCount = std::get<3>(GetParam());
 
     AppendLaunchKernel test;
     test.run(args);
@@ -33,4 +34,5 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(1, 1000),
         ::testing::Values(1, 256),
-        ::testing::Values(false, true)));
+        ::testing::Values(false, true),
+        ::testing::Values(100)));

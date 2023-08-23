@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,13 +47,16 @@ static TestResult run(const AppendLaunchKernelArguments &arguments, Statistics &
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, 1u, 1u));
 
     // Create event if necessary
-    const ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 1};
-    const ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, ZE_EVENT_SCOPE_FLAG_DEVICE, ZE_EVENT_SCOPE_FLAG_DEVICE};
+    const ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, arguments.appendCount};
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, ZE_EVENT_SCOPE_FLAG_DEVICE, ZE_EVENT_SCOPE_FLAG_DEVICE};
     ze_event_pool_handle_t eventPool{};
-    ze_event_handle_t event{};
+    std::vector<ze_event_handle_t> events(arguments.appendCount);
     if (arguments.useEvent) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 0, nullptr, &eventPool));
-        ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
+        for (auto j = 0u; j < arguments.appendCount; ++j) {
+            eventDesc.index = j;
+            ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[j]));
+        }
     }
 
     // Create command list and warmup
@@ -62,23 +65,29 @@ static TestResult run(const AppendLaunchKernelArguments &arguments, Statistics &
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
+    for (auto j = 0u; j < arguments.appendCount; ++j) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, events[j], 0, nullptr));
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
 
     // Benchmark
-    for (auto i = 0u; i < arguments.iterations; i++) {
+    for (auto i = 0u; i < arguments.iterations; ++i) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
         timer.measureStart();
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
+        for (auto j = 0u; j < arguments.appendCount; ++j) {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, events[j], 0, nullptr));
+        }
         timer.measureEnd();
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        statistics.pushValue(timer.get() / arguments.appendCount, typeSelector.getUnit(), typeSelector.getType());
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     }
 
     if (arguments.useEvent) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
+        for (auto j = 0u; j < arguments.appendCount; ++j) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(events[j]));
+        }
         ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
