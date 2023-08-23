@@ -28,4 +28,4 @@ TEST_P(DestroyCommandListTest, Test) {
 INSTANTIATE_TEST_SUITE_P(
     DestroyCommandListTest,
     DestroyCommandListTest,
-    ::testing::Values(1, 10, 100, 1000));
+    ::testing::Values(100, 1000));

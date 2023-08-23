@@ -29,5 +29,5 @@ INSTANTIATE_TEST_SUITE_P(
     CreateCommandListTest,
     CreateCommandListTest,
     ::testing::Combine(
-        ::testing::Values(1, 10, 100),
+        ::testing::Values(100),
         ::testing::Values(false, true)));

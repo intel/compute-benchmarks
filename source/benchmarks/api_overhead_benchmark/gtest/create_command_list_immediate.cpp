@@ -27,4 +27,4 @@ TEST_P(CreateCommandListImmediateTest, Test) {
 INSTANTIATE_TEST_SUITE_P(
     CreateCommandListImmediateTest,
     CreateCommandListImmediateTest,
-    ::testing::Values(1, 10, 100, 1000));
+    ::testing::Values(100, 1000));
