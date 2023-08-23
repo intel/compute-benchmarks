@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,12 +16,14 @@ struct EventTimeArguments : TestCaseArgumentContainer {
     BooleanArgument hostVisible;
     EventScopeArgument signalScope;
     EventScopeArgument waitScope;
+    Uint32Argument eventCount;
 
     EventTimeArguments()
         : useProfiling(*this, "useProfiling", "Event will use profiling"),
           hostVisible(*this, "hostVisible", "Event will set host visible flag"),
           signalScope(*this, "signal", "Type of signal scope"),
-          waitScope(*this, "wait", "Type of wait scope") {}
+          waitScope(*this, "wait", "Type of wait scope"),
+          eventCount(*this, "eventCount", "Number of events to create") {}
 };
 
 struct EventTime : TestCase<EventTimeArguments> {

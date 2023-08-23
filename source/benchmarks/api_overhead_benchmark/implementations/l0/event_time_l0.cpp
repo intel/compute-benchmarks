@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
     Timer timer;
 
     // Create event if necessary
-    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 256u};
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, arguments.eventCount};
     auto eventPoolFlags = arguments.hostVisible * ZE_EVENT_POOL_FLAG_HOST_VISIBLE | arguments.useProfiling * ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
     eventPoolDesc.flags = eventPoolFlags;
 
@@ -49,21 +49,31 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
     }
 
     ze_event_pool_handle_t eventPool{};
-    ze_event_handle_t event{};
+    std::vector<ze_event_handle_t> events(arguments.eventCount);
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 0, nullptr, &eventPool));
 
     // warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
+    for (auto j = 0u; j < arguments.eventCount; ++j) {
+        eventDesc.index = j;
+        ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[j]));
+    }
+    for (auto j = 0u; j < arguments.eventCount; ++j) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(events[j]));
+    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         timer.measureStart();
-        ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
+        for (auto j = 0u; j < arguments.eventCount; ++j) {
+            eventDesc.index = j;
+            ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[j]));
+        }
         timer.measureEnd();
-        ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        for (auto j = 0u; j < arguments.eventCount; ++j) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(events[j]));
+        }
+        statistics.pushValue(timer.get() / arguments.eventCount, typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
