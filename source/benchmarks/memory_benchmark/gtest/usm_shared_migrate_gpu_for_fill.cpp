@@ -15,7 +15,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<UsmSharedMigrateGpuForFill> registerTestCase{};
 
-class UsmSharedMigrateGpuForFillTest : public ::testing::TestWithParam<std::tuple<Api, size_t, bool, bool>> {
+class UsmSharedMigrateGpuForFillTest : public ::testing::TestWithParam<std::tuple<Api, size_t, bool, UsmMemAdvisePreferredLocation, bool>> {
 };
 
 TEST_P(UsmSharedMigrateGpuForFillTest, Test) {
@@ -23,7 +23,8 @@ TEST_P(UsmSharedMigrateGpuForFillTest, Test) {
     args.api = std::get<0>(GetParam());
     args.bufferSize = std::get<1>(GetParam());
     args.prefetchMemory = std::get<2>(GetParam());
-    args.forceBlitter = std::get<3>(GetParam());
+    args.preferredLocation = std::get<3>(GetParam());
+    args.forceBlitter = std::get<4>(GetParam());
 
     UsmSharedMigrateGpuForFill test;
     test.run(args);
@@ -37,4 +38,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(128 * megaByte, 256 * megaByte),
         ::testing::Values(false, true),
+        ::testing::Values(UsmMemAdvisePreferredLocation::None, UsmMemAdvisePreferredLocation::System, UsmMemAdvisePreferredLocation::Device),
         ::testing::Values(false, true)));

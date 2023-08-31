@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,12 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
+    if (arguments.preferredLocation == UsmMemAdvisePreferredLocation::System) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemAdvise(cmdList, levelzero.device, buffer, arguments.bufferSize, ZE_MEMORY_ADVICE_SET_SYSTEM_MEMORY_PREFERRED_LOCATION));
+    }
+    if (arguments.preferredLocation == UsmMemAdvisePreferredLocation::Device) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemAdvise(cmdList, levelzero.device, buffer, arguments.bufferSize, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 

@@ -47,6 +47,13 @@ static TestResult run(const UsmSharedMigrateGpuForFillArguments &arguments, Stat
     if (arguments.prefetchMemory) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryPrefetch(cmdList, bufferInt, arguments.bufferSize));
     }
+    if (arguments.preferredLocation == UsmMemAdvisePreferredLocation::System) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemAdvise(cmdList, levelzero.device, buffer, arguments.bufferSize, ZE_MEMORY_ADVICE_SET_SYSTEM_MEMORY_PREFERRED_LOCATION));
+    }
+    if (arguments.preferredLocation == UsmMemAdvisePreferredLocation::Device) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemAdvise(cmdList, levelzero.device, buffer, arguments.bufferSize, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
+    }
+
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffer, &pattern, 1, arguments.bufferSize, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 

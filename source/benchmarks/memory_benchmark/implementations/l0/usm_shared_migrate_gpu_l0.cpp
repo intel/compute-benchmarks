@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,6 +64,12 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
     if (arguments.prefetchMemory) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryPrefetch(cmdList, bufferInt, arguments.bufferSize));
+    }
+    if (arguments.preferredLocation == UsmMemAdvisePreferredLocation::System) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemAdvise(cmdList, levelzero.device, buffer, arguments.bufferSize, ZE_MEMORY_ADVICE_SET_SYSTEM_MEMORY_PREFERRED_LOCATION));
+    }
+    if (arguments.preferredLocation == UsmMemAdvisePreferredLocation::Device) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemAdvise(cmdList, levelzero.device, buffer, arguments.bufferSize, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));

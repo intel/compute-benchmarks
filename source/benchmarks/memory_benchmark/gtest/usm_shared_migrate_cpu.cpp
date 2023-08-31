@@ -15,7 +15,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<UsmSharedMigrateCpu> registerTestCase{};
 
-class UsmSharedMigrateCpuTest : public ::testing::TestWithParam<std::tuple<Api, bool, size_t>> {
+class UsmSharedMigrateCpuTest : public ::testing::TestWithParam<std::tuple<Api, bool, size_t, UsmMemAdvisePreferredLocation>> {
 };
 
 TEST_P(UsmSharedMigrateCpuTest, Test) {
@@ -23,6 +23,7 @@ TEST_P(UsmSharedMigrateCpuTest, Test) {
     args.api = std::get<0>(GetParam());
     args.accessAllBytes = std::get<1>(GetParam());
     args.bufferSize = std::get<2>(GetParam());
+    args.preferredLocation = std::get<3>(GetParam());
 
     UsmSharedMigrateCpu test;
     test.run(args);
@@ -35,4 +36,5 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(false, true),
-        ::testing::Values(128 * megaByte, 256 * megaByte)));
+        ::testing::Values(128 * megaByte, 256 * megaByte),
+        ::testing::Values(UsmMemAdvisePreferredLocation::None, UsmMemAdvisePreferredLocation::System, UsmMemAdvisePreferredLocation::Device)));
