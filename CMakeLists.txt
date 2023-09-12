@@ -93,6 +93,10 @@ if(BUILD_OMP)
     set(CMAKE_CXX_COMPILER "icpx")
 endif()
 
+if(BUILD_MPI)
+    find_package(MPI)
+endif()
+
 check_symbol_exists(SYS_pidfd_getfd "sys/syscall.h" HAVE_SYS_PIDFD_GETFD)
 check_symbol_exists(SYS_pidfd_open "sys/syscall.h" HAVE_SYS_PIDFD_OPEN)
 

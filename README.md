@@ -54,6 +54,17 @@ cmake .. -DBUILD_SYCL=ON
 cmake --build . --config Release
 ```
 
+### Building with MPI support
+
+Hybrid MPI + X implementations of the benchmarks will be built if:
+
+* the CMake option `BUILD_MPI` is set to `ON`;
+* CMake is able to locate the MPI compilers/headers/libraries through its `FindMPI` module;
+
+For Intel MPI, setting `I_MPI_OFFLOAD=1` or `I_MPI_OFFLOAD=2` is required; for other MPI implementations please refer to their manuals.
+
+The MPI benchmarks are only supported on Linux.
+
 ### Binary types
 Each benchmark suite can be built as a single-api binary or as a an all-api binary.
 - Single-api binaries are named like `ulls_benchmark_ocl` and do not load libraries from not used APIs. They are built by default and can be disabled by passing `-DBUILD_SINGLE_API_BINARIES=OFF` to CMake.
