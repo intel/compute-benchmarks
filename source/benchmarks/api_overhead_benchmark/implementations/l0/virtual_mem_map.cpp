@@ -123,7 +123,7 @@ static TestResult run(const VirtualMemMapArguments &arguments, Statistics &stati
 
     // Benchmark
     Timer timer;
-    status = prepareVirtualMemoryMaps(levelzero, reserveSize, reservedMemlist, physicalMemoryHandleList, arguments.iterations);
+    status = prepareVirtualMemoryMaps(levelzero, reserveSize, reservedMemlist, physicalMemoryHandleList, static_cast<uint32_t>(arguments.iterations));
     if (status != TestResult::Success) {
         return status;
     }

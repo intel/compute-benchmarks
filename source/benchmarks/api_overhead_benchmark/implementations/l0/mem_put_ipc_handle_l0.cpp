@@ -78,8 +78,8 @@ static TestResult run(const MemPutIpcHandleArguments &arguments, Statistics &sta
         }
 
         timer.measureStart();
-        for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
-            ASSERT_ZE_RESULT_SUCCESS(zeMemPutIpcHandle(levelzero.context, ipcHandles[i]));
+        for (int64_t k = 0; k < arguments.AllocationsCount; k++) {
+            ASSERT_ZE_RESULT_SUCCESS(zeMemPutIpcHandle(levelzero.context, ipcHandles[k]));
         }
         timer.measureEnd();
 

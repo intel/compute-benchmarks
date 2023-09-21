@@ -81,14 +81,14 @@ static TestResult run(const MemOpenIpcHandleArguments &arguments, Statistics &st
         }
 
         timer.measureStart();
-        for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
-            ASSERT_ZE_RESULT_SUCCESS(zeMemOpenIpcHandle(levelzero.context, levelzero.device, ipcHandles[i], 0, &ipcPointers[i]));
+        for (int64_t j = 0; j < arguments.AllocationsCount; j++) {
+            ASSERT_ZE_RESULT_SUCCESS(zeMemOpenIpcHandle(levelzero.context, levelzero.device, ipcHandles[j], 0, &ipcPointers[j]));
         }
         timer.measureEnd();
 
-        for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
-            ASSERT_ZE_RESULT_SUCCESS(zeMemPutIpcHandle(levelzero.context, ipcHandles[i]));
-            ipcPointers[i] = nullptr;
+        for (int64_t j = 0; j < arguments.AllocationsCount; j++) {
+            ASSERT_ZE_RESULT_SUCCESS(zeMemPutIpcHandle(levelzero.context, ipcHandles[j]));
+            ipcPointers[j] = nullptr;
         }
 
         auto status = modifyAllocations();
