@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ class EnvironmentRestorer {
 };
 
 void asyncReadThreadBody(ProcessDataWindows *processDataWindows) {
-    std::ostringstream stdOutStream = {};
+    std::ostringstream stdOutStream{};
 
     const static size_t bufferSize = 1024u;
     CHAR buffer[bufferSize];
@@ -98,7 +98,7 @@ void Process::run() {
     this->addArgument("synchronizationPipeIn", "0");
     this->addArgument("synchronizationPipeOut", "0");
     this->addArgument("measurementPipe", "0");
-    std::ostringstream commandLine = {};
+    std::ostringstream commandLine{};
     for (const auto &argument : this->arguments) {
         commandLine << argument.first;
         if (!argument.second.empty()) {

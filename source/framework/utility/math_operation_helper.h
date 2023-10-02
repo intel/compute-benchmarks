@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 
 #include "framework/enum/data_type.h"
 #include "framework/enum/math_operation.h"
+
+#include <algorithm>
 
 struct MathOperationTestData {
     size_t sizeOfDataType;

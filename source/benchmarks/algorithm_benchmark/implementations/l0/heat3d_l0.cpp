@@ -69,7 +69,7 @@ static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) 
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &initBufferDesc, 6 * nRanks * 1024, 0, &initBuffer));
     std::fill_n(static_cast<uint8_t *>(initBuffer), 6 * nRanks * 1024, 0);
     ze_ipc_mem_handle_t initBufferIpcHandle;
-    std::fill_n(initBufferIpcHandle.data, ZE_MAX_IPC_HANDLE_SIZE, 0);
+    std::fill_n(initBufferIpcHandle.data, ZE_MAX_IPC_HANDLE_SIZE, static_cast<char>(0));
     ASSERT_ZE_RESULT_SUCCESS(zeMemGetIpcHandle(levelzero.context, initBuffer, &initBufferIpcHandle));
 
     ze_event_pool_desc_t barrierEvPoolDesc = {};
@@ -80,7 +80,7 @@ static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) 
     ze_event_pool_handle_t barrierEvPool;
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &barrierEvPoolDesc, 0, nullptr, &barrierEvPool));
     ze_ipc_event_pool_handle_t barrierEvPoolIpcHandle;
-    std::fill_n(barrierEvPoolIpcHandle.data, ZE_MAX_IPC_HANDLE_SIZE, 0);
+    std::fill_n(barrierEvPoolIpcHandle.data, ZE_MAX_IPC_HANDLE_SIZE, static_cast<char>(0));
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolGetIpcHandle(barrierEvPool, &barrierEvPoolIpcHandle));
 
     std::vector<ze_event_handle_t> barrierEvents(2 * nRanks);
