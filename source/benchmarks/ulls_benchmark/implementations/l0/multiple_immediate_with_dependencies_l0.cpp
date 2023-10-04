@@ -95,7 +95,7 @@ static TestResult run(const MultipleImmediateCmdListsWithDependenciesArguments &
     for (auto i = 0u; i < arguments.cmdlistCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernels[i]));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernels[i], 1, 1, 1));
-        int32_t time = 10000;
+        int32_t time = 100;
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[i], 0, sizeof(time), &time));
     }
 

@@ -21,8 +21,8 @@ struct KernelSwitchLatencyArguments : TestCaseArgumentContainer {
     BooleanArgument hostVisible;
 
     KernelSwitchLatencyArguments()
-        : kernelCount(*this, "kernelCount", "Count of kernels"),
-          kernelExecutionTime(*this, "kernelExecutionTime", "Approximately how long a single kernel executes, in us"),
+        : kernelCount(*this, "count", "Count of kernels"),
+          kernelExecutionTime(*this, "execTime", "Approximately how long a single kernel executes, in us"),
           flushBetweenEnqueues(*this, "flush", "Flush between kernels"),
           barrier(*this, "barrier", "synchronization with barrier instead of events"),
           hostVisible(*this, "hostVisible", "events are with host visible flag") {}

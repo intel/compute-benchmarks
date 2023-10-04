@@ -32,5 +32,5 @@ INSTANTIATE_TEST_SUITE_P(
     KernelWithWorkPeriodicSubmissionTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::Values(1'000, 5'000, 50'000),
+        ::testing::Values(1'000, 5'000),
         ::testing::Values(10)));

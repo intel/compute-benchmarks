@@ -23,7 +23,7 @@ struct MultipleImmediateCmdListsWithDependencies : TestCase<MultipleImmediateCmd
     using TestCase<MultipleImmediateCmdListsWithDependenciesArguments>::TestCase;
 
     std::string getTestCaseName() const override {
-        return "MultipleImmediateCmdListsWithDependencies";
+        return "MultipleImmediateWithDependencies";
     }
 
     std::string getHelp() const override {
