@@ -234,7 +234,9 @@ typedef cl_uint cl_resource_memory_scope;
 #define CL_MEM_COMPRESSED_HINT_INTEL (1u << 21)
 #define CL_MEM_UNCOMPRESSED_HINT_INTEL (1u << 22)
 
+#ifndef CL_MEM_DEVICE_ID_INTEL
 #define CL_MEM_DEVICE_ID_INTEL 0x10011
+#endif /* CL_MEM_DEVICE_ID_INTEL */
 
 #pragma pack(push, 1)
 typedef struct _cl_resource_barrier_descriptor_intel {
