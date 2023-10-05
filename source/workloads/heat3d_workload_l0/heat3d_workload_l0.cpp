@@ -55,13 +55,8 @@
 
 #include "framework/l0/levelzero.h"
 #include "framework/utility/file_helper.h"
-#include "framework/utility/linux/ipc.h"
 #include "framework/utility/timer.h"
 #include "framework/workload/register_workload.h"
-
-#ifndef USE_PIDFD
-const std::string masterSocketName{"/tmp/heat3d.socket"};
-#endif // USE_PIDFD
 
 struct Heat3DArguments : WorkloadArgumentContainer {
     IntegerArgument rank;
@@ -93,6 +88,20 @@ struct Heat3DArguments : WorkloadArgumentContainer {
 };
 
 struct Heat3D : Workload<Heat3DArguments> {};
+
+#ifdef WIN32
+
+TestResult run(const Heat3DArguments &, Statistics &, WorkloadSynchronization &, WorkloadIo &) {
+    return TestResult::NoImplementation;
+}
+
+#else // WIN32
+
+#include "framework/utility/linux/ipc.h"
+
+#ifndef USE_PIDFD
+const std::string masterSocketName{"/tmp/heat3d.socket"};
+#endif // USE_PIDFD
 
 // Identify the six facets of a sub-domain
 enum class FacetTy : uint8_t { XU = 0,
@@ -887,6 +896,8 @@ TestResult run(const Heat3DArguments &arguments, Statistics &statistics, Workloa
 
     return TestResult::Success;
 }
+
+#endif // WIN32
 
 int main(int argc, char **argv) {
     Heat3D workload;

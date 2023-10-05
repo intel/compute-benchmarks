@@ -40,6 +40,6 @@ struct Heat3D : TestCase<Heat3DArguments> {
 
     std::string getHelp() const override {
         return "A 3D heat-equation solving benchmark that overlaps IPC data transfers (nearest-neighbor halo exchange) and GPU compute kernels."
-               "Measures multi-process concurrent kernel execution and IPC memory transfer performance on a single device.";
+               "Measures multi-process concurrent kernel execution and IPC memory transfer performance on a single device. Linux-only.";
     }
 };

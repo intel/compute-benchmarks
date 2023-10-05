@@ -4,7 +4,5 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(UNIX)
-    add_benchmark(algorithm_benchmark ocl l0 all)
-    add_benchmark_dependency_on_workload(algorithm_benchmark heat3d_workload_l0 l0)
-endif()
+add_benchmark(algorithm_benchmark l0 all)
+add_benchmark_dependency_on_workload(algorithm_benchmark heat3d_workload_l0 l0)

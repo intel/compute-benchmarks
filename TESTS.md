@@ -2,7 +2,7 @@
 Algorithm Benchmark is a set of benchmarks aimed at measuring the performance of realistic worloads.
 | Test name | Description | Params | L0 | OCL |
 |-----------|-------------|--------|----|-----|
-Heat3D|A 3D heat-equation solving benchmark that overlaps IPC data transfers (nearest-neighbor halo exchange) and GPU compute kernels.Measures multi-process concurrent kernel execution and IPC memory transfer performance on a single device.|<ul><li>--meshLength Number of mesh points along each of the X-Y-Z directions</li><li>--subDomainX Number of sub-domains in the X-direction</li><li>--subDomainY Number of sub-domains in the Y-direction</li><li>--subDomainZ Number of sub-domains in the Z-direction</li><li>--timesteps Number of simulation timesteps</li></ul>|:heavy_check_mark:|:x:|
+Heat3D|A 3D heat-equation solving benchmark that overlaps IPC data transfers (nearest-neighbor halo exchange) and GPU compute kernels.Measures multi-process concurrent kernel execution and IPC memory transfer performance on a single device. Linux-only.|<ul><li>--meshLength Number of mesh points along each of the X-Y-Z directions</li><li>--subDomainX Number of sub-domains in the X-direction</li><li>--subDomainY Number of sub-domains in the Y-direction</li><li>--subDomainZ Number of sub-domains in the Z-direction</li><li>--timesteps Number of simulation timesteps</li></ul>|:heavy_check_mark:|:x:|
 
 
 

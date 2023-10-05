@@ -7,12 +7,21 @@
 
 #include "framework/l0/levelzero.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/linux/ipc.h"
 #include "framework/utility/process_group.h"
 
 #include "definitions/heat3d.h"
 
 #include <gtest/gtest.h>
+
+#ifdef WIN32
+
+static TestResult run(const Heat3DArguments &, Statistics &) {
+    return TestResult::NoImplementation;
+}
+
+#else // WIN32
+
+#include "framework/utility/linux/ipc.h"
 
 #ifndef USE_PIDFD
 const std::string masterSocketName{"/tmp/heat3d.socket"};
@@ -174,5 +183,7 @@ static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) 
 
     return TestResult::Success;
 }
+
+#endif // WIN32
 
 static RegisterTestCaseImplementation<Heat3D> registerTestCase(run, Api::L0);
