@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,11 +66,10 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
 
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
-        ASSERT_CL_SUCCESS(clFlush(opencl.commandQueue));
+        ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
 
-        ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, buffer));
     }
 
