@@ -29,6 +29,8 @@ struct QueueConcurrency : TestCase<QueueConcurrencyArguments> {
     }
 
     std::string getHelp() const override {
-        return "Submits multiple kernels to out of order queue returning events. Then calls synchronization and meassures performance";
+        return "Submits multiple kernels to out of order queue returning events. "
+               "There is a sequence of long kernel, short kernel, wait for short kernel "
+               "Then calls synchronization and meassures performance";
     }
 };

@@ -39,44 +39,54 @@ static TestResult run(const QueueConcurrencyArguments &arguments, Statistics &st
     cl_program program = clCreateProgramWithSource(opencl.context, 1, &source, &sourceLength, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     ASSERT_CL_SUCCESS(clBuildProgram(program, 1, &opencl.device, nullptr, nullptr, nullptr));
-    cl_kernel kernel = clCreateKernel(program, "eat_time", &retVal);
+    cl_kernel slowKernel = clCreateKernel(program, "eat_time", &retVal);
+    ASSERT_CL_SUCCESS(retVal);
+    cl_kernel fastKernel = clCreateKernel(program, "eat_time", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
     // setup kernel time
     cl_uint kernelTime = static_cast<cl_uint>(arguments.kernelTime) * 7u;
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(kernelTime), &kernelTime));
+    ASSERT_CL_SUCCESS(clSetKernelArg(slowKernel, 0, sizeof(kernelTime), &kernelTime));
+    cl_uint fastTime = 1u;
+    ASSERT_CL_SUCCESS(clSetKernelArg(fastKernel, 0, sizeof(fastTime), &fastTime));
 
     // warmup
     size_t lws = 32u;
     size_t gws = lws * arguments.workgroupCount;
     std::vector<cl_event> events;
-    events.resize(arguments.kernelCount);
+    events.resize(arguments.kernelCount * 2);
 
     // Warmup, kernel
-
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[0]));
+    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, slowKernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[0]));
+    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, fastKernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[1]));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
     ASSERT_CL_SUCCESS(clReleaseEvent(events[0u]));
+    ASSERT_CL_SUCCESS(clReleaseEvent(events[1u]));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        // now submit high priority kernel
         timer.measureStart();
-        for (auto j = 0u; j < arguments.kernelCount; j++) {
-            ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[j]));
+        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, slowKernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[0]));
+        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, fastKernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[1]));
+
+        for (auto j = 2u; j < arguments.kernelCount * 2; j += 2) {
+            // wait only for fast kernel
+            ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, slowKernel, 1, nullptr, &gws, &lws, 1, &events[j - 1], &events[j]));
+            ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, fastKernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[j + 1]));
         }
         clFinish(opencl.commandQueue);
         timer.measureEnd();
         ASSERT_CL_SUCCESS(retVal);
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
-        for (auto j = 0u; j < arguments.kernelCount; j++) {
+        for (auto j = 0u; j < arguments.kernelCount * 2; j++) {
             ASSERT_CL_SUCCESS(clReleaseEvent(events[j]));
         }
     }
 
     // Cleanup
 
-    ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
+    ASSERT_CL_SUCCESS(clReleaseKernel(slowKernel));
+    ASSERT_CL_SUCCESS(clReleaseKernel(fastKernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     return TestResult::Success;
 }
