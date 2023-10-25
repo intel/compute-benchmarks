@@ -75,9 +75,14 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
     // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, event, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, arguments.useEventForHostSync ? event : nullptr, 0, nullptr));
+
+    if (arguments.useEventForHostSync) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
+    } else {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
+    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -89,9 +94,9 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
         }
         // last call synchronizes
         if (!arguments.useBarrierSynchronization) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, event, 0, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, arguments.useEventForHostSync ? event : nullptr, 0, nullptr));
         } else {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, event, 0u, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, arguments.useEventForHostSync ? event : nullptr, 0u, nullptr));
         }
 
         if (!arguments.measureCompletionTime) {
@@ -108,8 +113,10 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
             timer.measureEnd();
             statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         }
-        ASSERT_ZE_RESULT_SUCCESS(zeEventQueryStatus(event));
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
+        if (arguments.useEventForHostSync) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventQueryStatus(event));
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
+        }
     }
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
