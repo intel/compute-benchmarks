@@ -34,8 +34,8 @@ INSTANTIATE_TEST_SUITE_P(
     ExecuteCommandListImmediateMultiKernelTest,
     ExecuteCommandListImmediateMultiKernelTest,
     ::testing::Combine(
-        ::testing::Values(1u, 2u, 4u, 8u, 16u),
-        ::testing::Values(1u, 10u, 100u),
+        ::testing::Values(1u, 4u, 16u),
+        ::testing::Values(1u, 100u),
         ::testing::Values(false, true),
         ::testing::Values(2u),
         ::testing::Values(2u),

@@ -49,19 +49,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
-        ::testing::Values(512 * megaByte),
+        ::testing::Values(64 * megaByte),
         ::testing::Values(false, true),
         ::testing::Values(TestType::Regular)));
-
-INSTANTIATE_TEST_SUITE_P(
-    ExecuteCommandListImmediateCopyQueueTestWithLowerSize,
-    ExecuteCommandListImmediateCopyQueueTest,
-    ::testing::Combine(
-        ::CommonGtestArgs::allApis(),
-        ::testing::Values(true, false),
-        ::testing::Values(false, true),
-        ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
-        ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
-        ::testing::Values(128 * megaByte),
-        ::testing::Values(false, true),
-        ::testing::Values(TestType::ReducedSizeCAL)));

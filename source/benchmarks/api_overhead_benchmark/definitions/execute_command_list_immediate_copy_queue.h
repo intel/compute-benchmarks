@@ -32,7 +32,7 @@ struct ExecuteCommandListImmediateCopyQueue : TestCase<ExecuteCommandListImmedia
     using TestCase<ExecuteCommandListImmediateCopyQueueArguments>::TestCase;
 
     std::string getTestCaseName() const override {
-        return "ExecuteCommandListImmediateCopyQueue";
+        return "ExecImmediateCopyQueue";
     }
 
     std::string getHelp() const override {

@@ -27,4 +27,4 @@ TEST_P(GetMemoryPropertiesWithOffsetedPointerTest, Test) {
 INSTANTIATE_TEST_SUITE_P(
     GetMemoryPropertiesWithOffsetedPointerTest,
     GetMemoryPropertiesWithOffsetedPointerTest,
-    ::testing::Values(1, 10u, 100u, 1000u, 10000u));
+    ::testing::Values(1, 100u, 1000u));

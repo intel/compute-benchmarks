@@ -20,10 +20,10 @@ struct ExecuteCommandListImmediateMultiKernelArguments : TestCaseArgumentContain
 
     ExecuteCommandListImmediateMultiKernelArguments()
         : amountOfCalls(*this, "CallsCount", "amount of calls that is being measured"),
-          kernelExecutionTime(*this, "KernelExecutionTime", "Approximately how long a single kernel executes, in us"),
-          addBarrier(*this, "AddBarrier", "Add a Barrier after certain number of Kernel launches, number of kernels before barrier is controlled by numKernelsBeforeBarrier"),
-          numKernelsBeforeBarrier(*this, "NumKernelsBeforeBarrier", "Adds certain number of kernels prior to Barrier, Default is 2"),
-          numKernelsAfterBarrier(*this, "NumKernelsAfterBarrier", "Adds certain number of kernels after Barrier, Default is 2"),
+          kernelExecutionTime(*this, "ExecTime", "Approximately how long a single kernel executes, in us"),
+          addBarrier(*this, "Barrier", "Add a Barrier after certain number of Kernel launches, number of kernels before barrier is controlled by numKernelsBeforeBarrier"),
+          numKernelsBeforeBarrier(*this, "BeforeBarrierCnt", "Adds certain number of kernels prior to Barrier, Default is 2"),
+          numKernelsAfterBarrier(*this, "AfterBarrierCnt", "Adds certain number of kernels after Barrier, Default is 2"),
           useIoq(*this, "ioq", "Use In order queue") {}
 };
 
@@ -31,7 +31,7 @@ struct ExecuteCommandListImmediateMultiKernel : TestCase<ExecuteCommandListImmed
     using TestCase<ExecuteCommandListImmediateMultiKernelArguments>::TestCase;
 
     std::string getTestCaseName() const override {
-        return "ExecuteCommandListImmediateMultiKernel";
+        return "ExecImmediateMultiKernel";
     }
 
     std::string getHelp() const override {

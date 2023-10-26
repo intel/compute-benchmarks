@@ -19,12 +19,12 @@ struct SubmitKernelArguments : TestCaseArgumentContainer {
     BooleanArgument measureCompletionTime;
 
     SubmitKernelArguments()
-        : useProfiling(*this, "UseProfiling", "Create the queue with the enable_profiling property"),
-          inOrderQueue(*this, "InOrderQueue", "Create the queue with the in_order property"),
+        : useProfiling(*this, "Profiling", "Create the queue with the enable_profiling property"),
+          inOrderQueue(*this, "Ioq", "Create the queue with the in_order property"),
           discardEvents(*this, "DiscardEvents", "Create the queue with the discard_events property"),
           numKernels(*this, "NumKernels", "Number of kernels to submit to the queue"),
-          kernelExecutionTime(*this, "KernelExecutionTime", "Approximately how long a single kernel executes, in us"),
-          measureCompletionTime(*this, "MeasureCompletionTime", "Measures time taken to complete the submission (default is to measure only submit calls)") {}
+          kernelExecutionTime(*this, "KernelExecTime", "Approximately how long a single kernel executes, in us"),
+          measureCompletionTime(*this, "MeasureCompletion", "Measures time taken to complete the submission (default is to measure only submit calls)") {}
 };
 
 struct SubmitKernel : TestCase<SubmitKernelArguments> {

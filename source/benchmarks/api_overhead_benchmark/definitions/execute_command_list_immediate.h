@@ -20,12 +20,12 @@ struct ExecuteCommandListImmediateArguments : TestCaseArgumentContainer {
     BooleanArgument useIoq;
 
     ExecuteCommandListImmediateArguments()
-        : useProfiling(*this, "UseProfiling", "Pass a profiling ze_event_t to the API call"),
+        : useProfiling(*this, "Profiling", "Pass a profiling ze_event_t to the API call"),
           amountOfCalls(*this, "CallsCount", "amount of calls that is being meassured"),
-          measureCompletionTime(*this, "MeasureCompletionTime", "Measures time taken to complete the submission (default is to measure only Immediate call)"),
-          useBarrierSynchronization(*this, "useBarrierSynchronization", "Uses barrier synchronization instead of waiting for event from last kernel"),
-          kernelExecutionTime(*this, "KernelExecutionTime", "How long a single kernel executes, in us"),
-          useEventForHostSync(*this, "UseEventForHostSync",
+          measureCompletionTime(*this, "MeasureCompletion", "Measures time taken to complete the submission (default is to measure only Immediate call)"),
+          useBarrierSynchronization(*this, "BarrierSynchro", "Uses barrier synchronization instead of waiting for event from last kernel"),
+          kernelExecutionTime(*this, "KernelExecTime", "How long a single kernel executes, in us"),
+          useEventForHostSync(*this, "EventSync",
                               "If true, use events to synchronize with host. If false, use zeCommandListHostSynchronize"),
           useIoq(*this, "ioq", "Use In order queue") {}
 };
@@ -34,7 +34,7 @@ struct ExecuteCommandListImmediate : TestCase<ExecuteCommandListImmediateArgumen
     using TestCase<ExecuteCommandListImmediateArguments>::TestCase;
 
     std::string getTestCaseName() const override {
-        return "ExecuteCommandListImmediate";
+        return "ExecImmediate";
     }
 
     std::string getHelp() const override {
