@@ -105,8 +105,8 @@ static TestResult run(const UsmCopyImmediateArguments &arguments, Statistics &st
 
     // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
+    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
 
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.sourcePlacement, levelzero, source));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.destinationPlacement, levelzero, destination));
