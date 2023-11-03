@@ -57,7 +57,7 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
     // Create event
     uint32_t numEventsMultiplier = arguments.addBarrier ? static_cast<uint32_t>(arguments.numKernelsAfterBarrier + 1) : 2u;
     uint32_t eventsCount = static_cast<uint32_t>(arguments.amountOfCalls) * numEventsMultiplier;
-    ze_event_pool_desc_t eventPoolDesc;
+    ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = eventsCount;
     ze_event_pool_handle_t eventPool{};
