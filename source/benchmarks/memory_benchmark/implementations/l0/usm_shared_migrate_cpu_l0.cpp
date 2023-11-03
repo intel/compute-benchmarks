@@ -52,7 +52,7 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
 
     // Configure dispath parameters
     const uint32_t wgs = 256;
-    const uint32_t wgc = static_cast<uint32_t>(elementsCount) / wgs;
+    const uint32_t wgc = static_cast<uint32_t>(elementsCount / wgs);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, wgs, 1, 1));
     const ze_group_count_t dispatchTraits{wgc, 1, 1};
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
