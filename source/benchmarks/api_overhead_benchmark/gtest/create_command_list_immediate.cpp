@@ -29,5 +29,5 @@ INSTANTIATE_TEST_SUITE_P(
     CreateCommandListImmediateTest,
     CreateCommandListImmediateTest,
     ::testing::Combine(
-        ::testing::Values(false, true),
-        ::testing::Values(100, 1000)));
+        ::testing::Values(100, 1000),
+        ::testing::Values(false, true)));
