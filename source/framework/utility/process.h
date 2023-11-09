@@ -18,7 +18,7 @@ class Process {
     Process(const std::string &exeName);
     Process(Process &&other);
     Process &operator=(Process &&other);
-    ~Process();
+    ~Process() noexcept(false);
 
     // Configuring process to be run
     void addArgument(const std::string &key, const std::string &value);

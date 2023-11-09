@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(queues[i], kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
     }
     for (size_t i = 0; i < arguments.queueCount; i++) {
-        clFinish(queues[i]);
+        ASSERT_CL_SUCCESS(clFinish(queues[i]));
     }
 
     // Benchmark

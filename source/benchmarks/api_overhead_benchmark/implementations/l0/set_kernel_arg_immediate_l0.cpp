@@ -74,12 +74,12 @@ static TestResult run(const KernelSetArgumentValueImmediateArguments &arguments,
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
 
     // Warmup
-    st_input_8 kernelArgument8;
-    st_input_64 kernelArgument64;
-    st_input_256 kernelArgument256;
-    st_input_512 kernelArgument512;
-    st_input_1024 kernelArgument1024;
-    st_input_2048 kernelArgument2048;
+    st_input_8 kernelArgument8{};
+    st_input_64 kernelArgument64{};
+    st_input_256 kernelArgument256{};
+    st_input_512 kernelArgument512{};
+    st_input_1024 kernelArgument1024{};
+    st_input_2048 kernelArgument2048{};
     switch (arguments.argumentSize) {
     case 8:
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(st_input_8), &kernelArgument8));

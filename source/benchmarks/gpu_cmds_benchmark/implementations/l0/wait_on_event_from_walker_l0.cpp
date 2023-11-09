@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ struct TestResourcesForWaitOnWalker {
         ZE_RESULT_SUCCESS_OR_ERROR(zeCommandListClose(this->cmdList));
     }
 
-    ~TestResourcesForWaitOnWalker() {
+    ~TestResourcesForWaitOnWalker() noexcept(false) {
         EXPECT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
         EXPECT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
         EXPECT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));

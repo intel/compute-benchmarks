@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ struct Opencl {
     Opencl() : Opencl(QueueProperties::create()) {}
     Opencl(const QueueProperties &queueProperties) : Opencl(queueProperties, ContextProperties::create()) {}
     Opencl(const QueueProperties &queueProperties, const ContextProperties &contextProperties);
-    ~Opencl();
+    ~Opencl() noexcept(false);
 
     // Creating base OpenCL queue/context. Objects are saved inside the Opencl object
     // and released in its destructor

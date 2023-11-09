@@ -70,7 +70,7 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         for (auto &event : events) {
-            zeEventHostReset(event);
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
         }
         timer.measureStart();
         signalEvent = events[0];

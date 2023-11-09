@@ -196,6 +196,11 @@ struct ByteSizeArgument : PositiveIntegerArgument {
             }
         }
 
+        if (currentUnit >= unitCount) {
+            std::cerr << "Unknown byte size argument unit\n";
+            return;
+        }
+
         this->value = std::atol(valueWithoutUnit.c_str());
         this->value *= unitMultipliers[currentUnit];
     }

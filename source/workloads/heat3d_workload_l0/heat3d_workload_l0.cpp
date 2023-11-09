@@ -115,20 +115,20 @@ enum class FacetTy : uint8_t { XU = 0,
 // Stores info about a particular facet in a unified form
 struct FacetInfoTy {
     // Send, receive, and the neighbor's receive buffer of this facet
-    float *sendBuffer, *recvBuffer, *recvBufferNeighbor;
+    float *sendBuffer = nullptr, *recvBuffer = nullptr, *recvBufferNeighbor = nullptr;
     // Length of the buffers
-    size_t bufferLen;
+    size_t bufferLen{};
     // The neighbor's rank in this facet's direction
-    int neighborRank;
+    int neighborRank{};
     // The facet on the neighbor rank that is connected to this facet (U <-> D)
-    FacetTy neighborFacet;
+    FacetTy neighborFacet{};
     // Indices below take ghost points into account and are exact, so use <= when iterating over the 3D matrices
     // The starting & ending indices for the outer shell ghost facets, use these to copy to the outer shell facets
-    uint32_t outerFacetXStart, outerFacetXEnd, outerFacetYStart, outerFacetYEnd, outerFacetZStart, outerFacetZEnd;
+    uint32_t outerFacetXStart{}, outerFacetXEnd{}, outerFacetYStart{}, outerFacetYEnd{}, outerFacetZStart{}, outerFacetZEnd{};
     // The starting & ending indices for the inner shell sub-domain facets, use these to copy from the inner shell facets
-    uint32_t innerFacetXStart, innerFacetXEnd, innerFacetYStart, innerFacetYEnd, innerFacetZStart, innerFacetZEnd;
+    uint32_t innerFacetXStart{}, innerFacetXEnd{}, innerFacetYStart{}, innerFacetYEnd{}, innerFacetZStart{}, innerFacetZEnd{};
     // The starting & ending indices for the inner shell sub-domain facets (de-duplicated), use these to update the inner shell facets
-    uint32_t innerFacetXDedupStart, innerFacetXDedupEnd, innerFacetYDedupStart, innerFacetYDedupEnd, innerFacetZDedupStart, innerFacetZDedupEnd;
+    uint32_t innerFacetXDedupStart{}, innerFacetXDedupEnd{}, innerFacetYDedupStart{}, innerFacetYDedupEnd{}, innerFacetZDedupStart{}, innerFacetZDedupEnd{};
 };
 
 // Store various simulation parameters & variables
@@ -136,44 +136,44 @@ struct ParamsTy {
     ParamsTy(LevelZero &levelzero) : levelzero(levelzero) {}
 
     LevelZero &levelzero;
-    ze_module_handle_t module;
-    ze_kernel_handle_t kernelInitTemp, kernelPackSendBuf, kernelUnpackRecvBuf, kernelUpdateFacet, kernelUpdateInterior;
-    ze_command_list_handle_t cmdlist; // Immediate
-    void *initBuffer;
-    ze_event_pool_handle_t barrierEvPool;
-    std::vector<ze_event_handle_t> barrierEvents;
+    ze_module_handle_t module{};
+    ze_kernel_handle_t kernelInitTemp{}, kernelPackSendBuf{}, kernelUnpackRecvBuf{}, kernelUpdateFacet{}, kernelUpdateInterior{};
+    ze_command_list_handle_t cmdlist{}; // Immediate
+    void *initBuffer = nullptr;
+    ze_event_pool_handle_t barrierEvPool{};
+    std::vector<ze_event_handle_t> barrierEvents{};
 
 #ifndef USE_PIDFD
-    int socketWorker;
+    int socketWorker{};
 #endif // USE_PIDFD
 
-    uint32_t rank, nRanks;
+    uint32_t rank{}, nRanks{};
     // Number of sub-domains in each direction
-    uint32_t nSubDomainX, nSubDomainY, nSubDomainZ;
+    uint32_t nSubDomainX{}, nSubDomainY{}, nSubDomainZ{};
     // Sub-domain coordinates of this rank
-    uint32_t subDomainCoordX, subDomainCoordY, subDomainCoordZ;
-    uint32_t meshLength, nTimesteps;
+    uint32_t subDomainCoordX{}, subDomainCoordY{}, subDomainCoordZ{};
+    uint32_t meshLength{}, nTimesteps{};
     // Neighbor ranks in each direction, up & down
     // Assuming periodic boundary condition, so the neighbors wraparound
-    uint32_t neighbors[int(FacetTy::LAST)];
+    uint32_t neighbors[int(FacetTy::LAST)] = {};
     // Number of mesh points on each side of the sub-domain, sans the ghost facets
-    uint32_t nPointsX, nPointsY, nPointsZ;
+    uint32_t nPointsX{}, nPointsY{}, nPointsZ{};
     // Thermal conductivity, space & time resolution
-    float thermalConductivity, deltaSpace, deltaTime;
+    float thermalConductivity{}, deltaSpace{}, deltaTime{};
     // Store the sub-domain (incl. ghost facets) in flat storage, for current & next timestep
-    float *subDomainOld, *subDomainNew;
+    float *subDomainOld = nullptr, *subDomainNew = nullptr;
     // Send buffers for the six facets
-    float *sendBuffers[int(FacetTy::LAST)];
+    float *sendBuffers[int(FacetTy::LAST)] = {};
     // Receive buffers for the six facets
-    float *recvBuffers[int(FacetTy::LAST)];
+    float *recvBuffers[int(FacetTy::LAST)] = {};
     // Store information of the six facets in the sub-domain, determined by the topology of the ranks, won't change during the simulation
-    FacetInfoTy facetInfo[int(FacetTy::LAST)];
+    FacetInfoTy facetInfo[int(FacetTy::LAST)] = {};
 };
 
 // Stores the PID and the IPC handle for the halo exchange receive buffers
 struct HaloBufferInfoTy {
-    pid_t pid;
-    ze_ipc_mem_handle_t ipcHandle;
+    pid_t pid{};
+    ze_ipc_mem_handle_t ipcHandle{};
 };
 
 static TestResult ipcBarrierWorker(ParamsTy &params) {
@@ -277,7 +277,7 @@ FacetTy reverseFacetUD(const FacetTy facet) {
 }
 
 FacetInfoTy makeFacetInfo(const FacetTy facet, ParamsTy &params) {
-    FacetInfoTy facetInfo;
+    FacetInfoTy facetInfo{};
 
     facetInfo.sendBuffer = params.sendBuffers[int(facet)];
     facetInfo.recvBuffer = params.recvBuffers[int(facet)];

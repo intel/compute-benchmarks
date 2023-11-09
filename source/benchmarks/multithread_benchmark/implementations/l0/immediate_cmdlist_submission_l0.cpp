@@ -40,11 +40,11 @@ static void issueToImmediateCmdList(ThreadSpecificData *threadData, std::shared_
 
     std::shared_lock sharedLock(*barrier);
     threadData->timer.measureStart();
-    zeCommandListAppendLaunchKernel(threadData->cmdList, threadData->kernel, &groupCount, threadData->event, 0, nullptr);
+    EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(threadData->cmdList, threadData->kernel, &groupCount, threadData->event, 0, nullptr));
     while (*volatileBuffer != 1) {
     }
     threadData->timer.measureEnd();
-    zeEventHostSynchronize(threadData->event, std::numeric_limits<uint64_t>::max());
+    EXPECT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(threadData->event, std::numeric_limits<uint64_t>::max()));
 }
 
 static TestResult getComputeEngineInfo(std::vector<EngineInfo> &supportedEngineInfo, LevelZero &levelzero) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (arguments.usedIds == WorkItemIdUsage::AtomicPerWorkgroup) {
             uint32_t workgroupCount = static_cast<uint32_t>(arguments.workgroupCount);
-            clEnqueueWriteBuffer(opencl.commandQueue, buffer, true, 0u, 4u, &workgroupCount, 0u, nullptr, nullptr);
+            ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, buffer, true, 0u, 4u, &workgroupCount, 0u, nullptr, nullptr));
         }
 
         timer.measureStart();
@@ -68,7 +68,7 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         if (arguments.usedIds == WorkItemIdUsage::AtomicPerWorkgroup) {
             uint32_t returnedValue[2] = {0u};
-            clEnqueueReadBuffer(opencl.commandQueue, buffer, true, 0u, 8u, &returnedValue, 0u, nullptr, nullptr);
+            ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, true, 0u, 8u, &returnedValue, 0u, nullptr, nullptr));
             EXPECT_EQ(0u, returnedValue[0]);
             EXPECT_EQ(1337u, returnedValue[1]);
         }

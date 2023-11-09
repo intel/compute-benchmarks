@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,7 +86,7 @@ class TestCase : public TestCaseBase {
         return true;
     }
 
-    void run(ArgumentContainerT arguments) const {
+    void run(ArgumentContainerT &arguments) const {
         // Set iterations count from global configuration
         if (arguments.iterations != 0) {
             std::cerr << "WARNING: arguments.iterations was not zero. Overriding with value from global configuration - "

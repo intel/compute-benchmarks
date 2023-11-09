@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ struct LevelZero {
         : LevelZero(queueProperties, contextProperties, ExtensionProperties::create()) {}
     LevelZero(const QueueProperties &queueProperties, const ContextProperties &contextProperties,
               const ExtensionProperties &extensionProperties);
-    ~LevelZero();
+    ~LevelZero() noexcept(false);
 
     // Returns how many subDevices has been created. Will return 0, if no subDevices were specified in ContextProperties or
     // QueueProperties.

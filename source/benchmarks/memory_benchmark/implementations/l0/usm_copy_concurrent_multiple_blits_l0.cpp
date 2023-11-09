@@ -24,8 +24,8 @@ struct PerBlitterWorkInfo {
 };
 
 struct TransferBuffer {
-    void *hostBuffer;
-    void *deviceBuffer;
+    void *hostBuffer = nullptr;
+    void *deviceBuffer = nullptr;
     LevelZero &levelzero;
 
     TransferBuffer() = delete;
@@ -225,12 +225,12 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
     }
 
     // Warmup
-    zeEventHostReset(synchronizedStartEvent);
+    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(synchronizedStartEvent));
     result = startCopyOnBlitters(blitterWorkInfos, synchronizedStartEvent);
     if (result != TestResult::Success) {
         return result;
     }
-    zeEventHostSignal(synchronizedStartEvent);
+    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(synchronizedStartEvent));
     result = waitForAllBlittersToComplete(blitterWorkInfos);
     if (result != TestResult::Success) {
         return result;
@@ -244,13 +244,13 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     const auto totalBytesTransferred = gettotalBytesTransferred(blitterWorkInfos);
     for (auto i = 0u; i < arguments.iterations; i++) {
-        zeEventHostReset(synchronizedStartEvent);
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(synchronizedStartEvent));
         result = startCopyOnBlitters(blitterWorkInfos, synchronizedStartEvent);
         if (result != TestResult::Success) {
             return result;
         }
         timer.measureStart();
-        zeEventHostSignal(synchronizedStartEvent);
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(synchronizedStartEvent));
         result = waitForAllBlittersToComplete(blitterWorkInfos);
         if (result != TestResult::Success) {
             return result;

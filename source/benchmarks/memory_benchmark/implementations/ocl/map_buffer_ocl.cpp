@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ static TestResult run(const MapBufferArguments &arguments, Statistics &statistic
     void *ptr = clEnqueueMapBuffer(opencl.commandQueue, buffer, CL_BLOCKING, mapFlags, 0, arguments.size, 0, nullptr, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     ASSERT_CL_SUCCESS(clEnqueueUnmapMemObject(opencl.commandQueue, buffer, ptr, 0, nullptr, nullptr));
-    clFinish(opencl.commandQueue);
+    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

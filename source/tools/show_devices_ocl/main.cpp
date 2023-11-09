@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ std::vector<cl_platform_id> getPlatforms() {
 
 std::vector<cl_device_id> getDevices(cl_platform_id platform) {
     cl_uint numDevices;
-    clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices);
+    CL_SUCCESS_OR_ERROR(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices), "Querying devices");
     if (numDevices == 0) {
         return {};
     }

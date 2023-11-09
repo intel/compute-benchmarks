@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,7 @@ Opencl::Opencl(const QueueProperties &queueProperties, const ContextProperties &
     this->commandQueue = createQueue(queueProperties);
 }
 
-Opencl::~Opencl() {
+Opencl::~Opencl() noexcept(false) {
     for (auto &queueToRelease : commandQueues) {
         EXPECT_CL_SUCCESS(clReleaseCommandQueue(queueToRelease));
     }

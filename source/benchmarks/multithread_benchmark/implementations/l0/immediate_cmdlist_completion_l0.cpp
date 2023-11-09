@@ -35,11 +35,11 @@ struct EngineInfo {
 static void issueToImmediateCmdList(ThreadSpecificData *threadData, std::shared_mutex *barrier) {
     std::shared_lock sharedLock(*barrier);
     threadData->timer.measureStart();
-    zeCommandListAppendMemoryCopy(threadData->cmdList, threadData->deviceDstMemory,
-                                  threadData->hostSrcMemory, threadData->maxMemoryAllocSize,
-                                  threadData->event, 0, nullptr);
+    EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(threadData->cmdList, threadData->deviceDstMemory,
+                                                           threadData->hostSrcMemory, threadData->maxMemoryAllocSize,
+                                                           threadData->event, 0, nullptr));
 
-    zeEventHostSynchronize(threadData->event, std::numeric_limits<uint64_t>::max());
+    EXPECT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(threadData->event, std::numeric_limits<uint64_t>::max()));
     threadData->timer.measureEnd();
 }
 

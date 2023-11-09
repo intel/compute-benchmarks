@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
     // Warmup run
     ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, destination, CL_NON_BLOCKING, 0, transferSize, hostMemory, 0, nullptr, &profilingEvent));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue))
-    clReleaseEvent(profilingEvent);
+    ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

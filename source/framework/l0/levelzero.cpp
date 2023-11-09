@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ LevelZero::LevelZero(const QueueProperties &queueProperties, const ContextProper
     initializeImportHostPointerExtension(extensionProperties);
 }
 
-LevelZero::~LevelZero() {
+LevelZero::~LevelZero() noexcept(false) {
     for (auto &queue : commandQueues) {
         EXPECT_ZE_RESULT_SUCCESS(zeCommandQueueDestroy(queue));
     }

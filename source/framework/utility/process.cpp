@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ Process &Process::operator=(Process &&other) {
     return *this;
 }
 
-Process::~Process() {
+Process::~Process() noexcept(false) {
     freeOsSpecificData();
 }
 

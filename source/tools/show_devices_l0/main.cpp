@@ -23,7 +23,7 @@ int printAvailableEngines(ze_device_handle_t device, uint32_t numberOfTabs) {
         return -1;
     }
     std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
-    zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, queueProperties.data());
+    EXPECT_ZE_RESULT_SUCCESS(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, queueProperties.data()));
 
     std::string tabDelimiter = "";
     tabDelimiter.append(numberOfTabs, '\t');
@@ -134,7 +134,11 @@ int printPropertiesForAllSubDevices(ze_device_handle_t device, uint32_t numberOf
     }
 
     std::vector<ze_device_handle_t> subDevices(subDeviceCount);
-    zeDeviceGetSubDevices(device, &subDeviceCount, subDevices.data());
+    res = zeDeviceGetSubDevices(device, &subDeviceCount, subDevices.data());
+    if (res) {
+        std::cerr << "zeDeviceGetSubDevices failed\n";
+        return -1;
+    }
     for (auto subDevice : subDevices) {
         ret = printPropertiesForAllSubDevices(subDevice, numberOfTabs + 1);
         if (ret) {
@@ -230,7 +234,11 @@ int main() {
         return -1;
     }
     std::vector<ze_driver_handle_t> drivers(driverCount);
-    zeDriverGet(&driverCount, drivers.data());
+    res = zeDriverGet(&driverCount, drivers.data());
+    if (res != ZE_RESULT_SUCCESS) {
+        std::cerr << "zeDriverGet failed\n";
+        return -1;
+    }
 
     for (auto driver : drivers) {
         uint32_t deviceCount = 0;
@@ -240,7 +248,7 @@ int main() {
             continue;
         }
         std::vector<ze_device_handle_t> devices(deviceCount);
-        zeDeviceGet(driver, &deviceCount, devices.data());
+        EXPECT_ZE_RESULT_SUCCESS(zeDeviceGet(driver, &deviceCount, devices.data()));
 
         for (auto device : devices) {
             int ret = printPropertiesForAllSubDevices(device, 0);
@@ -248,7 +256,10 @@ int main() {
                 return -1;
             }
         }
-        printDevicesWithTheSameBdfAddress(devices);
+        int ret = printDevicesWithTheSameBdfAddress(devices);
+        if (ret) {
+            return -1;
+        }
     }
 
     return 0;

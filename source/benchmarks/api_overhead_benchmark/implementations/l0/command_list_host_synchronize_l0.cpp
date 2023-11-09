@@ -53,7 +53,7 @@ static TestResult run(const CommandListHostSynchronizeArguments &arguments, Stat
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, event, 0, nullptr));
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
         }
-        zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max());
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
         return TestResult::Success;
     };
 

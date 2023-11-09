@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class BenchmarkInfo {
 
   private:
     static std::unique_ptr<BenchmarkInfo> instance;
-    std::string name;
-    std::string description;
-    int testCaseColumnWidth;
+    std::string name{};
+    std::string description{};
+    int testCaseColumnWidth = 0;
 };

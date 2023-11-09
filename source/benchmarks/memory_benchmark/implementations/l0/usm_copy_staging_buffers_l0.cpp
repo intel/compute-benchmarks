@@ -37,16 +37,20 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
 
     Timer timer;
     // Create src & dst buffers
+    std::unique_ptr<char[]> srcStorage{};
+    std::unique_ptr<char[]> dstStorage{};
     char *src{};
     char *dst{};
     size_t offset = arguments.size / arguments.chunks;
 
     if (arguments.dstPlacement == UsmMemoryPlacement::Device) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.size, reinterpret_cast<void **>(&dst)));
-        src = new char[arguments.size];
+        srcStorage = std::make_unique<char[]>(arguments.size);
+        src = srcStorage.get();
     } else if (arguments.dstPlacement == UsmMemoryPlacement::Host) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.size, reinterpret_cast<void **>(&src)));
-        dst = new char[arguments.size];
+        dstStorage = std::make_unique<char[]>(arguments.size);
+        dst = dstStorage.get();
     }
 
     // create staging buffers
@@ -119,10 +123,8 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     if (arguments.dstPlacement == UsmMemoryPlacement::Device) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(UsmMemoryPlacement::Device, levelzero, dst));
-        delete[] src;
     } else {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(UsmMemoryPlacement::Device, levelzero, src));
-        delete[] dst;
     }
 
     for (auto i = 0u; i < arguments.chunks; i++) {

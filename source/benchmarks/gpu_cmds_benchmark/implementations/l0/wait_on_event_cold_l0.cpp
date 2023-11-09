@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ struct TestResources {
         ZE_RESULT_SUCCESS_OR_ERROR(zeCommandListClose(this->cmdList));
     }
 
-    ~TestResources() {
+    ~TestResources() noexcept(false) {
         EXPECT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
         for (auto &event : events) {
             EXPECT_ZE_RESULT_SUCCESS(zeEventDestroy(event));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,8 +20,8 @@
 
 void enqueueSvmCopy(ze_command_queue_handle_t queue, ze_command_list_handle_t cmdList, std::shared_mutex *barrier) {
     std::shared_lock sharedLock(*barrier);
-    zeCommandQueueExecuteCommandLists(queue, 1, &cmdList, nullptr);
-    zeCommandQueueSynchronize(queue, std::numeric_limits<uint64_t>::max());
+    EXPECT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(queue, 1, &cmdList, nullptr));
+    EXPECT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(queue, std::numeric_limits<uint64_t>::max()));
 }
 
 static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics) {

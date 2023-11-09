@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ struct EnumArgument : Argument {
         this->value = DerivedType::invalidEnumValue;
     }
 
-    EnumType value;
+    EnumType value{};
 
   private:
     static std::string composeHelpMessage(const std::string &extraHelpPrefix) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,7 +103,7 @@ struct BitfieldEnumArgument : Argument {
     }
 
   protected:
-    EnumType value;
+    EnumType value{};
 
   private:
     static EnumType parseSingleValue(const std::string &singleValueLower) {
