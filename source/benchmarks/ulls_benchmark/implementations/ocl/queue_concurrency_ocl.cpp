@@ -74,7 +74,7 @@ static TestResult run(const QueueConcurrencyArguments &arguments, Statistics &st
             ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, slowKernel, 1, nullptr, &gws, &lws, 1, &events[j - 1], &events[j]));
             ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, fastKernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[j + 1]));
         }
-        clFinish(opencl.commandQueue);
+        ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
         ASSERT_CL_SUCCESS(retVal);
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
