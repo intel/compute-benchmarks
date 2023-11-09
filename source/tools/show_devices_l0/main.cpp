@@ -81,6 +81,10 @@ int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
         std::cout << tabDelimiter << "Subdevice properties\n";
     }
     std::cout << tabDelimiter << "\tname:        " << deviceProperties.name << "\n"
+              << tabDelimiter << "\tslices: " << deviceProperties.numSlices << "\n"
+              << tabDelimiter << "\tsubslices per slice: " << deviceProperties.numSubslicesPerSlice << "\n"
+              << tabDelimiter << "\tEUs per slice: " << deviceProperties.numEUsPerSubslice << "\n"
+              << tabDelimiter << "\tthreads per EU: " << deviceProperties.numThreadsPerEU << "\n"
               << tabDelimiter << "\tdeviceId:    0x"
               << std::setw(4) << std::hex << std::setfill('0')
               << deviceProperties.deviceId << "\n"
