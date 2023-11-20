@@ -15,7 +15,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<StreamMemory> registerTestCase{};
 
-class StreamMemoryTest : public ::testing::TestWithParam<std::tuple<Api, StreamMemoryType, size_t, bool>> {
+class StreamMemoryTest : public ::testing::TestWithParam<std::tuple<Api, StreamMemoryType, size_t, bool, UsmMemoryPlacement>> {
 };
 
 TEST_P(StreamMemoryTest, Test) {
@@ -24,6 +24,7 @@ TEST_P(StreamMemoryTest, Test) {
     args.type = std::get<1>(GetParam());
     args.size = std::get<2>(GetParam());
     args.useEvents = std::get<3>(GetParam());
+    args.memoryPlacement = std::get<4>(GetParam());
 
     StreamMemory test;
     test.run(args);
@@ -37,4 +38,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::allApis(),
         ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
         ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 128 * megaByte, 512 * megaByte, 1 * gigaByte),
-        ::testing::Values(false, true)));
+        ::testing::Values(false, true),
+        ::testing::ValuesIn(UsmMemoryPlacementArgument::deviceAndHost)));

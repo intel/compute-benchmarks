@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,17 +10,20 @@
 #include "framework/argument/compression_argument.h"
 #include "framework/argument/enum/buffer_contents_argument.h"
 #include "framework/argument/enum/stream_memory_type_argument.h"
+#include "framework/argument/enum/usm_memory_placement_argument.h"
 #include "framework/test_case/test_case.h"
 
 struct StreamMemoryArguments : TestCaseArgumentContainer {
     StreamMemoryTypeArgument type;
     ByteSizeArgument size;
     BooleanArgument useEvents;
+    UsmMemoryPlacementArgument memoryPlacement;
 
     StreamMemoryArguments()
         : type(*this, "type", "Memory streaming type"),
           size(*this, "size", "Size of the memory to stream. Must be divisible by datatype size."),
-          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
+          memoryPlacement(*this, "memoryPlacement", "Memory type used for stream") {}
 };
 
 struct StreamMemory : TestCase<StreamMemoryArguments> {
