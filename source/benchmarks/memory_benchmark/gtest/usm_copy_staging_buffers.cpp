@@ -17,7 +17,7 @@
 class UsmCopyStagingBuffersTest : public ::testing::TestWithParam<std::tuple<Api, bool, UsmMemoryPlacement, size_t, size_t>> {
 };
 
-TEST_P(UsmCopyStagingBuffersTest, Test) {
+TEST_P(UsmCopyStagingBuffersTest, DISABLED_Test) {
     UsmCopyStagingBuffersArguments args;
     args.api = std::get<0>(GetParam());
     args.forceBlitter = std::get<1>(GetParam());

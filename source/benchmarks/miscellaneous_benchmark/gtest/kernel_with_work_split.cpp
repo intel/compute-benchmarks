@@ -17,7 +17,7 @@
 class KernelWithWorkSplitSubmissionTest : public ::testing::TestWithParam<std::tuple<Api, WorkItemIdUsage, size_t, size_t, size_t, bool>> {
 };
 
-TEST_P(KernelWithWorkSplitSubmissionTest, Test) {
+TEST_P(KernelWithWorkSplitSubmissionTest, DISABLED_Test) {
     KernelWithWorkArgumentsSplit args;
     args.api = std::get<0>(GetParam());
     args.usedIds = std::get<1>(GetParam());

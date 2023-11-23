@@ -87,11 +87,6 @@ class TestCase : public TestCaseBase {
     }
 
     void run(ArgumentContainerT &arguments) const {
-        // Set iterations count from global configuration
-        if (arguments.iterations != 0) {
-            std::cerr << "WARNING: arguments.iterations was not zero. Overriding with value from global configuration - "
-                      << Configuration::get().iterations << ".\n";
-        }
         arguments.iterations = Configuration::get().iterations;
         arguments.noIntelExtensions = Configuration::get().noIntelExtensions;
 
