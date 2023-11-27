@@ -13,7 +13,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<FlushTime> registerTestCase{};
 
-class FlushTimeTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, bool, bool>> {
+class FlushTimeTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, bool, bool, size_t>> {
 };
 
 TEST_P(FlushTimeTest, Test) {
@@ -23,6 +23,7 @@ TEST_P(FlushTimeTest, Test) {
     args.workgroupSize = std::get<1>(GetParam());
     args.useOoq = std::get<2>(GetParam());
     args.useEvent = std::get<3>(GetParam());
+    args.flushCount = std::get<4>(GetParam());
 
     FlushTime test;
     test.run(args);
@@ -35,4 +36,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1, 100, 1000),
         ::testing::Values(0, 1, 32, 256),
         ::testing::Values(false, true),
-        ::testing::Values(false, true)));
+        ::testing::Values(false, true),
+        ::testing::Values(100)));

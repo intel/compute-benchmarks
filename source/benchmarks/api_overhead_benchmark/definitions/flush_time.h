@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,12 +15,14 @@ struct FlushTimeArguments : TestCaseArgumentContainer {
     IntegerArgument workgroupSize;
     BooleanArgument useOoq;
     BooleanArgument useEvent;
+    PositiveIntegerArgument flushCount;
 
     FlushTimeArguments()
         : workgroupCount(*this, "wgc", "Workgroup count"),
           workgroupSize(*this, "wgs", "Workgroup size, pass 0 to make the driver calculate it during enqueue"),
           useOoq(*this, "ooq", "Use out of order queue"),
-          useEvent(*this, "event", "Pass output event to the enqueue call") {}
+          useEvent(*this, "event", "Pass output event to the enqueue call"),
+          flushCount(*this, "flushCount", "Count of flushes to measure") {}
 };
 
 struct FlushTime : TestCase<FlushTimeArguments> {

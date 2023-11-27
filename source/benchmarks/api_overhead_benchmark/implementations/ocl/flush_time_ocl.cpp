@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,15 +57,19 @@ static TestResult run(const FlushTimeArguments &arguments, Statistics &statistic
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, lwsForNdr, 0, nullptr, eventForNdr));
-        timer.measureStart();
-        ASSERT_CL_SUCCESS(clFlush(opencl.commandQueue));
-        timer.measureEnd();
-        ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
-        if (eventForNdr) {
-            ASSERT_CL_SUCCESS(clReleaseEvent(event));
+        std::chrono::high_resolution_clock::duration totalTime{};
+        for (auto j = 0u; j < arguments.flushCount; j++) {
+            ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, lwsForNdr, 0, nullptr, eventForNdr));
+            timer.measureStart();
+            ASSERT_CL_SUCCESS(clFlush(opencl.commandQueue));
+            timer.measureEnd();
+            totalTime += timer.get();
+            ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
+            if (eventForNdr) {
+                ASSERT_CL_SUCCESS(clReleaseEvent(event));
+            }
         }
+        statistics.pushValue(totalTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup
