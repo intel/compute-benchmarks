@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@ class Statistics {
 
     Statistics(size_t maxSamplesCount) : maxSamplesCount(maxSamplesCount) {}
 
+    virtual void pushPercentage(double value, MeasurementUnit unit, MeasurementType type, const std::string &description = "") = 0;
     virtual void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, const std::string &description = "") = 0;
     virtual void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, const std::string &description = "") = 0;
     virtual void pushUnitAndType(MeasurementUnit unit, MeasurementType type) = 0;

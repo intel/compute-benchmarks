@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "framework/argument/enum/usm_memory_placement_argument.h"
 #include "framework/test_case/test_case.h"
 
-struct MpiBcastArguments : TestCaseArgumentContainer {
+struct MpiBroadcastArguments : TestCaseArgumentContainer {
     StringArgument mpiLauncher;
     MpiStatisticsTypeArgument statsType;
 
@@ -20,7 +20,7 @@ struct MpiBcastArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument messageSize;
     UsmMemoryPlacementArgument bufferType;
 
-    MpiBcastArguments()
+    MpiBroadcastArguments()
         : mpiLauncher(*this, "mpiLauncher", "MPI launcher (e.g. mpirun --hostfile /path/to/hosts"),
           statsType(*this, "statsType", "MPI statistics type (Avg/Max/Min)"),
           numberOfRanks(*this, "numberOfRanks", "Total number of MPI ranks"),
@@ -34,11 +34,11 @@ struct MpiBcastArguments : TestCaseArgumentContainer {
     }
 };
 
-struct MpiBcast : public TestCase<MpiBcastArguments> {
-    using TestCase<MpiBcastArguments>::TestCase;
+struct MpiBroadcast : public TestCase<MpiBroadcastArguments> {
+    using TestCase<MpiBroadcastArguments>::TestCase;
 
     std::string getTestCaseName() const override {
-        return "MpiBcast";
+        return "MpiBroadcast";
     }
 
     std::string getHelp() const override {

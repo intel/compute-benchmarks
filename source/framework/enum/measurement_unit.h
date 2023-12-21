@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ enum class MeasurementUnit {
     Nanoseconds,
     GigabytesPerSecond,
     Latency,
+    Percentage,
 };
 
 namespace std {
@@ -30,6 +31,8 @@ inline std::string to_string(MeasurementUnit unit) {
         return "[GB/s]";
     case MeasurementUnit::Latency:
         return "[clk]";
+    case MeasurementUnit::Percentage:
+        return "[%]";
     default:
         FATAL_ERROR("Unknown measurement unit");
     }

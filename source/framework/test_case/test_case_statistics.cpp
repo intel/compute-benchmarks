@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,17 @@
 TestCaseStatistics::TestCaseStatistics(size_t maxSamplesCount, Configuration::PrintType printType)
     : Statistics(maxSamplesCount),
       printType(printType) {
+}
+
+void TestCaseStatistics::pushPercentage(double value, MeasurementUnit unit, MeasurementType type, const std::string &description) {
+    if (unit != MeasurementUnit::Percentage) {
+        FATAL_ERROR("Incorrect measurement unit");
+    }
+
+    overrideMeasurementUnit(unit);
+
+    const Value percentage = value;
+    this->pushValue(percentage, description, unit, type);
 }
 
 void TestCaseStatistics::pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, const std::string &description) {

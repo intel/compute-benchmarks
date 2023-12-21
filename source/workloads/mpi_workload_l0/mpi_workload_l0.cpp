@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,13 @@
 #include "framework/enum/mpi_test.h"
 #include "framework/enum/usm_memory_placement.h"
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/error.h"
 #include "framework/l0/utility/error_codes.h"
+#include "framework/utility/file_helper.h"
 #include "framework/workload/register_workload.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <ctime>
@@ -117,7 +120,47 @@ void memFree(LevelZero &levelzero, const int type, void *ptr) {
     }
 }
 
-TestResult testStartup(const MpiArguments &arguments, Statistics &statistics, const MpiStatisticsType statsType) {
+void mpiDummyCompute(const bool gpuCompute,
+                     uint64_t durationNs,
+                     int numMpiTestCalls,
+                     uint64_t *mpiTestTime,
+                     MPI_Request *mpiRequest,
+                     ze_kernel_handle_t kernel,
+                     const ze_group_count_t dispatch,
+                     ze_command_list_handle_t cmdListImmSync) {
+    int mpiFlag = 0;
+    timespec tStart, tEnd;
+    volatile int8_t x[64];
+
+    *mpiTestTime = 0;
+    if (numMpiTestCalls > 0) {
+        durationNs /= numMpiTestCalls;
+    }
+
+    do {
+        clock_gettime(CLOCK_MONOTONIC_RAW, &tStart);
+        clock_gettime(CLOCK_MONOTONIC_RAW, &tEnd);
+        while (getTimeDiffNs(tStart, tEnd) < durationNs) {
+            if (gpuCompute) {
+                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdListImmSync, kernel, &dispatch, nullptr, 0, nullptr));
+            } else {
+                for (int i = 0; i < 64; i++) {
+                    x[i] += x[i] / 3 + 2;
+                }
+            }
+            clock_gettime(CLOCK_MONOTONIC_RAW, &tEnd);
+        }
+        if (numMpiTestCalls != 0) {
+            clock_gettime(CLOCK_MONOTONIC_RAW, &tStart);
+            MPICHK(MPI_Test(mpiRequest, &mpiFlag, MPI_STATUS_IGNORE));
+            clock_gettime(CLOCK_MONOTONIC_RAW, &tEnd);
+            *mpiTestTime += getTimeDiffNs(tStart, tEnd);
+        }
+        numMpiTestCalls--;
+    } while (numMpiTestCalls > 0);
+}
+
+TestResult testStartup(const MpiArguments &arguments, const MpiStatisticsType statsType) {
     const bool initMpiFirst = arguments.testArg0;
 
     ze_init_flags_t flags = 0;
@@ -170,13 +213,10 @@ TestResult testStartup(const MpiArguments &arguments, Statistics &statistics, co
 
     MPICHK(MPI_Finalize());
 
-    for (auto i = 0u; i < arguments.iterations; i++) {
-        statistics.pushValue(std::chrono::nanoseconds{0}, MeasurementUnit::Unknown, MeasurementType::Unknown);
-    }
     return TestResult::Success;
 }
 
-TestResult testBandwidth(const MpiArguments &arguments, Statistics &statistics, const MpiStatisticsType statsType) {
+TestResult testBandwidth(const MpiArguments &arguments, const MpiStatisticsType statsType) {
     constexpr uint32_t warmup = 10;
     constexpr int batchSize = 100;
     MPI_Request requests[batchSize];
@@ -239,13 +279,10 @@ TestResult testBandwidth(const MpiArguments &arguments, Statistics &statistics, 
 
     MPICHK(MPI_Finalize());
 
-    for (auto i = 0u; i < arguments.iterations; i++) {
-        statistics.pushValue(std::chrono::nanoseconds{0}, MeasurementUnit::Unknown, MeasurementType::Unknown);
-    }
     return TestResult::Success;
 }
 
-TestResult testLatency(const MpiArguments &arguments, Statistics &statistics, const MpiStatisticsType statsType) {
+TestResult testLatency(const MpiArguments &arguments, const MpiStatisticsType statsType) {
     constexpr uint32_t warmup = 10;
     constexpr uint32_t iterations = 200;
 
@@ -305,13 +342,143 @@ TestResult testLatency(const MpiArguments &arguments, Statistics &statistics, co
 
     MPICHK(MPI_Finalize());
 
-    for (auto i = 0u; i < arguments.iterations; i++) {
-        statistics.pushValue(std::chrono::nanoseconds{0}, MeasurementUnit::Unknown, MeasurementType::Unknown);
-    }
     return TestResult::Success;
 }
 
-TestResult testBcast(const MpiArguments &arguments, Statistics &statistics, const MpiStatisticsType statsType) {
+TestResult testOverlap(const MpiArguments &arguments) {
+    constexpr uint32_t warmup = 10;
+    constexpr uint32_t iterations = 200;
+
+    const uint32_t messageSize = arguments.testArg0;
+    const int sendType = arguments.testArg1;
+    const int recvType = arguments.testArg2;
+    const bool gpuCompute = arguments.testArg3;
+    const int numMpiTestCalls = arguments.testArg4;
+
+    LevelZero levelzero{};
+    MPICHK(MPI_Init(nullptr, nullptr));
+
+    int myRank;
+    MPICHK(MPI_Comm_rank(MPI_COMM_WORLD, &myRank));
+
+    void *buf = memAlloc(levelzero, (myRank == 0) ? sendType : recvType, messageSize, 1);
+
+    void *gpuComputeBuf = nullptr;
+    ze_module_handle_t module = nullptr;
+    ze_kernel_handle_t kernel = nullptr;
+    ze_group_count_t gpuComputeDispatch = {0u, 0u, 0u};
+    ze_command_list_handle_t cmdListImmSync = nullptr;
+
+    if (gpuCompute && (myRank == 0)) {
+        ze_command_queue_desc_t queueDesc{};
+        queueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+        queueDesc.pNext = nullptr;
+        queueDesc.ordinal = 0;
+        queueDesc.index = 0;
+        queueDesc.flags = 0;
+        queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+        queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &queueDesc, &cmdListImmSync));
+
+        auto spirvModule = FileHelper::loadBinaryFile("mpi_workload_dummy_compute.spv");
+        if (spirvModule.size() == 0) {
+            return TestResult::KernelNotFound;
+        }
+
+        ze_module_desc_t moduleDesc{};
+        moduleDesc.stype = ZE_STRUCTURE_TYPE_MODULE_DESC;
+        moduleDesc.pNext = nullptr;
+        moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
+        moduleDesc.inputSize = spirvModule.size();
+        moduleDesc.pConstants = nullptr;
+        moduleDesc.pBuildFlags = nullptr;
+        ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
+
+        ze_kernel_desc_t kernelDesc{};
+        kernelDesc.stype = ZE_STRUCTURE_TYPE_KERNEL_DESC;
+        kernelDesc.pNext = nullptr;
+        kernelDesc.flags = 0;
+        kernelDesc.pKernelName = "dummy_compute";
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
+
+        const int gpuComputeIters = std::min(100u, messageSize / 4096u);
+        constexpr uint32_t gpuComputeBufSize = 1ul << 20;
+        gpuComputeBuf = memAlloc(levelzero, static_cast<int>(UsmMemoryPlacement::Device), gpuComputeBufSize, 64);
+        uint32_t groupSizeX, groupSizeY, groupSizeZ;
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(kernel, gpuComputeBufSize, 1u, 1u, &groupSizeX, &groupSizeY, &groupSizeZ));
+        gpuComputeDispatch = {gpuComputeBufSize / groupSizeX, 1u, 1u};
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &gpuComputeBuf));
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 1, sizeof(int), &gpuComputeIters));
+    }
+
+    timespec t0, t1, t2, t3;
+    MPI_Request mpiRequest;
+
+    uint64_t pureCommunicationTime = 0;
+    for (uint32_t i = 0; i < iterations + warmup; i++) {
+        MPICHK(MPI_Barrier(MPI_COMM_WORLD));
+        clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
+        if (myRank == 0) {
+            MPICHK(MPI_Isend(buf, messageSize, MPI_INT8_T, 1, 0, MPI_COMM_WORLD, &mpiRequest));
+            MPICHK(MPI_Wait(&mpiRequest, MPI_STATUS_IGNORE));
+        } else {
+            MPICHK(MPI_Recv(buf, messageSize, MPI_INT8_T, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+        }
+        clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
+
+        if (i >= warmup) {
+            pureCommunicationTime += getTimeDiffNs(t0, t1);
+        }
+    }
+
+    const uint64_t sendLatency = pureCommunicationTime / iterations;
+    uint64_t totalTime = 0u;
+    uint64_t computeTime = 0u;
+    uint64_t mpiTestTime = 0u;
+    for (uint32_t i = 0; i < iterations + warmup; i++) {
+        MPICHK(MPI_Barrier(MPI_COMM_WORLD));
+        clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
+        if (myRank == 0) {
+            MPICHK(MPI_Isend(buf, messageSize, MPI_INT8_T, 1, 0, MPI_COMM_WORLD, &mpiRequest));
+            clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
+            mpiDummyCompute(gpuCompute, sendLatency, numMpiTestCalls, &mpiTestTime, &mpiRequest, kernel, gpuComputeDispatch, cmdListImmSync);
+            clock_gettime(CLOCK_MONOTONIC_RAW, &t2);
+            MPICHK(MPI_Wait(&mpiRequest, MPI_STATUS_IGNORE));
+        } else {
+            MPICHK(MPI_Recv(buf, messageSize, MPI_INT8_T, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+        }
+        clock_gettime(CLOCK_MONOTONIC_RAW, &t3);
+
+        if (i >= warmup) {
+            // Isend time = t0 ~ t1
+            // Wait time = t2 ~ t3
+            totalTime += getTimeDiffNs(t0, t3);
+            computeTime += getTimeDiffNs(t1, t2);
+        }
+    }
+
+    const uint64_t overlap = 1e7 * std::max(0.0, 1.0 - ((totalTime - (computeTime - mpiTestTime)) / static_cast<double>(pureCommunicationTime)));
+    if (myRank == 0) {
+        std::cout << "**Measurement:" << overlap << std::endl;
+    }
+
+    if (gpuCompute && (myRank == 0)) {
+        memFree(levelzero, static_cast<int>(UsmMemoryPlacement::Device), gpuComputeBuf);
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
+        ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdListImmSync));
+    }
+
+    memFree(levelzero, (myRank == 0) ? sendType : recvType, buf);
+
+    MPICHK(MPI_Finalize());
+
+    return TestResult::Success;
+}
+
+TestResult testBroadcast(const MpiArguments &arguments, const MpiStatisticsType statsType) {
     constexpr uint32_t warmup = 5;
     constexpr uint32_t iterations = 50;
 
@@ -363,13 +530,10 @@ TestResult testBcast(const MpiArguments &arguments, Statistics &statistics, cons
 
     MPICHK(MPI_Finalize());
 
-    for (auto i = 0u; i < arguments.iterations; i++) {
-        statistics.pushValue(std::chrono::nanoseconds{0}, MeasurementUnit::Unknown, MeasurementType::Unknown);
-    }
     return TestResult::Success;
 }
 
-TestResult testReduce(const MpiArguments &arguments, Statistics &statistics, const MpiStatisticsType statsType) {
+TestResult testReduce(const MpiArguments &arguments, const MpiStatisticsType statsType) {
     constexpr uint32_t warmup = 5;
     constexpr uint32_t iterations = 50;
 
@@ -424,13 +588,10 @@ TestResult testReduce(const MpiArguments &arguments, Statistics &statistics, con
 
     MPICHK(MPI_Finalize());
 
-    for (auto i = 0u; i < arguments.iterations; i++) {
-        statistics.pushValue(std::chrono::nanoseconds{0}, MeasurementUnit::Unknown, MeasurementType::Unknown);
-    }
     return TestResult::Success;
 }
 
-TestResult testAllReduce(const MpiArguments &arguments, Statistics &statistics, const MpiStatisticsType statsType) {
+TestResult testAllReduce(const MpiArguments &arguments, const MpiStatisticsType statsType) {
     constexpr uint32_t warmup = 5;
     constexpr uint32_t iterations = 50;
 
@@ -485,13 +646,10 @@ TestResult testAllReduce(const MpiArguments &arguments, Statistics &statistics, 
 
     MPICHK(MPI_Finalize());
 
-    for (auto i = 0u; i < arguments.iterations; i++) {
-        statistics.pushValue(std::chrono::nanoseconds{0}, MeasurementUnit::Unknown, MeasurementType::Unknown);
-    }
     return TestResult::Success;
 }
 
-TestResult testAllToAll(const MpiArguments &arguments, Statistics &statistics, const MpiStatisticsType statsType) {
+TestResult testAllToAll(const MpiArguments &arguments, const MpiStatisticsType statsType) {
     constexpr uint32_t warmup = 5;
     constexpr uint32_t iterations = 50;
 
@@ -547,9 +705,6 @@ TestResult testAllToAll(const MpiArguments &arguments, Statistics &statistics, c
 
     MPICHK(MPI_Finalize());
 
-    for (auto i = 0u; i < arguments.iterations; i++) {
-        statistics.pushValue(std::chrono::nanoseconds{0}, MeasurementUnit::Unknown, MeasurementType::Unknown);
-    }
     return TestResult::Success;
 }
 
@@ -557,27 +712,35 @@ TestResult run(const MpiArguments &arguments, Statistics &statistics, WorkloadSy
     const auto testType = static_cast<MpiTestType>(static_cast<int>(arguments.testType));
     const auto statsType = static_cast<MpiStatisticsType>(static_cast<int>(arguments.statsType));
 
+    // We don't use the built-in statistics framework for MPI benchmarks
+    for (auto i = 0u; i < arguments.iterations; i++) {
+        statistics.pushValue(Timer::Clock::duration(0), MeasurementUnit::Unknown, MeasurementType::Unknown);
+    }
+
     switch (testType) {
     case MpiTestType::Startup: {
-        return testStartup(arguments, statistics, statsType);
+        return testStartup(arguments, statsType);
     }
     case MpiTestType::Bandwidth: {
-        return testBandwidth(arguments, statistics, statsType);
+        return testBandwidth(arguments, statsType);
     }
     case MpiTestType::Latency: {
-        return testLatency(arguments, statistics, statsType);
+        return testLatency(arguments, statsType);
     }
-    case MpiTestType::Bcast: {
-        return testBcast(arguments, statistics, statsType);
+    case MpiTestType::Overlap: {
+        return testOverlap(arguments);
+    }
+    case MpiTestType::Broadcast: {
+        return testBroadcast(arguments, statsType);
     }
     case MpiTestType::Reduce: {
-        return testReduce(arguments, statistics, statsType);
+        return testReduce(arguments, statsType);
     }
     case MpiTestType::AllReduce: {
-        return testAllReduce(arguments, statistics, statsType);
+        return testAllReduce(arguments, statsType);
     }
     case MpiTestType::AllToAll: {
-        return testAllToAll(arguments, statistics, statsType);
+        return testAllToAll(arguments, statsType);
     }
     default: {
         return TestResult::NoImplementation;

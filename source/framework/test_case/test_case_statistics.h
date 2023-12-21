@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ class TestCaseStatistics : public Statistics {
 
     explicit TestCaseStatistics(size_t maxSamplesCount, Configuration::PrintType printType);
 
+    void pushPercentage(double value, MeasurementUnit unit, MeasurementType type, const std::string &description = "") override;
     void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, const std::string &description = "") override;
     void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, const std::string &description = "") override;
     void pushUnitAndType(MeasurementUnit unit, MeasurementType type) override;

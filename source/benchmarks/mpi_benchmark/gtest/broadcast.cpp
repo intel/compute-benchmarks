@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "definitions/bcast.h"
+#include "definitions/broadcast.h"
 
 #include "framework/argument/enum/mpi_statistics_type_argument.h"
 #include "framework/test_case/register_test_case.h"
@@ -13,12 +13,12 @@
 
 #include <gtest/gtest.h>
 
-[[maybe_unused]] static const inline RegisterTestCase<MpiBcast> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<MpiBroadcast> registerTestCase{};
 
-class MpiBcastTest : public ::testing::TestWithParam<std::tuple<uint32_t, uint32_t, UsmMemoryPlacement, MpiStatisticsType>> {};
+class MpiBroadcastTest : public ::testing::TestWithParam<std::tuple<uint32_t, uint32_t, UsmMemoryPlacement, MpiStatisticsType>> {};
 
-TEST_P(MpiBcastTest, Test) {
-    MpiBcastArguments args{};
+TEST_P(MpiBroadcastTest, Test) {
+    MpiBroadcastArguments args{};
 
     args.api = Api::L0;
     args.numberOfRanks = std::get<0>(GetParam());
@@ -26,13 +26,13 @@ TEST_P(MpiBcastTest, Test) {
     args.bufferType = std::get<2>(GetParam());
     args.statsType = std::get<3>(GetParam());
 
-    MpiBcast test;
+    MpiBroadcast test;
     test.run(args);
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    MpiBcastTest,
-    MpiBcastTest,
+    MpiBroadcastTest,
+    MpiBroadcastTest,
     ::testing::Combine(
         ::testing::Values(2, 4, 8, 16, 32),
         ::testing::Values(1, 8, 64, 1024, 4096, 65536, 1u << 20),

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,8 @@ enum class MpiTestType : int {
     Startup,
     Bandwidth,
     Latency,
-    Bcast,
+    Overlap,
+    Broadcast,
     Reduce,
     AllReduce,
     AllToAll
