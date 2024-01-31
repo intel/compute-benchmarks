@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,12 +43,14 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
     // Create events
     ze_event_pool_handle_t eventPool{};
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = static_cast<uint32_t>(arguments.count);
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
     std::vector<ze_event_handle_t> events;
     for (auto j = 0u; j < arguments.count; ++j) {
         ze_event_handle_t event{};
         ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
+        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
         eventDesc.index = j;
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
         events.push_back(event);
