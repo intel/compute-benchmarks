@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,9 @@ static TestResult run(const CreateBufferArguments &arguments, Statistics &statis
     int *hostPtr = nullptr;
     std::vector<std::unique_ptr<int[]>> srcCpuBuffers(arguments.iterations);
     std::vector<cl_mem> buffersToRelease;
+    if (arguments.allocateAll) {
+        buffersToRelease.reserve(arguments.iterations);
+    }
     if (arguments.copyHostPtr) {
         memFlags |= CL_MEM_COPY_HOST_PTR;
         for (auto i = 0u; i < arguments.iterations; ++i) {
