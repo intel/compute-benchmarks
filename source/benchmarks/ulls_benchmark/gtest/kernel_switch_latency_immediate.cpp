@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelSwitchLatencyImmediate> registerTestCase{};
 
-class KernelSwitchLatencyImmediateTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, bool, bool>> {
+class KernelSwitchLatencyImmediateTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, bool, bool, bool, bool>> {
 };
 
 TEST_P(KernelSwitchLatencyImmediateTest, Test) {
@@ -24,6 +24,8 @@ TEST_P(KernelSwitchLatencyImmediateTest, Test) {
     args.kernelExecutionTime = std::get<2>(GetParam());
     args.barrier = std::get<3>(GetParam());
     args.hostVisible = std::get<4>(GetParam());
+    args.inOrder = std::get<5>(GetParam());
+    args.counterBasedEvents = std::get<6>(GetParam());
 
     KernelSwitchLatencyImmediate test;
     test.run(args);
@@ -34,7 +36,9 @@ INSTANTIATE_TEST_SUITE_P(
     KernelSwitchLatencyImmediateTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::Values(8, 32),
+        ::testing::Values(8),
         ::testing::Values(20),
+        ::testing::Values(false, true),
+        ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false, true)));

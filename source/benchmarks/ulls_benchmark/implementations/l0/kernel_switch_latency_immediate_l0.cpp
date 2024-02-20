@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,10 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
+    }
+
+    if (!arguments.inOrder && arguments.counterBasedEvents) {
+        return TestResult::ApiNotCapable;
     }
 
     // Setup
@@ -54,6 +58,9 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
 
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    if (arguments.inOrder) {
+        commandQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    }
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
@@ -66,7 +73,9 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
         flags |= ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     }
 
-    const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, flags, static_cast<uint32_t>(arguments.kernelCount)};
+    const ze_event_pool_counter_based_exp_desc_t counterBasedDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC, nullptr, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE};
+    const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, arguments.counterBasedEvents ? &counterBasedDesc : nullptr, flags, static_cast<uint32_t>(arguments.kernelCount)};
+
     uint32_t numDevices = 1;
     ze_event_pool_handle_t hEventPool;
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, numDevices, &levelzero.device, &hEventPool));
@@ -100,8 +109,10 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
             switchTime += std::chrono::nanoseconds((laterKernelTimestamp.global.kernelStart - earlierKernelTimestamp.global.kernelEnd) * timerResolution);
         }
         statistics.pushValue(switchTime / (arguments.kernelCount - 1), typeSelector.getUnit(), typeSelector.getType());
-        for (auto j = 0u; j < arguments.kernelCount; j++) {
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
+        if (!arguments.counterBasedEvents) {
+            for (auto j = 0u; j < arguments.kernelCount; j++) {
+                ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
+            }
         }
     }
 

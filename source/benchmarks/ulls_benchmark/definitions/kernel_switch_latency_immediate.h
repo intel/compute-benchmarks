@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,12 +18,16 @@ struct KernelSwitchLatencyImmediateArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument kernelExecutionTime;
     BooleanArgument barrier;
     BooleanArgument hostVisible;
+    BooleanArgument inOrder;
+    BooleanArgument counterBasedEvents;
 
     KernelSwitchLatencyImmediateArguments()
         : kernelCount(*this, "count", "Count of kernels"),
           kernelExecutionTime(*this, "execTime", "Approximately how long a single kernel executes, in us"),
           barrier(*this, "barrier", "synchronization with barrier instead of events"),
-          hostVisible(*this, "hostVisible", "events are with host visible flag") {}
+          hostVisible(*this, "hostVisible", "events are with host visible flag"),
+          inOrder(*this, "inOrder", "use in order queue/command list"),
+          counterBasedEvents(*this, "counterBasedEvents", "use counter based events for in order") {}
 };
 
 struct KernelSwitchLatencyImmediate : TestCase<KernelSwitchLatencyImmediateArguments> {
