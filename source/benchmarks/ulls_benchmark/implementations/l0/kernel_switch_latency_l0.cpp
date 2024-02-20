@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,10 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
+    }
+
+    if (arguments.counterBasedEvents && !arguments.inOrder) {
+        return TestResult::ApiNotCapable;
     }
 
     // Setup
@@ -53,6 +57,10 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     const ze_group_count_t groupCount{static_cast<uint32_t>(gws / lws), 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
+    if (arguments.inOrder) {
+        cmdListDesc.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
+    }
+
     ze_command_list_handle_t cmdList{};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
@@ -68,7 +76,9 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
         flags |= ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     }
 
-    const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, flags, static_cast<uint32_t>(arguments.kernelCount)};
+    const ze_event_pool_counter_based_exp_desc_t counterBasedDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC, nullptr, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE};
+    const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, arguments.counterBasedEvents ? &counterBasedDesc : nullptr, flags, static_cast<uint32_t>(arguments.kernelCount)};
+
     uint32_t numDevices = 1;
     ze_event_pool_handle_t hEventPool;
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, numDevices, &levelzero.device, &hEventPool));
@@ -106,8 +116,10 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
 
-        for (auto j = 0u; j < arguments.kernelCount; j++) {
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
+        if (!arguments.counterBasedEvents) {
+            for (auto j = 0u; j < arguments.kernelCount; j++) {
+                ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
+            }
         }
 
         // benchmark
@@ -127,8 +139,10 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
                 switchTime += std::chrono::nanoseconds((laterKernelTimestamp.global.kernelStart - earlierKernelTimestamp.global.kernelEnd) * timerResolution);
             }
             statistics.pushValue(switchTime / (arguments.kernelCount - 1), typeSelector.getUnit(), typeSelector.getType());
-            for (auto j = 0u; j < arguments.kernelCount; j++) {
-                ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
+            if (!arguments.counterBasedEvents) {
+                for (auto j = 0u; j < arguments.kernelCount; j++) {
+                    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
+                }
             }
         }
         for (uint32_t j = 0u; j < arguments.kernelCount; j++) {
@@ -160,8 +174,10 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
                 switchTime += std::chrono::nanoseconds((laterKernelTimestamp.global.kernelStart - earlierKernelTimestamp.global.kernelEnd) * timerResolution);
             }
             statistics.pushValue(switchTime / (arguments.kernelCount - 1), typeSelector.getUnit(), typeSelector.getType());
-            for (auto j = 0u; j < arguments.kernelCount; j++) {
-                ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
+            if (!arguments.counterBasedEvents) {
+                for (auto j = 0u; j < arguments.kernelCount; j++) {
+                    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
+                }
             }
         }
     }

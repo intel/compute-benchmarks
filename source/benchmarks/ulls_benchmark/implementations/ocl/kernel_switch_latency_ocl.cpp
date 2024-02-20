@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,10 +21,13 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
     }
+    if (arguments.counterBasedEvents) {
+        return TestResult::ApiNotCapable;
+    }
 
     // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
-    queueProperties.setOoq(true);
+    queueProperties.setOoq(!arguments.inOrder);
 
     Opencl opencl(queueProperties);
 
