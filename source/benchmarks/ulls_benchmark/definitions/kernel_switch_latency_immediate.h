@@ -20,6 +20,7 @@ struct KernelSwitchLatencyImmediateArguments : TestCaseArgumentContainer {
     BooleanArgument hostVisible;
     BooleanArgument inOrder;
     BooleanArgument counterBasedEvents;
+    BooleanArgument useProfiling;
 
     KernelSwitchLatencyImmediateArguments()
         : kernelCount(*this, "count", "Count of kernels"),
@@ -27,7 +28,8 @@ struct KernelSwitchLatencyImmediateArguments : TestCaseArgumentContainer {
           barrier(*this, "barrier", "synchronization with barrier instead of events"),
           hostVisible(*this, "hostVisible", "events are with host visible flag"),
           inOrder(*this, "inOrder", "use in order queue/command list"),
-          counterBasedEvents(*this, "counterBasedEvents", "use counter based events for in order") {}
+          counterBasedEvents(*this, "counterBasedEvents", "use counter based events for in order"),
+          useProfiling(*this, "useProfiling", "use profiling to obtain switch time") {}
 };
 
 struct KernelSwitchLatencyImmediate : TestCase<KernelSwitchLatencyImmediateArguments> {

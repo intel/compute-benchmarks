@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelSwitchLatencyImmediate> registerTestCase{};
 
-class KernelSwitchLatencyImmediateTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, bool, bool, bool, bool>> {
+class KernelSwitchLatencyImmediateTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, bool, bool, bool, bool, bool>> {
 };
 
 TEST_P(KernelSwitchLatencyImmediateTest, Test) {
@@ -26,6 +26,7 @@ TEST_P(KernelSwitchLatencyImmediateTest, Test) {
     args.hostVisible = std::get<4>(GetParam());
     args.inOrder = std::get<5>(GetParam());
     args.counterBasedEvents = std::get<6>(GetParam());
+    args.useProfiling = std::get<7>(GetParam());
 
     KernelSwitchLatencyImmediate test;
     test.run(args);
@@ -36,8 +37,9 @@ INSTANTIATE_TEST_SUITE_P(
     KernelSwitchLatencyImmediateTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::Values(8),
+        ::testing::Values(64),
         ::testing::Values(20),
+        ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false, true),

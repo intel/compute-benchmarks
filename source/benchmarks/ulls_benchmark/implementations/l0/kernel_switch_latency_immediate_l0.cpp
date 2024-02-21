@@ -16,14 +16,17 @@
 
 static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+    if (!arguments.inOrder && arguments.counterBasedEvents) {
+        return TestResult::ApiNotCapable;
+    }
+
+    if (!arguments.useProfiling && (!arguments.inOrder || !arguments.counterBasedEvents)) {
+        return TestResult::ApiNotCapable;
+    }
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
-    }
-
-    if (!arguments.inOrder && arguments.counterBasedEvents) {
-        return TestResult::ApiNotCapable;
     }
 
     // Setup
@@ -68,7 +71,12 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
 
     // Create events for profiling
-    ze_event_pool_flags_t flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    ze_event_pool_flags_t flags = {0u};
+    ze_event_pool_flags_t profilingFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    if (arguments.useProfiling) {
+        flags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    }
     if (arguments.hostVisible) {
         flags |= ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     }
@@ -85,8 +93,34 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
         ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, i, 0, 0};
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(hEventPool, &eventDesc, &profilingEvents[i]));
     }
+    Timer timer;
+
+    auto kernelsTime = std::chrono::nanoseconds(0u);
+    // if no profiling, we need to get average kernel time
+    if (!arguments.useProfiling) {
+        ze_event_pool_handle_t profilingEventPool;
+        const ze_event_pool_desc_t profilingEventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, arguments.counterBasedEvents ? &counterBasedDesc : nullptr, profilingFlags, 1u};
+        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &profilingEventPoolDesc, numDevices, &levelzero.device, &profilingEventPool));
+        ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0u, 0, 0};
+        ze_event_handle_t eventHandle = {0u};
+        ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(profilingEventPool, &eventDesc, &eventHandle));
+
+        for (auto j = 0u; j < arguments.kernelCount; j++) {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, eventHandle, 0, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(eventHandle, std::numeric_limits<uint64_t>::max()));
+            ze_kernel_timestamp_result_t eventTimestamps;
+            ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(eventHandle, &eventTimestamps));
+            kernelsTime += std::chrono::nanoseconds((eventTimestamps.global.kernelEnd - eventTimestamps.global.kernelStart) * timerResolution);
+            if (!arguments.counterBasedEvents) {
+                ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(eventHandle));
+            }
+        }
+        ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(eventHandle));
+        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(profilingEventPool));
+    }
 
     for (auto iteration = 0u; iteration < arguments.iterations; ++iteration) {
+        timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, profilingEvents[0], 0, nullptr));
         for (auto j = 1u; j < arguments.kernelCount; j++) {
             if (arguments.barrier) {
@@ -98,16 +132,22 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
         }
 
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(profilingEvents[arguments.kernelCount - 1], std::numeric_limits<uint64_t>::max()));
+        timer.measureEnd();
 
         auto switchTime = std::chrono::nanoseconds(0u);
-        for (auto j = 1u; j < arguments.kernelCount; j++) {
-            ze_kernel_timestamp_result_t earlierKernelTimestamp;
-            ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(profilingEvents[j - 1], &earlierKernelTimestamp));
-            ze_kernel_timestamp_result_t laterKernelTimestamp;
-            ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(profilingEvents[j], &laterKernelTimestamp));
+        if (arguments.useProfiling) {
+            for (auto j = 1u; j < arguments.kernelCount; j++) {
+                ze_kernel_timestamp_result_t earlierKernelTimestamp;
+                ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(profilingEvents[j - 1], &earlierKernelTimestamp));
+                ze_kernel_timestamp_result_t laterKernelTimestamp;
+                ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(profilingEvents[j], &laterKernelTimestamp));
 
-            switchTime += std::chrono::nanoseconds((laterKernelTimestamp.global.kernelStart - earlierKernelTimestamp.global.kernelEnd) * timerResolution);
+                switchTime += std::chrono::nanoseconds((laterKernelTimestamp.global.kernelStart - earlierKernelTimestamp.global.kernelEnd) * timerResolution);
+            }
+        } else {
+            switchTime = (std::chrono::nanoseconds)timer.get().count() - kernelsTime;
         }
+
         statistics.pushValue(switchTime / (arguments.kernelCount - 1), typeSelector.getUnit(), typeSelector.getType());
         if (!arguments.counterBasedEvents) {
             for (auto j = 0u; j < arguments.kernelCount; j++) {
