@@ -20,7 +20,7 @@ class BufferContentsHelper {
     static void fillWithIncreasingBytes(uint8_t *buffer, size_t size);
 
   private:
-    static thread_local std::mt19937 generator;
+    static std::mt19937 generator;
     static std::vector<uint8_t> cachedRandomData;
 
     static uint64_t randomOword();

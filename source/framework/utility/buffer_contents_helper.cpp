@@ -11,7 +11,7 @@
 
 #include <cstring>
 
-thread_local std::mt19937 BufferContentsHelper::generator{std::random_device{}()};
+std::mt19937 BufferContentsHelper::generator{std::random_device{}()};
 std::vector<uint8_t> BufferContentsHelper::cachedRandomData{};
 
 void BufferContentsHelper::fill(uint8_t *buffer, size_t size, BufferContents contents) {
