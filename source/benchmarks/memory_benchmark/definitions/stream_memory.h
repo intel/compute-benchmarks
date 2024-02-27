@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,12 +17,14 @@ struct StreamMemoryArguments : TestCaseArgumentContainer {
     StreamMemoryTypeArgument type;
     ByteSizeArgument size;
     BooleanArgument useEvents;
+    BufferContentsArgument contents;
     UsmMemoryPlacementArgument memoryPlacement;
 
     StreamMemoryArguments()
         : type(*this, "type", "Memory streaming type"),
           size(*this, "size", "Size of the memory to stream. Must be divisible by datatype size."),
           useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
+          contents(*this, "contents", "Buffer contents zeros/random"),
           memoryPlacement(*this, "memoryPlacement", "Memory type used for stream") {}
 };
 

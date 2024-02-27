@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,10 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
+    }
+
+    if (arguments.contents == BufferContents::Random) {
+        return TestResult::NoImplementation;
     }
 
     // Setup

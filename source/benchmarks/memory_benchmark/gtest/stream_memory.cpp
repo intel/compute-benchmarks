@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<StreamMemory> registerTestCase{};
 
-class StreamMemoryTest : public ::testing::TestWithParam<std::tuple<Api, StreamMemoryType, size_t, bool, UsmMemoryPlacement>> {
+class StreamMemoryTest : public ::testing::TestWithParam<std::tuple<Api, StreamMemoryType, size_t, bool, BufferContents, UsmMemoryPlacement>> {
 };
 
 TEST_P(StreamMemoryTest, Test) {
@@ -24,7 +24,8 @@ TEST_P(StreamMemoryTest, Test) {
     args.type = std::get<1>(GetParam());
     args.size = std::get<2>(GetParam());
     args.useEvents = std::get<3>(GetParam());
-    args.memoryPlacement = std::get<4>(GetParam());
+    args.contents = std::get<4>(GetParam());
+    args.memoryPlacement = std::get<5>(GetParam());
 
     StreamMemory test;
     test.run(args);
@@ -39,4 +40,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
         ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 128 * megaByte, 512 * megaByte, 1 * gigaByte),
         ::testing::Values(false, true),
+        ::testing::Values(BufferContents::Zeros, BufferContents::Random),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::deviceAndHost)));

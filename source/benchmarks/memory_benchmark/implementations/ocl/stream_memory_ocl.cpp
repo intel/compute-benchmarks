@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,10 @@ using namespace MemoryConstants;
 static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
+    if (arguments.memoryPlacement == UsmMemoryPlacement::Host) {
+        return TestResult::NoImplementation;
+    }
+
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
@@ -36,7 +40,6 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     bool useDoubles = opencl.getExtensions().areDoublesSupported();
 
     size_t elementSize = useDoubles ? 8u : 4u;
-    const size_t fillValue = 313u;
     const int64_t scalarValue = -999;
     const bool printBuildInfo = true;
 
@@ -91,7 +94,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     cl_kernel kernel = clCreateKernel(program, kernelName, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     for (auto i = 0u; i < buffersCount; i++) {
-        ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, buffers[i], &fillValue, sizeof(fillValue), 0, bufferSizes[i], 0, nullptr, nullptr));
+        BufferContentsHelperOcl::fillBuffer(opencl.commandQueue, buffers[i], bufferSizes[i], arguments.contents);
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(i), sizeof(buffers[i]), &buffers[i]))
     }
 
