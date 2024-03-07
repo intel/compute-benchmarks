@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,10 +22,12 @@ class QueueFamiliesHelper {
     };
 
     static inline std::unique_ptr<PropertiesForSelectingQueue> getPropertiesForSelectingEngine(cl_device_id device, Engine engine) {
-        const EngineGroup engineGroup = EngineHelper::getEngineGroup(engine);
-        const size_t engineIndex = EngineHelper::getEngineIndexWithinGroup(engine);
-
         const auto &families = queryQueueFamilies(device);
+        const auto copyEnginesCount = getCopyEnginesCount(families);
+
+        const EngineGroup engineGroup = EngineHelper::getEngineGroup(engine, copyEnginesCount);
+        const size_t engineIndex = EngineHelper::getEngineIndexWithinGroup(engine, copyEnginesCount);
+
         for (const auto &queueFamilyDesc : families) {
             if (engineGroup != queueFamilyDesc.type) {
                 continue;
@@ -103,6 +105,15 @@ class QueueFamiliesHelper {
         }
 
         return result;
+    }
+
+    static inline size_t getCopyEnginesCount(const std::vector<QueueFamilyDesc> &families) {
+        for (const auto &family : families) {
+            if (family.type == EngineGroup::Copy) {
+                return family.queueCount;
+            }
+        }
+        return 0;
     }
 
     static cl_command_queue_capabilities_intel getQueueCapabilities(cl_command_queue queue) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,10 +23,8 @@ enum class Engine {
     Ccs2,
     Ccs3,
 
-    // Copy group
+    // Copy / LinkCopy group
     Bcs,
-
-    // LinkCopy group
     Bcs1,
     Bcs2,
     Bcs3,
@@ -62,7 +60,7 @@ struct EngineHelper {
         return EngineGroup::Unknown;
     }
 
-    static EngineGroup getEngineGroup(Engine engine) {
+    static EngineGroup getEngineGroup(Engine engine, size_t copyEnginesCount) {
         switch (engine) {
         case Engine::Rcs:
             return EngineGroup::RenderCompute;
@@ -72,7 +70,6 @@ struct EngineHelper {
         case Engine::Ccs3:
             return EngineGroup::Compute;
         case Engine::Bcs:
-            return EngineGroup::Copy;
         case Engine::Bcs1:
         case Engine::Bcs2:
         case Engine::Bcs3:
@@ -80,14 +77,19 @@ struct EngineHelper {
         case Engine::Bcs5:
         case Engine::Bcs6:
         case Engine::Bcs7:
-        case Engine::Bcs8:
-            return EngineGroup::LinkCopy;
+        case Engine::Bcs8: {
+            auto copyEngineIndex = static_cast<size_t>(engine) - static_cast<size_t>(Engine::Bcs);
+            if (copyEngineIndex >= copyEnginesCount) {
+                return EngineGroup::LinkCopy;
+            }
+            return EngineGroup::Copy;
+        }
         default:
             FATAL_ERROR("Unknown engine");
         }
     }
 
-    static size_t getEngineIndexWithinGroup(Engine engine) {
+    static size_t getEngineIndexWithinGroup(Engine engine, size_t copyEnginesCount) {
         switch (engine) {
         case Engine::Rcs:
             return 0;
@@ -97,7 +99,6 @@ struct EngineHelper {
         case Engine::Ccs3:
             return static_cast<size_t>(engine) - static_cast<size_t>(Engine::Ccs0);
         case Engine::Bcs:
-            return 0;
         case Engine::Bcs1:
         case Engine::Bcs2:
         case Engine::Bcs3:
@@ -105,8 +106,13 @@ struct EngineHelper {
         case Engine::Bcs5:
         case Engine::Bcs6:
         case Engine::Bcs7:
-        case Engine::Bcs8:
-            return static_cast<size_t>(engine) - static_cast<size_t>(Engine::Bcs1);
+        case Engine::Bcs8: {
+            auto engineIndex = static_cast<size_t>(engine) - static_cast<size_t>(Engine::Bcs);
+            if (engineIndex >= copyEnginesCount) {
+                return engineIndex - copyEnginesCount;
+            }
+            return engineIndex;
+        }
         default:
             FATAL_ERROR("Unknown engine");
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,7 @@ class QueueFamiliesHelper {
     static std::vector<QueueFamilyDesc> queryQueueFamilies(ze_device_handle_t device);
 
   private:
-    static EngineGroup getEngineGroup(ze_command_queue_group_properties_t family);
+    static EngineGroup getEngineGroup(const ze_command_queue_group_properties_t family, bool &copyEngineFound);
+    static size_t getCopyEnginesCount(const std::vector<QueueFamilyDesc> &families);
 };
 } // namespace L0

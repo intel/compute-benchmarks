@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,10 +10,12 @@
 namespace L0 {
 
 std::unique_ptr<QueueFamiliesHelper::QueueDesc> QueueFamiliesHelper::getPropertiesForSelectingEngine(ze_device_handle_t device, Engine engine) {
-    const EngineGroup engineGroup = EngineHelper::getEngineGroup(engine);
-    const size_t engineIndex = EngineHelper::getEngineIndexWithinGroup(engine);
-
     const auto &families = queryQueueFamilies(device);
+    const auto copyEnginesCount = getCopyEnginesCount(families);
+
+    const EngineGroup engineGroup = EngineHelper::getEngineGroup(engine, copyEnginesCount);
+    const size_t engineIndex = EngineHelper::getEngineIndexWithinGroup(engine, copyEnginesCount);
+
     for (const auto &queueFamilyDesc : families) {
         if (engineGroup != queueFamilyDesc.type) {
             continue;
@@ -46,9 +48,10 @@ std::vector<QueueFamiliesHelper::QueueFamilyDesc> QueueFamiliesHelper::queryQueu
 
     // Iterate over queue groups
     std::vector<QueueFamilyDesc> result{};
+    bool copyEngineFound = false;
     for (uint32_t familyIndex = 0; familyIndex < familiesCount; familyIndex++) {
         const ze_command_queue_group_properties_t properties = families[familyIndex];
-        const EngineGroup engineGroup = getEngineGroup(properties);
+        const EngineGroup engineGroup = getEngineGroup(properties, copyEngineFound);
 
         if (engineGroup == EngineGroup::Unknown) {
             DEVELOPER_WARNING("Unknown LevelZero queue group at index. Ignoring.");
@@ -66,11 +69,10 @@ std::vector<QueueFamiliesHelper::QueueFamilyDesc> QueueFamiliesHelper::queryQueu
     return result;
 }
 
-EngineGroup QueueFamiliesHelper::getEngineGroup(ze_command_queue_group_properties_t family) {
+EngineGroup QueueFamiliesHelper::getEngineGroup(const ze_command_queue_group_properties_t family, bool &copyEngineFound) {
     const bool isCompute = family.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE;
     const bool isCopy = family.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
     const bool isNoneQueue = family.numQueues == 0;
-    const bool isSingleQueue = family.numQueues == 1;
 
     if (isNoneQueue) {
         return EngineGroup::Unknown;
@@ -85,13 +87,24 @@ EngineGroup QueueFamiliesHelper::getEngineGroup(ze_command_queue_group_propertie
     }
 
     if (isCopy) {
-        if (isSingleQueue) {
-            return EngineGroup::Copy; //  this could also be Linked BCS with only 1 queue, no way to know this
-        } else {
+        if (copyEngineFound) {
             return EngineGroup::LinkCopy;
+        } else {
+            copyEngineFound = true;
+            return EngineGroup::Copy; // Assuming main copy engines are reported before link copy
         }
     }
 
     return EngineGroup::Unknown;
 }
+
+size_t QueueFamiliesHelper::getCopyEnginesCount(const std::vector<QueueFamiliesHelper::QueueFamilyDesc> &families) {
+    for (const auto &family : families) {
+        if (family.type == EngineGroup::Copy) {
+            return family.queueCount;
+        }
+    }
+    return 0;
+}
+
 } // namespace L0
