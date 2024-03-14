@@ -41,6 +41,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     size_t elementSize = useDoubles ? 8u : 4u;
     const int64_t scalarValue = -999;
+    bool setScalarArgument = true;
     const bool printBuildInfo = true;
 
     // Create kernel-specific buffers
@@ -58,7 +59,12 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, 16u, nullptr, &retVal);
         break;
     case StreamMemoryType::Write:
-        kernelName = "write";
+        if (BufferContents::Random == arguments.contents) {
+            kernelName = "write_random";
+            setScalarArgument = false; // value to write is embedded in kernel code
+        } else {
+            kernelName = "write";
+        }
         buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
         break;
     case StreamMemoryType::Scale:
@@ -97,8 +103,9 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         BufferContentsHelperOcl::fillBuffer(opencl.commandQueue, buffers[i], bufferSizes[i], arguments.contents);
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(i), sizeof(buffers[i]), &buffers[i]))
     }
-
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount), elementSize, &scalarValue));
+    if (setScalarArgument) {
+        ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount), elementSize, &scalarValue));
+    }
 
     // Query max workgroup size
     size_t maxWorkgroupSize = {};
