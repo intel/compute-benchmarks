@@ -6,6 +6,7 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/buffer_contents_helper_l0.h"
 #include "framework/l0/utility/usm_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/timer.h"
@@ -39,6 +40,8 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
     void *source{}, *destination{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &source));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.destinationPlacement, levelzero, arguments.size, &destination));
+    ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, source, arguments.size, BufferContents::Random, true));
+    ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, destination, arguments.size, BufferContents::Random, true));
 
     // Create events
     ze_event_pool_handle_t eventPool{};

@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "buffer_contents_helper_l0.h"
-
-#include <memory>
 
 ze_result_t BufferContentsHelperL0::fillBuffer(ze_device_handle_t device, ze_context_handle_t context, ze_command_queue_handle_t queue, uint32_t queueOrdinal, void *buffer, size_t bufferSize, BufferContents contents, bool useImmediate) {
     ze_command_list_handle_t cmdList{};
@@ -56,7 +54,7 @@ ze_result_t BufferContentsHelperL0::fillBuffer(LevelZero &levelzero, void *buffe
                       levelzero.commandQueueDesc.ordinal, buffer, bufferSize, contents, useImmediate);
 }
 
-ze_result_t BufferContentsHelperL0::fillBufferWithRandomBytes(ze_context_handle_t context, ze_command_list_handle_t cmdList, void *buffer, size_t bufferSize, void *stagingAllocation) {
+ze_result_t BufferContentsHelperL0::fillBufferWithRandomBytes(ze_context_handle_t context, ze_command_list_handle_t cmdList, void *buffer, size_t bufferSize, void *&stagingAllocation) {
     // Create staging allocation
     ze_host_mem_alloc_desc_t desc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     ZE_RESULT_SUCCESS_OR_RETURN(zeMemAllocHost(context, &desc, bufferSize, 0, &stagingAllocation));

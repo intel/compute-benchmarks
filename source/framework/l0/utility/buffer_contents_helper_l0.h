@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ class BufferContentsHelperL0 : public BufferContentsHelper {
 
   private:
     static ze_result_t fillBufferWithRandomBytes(ze_context_handle_t context, ze_command_list_handle_t cmdList,
-                                                 void *buffer, size_t bufferSize, void *stagingAllocation);
+                                                 void *buffer, size_t bufferSize, void *&stagingAllocation);
 
     static ze_result_t fillBufferWithZeros(ze_command_list_handle_t cmdList, void *buffer, size_t bufferSize);
 };
