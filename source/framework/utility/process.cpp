@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,11 +26,13 @@ Process::Process(Process &&other)
 }
 
 Process &Process::operator=(Process &&other) {
-    exeName = std::move(other.exeName);
-    arguments = std::move(other.arguments);
-    envVariables = std::move(other.envVariables);
-    osSpecificData = std::move(other.osSpecificData);
-    other.osSpecificData = nullptr;
+    if (&other != this) {
+        exeName = std::move(other.exeName);
+        arguments = std::move(other.arguments);
+        envVariables = std::move(other.envVariables);
+        osSpecificData = std::move(other.osSpecificData);
+        other.osSpecificData = nullptr;
+    }
     return *this;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,6 +80,7 @@ int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
     } else {
         std::cout << tabDelimiter << "Subdevice properties\n";
     }
+    std::ios_base::fmtflags coutFlagsBackup(std::cout.flags());
     std::cout << tabDelimiter << "\tname:        " << deviceProperties.name << "\n"
               << tabDelimiter << "\tslices: " << deviceProperties.numSlices << "\n"
               << tabDelimiter << "\tsubslices per slice: " << deviceProperties.numSubslicesPerSlice << "\n"
@@ -109,6 +110,7 @@ int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
     std::cout << tabDelimiter << "\tshared cross device: " << parseCaps(memoryAccessCapabilities.sharedCrossDeviceAllocCapabilities) << "\n";
     std::cout << tabDelimiter << "\tshared system caps: " << parseCaps(memoryAccessCapabilities.sharedSystemAllocCapabilities) << "\n";
 
+    std::cout.flags(coutFlagsBackup);
     return 0;
 }
 
@@ -204,7 +206,7 @@ int printDevicesWithTheSameBdfAddress(std::vector<ze_device_handle_t> &devices) 
         pciIdentifiers.insert(std::make_pair(pciBdf.str(), deviceIndexes));
     }
 
-    for (auto devicePciIdentifier : pciIdentifiers) {
+    for (auto &devicePciIdentifier : pciIdentifiers) {
         auto pciProp = devicePciIdentifier.first;
         std::cout << "PCI: " << devicePciIdentifier.first
                   << "\n";

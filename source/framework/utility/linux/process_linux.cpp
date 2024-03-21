@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,7 +91,7 @@ void Process::run() {
             argumentsForExecStrings.push_back(std::move(str));
         }
         std::vector<char *> argumentsForExec = {};
-        argumentsForExec.reserve(argumentsForExec.size() + 1);
+        argumentsForExec.reserve(argumentsForExecStrings.size() + 1);
         for (auto &argumentsForExecString : argumentsForExecStrings) {
             argumentsForExec.push_back(argumentsForExecString.data());
         }

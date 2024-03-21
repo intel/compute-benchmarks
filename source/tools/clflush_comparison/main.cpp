@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -261,7 +261,7 @@ int main(int argc, char **argv) {
             }
 
             auto end = getTime();
-            auto score = (std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) / static_cast<double>(clflushIterations);
+            auto score = clflushIterations == 0 ? 0. : (std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) / static_cast<double>(clflushIterations);
 
             if (precise) {
                 char *pointerToModify = static_cast<char *>(memPtr);
