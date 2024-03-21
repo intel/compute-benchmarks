@@ -6,6 +6,7 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/buffer_contents_helper_l0.h"
 #include "framework/l0/utility/usm_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/file_helper.h"
@@ -26,10 +27,6 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         return TestResult::Nooped;
     }
 
-    if (arguments.contents == BufferContents::Random) {
-        return TestResult::NoImplementation;
-    }
-
     // Setup
     QueueProperties queueProperties = QueueProperties::create();
     ContextProperties contextProperties = ContextProperties::create();
@@ -47,8 +44,8 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     const bool useDoubles = moduleProperties.fp64flags != 0u;
     const size_t elementSize = useDoubles ? sizeof(double) : sizeof(float);
-    const size_t fillValue = 313u;
     const int32_t scalarValue = -999;
+    bool setScalarArgument = true;
     const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
@@ -81,7 +78,12 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, 16u, &buffers[buffersCount++]));
         break;
     case StreamMemoryType::Write:
-        kernelDesc.pKernelName = "write";
+        if (BufferContents::Random == arguments.contents) {
+            kernelDesc.pKernelName = "write_random";
+            setScalarArgument = false; // value to write is embedded in kernel code
+        } else {
+            kernelDesc.pKernelName = "write";
+        }
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
         break;
     case StreamMemoryType::Scale:
@@ -134,10 +136,12 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     // Enqueue filling of the buffers and set kernel arguments
     for (auto i = 0u; i < buffersCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffers[i], &fillValue, sizeof(fillValue), bufferSizes[i], event, 0, nullptr));
+        BufferContentsHelperL0::fillBuffer(levelzero, buffers[i], bufferSizes[i], arguments.contents, false);
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<int>(i), sizeof(buffers[i]), &buffers[i]));
     }
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), sizeof(scalarValue), &scalarValue));
+    if (setScalarArgument) {
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), sizeof(scalarValue), &scalarValue));
+    }
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, 0));
