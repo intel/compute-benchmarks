@@ -38,7 +38,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(64),
-        ::testing::Values(20),
+        ::testing::Values(200),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
