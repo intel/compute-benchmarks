@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,15 +23,19 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
 
     // Setup
     Timer timer;
-    auto size = 1u;
     Sycl sycl{sycl::property::queue::enable_profiling{}};
+    int operationsCount = static_cast<int>(arguments.kernelExecutionTime * 2);
 
     // Create buffer
     auto buffer = sycl::malloc_host<uint32_t>(size, sycl.queue);
 
     // Create kernel
-    const auto kernel = [buffer]() {
-        *buffer = 1u;
+    const auto kernel = [operationsCount]() {
+        volatile int value = 1u;
+        for (int i = 0; i < operationsCount; i++) {
+            value /= 2;
+            value *= 2;
+        }
     };
 
     std::vector<sycl::event> events(arguments.kernelCount);
