@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "framework/l0/levelzero.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/file_helper.h"
+#include "framework/utility/power_meter.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/kernel_with_work_periodic.h"
@@ -25,6 +26,7 @@ static TestResult run(const KernelWithWorkPeriodicArguments &arguments, Statisti
     // Setup
     LevelZero levelzero;
     Timer timer;
+    PowerMeter powerMeter;
 
     // Create output buffer
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
@@ -69,7 +71,10 @@ static TestResult run(const KernelWithWorkPeriodicArguments &arguments, Statisti
     // Benchmark
     const auto submissionDelay = std::chrono::microseconds(arguments.timeBetweenSubmissions);
     for (auto i = 0u; i < arguments.iterations; ++i) {
+        const auto sleepToTimeoutUllsController = std::chrono::microseconds(10000);
+        std::this_thread::sleep_for(sleepToTimeoutUllsController);
         Timer::Clock::duration executionTime(0);
+        ASSERT_ZE_RESULT_SUCCESS(powerMeter.measureStart());
         for (auto numKernel = 0u; numKernel < arguments.numSubmissions; ++numKernel) {
             std::this_thread::sleep_for(submissionDelay);
             timer.measureStart();
@@ -78,7 +83,13 @@ static TestResult run(const KernelWithWorkPeriodicArguments &arguments, Statisti
             timer.measureEnd();
             executionTime += timer.get();
         }
+        ASSERT_ZE_RESULT_SUCCESS(powerMeter.measureEnd());
         statistics.pushValue(executionTime, typeSelector.getUnit(), typeSelector.getType());
+        if (powerMeter.isEnabled()) {
+            statistics.pushValue(powerMeter.getTime(), typeSelector.getUnit(), typeSelector.getType(), "timeWithSleeps");
+            statistics.pushEnergy(powerMeter.getEnergy(), MeasurementUnit::MicroJoules, MeasurementType::Gpu, "energy");
+            statistics.pushEnergy(powerMeter.getPower(), MeasurementUnit::Watts, MeasurementType::Gpu, "avgPower");
+        }
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));

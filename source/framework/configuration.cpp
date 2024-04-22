@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,7 @@ Configuration::Configuration()
       testFilter(*this, "testFilter", "filter tests by their names"),
       returnSubmissionTimeInsteadOfWorkloadTime(*this, "forceSubmissionProfiling", "Overrides profiling to return submission time instead of workload time"),
       markTimers(*this, "markTimers", "Provides prints around Timer Start & End"),
+      measurePower(*this, "measurePower", "Measures power and energy in supported benchmarks"),
       extended(*this, "extended", "Run the benchmark with extended parameters"),
       reducedSizeCAL(*this, "reducedSizeCAL", "Run benchmark with lower buffer size") {
 

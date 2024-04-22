@@ -24,6 +24,8 @@ class WorkloadStatistics : public Statistics {
     void pushPercentage(double value, MeasurementUnit unit, MeasurementType type, const std::string &description = "") override;
     void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, const std::string &description = "") override;
     void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, const std::string &description = "") override;
+    virtual void pushEnergy(size_t microJoules, MeasurementUnit unit, MeasurementType type, const std::string &description = "") override;
+    virtual void pushEnergy(double watts, MeasurementUnit unit, MeasurementType type, const std::string &description = "") override;
     void pushUnitAndType(MeasurementUnit unit, MeasurementType type) override;
 
     bool isEmpty() const override;

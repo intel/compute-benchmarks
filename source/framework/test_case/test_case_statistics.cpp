@@ -86,6 +86,30 @@ void TestCaseStatistics::pushValue(Clock::duration time, uint64_t size, Measurem
     }
 }
 
+void TestCaseStatistics::pushEnergy(size_t microJoules, MeasurementUnit unit, MeasurementType type, const std::string &description) {
+    switch (unit) {
+    case MeasurementUnit::MicroJoules: {
+        const Value energyMicroJoules = static_cast<Value>(microJoules);
+        this->pushValue(energyMicroJoules, description, unit, type);
+        break;
+    }
+    default:
+        FATAL_ERROR("Unknown measurement unit");
+    }
+}
+
+void TestCaseStatistics::pushEnergy(double watts, MeasurementUnit unit, MeasurementType type, const std::string &description) {
+    switch (unit) {
+    case MeasurementUnit::Watts: {
+        const Value powerWatts = static_cast<Value>(watts);
+        this->pushValue(powerWatts, description, unit, type);
+        break;
+    }
+    default:
+        FATAL_ERROR("Unknown measurement unit");
+    }
+}
+
 void TestCaseStatistics::pushUnitAndType(MeasurementUnit unit, MeasurementType type) {
     overrideMeasurementUnit(unit);
 

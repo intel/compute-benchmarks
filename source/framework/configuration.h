@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,7 @@ struct Configuration : ArgumentContainer {
     StringListArgument testFilter;
     BooleanFlagArgument returnSubmissionTimeInsteadOfWorkloadTime;
     BooleanFlagArgument markTimers;
+    BooleanFlagArgument measurePower;
 
     // Test specific params
     BooleanFlagArgument extended;

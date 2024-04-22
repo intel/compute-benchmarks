@@ -22,6 +22,8 @@ class Statistics {
     virtual void pushPercentage(double value, MeasurementUnit unit, MeasurementType type, const std::string &description = "") = 0;
     virtual void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, const std::string &description = "") = 0;
     virtual void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, const std::string &description = "") = 0;
+    virtual void pushEnergy(size_t microJoules, MeasurementUnit unit, MeasurementType type, const std::string &description = "") = 0;
+    virtual void pushEnergy(double watts, MeasurementUnit unit, MeasurementType type, const std::string &description = "") = 0;
     virtual void pushUnitAndType(MeasurementUnit unit, MeasurementType type) = 0;
 
     virtual bool isEmpty() const = 0;

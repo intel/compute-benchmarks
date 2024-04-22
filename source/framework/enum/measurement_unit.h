@@ -18,6 +18,8 @@ enum class MeasurementUnit {
     GigabytesPerSecond,
     Latency,
     Percentage,
+    MicroJoules,
+    Watts,
 };
 
 namespace std {
@@ -33,6 +35,10 @@ inline std::string to_string(MeasurementUnit unit) {
         return "[clk]";
     case MeasurementUnit::Percentage:
         return "[%]";
+    case MeasurementUnit::MicroJoules:
+        return "[uJ]";
+    case MeasurementUnit::Watts:
+        return "[W]";
     default:
         FATAL_ERROR("Unknown measurement unit");
     }
