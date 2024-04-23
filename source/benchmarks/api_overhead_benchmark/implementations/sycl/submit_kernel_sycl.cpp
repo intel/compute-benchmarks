@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,10 +55,10 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     // Create kernel
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime);
     const auto eat_time = [=]([[maybe_unused]] auto u) {
-        volatile int value = 1u;
-        for (int i = 0; i < kernelOperationsCount; i++) {
-            value /= 2;
-            value *= 2;
+        if (kernelOperationsCount > 4) {
+            volatile int value = kernelOperationsCount;
+            while (--value)
+                ;
         }
     };
 
