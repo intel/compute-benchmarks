@@ -15,7 +15,7 @@ const static std::unordered_map<TestResult, TestResultHelper::TestResultInfo> te
     {TestResult::Error,                   { "ERROR",               true ,        true ,     false} },
     {TestResult::DriverFunctionNotFound,  { "NO_SUPPORT",          true ,        true,      true } },
     {TestResult::DeviceNotCapable,        { "NO_SUPPORT",          true ,        true,     true } },
-    {TestResult::ApiNotCapable,           { "NO_SUPPORT (API)",    true ,        false,     true } },
+    {TestResult::ApiNotCapable,           { "NO_SUPPORT (API)",    true ,        true,     true } },
     {TestResult::KernelNotFound,          { "MISSING_KERNEL",      true ,        true ,     true } },
     {TestResult::SkippedApi,              { "SKIPPED",             false,        false,     true } },
     {TestResult::UnsupportedApi,          { "SKIPPED",             false,        false,     true } },
