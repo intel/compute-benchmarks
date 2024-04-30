@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,6 +117,15 @@ class TestCase : public TestCaseBase {
 
   private:
     TestResult runImpl(TestCaseStatistics &statistics, const ArgumentContainerT &arguments, const std::string &testCaseNameWithConfig) const {
+        // Check test filters and arg filters
+        if (!matchesWithTestFilter()) {
+            return TestResult::FilteredOut;
+        }
+
+        if (!matchesWithArgFilter(arguments)) {
+            return TestResult::FilteredOut;
+        }
+
         // Get API
         const auto selectedApi = Configuration::get().selectedApi;
         if (arguments.api != selectedApi && selectedApi != Api::All) {
@@ -147,14 +156,6 @@ class TestCase : public TestCaseBase {
         const auto &testMap = TestMap::get();
         if (testMap.find(getTestCaseName()) == testMap.end()) {
             printTestMapWarning();
-        }
-
-        // Check test filters and arg filters
-        if (!matchesWithTestFilter()) {
-            return TestResult::FilteredOut;
-        }
-        if (!matchesWithArgFilter(arguments)) {
-            return TestResult::FilteredOut;
         }
 
         // Check if test case name with config is not too long

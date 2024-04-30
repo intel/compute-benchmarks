@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "definitions/create_buffer.h"
+
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
-
-#include "definitions/create_buffer.h"
 
 #include <gtest/gtest.h>
 
