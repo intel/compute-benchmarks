@@ -26,9 +26,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     Sycl sycl{sycl::property::queue::enable_profiling{}};
     int operationsCount = static_cast<int>(arguments.kernelExecutionTime * 2);
 
-    // Create buffer
-    auto buffer = sycl::malloc_host<uint32_t>(size, sycl.queue);
-
     // Create kernel
     const auto kernel = [operationsCount]() {
         volatile int value = 1u;

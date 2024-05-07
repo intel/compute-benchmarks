@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,8 +27,7 @@ std::map<sycl::backend, std::string> backendToString{
     {sycl::backend::opencl, "OpenCL"},
     {sycl::backend::ext_oneapi_level_zero, "oneAPI Level Zero"},
     {sycl::backend::ext_oneapi_cuda, "oneAPI CUDA"},
-    {sycl::backend::all, "All"},
-    {sycl::backend::ext_intel_esimd_emulator, "ESIMD CPU"}};
+    {sycl::backend::all, "All"}};
 
 void printDeviceInfo() {
     auto device = sycl::device{sycl::gpu_selector_v};
