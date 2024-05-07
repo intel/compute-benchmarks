@@ -73,6 +73,7 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument returnSubmissionTimeInsteadOfWorkloadTime;
     BooleanFlagArgument markTimers;
     BooleanFlagArgument measurePower;
+    BooleanFlagArgument printAllResults;
 
     // Test specific params
     BooleanFlagArgument extended;

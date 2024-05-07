@@ -40,6 +40,7 @@ Configuration::Configuration()
       returnSubmissionTimeInsteadOfWorkloadTime(*this, "forceSubmissionProfiling", "Overrides profiling to return submission time instead of workload time"),
       markTimers(*this, "markTimers", "Provides prints around Timer Start & End"),
       measurePower(*this, "measurePower", "Measures power and energy in supported benchmarks"),
+      printAllResults(*this, "printAllResults", "Prints all test results"),
       extended(*this, "extended", "Run the benchmark with extended parameters"),
       reducedSizeCAL(*this, "reducedSizeCAL", "Run benchmark with lower buffer size") {
 

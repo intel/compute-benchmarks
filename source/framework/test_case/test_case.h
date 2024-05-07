@@ -108,7 +108,7 @@ class TestCase : public TestCaseBase {
             DEVELOPER_WARNING_IF(testResultInfo.wasTestSkipped && !statistics.isEmpty(), "test was skipped but generated some values");
 
             // Print output line with error info if needed
-            const auto printMessage = arguments.isSingleTestMode ? testResultInfo.printInSingleTestMode : testResultInfo.printInAllTestsMode;
+            const auto printMessage = Configuration::get().printAllResults || (arguments.isSingleTestMode ? testResultInfo.printInSingleTestMode : testResultInfo.printInAllTestsMode);
             if (printMessage) {
                 statistics.printStatisticsString(testCaseNameWithConfig, testResultInfo.stringMessage);
             }
