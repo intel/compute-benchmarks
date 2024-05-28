@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,11 +33,24 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
-        timer.measureStart();
+        if (arguments.measureMode == AllocationMeasureMode::Allocate ||
+            arguments.measureMode == AllocationMeasureMode::Both) {
+            timer.measureStart();
+        }
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.usmMemoryPlacement, levelzero, arguments.size, &ptr));
-        timer.measureEnd();
+
+        if (arguments.measureMode == AllocationMeasureMode::Allocate) {
+            timer.measureEnd();
+        } else if (arguments.measureMode == AllocationMeasureMode::Free) {
+            timer.measureStart();
+        }
+
         ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, ptr));
 
+        if (arguments.measureMode == AllocationMeasureMode::Free ||
+            arguments.measureMode == AllocationMeasureMode::Both) {
+            timer.measureEnd();
+        }
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
     return TestResult::Success;
