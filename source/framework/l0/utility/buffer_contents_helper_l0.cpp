@@ -67,7 +67,7 @@ ze_result_t BufferContentsHelperL0::fillBufferWithRandomBytes(ze_context_handle_
 }
 
 ze_result_t BufferContentsHelperL0::fillBufferWithZeros(ze_command_list_handle_t cmdList, void *buffer, size_t bufferSize) {
-    const size_t pattern[] = {0};
+    const uint8_t pattern[] = {0};
     ZE_RESULT_SUCCESS_OR_RETURN(zeCommandListAppendMemoryFill(cmdList, buffer, pattern, sizeof(pattern), bufferSize, nullptr, 0, nullptr));
     return ZE_RESULT_SUCCESS;
 }
