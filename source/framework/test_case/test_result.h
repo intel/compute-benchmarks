@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,7 @@ struct TestResultHelper {
         const bool printInSingleTestMode;
         const bool printInAllTestsMode;
         const bool wasTestSkipped;
+        const bool printInPrintAllResultsMode;
     };
 
     static const TestResultInfo &getTestResultInfo(TestResult testResult);
