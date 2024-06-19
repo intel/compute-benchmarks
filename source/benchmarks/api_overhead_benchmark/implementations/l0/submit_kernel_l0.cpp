@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,10 +44,16 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
 
     // Create event pool
+    const ze_event_pool_counter_based_exp_desc_t counterBasedDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC, nullptr, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE};
+
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.flags |= arguments.useProfiling ? ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP : 0;
     eventPoolDesc.count = static_cast<uint32_t>(arguments.numKernels); // ensures one unique event per kernel
+    if (arguments.inOrderQueue) {
+        eventPoolDesc.pNext = &counterBasedDesc;
+    }
+
     ze_event_pool_handle_t eventPool;
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
 
@@ -61,6 +67,9 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     // Create an immediate command list
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    if (arguments.inOrderQueue) {
+        commandQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    }
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
@@ -77,10 +86,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
             signalEvent = events[iteration];
         }
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, signalEvent, 0, nullptr));
-        // For now, use a barrier to enforce in-order-ness.  This is different than SYCL, which uses an event!
-        if (arguments.inOrderQueue) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
-        }
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
     if (!arguments.discardEvents) {
@@ -104,10 +109,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
                 signalEvent = events[iteration];
             }
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, signalEvent, 0, nullptr));
-            // For now, use a barrier to enforce in-order-ness.  This is different than SYCL, which uses an event, at least when events are not discarded!
-            if (arguments.inOrderQueue) {
-                ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
-            }
         }
 
         if (!arguments.measureCompletionTime) {
