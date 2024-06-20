@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,7 +113,7 @@ TestResult socketConnect(const int socketLocal, const std::string &socketName) {
 }
 
 TestResult socketSendDataWithFd(const int socketReceiver, const int fd, void *data, const ssize_t nBytes) {
-    std::unique_ptr<uint8_t> controlMessage(new uint8_t[CMSG_SPACE(nBytes)]());
+    std::unique_ptr<uint8_t[]> controlMessage(new uint8_t[CMSG_SPACE(nBytes)]());
 
     iovec message{};
     message.iov_base = data;
@@ -142,7 +142,7 @@ TestResult socketSendDataWithFd(const int socketReceiver, const int fd, void *da
 }
 
 TestResult socketRecvDataWithFd(const int socketSender, int &fd, void *data, const ssize_t nBytes) {
-    std::unique_ptr<uint8_t> controlMessage(new uint8_t[CMSG_SPACE(nBytes)]());
+    std::unique_ptr<uint8_t[]> controlMessage(new uint8_t[CMSG_SPACE(nBytes)]());
 
     iovec message{};
     message.iov_base = data;
