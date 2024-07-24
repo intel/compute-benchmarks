@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,6 +52,8 @@ static TestResult run(const CopyBufferRectArguments &arguments, Statistics &stat
         }
     }
 
+    const auto copySize = (arguments.region[0] > 0 ? arguments.region[0] : 1u) * (arguments.region[1] > 0 ? arguments.region[1] : 1u) * (arguments.region[2] > 0 ? arguments.region[2] : 1u);
+
     // Warmup
     ASSERT_CL_SUCCESS(clEnqueueCopyBufferRect(opencl.commandQueue, sourceBuffer, destinationBuffer,
                                               arguments.origin, arguments.origin, arguments.region,
@@ -68,7 +70,7 @@ static TestResult run(const CopyBufferRectArguments &arguments, Statistics &stat
                                                   0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue))
         timer.measureEnd();
-        statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), typeSelector.getType());
+        statistics.pushValue(timer.get(), copySize, typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_CL_SUCCESS(clReleaseMemObject(sourceBuffer));
