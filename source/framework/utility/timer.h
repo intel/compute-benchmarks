@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,9 @@ class Timer {
     }
 
     Clock::duration get() const {
+        if (endTime <= startTime) {
+            return std::chrono::nanoseconds(1);
+        }
         return endTime - startTime;
     }
 
