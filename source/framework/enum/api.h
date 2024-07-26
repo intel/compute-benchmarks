@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ enum class Api {
     L0,
     SYCL,
     OMP,
+    UR,
 
     // Special values
     COUNT,
@@ -39,6 +40,8 @@ inline std::string to_string(Api api) {
         return "sycl";
     case Api::OMP:
         return "omp";
+    case Api::UR:
+        return "ur";
     default:
         FATAL_ERROR("Unknown API");
     }
@@ -55,6 +58,8 @@ inline std::string getUserFriendlyApiName(Api api) {
         return "SYCL";
     case Api::OMP:
         return "OpenMP";
+    case Api::UR:
+        return "UnifiedRuntime";
     default:
         FATAL_ERROR("Unknown API");
     }
@@ -71,6 +76,8 @@ inline Api parseApi(const std::string &value) {
         return Api::SYCL;
     } else if (value == "omp") {
         return Api::OMP;
+    } else if (value == "ur") {
+        return Api::UR;
     } else {
         return Api::Unknown;
     }
@@ -82,6 +89,7 @@ inline bool validateApi(Api api) {
     case Api::L0:
     case Api::SYCL:
     case Api::OMP:
+    case Api::UR:
         return true;
     default:
         return false;

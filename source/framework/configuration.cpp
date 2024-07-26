@@ -21,6 +21,8 @@ Configuration::Configuration()
       useOOQ(*this, "useOOQ", "Use out of order queue if it is supported"),
       l0DriverIndex(*this, "l0DriverIndex", "LevelZero driver index"),
       l0DeviceIndex(*this, "l0DeviceIndex", "LevelZero device index inside the driver"),
+      urPlatformIndex(*this, "urPlatformIndex", "UR adapter index"),
+      urDeviceIndex(*this, "urDeviceIndex", "UR device index inside the adapter"),
       test(*this, "test", "Selects particular test for execution. All arguments of the test must be provided"),
       subDeviceSelection(*this, "subDeviceSelection", "Device to be used in the benchmarks. Might be ignored by some specific tests"),
       csv(*this, "csv", "dump results in CSV format for easy imports to spreadsheets"),
@@ -57,6 +59,9 @@ Configuration::Configuration()
     // L0 params
     l0DriverIndex = 0;
     l0DeviceIndex = 0;
+
+    urPlatformIndex = 0;
+    urDeviceIndex = 0;
 
     // OCL & SYCL params
     useOOQ = true;

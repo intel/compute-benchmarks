@@ -53,6 +53,10 @@ struct Configuration : ArgumentContainer {
     NonNegativeIntegerArgument l0DriverIndex;
     NonNegativeIntegerArgument l0DeviceIndex;
 
+    // UR params
+    NonNegativeIntegerArgument urPlatformIndex;
+    NonNegativeIntegerArgument urDeviceIndex;
+
     // Api agnostic params
     StringArgument test;
     DeviceSelectionArgument subDeviceSelection;
