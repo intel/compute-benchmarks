@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -81,6 +81,6 @@ function (add_kernels_to_benchmark TARGET_NAME DIR)
     file(GLOB_RECURSE SOURCE_KERNELS ${DIR}/*.cl)
     target_sources(${TARGET_NAME} PRIVATE ${SOURCE_KERNELS})
 
-    file(GLOB KERNELS ${DIR}/*.spv ${DIR}/copyable_sources/*.cl ${DIR}/copyable_sources/*.spv)
+    file(GLOB KERNELS ${DIR}/*.spv ${DIR}/*.cl)
     set_property(TARGET ${TARGET_NAME} APPEND PROPERTY KERNELS ${KERNELS})
 endfunction()
