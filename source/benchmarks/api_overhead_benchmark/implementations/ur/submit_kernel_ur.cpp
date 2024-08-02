@@ -78,7 +78,8 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     }
 
     for (auto &event : events) {
-        urEventRelease(event);
+        if (event)
+            urEventRelease(event);
     }
 
     // Benchmark
@@ -112,7 +113,8 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         }
 
         for (auto &event : events) {
-            urEventRelease(event);
+            if (event)
+                urEventRelease(event);
         }
     }
 
