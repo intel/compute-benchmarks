@@ -27,7 +27,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         return TestResult::Nooped;
     }
 
-    auto kernelExecutionTime = arguments.kernelExecutionTime;
+    int kernelExecutionTime = arguments.kernelExecutionTime;
 
     // Setup
     UrState ur;
