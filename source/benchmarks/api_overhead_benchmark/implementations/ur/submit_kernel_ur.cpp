@@ -55,6 +55,9 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     if (!arguments.inOrderQueue) {
         queueProperties.flags = UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     }
+    if (arguments.discardEvents) {
+        queueProperties.flags |= UR_QUEUE_FLAG_DISCARD_EVENTS;
+    }
 
     EXPECT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device,
                                            &queueProperties, &queue));

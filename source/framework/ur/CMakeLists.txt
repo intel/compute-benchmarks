@@ -8,33 +8,42 @@ if (NOT BUILD_UR)
     return()
 endif()
 
-include(FetchContent)
+if(BENCHMARK_UR_SOURCE_DIR)
+    add_subdirectory(
+        ${BENCHMARK_UR_SOURCE_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}/unified-runtime)
+else()
+    include(FetchContent)
 
-set(UMF_DISABLE_HWLOC ON CACHE INTERNAL "")
-set(UMF_BUILD_EXAMPLES OFF CACHE INTERNAL "EXAMPLES")
-set(UR_BUILD_TESTS OFF CACHE INTERNAL "TESTS")
+    set(UMF_DISABLE_HWLOC ON CACHE INTERNAL "")
+    set(UMF_BUILD_EXAMPLES OFF CACHE INTERNAL "EXAMPLES")
+    set(UR_BUILD_TESTS OFF CACHE INTERNAL "TESTS")
 
-set(UNIFIED_RUNTIME_REPO "https://github.com/oneapi-src/unified-runtime.git")
-set(UNIFIED_RUNTIME_TAG main)
+    set(UNIFIED_RUNTIME_REPO "https://github.com/oneapi-src/unified-runtime.git")
+    set(UNIFIED_RUNTIME_TAG main)
 
-if(BENCHMARK_UR_OVERRIDE_FETCH_CONTENT_REPO)
-    set(UNIFIED_RUNTIME_REPO "${BENCHMARK_UR_OVERRIDE_FETCH_CONTENT_REPO}")
-endif()
-if(BENCHMARK_UR_OVERRIDE_FETCH_CONTENT_TAG)
-    set(UNIFIED_RUNTIME_TAG "${BENCHMARK_UR_OVERRIDE_FETCH_CONTENT_TAG}")
+    message(STATUS
+      "Will fetch Unified Runtime from ${UNIFIED_RUNTIME_REPO} at ${UNIFIED_RUNTIME_TAG}")
+
+    if(BENCHMARK_UR_OVERRIDE_FETCH_CONTENT_REPO)
+        set(UNIFIED_RUNTIME_REPO "${BENCHMARK_UR_OVERRIDE_FETCH_CONTENT_REPO}")
+    endif()
+    if(BENCHMARK_UR_OVERRIDE_FETCH_CONTENT_TAG)
+        set(UNIFIED_RUNTIME_TAG "${BENCHMARK_UR_OVERRIDE_FETCH_CONTENT_TAG}")
+    endif()
+
+    message(STATUS "Will fetch Unified Runtime from ${UNIFIED_RUNTIME_REPO}")
+    FetchContent_Declare(unified-runtime
+    GIT_REPOSITORY    ${UNIFIED_RUNTIME_REPO}
+    GIT_TAG           ${UNIFIED_RUNTIME_TAG}
+    )
+
+    FetchContent_GetProperties(unified-runtime)
+    FetchContent_MakeAvailable(unified-runtime)
 endif()
 
 # Define target
 set(API_NAME ur)
-
-message(STATUS "Will fetch Unified Runtime from ${UNIFIED_RUNTIME_REPO}")
-FetchContent_Declare(unified-runtime
-GIT_REPOSITORY    ${UNIFIED_RUNTIME_REPO}
-GIT_TAG           ${UNIFIED_RUNTIME_TAG}
-)
-
-FetchContent_GetProperties(unified-runtime)
-FetchContent_MakeAvailable(unified-runtime)
 
 set(TARGET_NAME compute_benchmarks_framework_${API_NAME})
 
