@@ -43,9 +43,6 @@ void printDeviceInfo() {
     std::cout << "Using SYCL backend: " << backendToString[backend] << std::endl;
     std::cout << "Driver version: " << driverVersion << std::endl;
 
-    if (backend == sycl::backend::opencl) {
-        std::cout << "OpenCL C version: " << device.get_info<sycl::info::device::opencl_c_version>() << std::endl;
-    }
     std::cout << "\tDevice: " << deviceName << std::endl;
     std::cout << "\t\tVendor:\t" << vendorName << std::endl;
     std::cout << "\t\tType:\t" << deviceType << std::endl;
@@ -77,9 +74,6 @@ static void printAvailableDevices() {
         std::cout << "\t\tVendor:\t" << vendorName << std::endl;
         std::cout << "\t\tDriver version:\t" << driverVersion << std::endl;
         std::cout << "\t\tVersion:\t" << version << std::endl;
-        if (backend == sycl::backend::opencl) {
-            std::cout << "\t\tOpenCL C Version:\t" << device.get_info<sycl::info::device::opencl_c_version>() << std::endl;
-        }
 
         std::cout << std::endl;
     }
