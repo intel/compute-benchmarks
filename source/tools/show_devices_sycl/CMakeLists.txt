@@ -13,6 +13,7 @@ add_executable(${TARGET_NAME} CMakeLists.txt)
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER tools)
 add_sources_to_benchmark(${TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(${TARGET_NAME} PRIVATE compute_benchmarks_framework_sycl)
+target_include_directories(${TARGET_NAME} PUBLIC ${SOURCE_ROOT})
 
 # Additional config
 setup_vs_folders(${TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR})
