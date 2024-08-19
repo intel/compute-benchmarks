@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "framework/test_case/test_case.h"
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 
 namespace SYCL {
 namespace sycl = ::sycl;
