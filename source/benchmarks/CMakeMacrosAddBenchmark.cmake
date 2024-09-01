@@ -76,9 +76,6 @@ function (add_benchmark_for_api BASE_TARGET_NAME APPEND_API_TO_TARGET_NAME REGIS
         target_compile_definitions(${TARGET_NAME} PUBLIC USE_PIDFD)
     endif()
 
-
-	target_include_directories(${TARGET_NAME} PUBLIC ${SOURCE_ROOT})
-	
     # API agnostic sources
     set(API_AGNOSTIC_SOURCE_DIRECTORIES
         ${BENCHMARKS_SOURCE_ROOT}/common
