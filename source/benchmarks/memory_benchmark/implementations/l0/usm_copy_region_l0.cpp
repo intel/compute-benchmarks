@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,8 +32,8 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create();
     ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(
-        (arguments.sourcePlacement == UsmMemoryPlacement::NonUsmImported ||
-         arguments.destinationPlacement == UsmMemoryPlacement::NonUsmImported));
+        (requiresImport(arguments.sourcePlacement) ||
+         requiresImport(arguments.destinationPlacement)));
 
     LevelZero levelzero(queueProperties, contextProperties, extensionProperties);
     if (levelzero.commandQueue == nullptr) {

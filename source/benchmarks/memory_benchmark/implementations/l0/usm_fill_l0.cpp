@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create();
     ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(
-        arguments.usmMemoryPlacement == UsmMemoryPlacement::NonUsmImported);
+        requiresImport(arguments.usmMemoryPlacement));
 
     LevelZero levelzero(queueProperties, contextProperties, extensionProperties);
     if (levelzero.commandQueue == nullptr || arguments.patternSize > levelzero.commandQueueMaxFillSize) {
@@ -63,7 +63,7 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
     if (arguments.patternContents == BufferContents::Random) {
         BufferContentsHelperL0::fillWithRandomBytes(pattern.get(), arguments.patternSize);
     }
-    if (arguments.usmMemoryPlacement == UsmMemoryPlacement::NonUsmImported) {
+    if (requiresImport(arguments.usmMemoryPlacement)) {
         ASSERT_ZE_RESULT_SUCCESS(levelzero.importHostPointer.importExternalPointer(
             levelzero.driver, pattern.get(), arguments.patternSize));
     }
@@ -107,7 +107,7 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     }
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.usmMemoryPlacement, levelzero, buffer));
-    if (arguments.usmMemoryPlacement == UsmMemoryPlacement::NonUsmImported) {
+    if (requiresImport(arguments.usmMemoryPlacement)) {
         ASSERT_ZE_RESULT_SUCCESS(levelzero.importHostPointer.releaseExternalPointer(
             levelzero.driver, pattern.get()));
     }

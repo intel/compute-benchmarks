@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,8 +25,8 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
     }
 
     if (arguments.reuseCommandList == true ||
-        arguments.sourcePlacement == UsmMemoryPlacement::NonUsmImported ||
-        arguments.destinationPlacement == UsmMemoryPlacement::NonUsmImported) {
+        requiresImport(arguments.sourcePlacement) ||
+        requiresImport(arguments.sourcePlacement)) {
         return TestResult::ApiNotCapable;
     }
 

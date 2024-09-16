@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ static TestResult run(const UsmFillSpecificPatternArguments &arguments, Statisti
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create();
     ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(
-        arguments.usmMemoryPlacement == UsmMemoryPlacement::NonUsmImported);
+        requiresImport(arguments.usmMemoryPlacement));
 
     LevelZero levelzero(queueProperties, contextProperties, extensionProperties);
     if (levelzero.commandQueue == nullptr || pattern.size() > levelzero.commandQueueMaxFillSize) {
@@ -46,7 +46,7 @@ static TestResult run(const UsmFillSpecificPatternArguments &arguments, Statisti
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.usmMemoryPlacement, levelzero, arguments.bufferSize, &buffer));
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, buffer, arguments.bufferSize));
 
-    if (arguments.usmMemoryPlacement == UsmMemoryPlacement::NonUsmImported) {
+    if (requiresImport(arguments.usmMemoryPlacement)) {
         ASSERT_ZE_RESULT_SUCCESS(levelzero.importHostPointer.importExternalPointer(
             levelzero.driver, patternAddress, pattern.size()));
         ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device,
@@ -110,7 +110,7 @@ static TestResult run(const UsmFillSpecificPatternArguments &arguments, Statisti
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     }
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.usmMemoryPlacement, levelzero, buffer));
-    if (arguments.usmMemoryPlacement == UsmMemoryPlacement::NonUsmImported) {
+    if (requiresImport(arguments.usmMemoryPlacement)) {
         ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device,
                                                       patternAddress, pattern.size()));
         ASSERT_ZE_RESULT_SUCCESS(levelzero.importHostPointer.releaseExternalPointer(

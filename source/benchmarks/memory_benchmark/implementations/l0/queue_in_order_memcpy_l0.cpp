@@ -27,8 +27,8 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.isCopyOnly).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create();
     ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(
-        (arguments.sourcePlacement == UsmMemoryPlacement::NonUsmImported ||
-         arguments.destinationPlacement == UsmMemoryPlacement::NonUsmImported));
+        (requiresImport(arguments.sourcePlacement) ||
+         requiresImport(arguments.destinationPlacement)));
 
     LevelZero levelzero(queueProperties, contextProperties, extensionProperties);
     if (levelzero.commandQueue == nullptr) {

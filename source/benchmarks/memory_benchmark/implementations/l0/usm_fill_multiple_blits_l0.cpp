@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics
     }
 
     ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(
-        (arguments.memoryPlacement == UsmMemoryPlacement::NonUsmImported));
+        requiresImport(arguments.memoryPlacement));
     LevelZero levelzero(QueueProperties::create(),
                         ContextProperties::create(),
                         extensionProperties);

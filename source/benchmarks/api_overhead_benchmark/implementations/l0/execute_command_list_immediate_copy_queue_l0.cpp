@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,8 +29,8 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.isCopyOnly).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create();
     ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(
-        (arguments.sourcePlacement == UsmMemoryPlacement::NonUsmImported ||
-         arguments.destinationPlacement == UsmMemoryPlacement::NonUsmImported));
+        (requiresImport(arguments.sourcePlacement) ||
+         requiresImport(arguments.destinationPlacement)));
 
     LevelZero levelzero(queueProperties, contextProperties, extensionProperties);
     if (levelzero.commandQueue == nullptr) {

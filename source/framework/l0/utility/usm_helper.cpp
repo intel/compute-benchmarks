@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "framework/l0/utility/usm_helper.h"
+
+#include "framework/utility/aligned_allocator.h"
 
 namespace L0::UsmHelper {
 
@@ -19,12 +21,22 @@ ze_result_t allocate(UsmMemoryPlacement placement, LevelZero &levelZero, size_t 
         return zeMemAllocHost(levelZero.context, &hostAllocDesc, size, 0, buffer);
     case UsmMemoryPlacement::Shared:
         return zeMemAllocShared(levelZero.context, &deviceAllocDesc, &hostAllocDesc, size, 0, levelZero.device, buffer);
-    case UsmMemoryPlacement::NonUsmImported: {
-        *buffer = malloc(size);
+    case UsmMemoryPlacement::NonUsmImported:
+    case UsmMemoryPlacement::NonUsmImported2MBAligned: {
+        if (placement == UsmMemoryPlacement::NonUsmImported2MBAligned) {
+            *buffer = alloc2MBAligned(size);
+        } else {
+            *buffer = malloc(size);
+        }
         return levelZero.importHostPointer.importExternalPointer(levelZero.driver, *buffer, size);
     }
-    case UsmMemoryPlacement::NonUsm: {
-        *buffer = malloc(size);
+    case UsmMemoryPlacement::NonUsm:
+    case UsmMemoryPlacement::NonUsm2MBAligned: {
+        if (placement == UsmMemoryPlacement::NonUsm2MBAligned) {
+            *buffer = alloc2MBAligned(size);
+        } else {
+            *buffer = malloc(size);
+        }
         return ZE_RESULT_SUCCESS;
     }
     default:
@@ -69,7 +81,7 @@ ze_result_t deallocate(UsmMemoryPlacement placement, LevelZero &levelZero, void 
     if (placement == UsmMemoryPlacement::NonUsm) {
         free(buffer);
         return ZE_RESULT_SUCCESS;
-    } else if (placement == UsmMemoryPlacement::NonUsmImported) {
+    } else if (requiresImport(placement)) {
         auto ret = levelZero.importHostPointer.releaseExternalPointer(levelZero.driver, buffer);
         free(buffer);
         return ret;
