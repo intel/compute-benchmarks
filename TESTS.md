@@ -88,7 +88,7 @@ Int64Div|enqueues kernel performing an int64 division emulation|<ul><li>--useEve
 EU Benchmark is a set of tests aimed at measuring performance of calculations performed in kernels.
 | Test name | Description | Params | L0 | OCL |
 |-----------|-------------|--------|----|-----|
-DoMathOperation|enqueues kernel performing a math operation|<ul><li>--op Math operation to perform (Add or Sub or Div or Modulo or Inc or Dec or Min or Max or And or Or or Xor)</li><li>--type Data type of the atomic. Keep in mind not all operations are supported for floating points (Int32 or Int64 or Float)</li><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li><li>--wgc Work group count</li><li>--wgs Work group size</li></ul>|:x:|:heavy_check_mark:|
+DoMathOperation|enqueues kernel performing a math operation|<ul><li>--mixGrf Run kernels with mixed grf modes (0 or 1)</li><li>--op Math operation to perform (Add or Sub or Div or Modulo or Inc or Dec or Min or Max or And or Or or Xor)</li><li>--type Data type of the atomic. Keep in mind not all operations are supported for floating points (Int32 or Int64 or Float)</li><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li><li>--wgc Work group count</li><li>--wgs Work group size</li></ul>|:x:|:heavy_check_mark:|
 ReadAfterAtomicWrite|enqueues kernel, which writes to global memory using atomic and then reads non atomically|<ul><li>--atomic If true, write to global memory will be atomic. (0 or 1)</li><li>--shuffleRead If true, each thread will write and read different memory cell. Otherwise it will be the same one. (0 or 1)</li><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li><li>--wgs Workgroup size</li></ul>|:x:|:heavy_check_mark:|
 
 

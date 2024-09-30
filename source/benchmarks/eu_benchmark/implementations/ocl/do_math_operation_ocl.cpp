@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 #include <cstring>
 #include <gtest/gtest.h>
 
-std::string getCompilerOptions(DataType dataType, MathOperation operation) {
+std::string getCompilerOptions(DataType dataType, MathOperation operation, bool largeGrfMode) {
     CompilerOptionsBuilder options{};
     options.addDefinitionKeyValue("DATATYPE", DataTypeHelper::toOpenclC(dataType));
 
@@ -58,6 +58,10 @@ std::string getCompilerOptions(DataType dataType, MathOperation operation) {
         break;
     default:
         FATAL_ERROR("Invalid math operation");
+    }
+
+    if (largeGrfMode) {
+        options.addOption("-cl-intel-256-GRF-per-thread");
     }
 
     return options.str();
@@ -101,12 +105,33 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
     cl_program program = nullptr;
     const char *programName = "eu_benchmark_perform_math_operation.cl";
     const char *kernelName = "do_math_operation";
-    const std::string compilerOptions = getCompilerOptions(arguments.dataType, arguments.operation);
+    const std::string compilerOptions = getCompilerOptions(arguments.dataType, arguments.operation, false);
     if (auto result = ProgramHelperOcl::buildProgramFromSourceFile(opencl.context, opencl.device, programName, compilerOptions.c_str(), program); result != TestResult::Success) {
         return result;
     }
     cl_kernel kernel = clCreateKernel(program, kernelName, &retVal);
     ASSERT_CL_SUCCESS(retVal);
+
+    cl_program largeGrfProgram = nullptr;
+    cl_kernel largeGrfKernel = nullptr;
+
+    if (arguments.mixGrfModes) {
+        const std::string largeGrfCompilerOptions = getCompilerOptions(arguments.dataType, arguments.operation, true);
+        if (auto result = ProgramHelperOcl::buildProgramFromSourceFile(opencl.context, opencl.device, programName, largeGrfCompilerOptions.c_str(), largeGrfProgram); result != TestResult::Success) {
+            return result;
+        }
+        largeGrfKernel = clCreateKernel(largeGrfProgram, kernelName, &retVal);
+        ASSERT_CL_SUCCESS(retVal);
+
+        ASSERT_CL_SUCCESS(clSetKernelArg(largeGrfKernel, 0, sizeof(buffer), &buffer));
+        ASSERT_CL_SUCCESS(clSetKernelArg(largeGrfKernel, 1, data.sizeOfDataType, data.otherArgument));
+        ASSERT_CL_SUCCESS(clSetKernelArg(largeGrfKernel, 2, sizeof(data.loopIterations), &data.loopIterations));
+        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, largeGrfKernel, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
+        ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
+        if (eventForEnqueue) {
+            ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
+        }
+    }
 
     // Warmup
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
@@ -120,8 +145,15 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
+        auto kernelForExecution = kernel;
+        if (arguments.mixGrfModes && i % 2 == 0) {
+            kernelForExecution = largeGrfKernel;
+        } else {
+            kernelForExecution = kernel;
+        }
+
         timer.measureStart();
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
+        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernelForExecution, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
         if (eventForEnqueue) {
@@ -145,6 +177,12 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
+
+    if (arguments.mixGrfModes) {
+        ASSERT_CL_SUCCESS(clReleaseKernel(largeGrfKernel));
+        ASSERT_CL_SUCCESS(clReleaseProgram(largeGrfProgram));
+    }
+
     return TestResult::Success;
 }
 
