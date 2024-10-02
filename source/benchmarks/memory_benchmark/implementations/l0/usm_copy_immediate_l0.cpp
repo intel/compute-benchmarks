@@ -70,10 +70,10 @@ static TestResult run(const UsmCopyImmediateArguments &arguments, Statistics &st
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
 
     // Fill buffer
-    if (arguments.sourcePlacement != UsmMemoryPlacement::NonUsm) {
+    if (isUsmMemoryType(arguments.sourcePlacement)) {
         ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, source, arguments.size, arguments.contents, true));
     }
-    if (arguments.destinationPlacement != UsmMemoryPlacement::NonUsm) {
+    if (isUsmMemoryType(arguments.destinationPlacement)) {
         ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, destination, arguments.size, arguments.contents, true));
     }
 

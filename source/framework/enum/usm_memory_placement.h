@@ -27,3 +27,16 @@ inline constexpr bool requiresImport(UsmMemoryPlacement inputType) {
     }
     return false;
 }
+
+inline constexpr bool isUsmMemoryType(UsmMemoryPlacement inputType) {
+    switch (inputType) {
+    case UsmMemoryPlacement::Host:
+    case UsmMemoryPlacement::Device:
+    case UsmMemoryPlacement::Shared:
+    case UsmMemoryPlacement::NonUsmImported:
+    case UsmMemoryPlacement::NonUsmImported2MBAligned:
+        return true;
+    default:
+        return false;
+    }
+}
