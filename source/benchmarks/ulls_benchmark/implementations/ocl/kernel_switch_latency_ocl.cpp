@@ -68,9 +68,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
 
         for (auto j = 1u; j < arguments.kernelCount; j++) {
             ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 1, &profilingEvents[j - 1], &profilingEvents[j]));
-            if (arguments.flushBetweenEnqueues) {
-                ASSERT_CL_SUCCESS(clFlush(opencl.commandQueue));
-            }
         }
 
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));

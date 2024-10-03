@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,8 +35,8 @@ INSTANTIATE_TEST_SUITE_P(
     QueuePrioritiesTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::Values(1, 100),
+        ::testing::Values(1, 10),
         ::testing::Values(false, true),
-        ::testing::Values(1, 2048, 8192),
-        ::testing::Values(1, 100),
-        ::testing::Values(1, 15)));
+        ::testing::Values(1, 2048),
+        ::testing::Values(1, 10),
+        ::testing::Values(1, 6)));
