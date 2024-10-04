@@ -19,13 +19,15 @@ struct MultiKernelExecutionArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument workgroupCount;
     PositiveIntegerArgument delay;
     BooleanArgument inOrderOverOOO;
+    BooleanArgument profiling;
 
     MultiKernelExecutionArguments()
         : kernelCount(*this, "count", "Count of kernels within command list"),
           workgroupSize(*this, "wkgSizes", "work group size of each kernel"),
           workgroupCount(*this, "wkgCount", "work group count of each kernel"),
           delay(*this, "delay", "how much delay between atomic reads"),
-          inOrderOverOOO(*this, "inOrderOverOOO", "use out of order queue to implement in order queue") {}
+          inOrderOverOOO(*this, "inOrderOverOOO", "use out of order queue to implement in order queue"),
+          profiling(*this, "profiling", "use profiling on the gpu to collect score") {}
 };
 
 struct MultiKernelExecution : TestCase<MultiKernelExecutionArguments> {
