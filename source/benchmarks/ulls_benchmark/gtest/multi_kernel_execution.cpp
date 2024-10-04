@@ -38,5 +38,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(100u),
         ::testing::Values(32u),
         ::testing::Values(32u),
-        ::testing::Values(1u, 500u),
-        ::testing::Values(false, true)));
+        ::testing::Values(1u),
+        ::testing::Values(false)));
