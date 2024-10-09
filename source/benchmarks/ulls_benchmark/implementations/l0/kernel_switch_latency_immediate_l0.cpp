@@ -105,12 +105,15 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
         ze_event_handle_t eventHandle = {0u};
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(profilingEventPool, &eventDesc, &eventHandle));
 
-        for (auto j = 0u; j < arguments.kernelCount; j++) {
+        for (auto j = 0u; j < arguments.kernelCount + 1; j++) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, eventHandle, 0, nullptr));
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(eventHandle, std::numeric_limits<uint64_t>::max()));
             ze_kernel_timestamp_result_t eventTimestamps;
             ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(eventHandle, &eventTimestamps));
-            kernelsTime += std::chrono::nanoseconds((eventTimestamps.global.kernelEnd - eventTimestamps.global.kernelStart) * timerResolution);
+            // first run is a warmup
+            if (j > 0) {
+                kernelsTime += std::chrono::nanoseconds((eventTimestamps.global.kernelEnd - eventTimestamps.global.kernelStart) * timerResolution);
+            }
             if (!arguments.counterBasedEvents) {
                 ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(eventHandle));
             }
@@ -145,7 +148,11 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
                 switchTime += std::chrono::nanoseconds((laterKernelTimestamp.global.kernelStart - earlierKernelTimestamp.global.kernelEnd) * timerResolution);
             }
         } else {
-            switchTime = (std::chrono::nanoseconds)timer.get().count() - kernelsTime;
+            auto totalTime = (std::chrono::nanoseconds)timer.get().count();
+            if (totalTime < kernelsTime) {
+                continue;
+            }
+            switchTime = totalTime - kernelsTime;
         }
 
         statistics.pushValue(switchTime / (arguments.kernelCount - 1), typeSelector.getUnit(), typeSelector.getType());
