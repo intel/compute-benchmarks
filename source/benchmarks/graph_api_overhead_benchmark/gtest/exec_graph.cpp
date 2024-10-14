@@ -5,28 +5,29 @@
  *
  */
 
-#include "definitions/submit_graph.h"
+#include "definitions/exec_graph.h"
 
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
 
 #include <gtest/gtest.h>
 
-[[maybe_unused]] static const inline RegisterTestCase<SubmitGraph> registerTestCase{};
+[[maybe_unused]] static const inline RegisterTestCase<ExecGraph> registerTestCase{};
 
-class SubmitGraphTest : public ::testing::TestWithParam<std::tuple<std::size_t>> {
+class ExecGraphTest : public ::testing::TestWithParam<std::tuple<std::size_t>> {
 };
 
-TEST_P(SubmitGraphTest, Test) {
-    SubmitGraphArguments args{};
+TEST_P(ExecGraphTest, Test) {
+    ExecGraphArguments args{};
     args.api = Api::SYCL;
+    args.iterations = 5;
     args.numKernels = std::get<0>(GetParam());
 
-    SubmitGraph test;
+    ExecGraph test;
     test.run(args);
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    SubmitGraphTest,
-    SubmitGraphTest,
+    ExecGraphTest,
+    ExecGraphTest,
     ::testing::Values(50, 100, 500));

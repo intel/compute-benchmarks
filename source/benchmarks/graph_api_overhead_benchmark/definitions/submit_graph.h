@@ -25,6 +25,6 @@ struct SubmitGraph : TestCase<SubmitGraphArguments> {
     }
 
     std::string getHelp() const override {
-        return "measures time spent in submitting a graph to a SYCL (or SYCL-like) queue";
+        return "measures time spent in submitting a graph to a SYCL queue";
     }
 };

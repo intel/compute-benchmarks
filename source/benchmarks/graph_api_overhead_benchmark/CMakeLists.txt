@@ -4,4 +4,4 @@
 # SPDX-License-Identifier: MIT
 #
 
-add_benchmark(graph_api_overhead_benchmark sycl all)
+add_benchmark(graph_api_benchmark sycl all)
