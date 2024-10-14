@@ -14,7 +14,7 @@ struct ExecGraphArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument numKernels;
 
     ExecGraphArguments()
-        : numKernels(*this, "NumKernels", "Number of kernels to exec in a graph") {}
+        : numKernels(*this, "numKernels", "Number of kernels to exec in a graph") {}
 };
 
 struct ExecGraph : TestCase<ExecGraphArguments> {

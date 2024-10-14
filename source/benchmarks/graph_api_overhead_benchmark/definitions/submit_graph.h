@@ -14,7 +14,7 @@ struct SubmitGraphArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument numKernels;
 
     SubmitGraphArguments()
-        : numKernels(*this, "NumKernels", "Number of kernels to submit to the queue") {}
+        : numKernels(*this, "numKernels", "Number of kernels to submit to the queue") {}
 };
 
 struct SubmitGraph : TestCase<SubmitGraphArguments> {
@@ -25,6 +25,6 @@ struct SubmitGraph : TestCase<SubmitGraphArguments> {
     }
 
     std::string getHelp() const override {
-        return "measures time spent in submitting a graph to a SYCL queue";
+        return "Measures time spent in submitting a SYCL graph to the queue";
     }
 };
