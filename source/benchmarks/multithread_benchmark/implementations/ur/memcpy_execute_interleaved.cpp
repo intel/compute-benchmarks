@@ -35,6 +35,7 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
     size_t numThreads = arguments.numThreads;
     size_t allocSize = arguments.allocSize;
     bool useEvents = arguments.useEvents;
+    size_t arraySize = allocSize / sizeof(int);
 
     if (!useEvents && !inOrderQueue) {
         std::cerr << "In order queue must be used when events are not used" << std::endl;
@@ -125,7 +126,7 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
             ur_event_handle_t *finalSignalEventPtr = useEvents ? &events[i][2] : nullptr;
 
             EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, usm_ptr, src_buffer.data(), allocSize, 0, nullptr, memcpySignalEventPtr));
-            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(queue, kernel, n_dimensions, &global_offset, &allocSize, nullptr, useEvents, memcpySignalEventPtr, kernelSignalEventPtr));
+            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(queue, kernel, n_dimensions, &global_offset, &arraySize, nullptr, useEvents, memcpySignalEventPtr, kernelSignalEventPtr));
             EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, host_dst, usm_ptr, allocSize, useEvents, kernelSignalEventPtr, finalSignalEventPtr));
         }
 
