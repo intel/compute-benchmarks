@@ -31,10 +31,11 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
 
     bool inOrderQueue = arguments.inOrderQueue;
     bool measureCompletionTime = arguments.measureCompletionTime;
-    int numQueuesPerThread = arguments.numQueuesPerThread;
+    size_t numOpsPerThread = arguments.numOpsPerThread;
     size_t numThreads = arguments.numThreads;
     size_t allocSize = arguments.allocSize;
     bool useEvents = arguments.useEvents;
+    bool useQueuePerThread = arguments.useQueuePerThread;
     size_t arraySize = allocSize / sizeof(int);
 
     if (!useEvents && !inOrderQueue) {
@@ -61,11 +62,11 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
 
     std::vector<std::vector<void *>> usm(numThreads);
     std::vector<std::vector<ur_kernel_handle_t>> kernels(numThreads);
-    std::vector<std::vector<ur_queue_handle_t>> queues(numThreads);
+    std::vector<ur_queue_handle_t> queues(numThreads);
     std::vector<int> src_buffer(allocSize / sizeof(int), 99);
     std::vector<std::vector<std::vector<int>>> dst_buffers(numThreads);
 
-    ur_queue_handle_t singleQueue;
+    ur_queue_handle_t singleQueue = nullptr;
 
     ur_queue_properties_t queueProperties = {};
 
@@ -73,27 +74,25 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         queueProperties.flags = UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     }
 
-    // Setup queues (or a single queue if numQueuesPerThread == 0)
-    if (numQueuesPerThread == 0) {
+    // Setup queues (or a single queue if !useQueuePerThread)
+    if (!useQueuePerThread) {
         EXPECT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device,
                                                &queueProperties, &singleQueue));
         for (size_t i = 0; i < numThreads; i++) {
-            queues[i].push_back(singleQueue);
+            queues[i] = singleQueue;
         }
     } else {
         for (size_t i = 0; i < numThreads; i++) {
-            for (int j = 0; j < numQueuesPerThread; j++) {
-                ur_queue_handle_t queue;
-                EXPECT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device,
-                                                       &queueProperties, &queue));
-                queues[i].push_back(queue);
-            }
+            ur_queue_handle_t queue;
+            EXPECT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device,
+                                                   &queueProperties, &queue));
+            queues[i] = queue;
         }
     }
 
     // Setup kernels and USM allocations
     for (size_t i = 0; i < numThreads; i++) {
-        for (size_t j = 0; j < queues[i].size(); j++) {
+        for (size_t j = 0; j < numOpsPerThread; j++) {
             void *ptr;
             EXPECT_UR_RESULT_SUCCESS(urUSMDeviceAlloc(ur.context, ur.device, nullptr, nullptr, allocSize, &ptr));
             usm[i].push_back(ptr);
@@ -108,15 +107,15 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
     }
 
     auto worker = [&](size_t thread_id, Timer &timer) {
-        std::vector<std::vector<ur_event_handle_t>> events(queues[thread_id].size());
+        std::vector<std::vector<ur_event_handle_t>> events(numOpsPerThread);
         for (auto &events_vec : events) {
             events_vec.assign(3, nullptr);
         }
 
         timer.measureStart();
 
-        for (size_t i = 0; i < queues[thread_id].size(); i++) {
-            auto queue = queues[thread_id][i];
+        auto queue = queues[thread_id];
+        for (size_t i = 0; i < numOpsPerThread; i++) {
             auto kernel = kernels[thread_id][i];
             auto usm_ptr = usm[thread_id][i];
             auto host_dst = dst_buffers[thread_id][i].data();
@@ -134,13 +133,11 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
             timer.measureEnd();
 
         if (useEvents) {
-            for (size_t i = 0; i < queues[thread_id].size(); i++) {
+            for (size_t i = 0; i < numOpsPerThread; i++) {
                 EXPECT_UR_RESULT_SUCCESS(urEventWait(1, &events[i].back()));
             }
         } else {
-            for (size_t i = 0; i < queues[thread_id].size(); i++) {
-                EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queues[thread_id][i]));
-            }
+            EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
         }
 
         if (measureCompletionTime)
@@ -193,9 +190,10 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
 #ifndef NDEBUG
         // verify the results
         for (size_t t = 0; t < numThreads; t++) {
-            for (size_t i = 0; i < queues[t].size(); i++) {
+            for (size_t i = 0; i < numOpsPerThread; i++) {
                 for (size_t j = 0; j < allocSize / sizeof(int); j++) {
                     if (dst_buffers[t][i][j] != 1) {
+                        std::cerr << "dst_buffers at: " << t << " " << i << " " << j << " , is: " << dst_buffers[t][i][j] << std::endl;
                         return TestResult::Error;
                     }
                 }
@@ -207,15 +205,16 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
     }
 
     for (size_t i = 0; i < numThreads; i++) {
-        for (size_t j = 0; j < queues[i].size(); j++) {
+        for (size_t j = 0; j < numOpsPerThread; j++) {
             EXPECT_UR_RESULT_SUCCESS(urKernelRelease(kernels[i][j]));
             EXPECT_UR_RESULT_SUCCESS(urUSMFree(ur.context, usm[i][j]));
-            if (numQueuesPerThread != 0) {
-                EXPECT_UR_RESULT_SUCCESS(urQueueRelease(queues[i][j]));
-            }
+        }
+
+        if (!singleQueue) {
+            EXPECT_UR_RESULT_SUCCESS(urQueueRelease(queues[i]));
         }
     }
-    if (numQueuesPerThread == 0) {
+    if (singleQueue) {
         EXPECT_UR_RESULT_SUCCESS(urQueueRelease(singleQueue));
     }
     EXPECT_UR_RESULT_SUCCESS(urProgramRelease(program));
