@@ -23,10 +23,6 @@ using namespace MemoryConstants;
 static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
-    if (arguments.memoryPlacement == UsmMemoryPlacement::Host) {
-        return TestResult::NoImplementation;
-    }
-
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
@@ -51,12 +47,17 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     size_t buffersCount = {};
     size_t bufferSizes[3] = {bufferSize, bufferSize, bufferSize};
 
+    auto bufferFlags = CL_MEM_READ_WRITE;
+    if (arguments.memoryPlacement == UsmMemoryPlacement::Host) {
+        bufferFlags |= CL_MEM_FORCE_HOST_MEMORY_INTEL;
+    }
+
     switch (arguments.type) {
     case StreamMemoryType::Read:
         kernelName = "read";
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
+        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
         bufferSizes[buffersCount] = 16u;
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, 16u, nullptr, &retVal);
+        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, 16u, nullptr, &retVal);
         break;
     case StreamMemoryType::Write:
         if (BufferContents::Random == arguments.contents) {
@@ -65,18 +66,18 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         } else {
             kernelName = "write";
         }
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
+        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
         break;
     case StreamMemoryType::Scale:
         kernelName = "scale";
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
+        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
+        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
         break;
     case StreamMemoryType::Triad:
         kernelName = "triad";
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
+        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
+        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
+        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
         break;
     default:
         FATAL_ERROR("Unknown StreamMemoryType");
