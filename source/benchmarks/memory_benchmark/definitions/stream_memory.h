@@ -19,13 +19,15 @@ struct StreamMemoryArguments : TestCaseArgumentContainer {
     BooleanArgument useEvents;
     BufferContentsArgument contents;
     UsmMemoryPlacementArgument memoryPlacement;
+    PositiveIntegerArgument partialMultiplier;
 
     StreamMemoryArguments()
         : type(*this, "type", "Memory streaming type"),
           size(*this, "size", "Size of the memory to stream. Must be divisible by datatype size."),
           useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
           contents(*this, "contents", "Buffer contents zeros/random"),
-          memoryPlacement(*this, "memoryPlacement", "Memory type used for stream") {}
+          memoryPlacement(*this, "memoryPlacement", "Memory type used for stream"),
+          partialMultiplier(*this, "multiplier", "multiplies id used for accessing the resources to simulate partials") {}
 };
 
 struct StreamMemory : TestCase<StreamMemoryArguments> {

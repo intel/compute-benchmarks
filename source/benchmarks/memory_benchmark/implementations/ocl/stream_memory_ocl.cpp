@@ -23,6 +23,15 @@ using namespace MemoryConstants;
 static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
+    if (arguments.partialMultiplier > 1u) {
+        if (arguments.type == StreamMemoryType::Scale || arguments.type == StreamMemoryType::Triad) {
+            return TestResult::NoImplementation;
+        }
+        if (arguments.type == StreamMemoryType::Write && arguments.contents != BufferContents::Zeros) {
+            return TestResult::NoImplementation;
+        }
+    }
+
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
@@ -54,7 +63,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        kernelName = "read";
+        kernelName = "readWithMultiplier";
         buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
         bufferSizes[buffersCount] = 16u;
         buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, 16u, nullptr, &retVal);
@@ -64,7 +73,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
             kernelName = "write_random";
             setScalarArgument = false; // value to write is embedded in kernel code
         } else {
-            kernelName = "write";
+            kernelName = "writeWithMultiplier";
         }
         buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
         break;
@@ -108,6 +117,11 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount), elementSize, &scalarValue));
     }
 
+    int multiplier = static_cast<int>(arguments.partialMultiplier);
+    if ((arguments.type == StreamMemoryType::Write && arguments.contents != BufferContents::Random) || arguments.type == StreamMemoryType::Read) {
+        ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(setScalarArgument ? buffersCount + 1 : buffersCount), 4u, &multiplier));
+    }
+
     // Query max workgroup size
     size_t maxWorkgroupSize = {};
     clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(maxWorkgroupSize), &maxWorkgroupSize, nullptr);
@@ -137,6 +151,10 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
             break;
         default:
             break;
+        }
+
+        if (arguments.partialMultiplier > 1u) {
+            transferSize = transferSize / arguments.partialMultiplier;
         }
 
         if (eventForEnqueue) {
