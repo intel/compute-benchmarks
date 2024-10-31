@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ cl_int BufferContentsHelperOcl::fillUsmBufferOrHostPtr(cl_command_queue queue, v
         return fillUsmBuffer(queue, ptr, ptrSize, contents);
     case UsmMemoryPlacement::NonUsm:
     case UsmMemoryPlacement::NonUsmMapped:
+    case UsmMemoryPlacement::NonUsm2MBAligned:
         fill(static_cast<uint8_t *>(ptr), ptrSize, contents);
         return CL_SUCCESS;
     default:

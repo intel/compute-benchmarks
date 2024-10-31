@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<DoMathOperation> registerTestCase{};
 
-class DoMathOperationTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, CommonGtestArgs::EnqueueSize, bool>> {
+class DoMathOperationTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, CommonGtestArgs::EnqueueSize, bool, bool>> {
 };
 
 TEST_P(DoMathOperationTest, Test) {
@@ -25,6 +25,7 @@ TEST_P(DoMathOperationTest, Test) {
     args.workgroupCount = std::get<2>(GetParam()).workgroupCount;
     args.workgroupSize = std::get<2>(GetParam()).workgroupSize;
     args.useEvents = std::get<3>(GetParam());
+    args.mixGrfModes = std::get<4>(GetParam());
 
     DoMathOperation test;
     test.run(args);
@@ -37,4 +38,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(DataType::Float, DataType::Int32),
         ::testing::ValuesIn(NormalMathOperationArgument::enumValues),
         ::CommonGtestArgs::enqueueSizesForAtomics(),
-        ::testing::Values(true)));
+        ::testing::Values(true),
+        ::testing::Values(false)));

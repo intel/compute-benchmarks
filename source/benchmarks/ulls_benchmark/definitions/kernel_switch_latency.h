@@ -16,7 +16,6 @@
 struct KernelSwitchLatencyArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument kernelCount;
     PositiveIntegerArgument kernelExecutionTime;
-    BooleanArgument flushBetweenEnqueues;
     BooleanArgument barrier;
     BooleanArgument hostVisible;
     BooleanArgument inOrder;
@@ -24,19 +23,18 @@ struct KernelSwitchLatencyArguments : TestCaseArgumentContainer {
 
     KernelSwitchLatencyArguments()
         : kernelCount(*this, "count", "Count of kernels"),
-          kernelExecutionTime(*this, "execTime", "Approximately how long a single kernel executes, in us"),
-          flushBetweenEnqueues(*this, "flush", "Flush between kernels"),
+          kernelExecutionTime(*this, "kernelTime", "Approximately how long a single kernel executes, in us"),
           barrier(*this, "barrier", "synchronization with barrier instead of events"),
           hostVisible(*this, "hostVisible", "events are with host visible flag"),
-          inOrder(*this, "inOrder", "use in order queue/command list"),
-          counterBasedEvents(*this, "counterBasedEvents", "use counter based events for in order") {}
+          inOrder(*this, "ioq", "use in order queue/command list"),
+          counterBasedEvents(*this, "ctrBasedEvents", "use counter based events for in order") {}
 };
 
 struct KernelSwitchLatency : TestCase<KernelSwitchLatencyArguments> {
     using TestCase<KernelSwitchLatencyArguments>::TestCase;
 
     std::string getTestCaseName() const override {
-        return "KernelSwitchLatency";
+        return "KernelSwitch";
     }
 
     std::string getHelp() const override {

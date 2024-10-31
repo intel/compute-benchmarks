@@ -61,9 +61,29 @@ static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics
     Timer timer;
 
     if (!arguments.inOrderOverOOO) {
+        const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+        const auto timestampBufferSize = sizeof(uint64_t) * 2;
+        void *timestampBuffer = nullptr;
+        uint64_t *beginTimestamp = nullptr;
+        uint64_t *endTimestamp = nullptr;
+        const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
+
+        if (arguments.profiling) {
+            ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostAllocationDesc, timestampBufferSize, 0, &timestampBuffer));
+            ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, timestampBuffer, timestampBufferSize))
+            beginTimestamp = static_cast<uint64_t *>(timestampBuffer);
+            endTimestamp = beginTimestamp + 1;
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, beginTimestamp, nullptr, 0, nullptr));
+        }
+
         for (auto i = 0u; i < arguments.kernelCount; i++) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
         }
+
+        if (arguments.profiling) {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, endTimestamp, nullptr, 0, nullptr));
+        }
+
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
         // Warmup
@@ -76,7 +96,16 @@ static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics
             ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
             ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
             timer.measureEnd();
-            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+            if (arguments.profiling) {
+                auto totalTime = std::chrono::nanoseconds(*endTimestamp - *beginTimestamp);
+                totalTime *= timerResolution;
+                statistics.pushValue(totalTime, typeSelector.getUnit(), MeasurementType::Gpu);
+            } else {
+                statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+            }
+        }
+        if (arguments.profiling) {
+            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, timestampBuffer));
         }
     } else {
 
