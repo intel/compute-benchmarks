@@ -24,19 +24,19 @@ struct KernelSwitchLatencyImmediateArguments : TestCaseArgumentContainer {
 
     KernelSwitchLatencyImmediateArguments()
         : kernelCount(*this, "count", "Count of kernels"),
-          kernelExecutionTime(*this, "execTime", "Approximately how long a single kernel executes, in us"),
+          kernelExecutionTime(*this, "kTime", "Approximately how long a single kernel executes, in us"),
           barrier(*this, "barrier", "synchronization with barrier instead of events"),
-          hostVisible(*this, "hostVisible", "events are with host visible flag"),
-          inOrder(*this, "inOrder", "use in order queue/command list"),
-          counterBasedEvents(*this, "counterBasedEvents", "use counter based events for in order"),
-          useProfiling(*this, "useProfiling", "use profiling to obtain switch time") {}
+          hostVisible(*this, "cpuVisible", "events are with host visible flag"),
+          inOrder(*this, "ioq", "use in order queue/command list"),
+          counterBasedEvents(*this, "ctrEvents", "use counter based events for in order"),
+          useProfiling(*this, "profiling", "use profiling to obtain switch time") {}
 };
 
 struct KernelSwitchLatencyImmediate : TestCase<KernelSwitchLatencyImmediateArguments> {
     using TestCase<KernelSwitchLatencyImmediateArguments>::TestCase;
 
     std::string getTestCaseName() const override {
-        return "KernelSwitchLatencyImmediate";
+        return "KernelSwitchImm";
     }
 
     std::string getHelp() const override {

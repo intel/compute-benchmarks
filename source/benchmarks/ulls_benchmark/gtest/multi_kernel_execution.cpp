@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<MultiKernelExecution> registerTestCase{};
 
-class MultiKernelExecutionTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, size_t, size_t, bool>> {
+class MultiKernelExecutionTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, size_t, size_t, bool, bool>> {
 };
 
 TEST_P(MultiKernelExecutionTest, Test) {
@@ -25,6 +25,7 @@ TEST_P(MultiKernelExecutionTest, Test) {
     args.workgroupCount = std::get<3>(GetParam());
     args.delay = std::get<4>(GetParam());
     args.inOrderOverOOO = std::get<5>(GetParam());
+    args.profiling = std::get<6>(GetParam());
 
     MultiKernelExecution test;
     test.run(args);
@@ -38,5 +39,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(100u),
         ::testing::Values(32u),
         ::testing::Values(32u),
-        ::testing::Values(1u, 500u),
+        ::testing::Values(1u),
+        ::testing::Values(false),
         ::testing::Values(false, true)));

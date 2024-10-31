@@ -7,6 +7,20 @@
 
 // #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
+__kernel void readWithMultiplier(const __global STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict dummyOutput, STREAM_TYPE scalar, int multiplier) {
+    int i = get_global_id(0);
+    if(multiplier > 1){
+        i = i * multiplier;
+        if(i >= get_global_size(0)) return;
+    }
+    STREAM_TYPE value = x[i];
+
+    // A trick to ensure compiler won't optimize away the read
+    if (value == 0.37221) {
+        *dummyOutput = value;
+    }
+}
+
 __kernel void read(const __global STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict dummyOutput, STREAM_TYPE scalar) {
     const int i = get_global_id(0);
     STREAM_TYPE value = x[i];
@@ -15,6 +29,15 @@ __kernel void read(const __global STREAM_TYPE *restrict x, __global STREAM_TYPE 
     if (value == 0.37221) {
         *dummyOutput = value;
     }
+}
+
+__kernel void writeWithMultiplier(__global STREAM_TYPE *restrict x, STREAM_TYPE scalar, int multiplier) {
+    int i = get_global_id(0);
+    if(multiplier > 1){
+        i = i * multiplier;
+        if(i >= get_global_size(0)) return;
+    }
+    x[i] = scalar;
 }
 
 __kernel void write(__global STREAM_TYPE *restrict x, STREAM_TYPE scalar) {

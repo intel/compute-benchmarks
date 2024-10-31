@@ -78,7 +78,7 @@ ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &leve
 }
 
 ze_result_t deallocate(UsmMemoryPlacement placement, LevelZero &levelZero, void *buffer) {
-    if (placement == UsmMemoryPlacement::NonUsm) {
+    if (placement == UsmMemoryPlacement::NonUsm || placement == UsmMemoryPlacement::NonUsm2MBAligned) {
         free(buffer);
         return ZE_RESULT_SUCCESS;
     } else if (requiresImport(placement)) {

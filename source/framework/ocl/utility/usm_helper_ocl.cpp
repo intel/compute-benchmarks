@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "usm_helper_ocl.h"
+
+#include "framework/utility/aligned_allocator.h"
 
 cl_int UsmHelperOcl::allocate(Opencl &opencl,
                               UsmMemoryPlacement placement,
@@ -32,6 +34,9 @@ cl_int UsmHelperOcl::allocate(Opencl &opencl,
         break;
     case UsmMemoryPlacement::NonUsm:
         outAlloc.ptr = new uint8_t[bufferSize];
+        break;
+    case UsmMemoryPlacement::NonUsm2MBAligned:
+        outAlloc.ptr = alloc2MBAligned(bufferSize);
         break;
     case UsmMemoryPlacement::NonUsmMapped:
         outAlloc.mappedData.queue = opencl.commandQueue;
@@ -60,6 +65,9 @@ cl_int UsmHelperOcl::deallocate(Alloc &alloc) {
         break;
     case UsmMemoryPlacement::NonUsm:
         delete[] (static_cast<uint8_t *>(alloc.ptr));
+        break;
+    case UsmMemoryPlacement::NonUsm2MBAligned:
+        free(alloc.ptr);
         break;
     case UsmMemoryPlacement::NonUsmMapped:
         CL_SUCCESS_OR_RETURN(clEnqueueUnmapMemObject(alloc.mappedData.queue, alloc.mappedData.memObject, alloc.ptr, 0, nullptr, nullptr));

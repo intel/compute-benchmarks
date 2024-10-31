@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,5 +32,5 @@ INSTANTIATE_TEST_SUITE_P(
     KernelWithWorkPeriodicSubmissionTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::Values(1'000, 5'000),
-        ::testing::Values(10)));
+        ::testing::Values(1, 5'000),
+        ::testing::Values(2)));

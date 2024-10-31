@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,13 +19,15 @@ struct DoMathOperationArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument workgroupCount;
     PositiveIntegerArgument workgroupSize;
     BooleanArgument useEvents;
+    BooleanArgument mixGrfModes;
 
     DoMathOperationArguments()
         : dataType(*this, "type", CommonHelpMessage::atomicDataType()),
           operation(*this, "op", "Math operation to perform"),
           workgroupCount(*this, "wgc", "Work group count"),
           workgroupSize(*this, "wgs", "Work group size"),
-          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
+          mixGrfModes(*this, "mixGrf", "Run kernels with mixed grf modes") {}
 };
 
 struct DoMathOperation : TestCase<DoMathOperationArguments> {
