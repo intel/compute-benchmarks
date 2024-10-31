@@ -20,7 +20,6 @@ class ExecGraphTest : public ::testing::TestWithParam<std::tuple<std::size_t>> {
 TEST_P(ExecGraphTest, Test) {
     ExecGraphArguments args{};
     args.api = Api::SYCL;
-    args.iterations = 5;
     args.numKernels = std::get<0>(GetParam());
 
     ExecGraph test;

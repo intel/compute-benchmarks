@@ -5,25 +5,23 @@
  *
  */
 
-#include <list>
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/submit_graph.h"
 
-#include <sycl/sycl.hpp>
-#include <sycl/ext/oneapi/experimental/graph.hpp>
-
 #include <gtest/gtest.h>
-
+#include <list>
+#include <sycl/ext/oneapi/experimental/graph.hpp>
+#include <sycl/sycl.hpp>
 
 using namespace sycl;
 namespace sycl_ext = sycl::ext::oneapi::experimental;
- 
-constexpr std::size_t N = 1024*1024;
 
-static TestResult run(const SubmitGraphArguments & arguments, Statistics & statistics) {
-    
+constexpr std::size_t N = 1024 * 1024;
+
+static TestResult run(const SubmitGraphArguments &arguments, Statistics &statistics) {
+
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
@@ -34,38 +32,36 @@ static TestResult run(const SubmitGraphArguments & arguments, Statistics & stati
 
     Timer timer;
     queue Queue{sycl::default_selector_v};
-   
-   
+
     sycl_ext::command_graph Graph(Queue.get_context(), Queue.get_device());
 
-    float ** Ptr = sycl::malloc_shared<float*>(numK, Queue);
-    for (std::size_t idx = 0; idx < numK; idx++)
-    {
-        Ptr[idx] = sycl::malloc_device<float>(N, Queue); 
+    float **Ptr = sycl::malloc_shared<float *>(numK, Queue);
+    for (std::size_t idx = 0; idx < numK; idx++) {
+        Ptr[idx] = sycl::malloc_device<float>(N, Queue);
     }
-    
+
     for (std::size_t itr = 0; itr < arguments.iterations; itr++) {
 
         timer.measureStart();
 
         Graph.begin_recording(Queue);
-        
-        event InitEvent = Queue.submit([&](handler& CGH) {
-        CGH.parallel_for(range<1>(N), [=](item<1> id) {
-            for (std::size_t idx = 0; idx < numK; idx++) {
-                Ptr[idx][id] = static_cast<float>(idx);
-            }
+
+        event InitEvent = Queue.submit([&](handler &CGH) {
+            CGH.parallel_for(range<1>(N), [=](item<1> id) {
+                for (std::size_t idx = 0; idx < numK; idx++) {
+                    Ptr[idx][id] = static_cast<float>(idx);
+                }
             });
         });
-        
+
         for (std::size_t idx = 0; idx < numK; idx++) {
 
-            event ev = Queue.submit([&](handler& CGH) {
-            CGH.depends_on(InitEvent);
-            CGH.parallel_for(range<1>(N), [=](item<1> id) {
-                Ptr[idx][id] += 1.0f;
+            event ev = Queue.submit([&](handler &CGH) {
+                CGH.depends_on(InitEvent);
+                CGH.parallel_for(range<1>(N), [=](item<1> id) {
+                    Ptr[idx][id] += 1.0f;
+                });
             });
-            });  
         }
 
         Graph.end_recording(Queue);
@@ -83,6 +79,6 @@ static TestResult run(const SubmitGraphArguments & arguments, Statistics & stati
     sycl::free(Ptr, Queue);
 
     return TestResult::Success;
-}; 
+};
 
 [[maybe_unused]] static RegisterTestCaseImplementation<SubmitGraph> registerTestCase(run, Api::SYCL);
