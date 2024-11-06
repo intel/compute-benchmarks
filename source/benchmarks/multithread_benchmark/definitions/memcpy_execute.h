@@ -18,6 +18,8 @@ struct MemcpyExecuteArguments : TestCaseArgumentContainer {
     BooleanArgument measureCompletionTime;
     BooleanArgument useEvents;
     BooleanArgument useQueuePerThread;
+    BooleanArgument srcUSM;
+    BooleanArgument dstUSM;
 
     MemcpyExecuteArguments()
         : inOrderQueue(*this, "Ioq", "Create the queue with the in_order property"),
@@ -26,7 +28,9 @@ struct MemcpyExecuteArguments : TestCaseArgumentContainer {
           allocSize(*this, "AllocSize", "Size of the memory allocation in bytes"),
           measureCompletionTime(*this, "MeasureCompletion", "Measures time taken to complete the submissions (default is to measure only submit calls)"),
           useEvents(*this, "UseEvents", "Explicitly synchronize commands by events (needs to be set for Ioq=0)"),
-          useQueuePerThread(*this, "UseQueuePerThread", "Use a separate queue in each thread") {}
+          useQueuePerThread(*this, "UseQueuePerThread", "Use a separate queue in each thread"),
+          srcUSM(*this, "SrcUSM", "Use USM for host source buffer"),
+          dstUSM(*this, "DstUSM", "Use USM for host destination buffers") {}
 };
 
 struct MemcpyExecute : TestCase<MemcpyExecuteArguments> {

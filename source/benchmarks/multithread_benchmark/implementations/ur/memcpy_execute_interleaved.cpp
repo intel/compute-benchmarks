@@ -36,6 +36,8 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
     size_t allocSize = arguments.allocSize;
     bool useEvents = arguments.useEvents;
     bool useQueuePerThread = arguments.useQueuePerThread;
+    bool srcUSM = arguments.srcUSM;
+    bool dstUSM = arguments.dstUSM;
     size_t arraySize = allocSize / sizeof(int);
 
     if (!useEvents && !inOrderQueue) {
@@ -63,8 +65,6 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
     std::vector<std::vector<void *>> usm(numThreads);
     std::vector<std::vector<ur_kernel_handle_t>> kernels(numThreads);
     std::vector<ur_queue_handle_t> queues(numThreads);
-    std::vector<int> src_buffer(allocSize / sizeof(int), 99);
-    std::vector<std::vector<std::vector<int>>> dst_buffers(numThreads);
 
     ur_queue_handle_t singleQueue = nullptr;
 
@@ -90,6 +90,17 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         }
     }
 
+    void *src_buffer;
+    std::vector<void *> dst_buffers;
+
+    if (srcUSM) {
+        EXPECT_UR_RESULT_SUCCESS(urUSMHostAlloc(ur.context, nullptr, nullptr, allocSize, &src_buffer));
+    } else {
+        src_buffer = malloc(allocSize);
+    }
+
+    memset(src_buffer, 99, allocSize);
+
     // Setup kernels and USM allocations
     for (size_t i = 0; i < numThreads; i++) {
         for (size_t j = 0; j < numOpsPerThread; j++) {
@@ -101,9 +112,16 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
             EXPECT_UR_RESULT_SUCCESS(urKernelCreate(program, kernelName, &kernel));
             EXPECT_UR_RESULT_SUCCESS(urKernelSetArgPointer(kernel, 0, nullptr, usm[i][j]));
             kernels[i].push_back(kernel);
-
-            dst_buffers[i].emplace_back(allocSize / sizeof(int), 0);
         }
+
+        dst_buffers.emplace_back();
+
+        if (dstUSM) {
+            EXPECT_UR_RESULT_SUCCESS(urUSMHostAlloc(ur.context, nullptr, nullptr, allocSize * numOpsPerThread, &dst_buffers.back()));
+        } else {
+            dst_buffers.back() = malloc(allocSize * numOpsPerThread);
+        }
+        memset(dst_buffers.back(), 0, allocSize * numOpsPerThread);
     }
 
     auto worker = [&](size_t thread_id, Timer &timer) {
@@ -118,13 +136,13 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         for (size_t i = 0; i < numOpsPerThread; i++) {
             auto kernel = kernels[thread_id][i];
             auto usm_ptr = usm[thread_id][i];
-            auto host_dst = dst_buffers[thread_id][i].data();
+            auto host_dst = ((char *)dst_buffers[thread_id]) + i * allocSize;
 
             ur_event_handle_t *memcpySignalEventPtr = useEvents ? &events[i][0] : nullptr;
             ur_event_handle_t *kernelSignalEventPtr = useEvents ? &events[i][1] : nullptr;
             ur_event_handle_t *finalSignalEventPtr = useEvents ? &events[i][2] : nullptr;
 
-            EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, usm_ptr, src_buffer.data(), allocSize, 0, nullptr, memcpySignalEventPtr));
+            EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, usm_ptr, src_buffer, allocSize, 0, nullptr, memcpySignalEventPtr));
             EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(queue, kernel, n_dimensions, &global_offset, &arraySize, nullptr, useEvents, memcpySignalEventPtr, kernelSignalEventPtr));
             EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, host_dst, usm_ptr, allocSize, useEvents, kernelSignalEventPtr, finalSignalEventPtr));
         }
@@ -192,8 +210,9 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         for (size_t t = 0; t < numThreads; t++) {
             for (size_t i = 0; i < numOpsPerThread; i++) {
                 for (size_t j = 0; j < allocSize / sizeof(int); j++) {
-                    if (dst_buffers[t][i][j] != 1) {
-                        std::cerr << "dst_buffers at: " << t << " " << i << " " << j << " , is: " << dst_buffers[t][i][j] << std::endl;
+                    auto v = *(((char *)dst_buffers[t]) + i * allocSize + j * sizeof(int));
+                    if (v != 1) {
+                        std::cerr << "dst_buffers at: " << t << " " << i << " " << j << " , is: " << (int)v << std::endl;
                         return TestResult::Error;
                     }
                 }
@@ -204,10 +223,22 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         statistics.pushValue(avgTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
+    if (srcUSM) {
+        EXPECT_UR_RESULT_SUCCESS(urUSMFree(ur.context, src_buffer));
+    } else {
+        free(src_buffer);
+    }
+
     for (size_t i = 0; i < numThreads; i++) {
         for (size_t j = 0; j < numOpsPerThread; j++) {
             EXPECT_UR_RESULT_SUCCESS(urKernelRelease(kernels[i][j]));
             EXPECT_UR_RESULT_SUCCESS(urUSMFree(ur.context, usm[i][j]));
+        }
+
+        if (dstUSM) {
+            EXPECT_UR_RESULT_SUCCESS(urUSMFree(ur.context, dst_buffers[i]));
+        } else {
+            free(dst_buffers[i]);
         }
 
         if (!singleQueue) {

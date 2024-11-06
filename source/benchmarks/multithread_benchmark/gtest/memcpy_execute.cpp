@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<MemcpyExecute> registerTestCase{};
 
-class MemcpyExecuteTest : public ::testing::TestWithParam<std::tuple<Api, bool, size_t, size_t, size_t, bool, bool, bool>> {
+class MemcpyExecuteTest : public ::testing::TestWithParam<std::tuple<Api, bool, size_t, size_t, size_t, bool, bool, bool, bool, bool>> {
 };
 
 TEST_P(MemcpyExecuteTest, Test) {
@@ -27,6 +27,8 @@ TEST_P(MemcpyExecuteTest, Test) {
     args.measureCompletionTime = std::get<5>(GetParam());
     args.useEvents = std::get<6>(GetParam());
     args.useQueuePerThread = std::get<7>(GetParam());
+    args.srcUSM = std::get<8>(GetParam());
+    args.dstUSM = std::get<9>(GetParam());
     MemcpyExecute test;
     test.run(args);
 }
@@ -42,5 +44,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1024u * 1024u), // allocSize
         ::testing::Values(false, true),   // measureCompletionTime
         ::testing::Values(false, true),   // useEvents
-        ::testing::Values(true)           // useQueuePerThread
+        ::testing::Values(true),          // useQueuePerThread
+        ::testing::Values(true),          // srcUSM
+        ::testing::Values(true)           // dstUSM
         ));
