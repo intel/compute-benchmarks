@@ -43,19 +43,23 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     kernelDesc.pKernelName = "eat_time";
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
 
-    // Create event pool
-    const ze_event_pool_counter_based_exp_desc_t counterBasedDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC, nullptr, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE};
+    const bool counterBasedEvents = arguments.inOrderQueue;
+    zex_counter_based_event_desc_t counterBasedEventDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+    counterBasedEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+    counterBasedEventDesc.flags |= arguments.useProfiling ? ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP : 0;
+    counterBasedEventDesc.signalScope = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    counterBasedEventDesc.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
+    // Create event pool
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.flags |= arguments.useProfiling ? ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP : 0;
     eventPoolDesc.count = static_cast<uint32_t>(arguments.numKernels); // ensures one unique event per kernel
-    if (arguments.inOrderQueue) {
-        eventPoolDesc.pNext = &counterBasedDesc;
-    }
 
-    ze_event_pool_handle_t eventPool;
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
+    ze_event_pool_handle_t eventPool = nullptr;
+    if (!counterBasedEvents) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
+    }
 
     ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
@@ -81,8 +85,13 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         // This isn't exactly what SYCL does, but it is a reasonable approximation.
         ze_event_handle_t signalEvent = nullptr;
         if (!arguments.discardEvents) {
-            eventDesc.index = iteration;
-            ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[iteration]));
+
+            if (counterBasedEvents) {
+                ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &events[iteration]));
+            } else {
+                eventDesc.index = iteration;
+                ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[iteration]));
+            }
             signalEvent = events[iteration];
         }
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, signalEvent, 0, nullptr));
@@ -104,8 +113,12 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
             // This isn't exactly what SYCL does, but it is a reasonable approximation.
             ze_event_handle_t signalEvent = nullptr;
             if (!arguments.discardEvents) {
-                eventDesc.index = iteration;
-                ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[iteration]));
+                if (counterBasedEvents) {
+                    ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &events[iteration]));
+                } else {
+                    eventDesc.index = iteration;
+                    ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[iteration]));
+                }
                 signalEvent = events[iteration];
             }
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, signalEvent, 0, nullptr));
@@ -132,7 +145,9 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
 
     // Clean up
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
+    if (!counterBasedEvents) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));

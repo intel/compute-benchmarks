@@ -59,18 +59,13 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList2));
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
-    ze_event_pool_flags_t flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-    const ze_event_pool_counter_based_exp_desc_t counterBasedDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC, nullptr, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE};
-    const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, &counterBasedDesc, flags, static_cast<uint32_t>(arguments.switchCount + 1)};
 
-    uint32_t numDevices = 1;
-    ze_event_pool_handle_t hEventPool;
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, numDevices, &levelzero.device, &hEventPool));
+    zex_counter_based_event_desc_t counterBasedEventDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+    counterBasedEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
 
     std::vector<ze_event_handle_t> profilingEvents(arguments.switchCount + 1);
     for (auto eventId = 0u; eventId < arguments.switchCount + 1; eventId++) {
-        ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, eventId, 0, 0};
-        ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(hEventPool, &eventDesc, &profilingEvents[eventId]));
+        ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &profilingEvents[eventId]));
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList1, kernel, &groupCount, profilingEvents[0], 0, nullptr));
@@ -117,7 +112,6 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
     for (auto &hEvent : profilingEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(hEvent));
     }
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(hEventPool));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList1));

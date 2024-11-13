@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,7 @@ struct LevelZero {
     ze_device_handle_t commandQueueDevice{};
     size_t commandQueueMaxFillSize{};
     ImportHostPointerExtension importHostPointer{};
+    L0CounterBasedEventCreate2 counterBasedEventCreate2 = nullptr;
 
     // Constructors, destructor
     LevelZero() : LevelZero(QueueProperties::create()) {}

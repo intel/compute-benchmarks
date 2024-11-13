@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -160,6 +160,12 @@ void LevelZero::initializeImportHostPointerExtension(const ExtensionProperties &
                                             "zexDriverGetHostPointerBaseAddress",
                                             reinterpret_cast<void **>(&this->importHostPointer.getHostPointerBaseAddress)));
     FATAL_ERROR_IF(this->importHostPointer.getHostPointerBaseAddress == nullptr, "zexDriverGetHostPointerBaseAddress retrieved nullptr");
+
+    EXPECT_ZE_RESULT_SUCCESS(
+        zeDriverGetExtensionFunctionAddress(this->driver,
+                                            "zexCounterBasedEventCreate2",
+                                            reinterpret_cast<void **>(&this->counterBasedEventCreate2)));
+    FATAL_ERROR_IF(this->counterBasedEventCreate2 == nullptr, "zexCounterBasedEventCreate2 retrieved nullptr");
 }
 
 } // namespace L0
