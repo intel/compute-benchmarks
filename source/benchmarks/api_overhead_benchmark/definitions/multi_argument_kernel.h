@@ -13,10 +13,20 @@
 struct MultiArgumentKernelTimeArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument argumentCount;
     BooleanArgument measureSetKernelArg;
+    BooleanArgument useGlobalIds;
+    PositiveIntegerArgument count;
+    BooleanArgument exec;
+    PositiveIntegerArgument lws;
+    PositiveIntegerArgument groupCount;
 
     MultiArgumentKernelTimeArguments()
         : argumentCount(*this, "argumentCount", "argument count in a kernel, supported values 1,4,8,16,32,64"),
-          measureSetKernelArg(*this, "measureSetArg", "control whether setKernelArgSvmPointer is measured or not") {}
+          measureSetKernelArg(*this, "measureSetArg", "control whether setKernelArgSvmPointer is measured or not"),
+          useGlobalIds(*this, "ids", "control whether kernel uses global ids"),
+          count(*this, "count", "how many kernel launches are measured"),
+          exec(*this, "exec", "measure execute as well"),
+          lws(*this, "lws", "local work size"),
+          groupCount(*this, "groupCount", "total amount of work groups") {}
 };
 
 struct MultiArgumentKernelTime : TestCase<MultiArgumentKernelTimeArguments> {

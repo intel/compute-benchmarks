@@ -28,8 +28,8 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
     cl_int retVal{};
     Timer timer;
 
-    size_t gws[3] = {512, 2, 8};
-    const size_t lws[3] = {16, 2, 8};
+    size_t gws[3] = {arguments.lws * arguments.groupCount, 1, 1};
+    const size_t lws[3] = {arguments.lws, 1, 1};
 
     // Create kernels
     const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile("api_overhead_benchmark_multi_arg_kernel.cl");
@@ -43,6 +43,10 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
     ASSERT_CL_SUCCESS(clBuildProgram(program, 1, &opencl.device, nullptr, nullptr, nullptr));
 
     std::string kernelName = "kernelWith" + std::to_string(arguments.argumentCount);
+
+    if (arguments.useGlobalIds) {
+        kernelName += "WithIds";
+    }
 
     cl_kernel kernel = clCreateKernel(program, kernelName.c_str(), &retVal);
     ASSERT_CL_SUCCESS(retVal);
@@ -73,8 +77,9 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
         if (!arguments.measureSetKernelArg) {
             timer.measureStart();
         }
-
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 3, nullptr, gws, lws, 0, nullptr, nullptr));
+        for (auto index = 0u; index < arguments.count; index++) {
+            ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 3, nullptr, gws, lws, 0, nullptr, nullptr));
+        }
         timer.measureEnd();
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
