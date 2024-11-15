@@ -16,7 +16,7 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

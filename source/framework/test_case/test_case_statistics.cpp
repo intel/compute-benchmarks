@@ -65,6 +65,10 @@ void TestCaseStatistics::pushValue(Clock::duration time, MeasurementUnit unit, M
 
 void TestCaseStatistics::pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, const std::string &description) {
     static_assert(std::is_floating_point_v<Value>, "Need floating point type for the below cast to work properly");
+    if (unit != MeasurementUnit::GigabytesPerSecond) {
+        FATAL_ERROR("Test is passing size which requires Bandwidth calculcation, please fix benchmark");
+    }
+
     const Value timeSeconds = std::chrono::duration_cast<std::chrono::duration<Value>>(time).count();
 
     overrideMeasurementUnit(unit);
