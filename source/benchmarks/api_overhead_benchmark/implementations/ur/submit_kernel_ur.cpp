@@ -8,6 +8,7 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/ur/error.h"
 #include "framework/ur/ur.h"
+#include "framework/utility/cpu_counter.h"
 #include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
@@ -20,6 +21,7 @@ static constexpr size_t global_size[] = {1, 1, 1};
 static constexpr size_t local_size[] = {1, 1, 1};
 
 static TestResult run(const SubmitKernelArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelectorHwI(MeasurementUnit::CpuHardwareCounter, MeasurementType::Cpu);
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
@@ -32,6 +34,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     // Setup
     UrState ur;
     Timer timer;
+    CpuCounter cpuCounter;
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_eat_time.spv");
@@ -65,29 +68,32 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     std::vector<ur_event_handle_t> events(arguments.numKernels);
 
     // warmup
-    for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
-        EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
-            kernel, 0, sizeof(int), nullptr,
-            reinterpret_cast<void *>(&kernelExecutionTime)));
+    for (auto i = 0u; i < arguments.iterations; i++) {
+        for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
+            EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
+                kernel, 0, sizeof(int), nullptr,
+                reinterpret_cast<void *>(&kernelExecutionTime)));
 
-        ur_event_handle_t *signalEvent = nullptr;
-        if (!arguments.discardEvents) {
-            signalEvent = &events[iteration];
+            ur_event_handle_t *signalEvent = nullptr;
+            if (!arguments.discardEvents) {
+                signalEvent = &events[iteration];
+            }
+
+            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
+                queue, kernel, n_dimensions, nullptr, &local_size[0],
+                &global_size[0], 0, nullptr, signalEvent));
         }
 
-        EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
-            queue, kernel, n_dimensions, nullptr, &local_size[0],
-            &global_size[0], 0, nullptr, signalEvent));
-    }
-
-    for (auto &event : events) {
-        if (event)
-            urEventRelease(event);
+        for (auto &event : events) {
+            if (event)
+                urEventRelease(event);
+        }
     }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
+        cpuCounter.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
             EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
                 kernel, 0, sizeof(int), nullptr,
@@ -104,15 +110,19 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         }
 
         if (!arguments.measureCompletionTime) {
+            cpuCounter.measureEnd();
             timer.measureEnd();
-            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType(), "time");
+            statistics.pushCpuCounter(cpuCounter.get(), typeSelectorHwI.getUnit(), typeSelectorHwI.getType(), "hw instructions");
         }
 
         EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
 
         if (arguments.measureCompletionTime) {
+            cpuCounter.measureEnd();
             timer.measureEnd();
-            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType(), "time");
+            statistics.pushCpuCounter(cpuCounter.get(), typeSelectorHwI.getUnit(), typeSelectorHwI.getType(), "hw instructions");
         }
 
         for (auto &event : events) {

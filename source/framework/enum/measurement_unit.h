@@ -20,6 +20,7 @@ enum class MeasurementUnit {
     Percentage,
     MicroJoules,
     Watts,
+    CpuHardwareCounter
 };
 
 namespace std {
@@ -39,6 +40,8 @@ inline std::string to_string(MeasurementUnit unit) {
         return "[uJ]";
     case MeasurementUnit::Watts:
         return "[W]";
+    case MeasurementUnit::CpuHardwareCounter:
+        return "[count]";
     default:
         FATAL_ERROR("Unknown measurement unit");
     }

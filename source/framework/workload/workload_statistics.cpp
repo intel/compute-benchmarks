@@ -43,6 +43,12 @@ void WorkloadStatistics::pushValue([[maybe_unused]] Clock::duration time,
     FATAL_ERROR("Not implemented");
 }
 
+void WorkloadStatistics::pushCpuCounter([[maybe_unused]] uint64_t count, [[maybe_unused]] MeasurementUnit unit, MeasurementType type, const std::string &description) {
+    FATAL_ERROR_IF(type != MeasurementType::Unknown, "WorkloadStatistics does not support setting measurement type");
+    FATAL_ERROR_IF(description != "", "WorkloadStatistics does not support multiple statistics groups");
+    FATAL_ERROR("Not implemented");
+}
+
 void WorkloadStatistics::pushEnergy([[maybe_unused]] size_t microJoules,
                                     [[maybe_unused]] MeasurementUnit unit,
                                     MeasurementType type,

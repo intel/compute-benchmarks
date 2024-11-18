@@ -90,6 +90,18 @@ void TestCaseStatistics::pushValue(Clock::duration time, uint64_t size, Measurem
     }
 }
 
+void TestCaseStatistics::pushCpuCounter(uint64_t count, MeasurementUnit unit, MeasurementType type, const std::string &description) {
+    switch (unit) {
+    case MeasurementUnit::CpuHardwareCounter: {
+        const Value cpuCounter = static_cast<Value>(count);
+        this->pushValue(cpuCounter, description, unit, type);
+        break;
+    }
+    default:
+        FATAL_ERROR("Unknown measurement unit");
+    }
+}
+
 void TestCaseStatistics::pushEnergy(size_t microJoules, MeasurementUnit unit, MeasurementType type, const std::string &description) {
     switch (unit) {
     case MeasurementUnit::MicroJoules: {
