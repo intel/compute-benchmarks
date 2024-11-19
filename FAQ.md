@@ -86,3 +86,19 @@ No need to worry about it. CMake requires special config files, so it can discov
 
 ### Why am I getting linker errors related to libze_loader.so?
 You probably cloned the repository on Windows and copied the files over to Linux. Because of that symbolic links pointing to the Level Zero loader break and they are interpreted as raw files. Recommended way is to clone and build the repository on the same system. Or, if you don't care about LevelZero tests, you can disable them with `-DBUILD_L0=OFF` CMake argument.
+
+
+
+### How can I compare the results of multiple runs?
+The compute benchmarks can be used to measure the performance impact of various parameters: hardware, KMD, runtime flags, etc. One simple way to compare those results is to bring them side by side thanks to the CSV export and a CSV processor such as [csvkit](https://pypi.org/project/csvkit). First step is to run some benchmarks and collect results, in this case the mean value:
+```
+./api_overhead_benchmark_l0 --csv --noHeaders | csvcut -c TestCase,Mean > results-run1.csv
+...
+./api_overhead_benchmark_l0 --csv --noHeaders | csvcut -c TestCase,Mean > results-run2.csv
+...
+./api_overhead_benchmark_l0 --csv --noHeaders | csvcut -c TestCase,Mean > results-run3.csv
+```
+The results can now be joined into a single CSV file so that a new column is appended for each run, with the mean value for the benchmark on the row:
+```
+csvjoin -c TestCase results-run*.csv > results-combined.csv
+```
