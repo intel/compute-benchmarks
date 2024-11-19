@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ struct UsmCopyConcurrentMultipleBlits : TestCase<UsmCopyConcurrentMultipleBlitsA
 
     std::string getHelp() const override {
         return "Measures Copy bandwidth while performing concurrent copies between host and device using "
-               "different copy engines. Engines for Host to Device copies could be selected using d2hBlitters."
+               "different copy engines. Engines for Host to Device copies could be selected using h2dBlitters. "
                "Engines for Device to Host copies could be selected using d2hBlitters.";
     }
 };
