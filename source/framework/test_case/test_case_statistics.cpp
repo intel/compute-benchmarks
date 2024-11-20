@@ -301,22 +301,23 @@ void TestCaseStatistics::printStatisticsNoop(const std::string &testCaseName) co
 }
 
 void TestCaseStatistics::printStatisticsCsv(const std::string &testCaseName) const {
-    const auto samplesEntry = this->samplesMap.begin();
-    FATAL_ERROR_IF(samplesEntry == this->samplesMap.end(), "Test did not generate any values");
+    FATAL_ERROR_IF(this->samplesMap.begin() == this->samplesMap.end(), "Test did not generate any values");
 
-    const std::string &samplesName = samplesEntry->first;
-    const Samples &samples = samplesEntry->second;
-    const MetricsStrings metricsStrings{samplesName, samples, this->reachedInfinity};
+    for (const auto &samplesEntry : this->samplesMap) {
+        const std::string &samplesName = samplesEntry.first;
+        const Samples &samples = samplesEntry.second;
+        const MetricsStrings metricsStrings{samplesName, samples, this->reachedInfinity};
 
-    std::cout << testCaseName << ",";
-    std::cout << metricsStrings.mean << ",";
-    std::cout << metricsStrings.median << ",";
-    std::cout << metricsStrings.standardDeviation << ",";
-    std::cout << metricsStrings.min << ",";
-    std::cout << metricsStrings.max << ",";
-    std::cout << metricsStrings.type << ",";
-    std::cout << metricsStrings.label;
-    std::cout << std::endl;
+        std::cout << testCaseName << ",";
+        std::cout << metricsStrings.mean << ",";
+        std::cout << metricsStrings.median << ",";
+        std::cout << metricsStrings.standardDeviation << ",";
+        std::cout << metricsStrings.min << ",";
+        std::cout << metricsStrings.max << ",";
+        std::cout << metricsStrings.type << ",";
+        std::cout << metricsStrings.label;
+        std::cout << std::endl;
+    }
 }
 
 void TestCaseStatistics::printStatisticsVerbose() const {
