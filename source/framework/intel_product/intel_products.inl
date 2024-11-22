@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
     INTEL_GEN(XeHpCore)
     INTEL_GEN(XeHpgCore)
     INTEL_GEN(XeHpcCore)
+    INTEL_GEN(Xe2HpgCore)
 #endif
 
 #ifdef INTEL_PRODUCT
@@ -43,6 +44,9 @@
     INTEL_PRODUCT(Dg2,      XeHpgCore)
 
     INTEL_PRODUCT(Pvc,      XeHpcCore)
+
+    INTEL_PRODUCT(Bmg,      Xe2HpgCore)
+    INTEL_PRODUCT(Lnl,      Xe2HpgCore)
 #endif
 
 #ifdef INTEL_PRODUCT_ID
@@ -250,5 +254,13 @@
     INTEL_PRODUCT_ID(0x0BE0, Pvc)
     INTEL_PRODUCT_ID(0x0BE1, Pvc)
     INTEL_PRODUCT_ID(0x0BE5, Pvc)
+    INTEL_PRODUCT_ID(0xE202, Bmg)
+    INTEL_PRODUCT_ID(0xE20B, Bmg)
+    INTEL_PRODUCT_ID(0xE20C, Bmg)
+    INTEL_PRODUCT_ID(0xE20D, Bmg)
+    INTEL_PRODUCT_ID(0xE212, Bmg)
+    INTEL_PRODUCT_ID(0x6420, Lnl)
+    INTEL_PRODUCT_ID(0x64A0, Lnl)
+    INTEL_PRODUCT_ID(0x64B0, Lnl)
 #endif
 // clang-format on
