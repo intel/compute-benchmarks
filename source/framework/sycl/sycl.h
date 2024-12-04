@@ -9,7 +9,7 @@
 
 #include "framework/test_case/test_case.h"
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 
 namespace SYCL {
 namespace sycl = ::sycl;
