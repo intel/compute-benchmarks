@@ -19,6 +19,7 @@ using L0CounterBasedEventCreate2 = decltype(&zexCounterBasedEventCreate2);
 
 struct ExtensionProperties {
     bool getImportHostPointerFunctions = false;
+    bool getCounterBasedCreateFunctions = false;
 
     static ExtensionProperties create() {
         return ExtensionProperties();
@@ -26,6 +27,11 @@ struct ExtensionProperties {
 
     ExtensionProperties &setImportHostPointerFunctions(bool value) {
         getImportHostPointerFunctions = value;
+        return *this;
+    }
+
+    ExtensionProperties &setCounterBasedCreateFunctions(bool value) {
+        getCounterBasedCreateFunctions = value;
         return *this;
     }
 };

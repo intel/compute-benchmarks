@@ -23,7 +23,10 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     }
 
     // Setup
-    LevelZero levelzero;
+    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(
+        arguments.inOrderQueue);
+    LevelZero levelzero(extensionProperties);
+
     Timer timer;
     const ze_group_count_t groupCount{1, 1, 1};
 

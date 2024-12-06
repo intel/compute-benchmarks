@@ -30,7 +30,9 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     }
 
     // Setup
-    LevelZero levelzero(QueueProperties::create().disable());
+    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(
+        arguments.counterBasedEvents);
+    LevelZero levelzero(QueueProperties::create().disable(), ContextProperties::create(), extensionProperties);
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 

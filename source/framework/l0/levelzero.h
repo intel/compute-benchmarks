@@ -51,6 +51,8 @@ struct LevelZero {
         : LevelZero(queueProperties, contextProperties, ExtensionProperties::create()) {}
     LevelZero(const QueueProperties &queueProperties, const ContextProperties &contextProperties,
               const ExtensionProperties &extensionProperties);
+    LevelZero(const ExtensionProperties &extensionProperties) : LevelZero(QueueProperties::create(),
+                                                                          ContextProperties::create(), extensionProperties) {}
     ~LevelZero() noexcept(false);
 
     // Returns how many subDevices has been created. Will return 0, if no subDevices were specified in ContextProperties or
@@ -117,7 +119,7 @@ struct LevelZero {
         return submissionTime;
     }
 
-    void initializeImportHostPointerExtension(const ExtensionProperties &extensionProperties);
+    void initializeExtension(const ExtensionProperties &extensionProperties);
 
     // Queriers subDevices of the root device and creates them if any. This method is only called when it's necessary, i.e. user
     // specified some subDevices in ContextProperties

@@ -27,7 +27,9 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     }
 
     // Setup
-    LevelZero levelzero;
+    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(
+        arguments.counterBasedEvents);
+    LevelZero levelzero(extensionProperties);
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 

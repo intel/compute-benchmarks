@@ -23,7 +23,9 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
     }
 
     // Setup
-    LevelZero levelzero;
+    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(
+        true);
+    LevelZero levelzero(extensionProperties);
 
     const size_t lws = 32u;
     const size_t gws = lws;

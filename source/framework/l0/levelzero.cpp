@@ -63,7 +63,7 @@ LevelZero::LevelZero(const QueueProperties &queueProperties, const ContextProper
     this->commandQueueDevice = queueDesc.family.device;
     this->commandQueueMaxFillSize = queueDesc.family.maxFillSize;
 
-    initializeImportHostPointerExtension(extensionProperties);
+    initializeExtension(extensionProperties);
 }
 
 LevelZero::~LevelZero() noexcept(false) {
@@ -140,32 +140,32 @@ ze_command_queue_handle_t LevelZero::createQueue(ze_device_handle_t deviceHandle
     return queue;
 }
 
-void LevelZero::initializeImportHostPointerExtension(const ExtensionProperties &extensionProperties) {
-    if (!extensionProperties.getImportHostPointerFunctions) {
-        return;
+void LevelZero::initializeExtension(const ExtensionProperties &extensionProperties) {
+    if (extensionProperties.getImportHostPointerFunctions) {
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zexDriverImportExternalPointer",
+                                                reinterpret_cast<void **>(&this->importHostPointer.importExternalPointer)));
+        FATAL_ERROR_IF(this->importHostPointer.importExternalPointer == nullptr, "zexDriverImportExternalPointer retrieved nullptr");
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zexDriverReleaseImportedPointer",
+                                                reinterpret_cast<void **>(&this->importHostPointer.releaseExternalPointer)));
+        FATAL_ERROR_IF(this->importHostPointer.releaseExternalPointer == nullptr, "zexDriverReleaseImportedPointer retrieved nullptr");
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zexDriverGetHostPointerBaseAddress",
+                                                reinterpret_cast<void **>(&this->importHostPointer.getHostPointerBaseAddress)));
+        FATAL_ERROR_IF(this->importHostPointer.getHostPointerBaseAddress == nullptr, "zexDriverGetHostPointerBaseAddress retrieved nullptr");
     }
 
-    EXPECT_ZE_RESULT_SUCCESS(
-        zeDriverGetExtensionFunctionAddress(this->driver,
-                                            "zexDriverImportExternalPointer",
-                                            reinterpret_cast<void **>(&this->importHostPointer.importExternalPointer)));
-    FATAL_ERROR_IF(this->importHostPointer.importExternalPointer == nullptr, "zexDriverImportExternalPointer retrieved nullptr");
-    EXPECT_ZE_RESULT_SUCCESS(
-        zeDriverGetExtensionFunctionAddress(this->driver,
-                                            "zexDriverReleaseImportedPointer",
-                                            reinterpret_cast<void **>(&this->importHostPointer.releaseExternalPointer)));
-    FATAL_ERROR_IF(this->importHostPointer.releaseExternalPointer == nullptr, "zexDriverReleaseImportedPointer retrieved nullptr");
-    EXPECT_ZE_RESULT_SUCCESS(
-        zeDriverGetExtensionFunctionAddress(this->driver,
-                                            "zexDriverGetHostPointerBaseAddress",
-                                            reinterpret_cast<void **>(&this->importHostPointer.getHostPointerBaseAddress)));
-    FATAL_ERROR_IF(this->importHostPointer.getHostPointerBaseAddress == nullptr, "zexDriverGetHostPointerBaseAddress retrieved nullptr");
-
-    EXPECT_ZE_RESULT_SUCCESS(
-        zeDriverGetExtensionFunctionAddress(this->driver,
-                                            "zexCounterBasedEventCreate2",
-                                            reinterpret_cast<void **>(&this->counterBasedEventCreate2)));
-    FATAL_ERROR_IF(this->counterBasedEventCreate2 == nullptr, "zexCounterBasedEventCreate2 retrieved nullptr");
+    if (extensionProperties.getCounterBasedCreateFunctions) {
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zexCounterBasedEventCreate2",
+                                                reinterpret_cast<void **>(&this->counterBasedEventCreate2)));
+        FATAL_ERROR_IF(this->counterBasedEventCreate2 == nullptr, "zexCounterBasedEventCreate2 retrieved nullptr");
+    }
 }
 
 } // namespace L0
