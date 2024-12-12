@@ -87,6 +87,7 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     counterBasedEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
     if (arguments.hostVisible) {
         counterBasedEventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+        counterBasedEventDesc.signalScope |= ZE_EVENT_SCOPE_FLAG_HOST;
     }
     if (arguments.useProfiling) {
         counterBasedEventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
@@ -107,6 +108,9 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
             ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &profilingEvents[i]));
         } else {
             ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, i, 0, 0};
+            if (arguments.hostVisible) {
+                eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+            }
             ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(hEventPool, &eventDesc, &profilingEvents[i]));
         }
     }
@@ -116,15 +120,15 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     // if no profiling, we need to get average kernel time
     if (!arguments.useProfiling) {
         ze_event_pool_handle_t profilingEventPool = nullptr;
-        const ze_event_pool_desc_t profilingEventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, profilingFlags, 1u};
         ze_event_handle_t eventHandle = nullptr;
 
         if (arguments.counterBasedEvents) {
             zex_counter_based_event_desc_t profilingDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
-            counterBasedEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+            profilingDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
 
             ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &profilingDesc, &eventHandle));
         } else {
+            const ze_event_pool_desc_t profilingEventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, profilingFlags, 1u};
             ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &profilingEventPoolDesc, numDevices, &levelzero.device, &profilingEventPool));
             ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0u, 0, 0};
             ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(profilingEventPool, &eventDesc, &eventHandle));
