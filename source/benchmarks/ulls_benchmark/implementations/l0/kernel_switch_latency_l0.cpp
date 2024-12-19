@@ -68,6 +68,7 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     counterBasedEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
     if (arguments.hostVisible) {
         counterBasedEventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+        counterBasedEventDesc.signalScope |= ZE_EVENT_SCOPE_FLAG_HOST;
     }
 
     ze_event_pool_flags_t flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
