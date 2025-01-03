@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 constexpr uint32_t maxNumberOfEngines = 9;
 
-using BcsBitmaskArgument = BitmaskArgument<maxNumberOfEngines, false>;
+using BcsBitmaskArgument = BitmaskArgument<maxNumberOfEngines, true>;
 
 struct UsmCopyConcurrentMultipleBlitsArguments : TestCaseArgumentContainer {
     ByteSizeArgument size;
