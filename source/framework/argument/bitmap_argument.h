@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,8 +61,10 @@ struct BitmaskArgument : Argument {
         }
 
         this->value = Bitset(valueToParse);
-        if (!canBeAllZeros && this->value.none()) {
-            return;
+        if constexpr (!canBeAllZeros) {
+            if (this->value.none()) {
+                return;
+            }
         }
 
         this->valid = true;
