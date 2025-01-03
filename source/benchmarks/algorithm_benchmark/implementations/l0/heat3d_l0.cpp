@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,6 +46,11 @@ static TestResult ipcBarrierMaster(std::vector<ze_event_handle_t> &barrierEvents
 
 static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
 
     const uint32_t nRanks = arguments.subDomainX * arguments.subDomainY * arguments.subDomainZ;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,12 @@ static TestResult getComputeEngineInfo(std::vector<EngineInfo> &supportedEngineI
 }
 
 static TestResult run(const MultiProcessImmediateCmdlistSubmissionArguments &arguments, Statistics &statistics) {
+    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
     // Setup
     LevelZero levelzero;
     std::vector<EngineInfo> supportedEngineInfo{};
