@@ -38,6 +38,11 @@ struct BitmaskArgument : Argument {
     }
 
     bool validate() const override {
+        if constexpr (!canBeAllZeros) {
+            if (this->value.none()) {
+                return false;
+            }
+        }
         return this->valid;
     }
 
