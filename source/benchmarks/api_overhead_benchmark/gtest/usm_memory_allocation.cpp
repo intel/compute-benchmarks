@@ -15,15 +15,15 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<UsmMemoryAllocation> registerTestCase{};
 
-class UsmMemoryAllocationTest : public ::testing::TestWithParam<std::tuple<UsmRuntimeMemoryPlacement, size_t, AllocationMeasureMode>> {
+class UsmMemoryAllocationTest : public ::testing::TestWithParam<std::tuple<Api, UsmRuntimeMemoryPlacement, size_t, AllocationMeasureMode>> {
 };
 
 TEST_P(UsmMemoryAllocationTest, Test) {
     UsmMemoryAllocationArguments args{};
-    args.api = Api::L0;
-    args.usmMemoryPlacement = std::get<0>(GetParam());
-    args.size = std::get<1>(GetParam());
-    args.measureMode = std::get<2>(GetParam());
+    args.api = std::get<0>(GetParam());
+    args.usmMemoryPlacement = std::get<1>(GetParam());
+    args.size = std::get<2>(GetParam());
+    args.measureMode = std::get<3>(GetParam());
     UsmMemoryAllocation test;
     test.run(args);
 }
@@ -32,6 +32,7 @@ INSTANTIATE_TEST_SUITE_P(
     UsmMemoryAllocationTest,
     UsmMemoryAllocationTest,
     ::testing::Combine(
+        ::CommonGtestArgs::allApis(),
         ::testing::Values(UsmRuntimeMemoryPlacement::Host, UsmRuntimeMemoryPlacement::Device, UsmRuntimeMemoryPlacement::Shared),
         ::testing::Values(4,
                           64,
@@ -49,6 +50,7 @@ INSTANTIATE_TEST_SUITE_P(
     UsmMemoryAllocationTestLIMITED,
     UsmMemoryAllocationTest,
     ::testing::Combine(
+        ::CommonGtestArgs::allApis(),
         ::testing::Values(UsmRuntimeMemoryPlacement::Shared),
         ::testing::Values(
             4 * MemoryConstants::megaByte),
