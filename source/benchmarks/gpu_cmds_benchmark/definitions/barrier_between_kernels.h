@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,12 +18,14 @@ struct BarrierBetweenKernelsArguments : TestCaseArgumentContainer {
     IntegerArgument onlyReads;
     IntegerArgument remoteAccess;
     UsmMemoryPlacementArgument flushedMemory;
+    IntegerArgument barrierCount;
 
     BarrierBetweenKernelsArguments()
         : bytesToFlush(*this, "bytes", "bytes to flush from L3"),
           onlyReads(*this, "onlyReads", "only reads cached in L3"),
           remoteAccess(*this, "remoteAccess", "access cached from remote tile"),
-          flushedMemory(*this, "memoryType", "memory type cached in L3") {}
+          flushedMemory(*this, "memoryType", "memory type cached in L3"),
+          barrierCount(*this, "barrierCount", "total amount of measured barriers") {}
 };
 
 struct BarrierBetweenKernels : TestCase<BarrierBetweenKernelsArguments> {
