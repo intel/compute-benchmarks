@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -166,6 +166,36 @@ void LevelZero::initializeExtension(const ExtensionProperties &extensionProperti
                                                 reinterpret_cast<void **>(&this->counterBasedEventCreate2)));
         FATAL_ERROR_IF(this->counterBasedEventCreate2 == nullptr, "zexCounterBasedEventCreate2 retrieved nullptr");
     }
+}
+
+ze_mutable_command_list_exp_properties_t LevelZero::getDeviceMclProperties(ze_device_handle_t deviceHandle) const {
+    ze_mutable_command_list_exp_properties_t mclProperties{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_PROPERTIES};
+    ze_device_properties_t deviceProperties{ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    deviceProperties.pNext = &mclProperties;
+
+    EXPECT_ZE_RESULT_SUCCESS(zeDeviceGetProperties(deviceHandle, &deviceProperties));
+    return mclProperties;
+}
+
+bool LevelZero::isMclExtensionAvailable(uint32_t major, uint32_t minor) const {
+    const std::string name = "ZE_experimental_mutable_command_list";
+    const uint32_t version = ZE_MAKE_VERSION(major, minor);
+
+    uint32_t extensionsCount = 0;
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionProperties(driver, &extensionsCount, nullptr));
+
+    std::vector<ze_driver_extension_properties_t> driverExtensions(extensionsCount);
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionProperties(driver, &extensionsCount, driverExtensions.data()));
+    for (uint32_t i = 0; i < extensionsCount; i++) {
+        auto queryName = driverExtensions[i].name;
+        if (strncmp(queryName, name.c_str(), name.size()) == 0) {
+            auto queryVersion = driverExtensions[i].version;
+            if (queryVersion >= version) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 } // namespace L0

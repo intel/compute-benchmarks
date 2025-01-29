@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,6 +91,13 @@ struct LevelZero {
         EXPECT_ZE_RESULT_SUCCESS(zeDeviceGetComputeProperties(deviceHandle, &deviceComputeProperties));
         return deviceComputeProperties;
     }
+
+    ze_mutable_command_list_exp_properties_t getDeviceMclProperties() const { return getDeviceMclProperties(this->device); }
+    ze_mutable_command_list_exp_properties_t getDeviceMclProperties(DeviceSelection deviceSelection) const { return getDeviceMclProperties(getDevice(deviceSelection)); }
+    ze_mutable_command_list_exp_properties_t getDeviceMclProperties(ze_device_handle_t deviceHandle) const;
+
+    bool isMclExtensionAvailable(uint32_t major, uint32_t minor) const;
+
     uint64_t getTimerResolution(DeviceSelection deviceSelection) const { return getDeviceProperties(deviceSelection).timerResolution; }
     uint64_t getTimerResolution(ze_device_handle_t deviceHandle) const { return getDeviceProperties(deviceHandle).timerResolution; }
 
