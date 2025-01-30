@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,6 +67,7 @@ struct Configuration : ArgumentContainer {
     ApiArgument selectedApi;
     BooleanFlagArgument noIntelExtensions;
     BooleanFlagArgument dumpCommandLines;
+    BooleanFlagArgument allowLimitedTests;
     BooleanFlagArgument noop;
     BooleanFlagArgument noHeaders;
     BooleanFlagArgument noColumnNames;

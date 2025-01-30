@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@ class TestCaseBase : public TestCaseInterface {
     // Filters
     bool matchesWithTestFilter() const;
     bool matchesWithArgFilter(const ArgumentContainer &arguments) const;
+    bool needsToBeFilteredDueToLimitedTargets() const;
 
     // Warnings
     void printTestMapWarning() const;

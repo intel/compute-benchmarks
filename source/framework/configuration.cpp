@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ Configuration::Configuration()
       selectedApi(*this, "api", "Compute API to be used"),
       noIntelExtensions(*this, "no-intel-extensions", "do not run benchmark requiring Intel specific extensions"),
       dumpCommandLines(*this, "dumpCommandLines", "output commandline arguments to run the each test"),
+      allowLimitedTests(*this, "allowLimitedTests", "allow only limited scenarios to be run"),
       noop(*this, "noop", "do not run any tests, only print their names and parameters"),
       noHeaders(*this, "noHeaders", "Do not print any informational messages at the top of the output"),
       noColumnNames(*this, "noColumnNames", "Do not print column names at the top of the output"),
@@ -75,6 +76,7 @@ Configuration::Configuration()
     selectedApi = Api::All;
     noIntelExtensions = false;
     dumpCommandLines = false;
+    allowLimitedTests = false;
     subDeviceSelection = DeviceSelection::Root;
     noop = false;
     noHeaders = false;
