@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,3 +44,15 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(true),
         ::testing::Values(1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072),
         ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    FullRemoteAccessMemoryTestLIMITED,
+    FullRemoteAccessMemoryTest,
+    ::testing::Combine(
+        ::testing::Values(Api::OpenCL),
+        ::testing::Values(StreamMemoryType::Write),
+        ::testing::Values(1 * gigaByte),
+        ::testing::Values(1),
+        ::testing::Values(true),
+        ::testing::Values(1024),
+        ::testing::Values(true)));

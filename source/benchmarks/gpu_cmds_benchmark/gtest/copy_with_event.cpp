@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,3 +38,15 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    CopyWithEventTestLIMITED,
+    CopyWithEventTest,
+    ::testing::ValuesIn([] {
+        std::vector<std::tuple<size_t, bool, bool, bool>> testCases;
+        testCases.emplace_back(500, false, false, true);
+        testCases.emplace_back(500, false, true, false);
+        testCases.emplace_back(500, true, false, false);
+        testCases.emplace_back(500, true, true, true);
+        return testCases;
+    }()));

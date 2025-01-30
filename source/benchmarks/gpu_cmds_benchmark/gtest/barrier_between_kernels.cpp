@@ -40,3 +40,14 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(0, 1),
         ::testing::Values(4, 8, 16, 32, 64, 256, 1024, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 33554432, 67108864, 134217728),
         ::testing::Values(1)));
+
+INSTANTIATE_TEST_SUITE_P(
+    BarrierBetweenKernelsTestLIMITED,
+    BarrierBetweenKernelsTest,
+    ::testing::ValuesIn([] {
+        std::vector<std::tuple<size_t, UsmMemoryPlacement, size_t, size_t, size_t>> testCases;
+        testCases.emplace_back(1, UsmMemoryPlacement::Device, 0, 16384, 1);
+        testCases.emplace_back(1, UsmMemoryPlacement::Host, 0, 16384, 1);
+        testCases.emplace_back(1, UsmMemoryPlacement::Device, 1, 4, 10);
+        return testCases;
+    }()));

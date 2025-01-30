@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,3 +42,15 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1u),
         ::testing::Values(false),
         ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    MultiKernelExecutionTestLIMITED,
+    MultiKernelExecutionTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(10u, 100u, 500u),
+        ::testing::Values(32u),
+        ::testing::Values(32u),
+        ::testing::Values(1u),
+        ::testing::Values(false),
+        ::testing::Values(true)));

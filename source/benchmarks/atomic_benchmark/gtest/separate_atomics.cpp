@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,3 +63,14 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::enqueueSizesForAtomics(),
         ::testing::Values(true),
         ::testing::Values(TestType::Extended)));
+
+INSTANTIATE_TEST_SUITE_P(
+    SeparateAtomicsTestLIMITED,
+    SeparateAtomicsTest,
+    ::testing::Combine(
+        ::testing::Values(DataType::Int32),
+        ::testing::Values(MathOperation::Inc),
+        ::testing::Values(1, 4),
+        ::testing::Values(CommonGtestArgs::EnqueueSize{32, 64}),
+        ::testing::Values(true),
+        ::testing::Values(TestType::Regular)));

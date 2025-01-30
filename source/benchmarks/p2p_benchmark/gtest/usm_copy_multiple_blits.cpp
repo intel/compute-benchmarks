@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,3 +44,13 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(0, 1),
         ::testing::Values(512 * megaByte),
         ::testing::Values("000000001", "000000010", "000000110", "111111111")));
+
+INSTANTIATE_TEST_SUITE_P(
+    UsmCopyMultipleBlitsTestLIMITED,
+    UsmCopyMultipleBlitsTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(0),
+        ::testing::Values(1),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values("000000001")));

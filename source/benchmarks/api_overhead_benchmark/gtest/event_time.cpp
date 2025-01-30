@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,4 +37,14 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::ValuesIn(EventScopeArgument::enumValues),
         ::testing::ValuesIn(EventScopeArgument::enumValues),
+        ::testing::Values(100u)));
+
+INSTANTIATE_TEST_SUITE_P(
+    EventTimeTestLIMITED,
+    EventTimeTest,
+    ::testing::Combine(
+        ::testing::Values(true),
+        ::testing::Values(false),
+        ::testing::Values(EventScope::scopeSubDevice),
+        ::testing::Values(EventScope::scopeHost),
         ::testing::Values(100u)));

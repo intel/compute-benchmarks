@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,5 +26,10 @@ TEST_P(ExecuteCommandListTestWithFenceUsageTest, Test) {
 
 INSTANTIATE_TEST_SUITE_P(
     ExecuteCommandListTestWithFenceUsageTest,
+    ExecuteCommandListTestWithFenceUsageTest,
+    ::testing::Values(Api::L0));
+
+INSTANTIATE_TEST_SUITE_P(
+    ExecuteCommandListTestWithFenceUsageTestLIMITED,
     ExecuteCommandListTestWithFenceUsageTest,
     ::testing::Values(Api::L0));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,3 +36,15 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(WorkItemIdUsage::None, WorkItemIdUsage::Global, WorkItemIdUsage::Local, WorkItemIdUsage::AtomicPerWorkgroup),
         ::CommonGtestArgs::workgroupCount(),
         ::CommonGtestArgs::workgroupSize()));
+
+INSTANTIATE_TEST_SUITE_P(
+    KernelWithWorkSubmissionTestLIMITED,
+    KernelWithWorkSubmissionTest,
+    ::testing::ValuesIn([] {
+        std::vector<std::tuple<Api, WorkItemIdUsage, size_t, size_t>> testCases;
+        testCases.emplace_back(Api::L0, WorkItemIdUsage::Local, 10000, 32);
+        testCases.emplace_back(Api::OpenCL, WorkItemIdUsage::Global, 1000, 256);
+        testCases.emplace_back(Api::OpenCL, WorkItemIdUsage::Local, 1000, 256);
+        testCases.emplace_back(Api::OpenCL, WorkItemIdUsage::None, 1000, 256);
+        return testCases;
+    }()));

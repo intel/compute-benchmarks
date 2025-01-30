@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,3 +40,14 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1, 2048),
         ::testing::Values(1, 10),
         ::testing::Values(1, 6)));
+
+INSTANTIATE_TEST_SUITE_P(
+    QueuePrioritiesTestLIMITED,
+    QueuePrioritiesTest,
+    ::testing::Combine(
+        ::testing::Values(Api::OpenCL),
+        ::testing::Values(1000),
+        ::testing::Values(true),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1)));

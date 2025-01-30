@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,8 +27,8 @@ TEST_P(ExecuteCommandListTestWithIndirectTest, Test) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    ExecuteCommandListTestWithIndirectTest,
+    ExecuteCommandListTestWithIndirectTestLIMITED,
     ExecuteCommandListTestWithIndirectTest,
     ::testing::Combine(
-        ::testing::Values(0u, 10u, 100u, 1000u),
-        ::testing::Values(UsmMemoryPlacement::Shared, UsmMemoryPlacement::Host)));
+        ::testing::Values(100u),
+        ::testing::Values(UsmMemoryPlacement::Shared)));

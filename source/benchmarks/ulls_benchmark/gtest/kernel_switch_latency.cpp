@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,3 +42,20 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    KernelSwitchLatencyTestLIMITED,
+    KernelSwitchLatencyTest,
+    ::testing::ValuesIn([] {
+        std::vector<std::tuple<Api, size_t, size_t, bool, bool, bool, bool>> testCases;
+        testCases.emplace_back(Api::L0, 8, 200, false, false, false, false);
+        testCases.emplace_back(Api::L0, 8, 200, false, false, true, false);
+        testCases.emplace_back(Api::L0, 8, 200, false, false, true, true);
+        testCases.emplace_back(Api::L0, 8, 200, false, true, false, false);
+        testCases.emplace_back(Api::L0, 8, 200, false, true, true, false);
+        testCases.emplace_back(Api::L0, 8, 200, false, true, true, true);
+        testCases.emplace_back(Api::L0, 8, 200, true, false, false, false);
+        testCases.emplace_back(Api::L0, 8, 200, true, false, true, false);
+        testCases.emplace_back(Api::L0, 8, 200, true, false, true, true);
+        return testCases;
+    }()));

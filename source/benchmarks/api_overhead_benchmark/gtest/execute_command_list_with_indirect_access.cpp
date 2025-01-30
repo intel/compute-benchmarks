@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,3 +32,10 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(10u, 100u, 1000u),
         ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    ExecuteCommandListTestWithIndirectAccessTestLIMITED,
+    ExecuteCommandListTestWithIndirectAccessTest,
+    ::testing::Combine(
+        ::testing::Values(100u),
+        ::testing::Values(true)));

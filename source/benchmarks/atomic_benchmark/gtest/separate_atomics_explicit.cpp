@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,3 +69,14 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::enqueueSizesForAtomics(),
         ::testing::Values(true),
         ::testing::Values(TestType::Extended)));
+
+INSTANTIATE_TEST_SUITE_P(
+    SeparateAtomicsExplicitTestLIMITED,
+    SeparateAtomicsExplicitTest,
+    ::testing::ValuesIn([] {
+        std::vector<std::tuple<DataType, MathOperation, size_t, AtomicScope, AtomicMemoryOrder, CommonGtestArgs::EnqueueSize, bool, TestType>> testCases;
+        testCases.emplace_back(DataType::Int32, MathOperation::Add, 1, AtomicScope::Workgroup, AtomicMemoryOrder::AcquireRelease, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
+        testCases.emplace_back(DataType::Int32, MathOperation::Add, 1, AtomicScope::Workgroup, AtomicMemoryOrder::SequentialConsitent, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
+        testCases.emplace_back(DataType::Int32, MathOperation::Add, 4, AtomicScope::Device, AtomicMemoryOrder::AcquireRelease, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
+        return testCases;
+    }()));

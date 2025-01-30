@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,3 +38,13 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    EnqueueNdrTimeTestLIMITED,
+    EnqueueNdrTimeTest,
+    ::testing::Combine(
+        ::testing::Values(100),
+        ::testing::Values(256),
+        ::testing::Values(true),
+        ::testing::Values(true),
+        ::testing::Values(true)));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,5 +35,14 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(64, 128, 256, 512),
         ::testing::Values(false, true),
+        ::testing::Values(false, true),
+        ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    ReadAfterAtomicWriteTestLIMITED,
+    ReadAfterAtomicWriteTest,
+    ::testing::Combine(
+        ::testing::Values(256),
+        ::testing::Values(true),
         ::testing::Values(false, true),
         ::testing::Values(true)));

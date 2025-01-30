@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,5 +33,13 @@ INSTANTIATE_TEST_SUITE_P(
     EventCtxtSwitchLatencyTest,
     ::testing::Combine(
         ::testing::Values(500, 1000),
+        ::testing::Values(Engine::Ccs0),
+        ::testing::Values(Engine::Bcs)));
+
+INSTANTIATE_TEST_SUITE_P(
+    EventCtxtSwitchLatencyTestLIMITED,
+    EventCtxtSwitchLatencyTest,
+    ::testing::Combine(
+        ::testing::Values(500),
         ::testing::Values(Engine::Ccs0),
         ::testing::Values(Engine::Bcs)));

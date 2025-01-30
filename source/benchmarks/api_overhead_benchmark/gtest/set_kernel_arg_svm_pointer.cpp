@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,4 +35,13 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(100),
         ::testing::Values(false, true),
+        ::testing::Values(1024)));
+
+INSTANTIATE_TEST_SUITE_P(
+    SetKernelArgSvmPointerTestLIMITED,
+    SetKernelArgSvmPointerTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0, Api::OpenCL),
+        ::testing::Values(100),
+        ::testing::Values(true),
         ::testing::Values(1024)));

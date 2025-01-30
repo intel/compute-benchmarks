@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,4 +30,11 @@ INSTANTIATE_TEST_SUITE_P(
     DestroyCommandListImmediateTest,
     ::testing::Combine(
         ::testing::Values(100, 1000),
+        ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    DestroyCommandListImmediateTestLIMITED,
+    DestroyCommandListImmediateTest,
+    ::testing::Combine(
+        ::testing::Values(1000),
         ::testing::Values(false, true)));

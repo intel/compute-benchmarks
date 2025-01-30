@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,3 +40,14 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::enqueueSizesForAtomics(),
         ::testing::Values(true),
         ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(
+    DoMathOperationTestLIMITED,
+    DoMathOperationTest,
+    ::testing::ValuesIn([] {
+        std::vector<std::tuple<DataType, MathOperation, CommonGtestArgs::EnqueueSize, bool, bool>> testCases;
+        testCases.push_back(std::make_tuple(DataType::Float, MathOperation::Add, CommonGtestArgs::EnqueueSize{32, 64}, true, false));
+        testCases.push_back(std::make_tuple(DataType::Int32, MathOperation::Max, CommonGtestArgs::EnqueueSize{32, 64}, true, false));
+        testCases.push_back(std::make_tuple(DataType::Int32, MathOperation::Modulo, CommonGtestArgs::EnqueueSize{32, 64}, true, false));
+        return testCases;
+    }()));

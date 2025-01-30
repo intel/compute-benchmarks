@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,3 +37,12 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(512 * megaByte),
         ::testing::Values(false, true),
         ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    UsmBidirectionalCopyTestLIMITED,
+    UsmBidirectionalCopyTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(false),
+        ::testing::Values(true)));

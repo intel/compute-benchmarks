@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,3 +30,8 @@ INSTANTIATE_TEST_SUITE_P(
     ExecuteCommandListTest,
     ExecuteCommandListTest,
     ::testing::Values(false, true, false));
+
+INSTANTIATE_TEST_SUITE_P(
+    ExecuteCommandListTestLIMITED,
+    ExecuteCommandListTest,
+    ::testing::Values(true));

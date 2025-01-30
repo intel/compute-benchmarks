@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,3 +29,8 @@ INSTANTIATE_TEST_SUITE_P(
     WaitOnEventColdTest,
     WaitOnEventColdTest,
     ::testing::Values(500, 1000));
+
+INSTANTIATE_TEST_SUITE_P(
+    WaitOnEventColdTestLIMITED,
+    WaitOnEventColdTest,
+    ::testing::Values(500));

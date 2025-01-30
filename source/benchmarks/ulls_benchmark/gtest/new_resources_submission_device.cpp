@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,3 +34,10 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(1, 64 * kiloByte, 512 * kiloByte, 1 * megaByte, 16 * megaByte, 64 * megaByte, 256 * megaByte, 1 * gigaByte)));
+
+INSTANTIATE_TEST_SUITE_P(
+    NewResourcesSubmissionDeviceTestLIMITED,
+    NewResourcesSubmissionDeviceTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(1)));

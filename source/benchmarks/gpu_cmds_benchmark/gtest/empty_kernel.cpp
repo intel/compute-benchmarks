@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,3 +35,11 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(500),
         ::CommonGtestArgs::workgroupCount(),
         ::CommonGtestArgs::workgroupSize()));
+
+INSTANTIATE_TEST_SUITE_P(
+    EmptyKernelTestLIMITED,
+    EmptyKernelTest,
+    ::testing::Combine(
+        ::testing::Values(500),
+        ::testing::Values(100),
+        ::testing::Values(256)));

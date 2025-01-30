@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,4 +37,14 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(0, 1, 32, 256),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
+        ::testing::Values(100)));
+
+INSTANTIATE_TEST_SUITE_P(
+    FlushTimeTestLIMITED,
+    FlushTimeTest,
+    ::testing::Combine(
+        ::testing::Values(100),
+        ::testing::Values(256),
+        ::testing::Values(false),
+        ::testing::Values(true),
         ::testing::Values(100)));

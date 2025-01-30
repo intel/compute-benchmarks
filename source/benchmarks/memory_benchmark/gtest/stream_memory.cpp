@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,3 +44,28 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(BufferContents::Zeros, BufferContents::Random),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::deviceAndHost),
         ::testing::Values(1u)));
+
+INSTANTIATE_TEST_SUITE_P(
+    StreamMemoryTestLIMITED,
+    StreamMemoryTest,
+    ::testing::ValuesIn([] {
+        std::vector<std::tuple<Api, StreamMemoryType, size_t, bool, BufferContents, UsmMemoryPlacement, size_t>> testCases;
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Read, 1 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Device, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Read, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Device, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Read, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Host, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Read, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Device, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Read, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Host, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Scale, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Device, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Scale, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Host, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Scale, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Device, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Scale, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Host, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Triad, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Device, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Triad, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Host, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Triad, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Device, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Triad, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Host, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Write, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Device, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Write, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Host, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Write, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Device, 1u);
+        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Write, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Host, 1u);
+        return testCases;
+    }()));

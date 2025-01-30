@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,14 @@ TEST_P(QueueSwitchTest, Test) {
 
 INSTANTIATE_TEST_SUITE_P(
     QueueSwitchTest,
+    QueueSwitchTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(10u),
+        ::testing::Values(1u)));
+
+INSTANTIATE_TEST_SUITE_P(
+    QueueSwitchTestLIMITED,
     QueueSwitchTest,
     ::testing::Combine(
         ::testing::Values(Api::L0),
