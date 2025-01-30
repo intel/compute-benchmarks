@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -224,10 +224,10 @@ int BenchmarkMain::main() {
         DeviceInfo::printDeviceInfo();
         printVersion(false, "Benchmark version: ");
     }
+    ::testing::InitGoogleTest(&argc, argv);
     if (std::string test = configuration.test; test != "") {
         return executeSingleTest(test);
     } else {
-        ::testing::InitGoogleTest(&argc, argv);
         return executeAllTests();
     }
 }
