@@ -82,18 +82,21 @@ bool TestCaseBase::matchesWithArgFilter(const ArgumentContainer &arguments) cons
 
 bool TestCaseBase::needsToBeFilteredDueToLimitedTargets() const {
     const auto *test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-    const auto full_suite_name = std::string(test_info->test_suite_name());
-    if (full_suite_name.find("LIMITED/") != std::string::npos) {
-        const auto pos = full_suite_name.find('/');
-        if (pos != std::string::npos) {
-            const auto instantiate_name = full_suite_name.substr(0, pos);
-            const auto test_class_name = full_suite_name.substr(pos + 1);
-            if (instantiate_name != test_class_name) {
-                return !Configuration::get().allowLimitedTests;
+    if (test_info) {
+        const auto full_suite_name = std::string(test_info->test_suite_name());
+        if (full_suite_name.find("LIMITED/") != std::string::npos) {
+            const auto pos = full_suite_name.find('/');
+            if (pos != std::string::npos) {
+                const auto instantiate_name = full_suite_name.substr(0, pos);
+                const auto test_class_name = full_suite_name.substr(pos + 1);
+                if (instantiate_name != test_class_name) {
+                    return !Configuration::get().allowLimitedTests;
+                }
             }
         }
+        return Configuration::get().allowLimitedTests;
     }
-    return Configuration::get().allowLimitedTests;
+    return false;
 }
 
 void TestCaseBase::printTestMapWarning() const {
