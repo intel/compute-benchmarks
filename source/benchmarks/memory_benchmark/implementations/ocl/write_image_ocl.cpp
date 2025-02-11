@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "framework/ocl/opencl.h"
+#include "framework/ocl/utility/buffer_contents_helper_ocl.h"
 #include "framework/ocl/utility/hostptr_reuse_helper.h"
 #include "framework/ocl/utility/image_helper_ocl.h"
 #include "framework/ocl/utility/profiling_helper.h"
@@ -60,6 +61,8 @@ static TestResult run(const WriteImageArguments &arguments, Statistics &statisti
     // Create hostptr
     HostptrReuseHelper::Alloc hostptrAlloc{};
     ASSERT_CL_SUCCESS(HostptrReuseHelper::allocateBufferHostptr(opencl, arguments.hostPtrPlacement, imageSizeInBytes, hostptrAlloc));
+    auto placement = arguments.hostPtrPlacement == HostptrReuseMode::Usm ? UsmMemoryPlacement::Host : UsmMemoryPlacement::NonUsm;
+    ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillUsmBufferOrHostPtr(opencl.commandQueue, hostptrAlloc.ptr, imageSizeInBytes, placement, BufferContents::Random));
 
     // Warmup
     const size_t origin[] = {0, 0, 0};
