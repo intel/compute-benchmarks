@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,6 +95,17 @@ int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
         std::cout << static_cast<uint32_t>(deviceProperties.uuid.id[i]) << " ";
     }
     std::cout << "\n";
+
+    ze_device_memory_properties_t memoryProperties = {};
+    uint32_t count = 0u;
+    res = zeDeviceGetMemoryProperties(device, &count, nullptr);
+    if (res == ZE_RESULT_SUCCESS && count == 1) {
+        zeDeviceGetMemoryProperties(device, &count, &memoryProperties);
+        std::cout << tabDelimiter << "Memory properties: \n";
+        std::cout << tabDelimiter << "\ttotal size: " << std::dec << memoryProperties.totalSize << "\n";
+        std::cout << tabDelimiter << "\tmax clock rate: " << memoryProperties.maxClockRate << "\n";
+    }
+
     ze_device_memory_access_properties_t memoryAccessCapabilities = {};
 
     res = zeDeviceGetMemoryAccessProperties(device, &memoryAccessCapabilities);
