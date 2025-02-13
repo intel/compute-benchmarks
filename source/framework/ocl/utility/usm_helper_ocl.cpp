@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,11 +32,14 @@ cl_int UsmHelperOcl::allocate(Opencl &opencl,
     case UsmMemoryPlacement::Shared:
         outAlloc.ptr = outAlloc.usm.clSharedMemAllocINTEL(opencl.context, opencl.device, nullptr, bufferSize, 0, &retVal);
         break;
-    case UsmMemoryPlacement::NonUsm:
-        outAlloc.ptr = new uint8_t[bufferSize];
+    case UsmMemoryPlacement::NonUsmMisaligned:
+        outAlloc.ptr = Allocator::allocMisaligned(bufferSize, misalignedOffset);
+        break;
+    case UsmMemoryPlacement::NonUsm4KBAligned:
+        outAlloc.ptr = Allocator::alloc4KBAligned(bufferSize);
         break;
     case UsmMemoryPlacement::NonUsm2MBAligned:
-        outAlloc.ptr = alloc2MBAligned(bufferSize);
+        outAlloc.ptr = Allocator::alloc2MBAligned(bufferSize);
         break;
     case UsmMemoryPlacement::NonUsmMapped:
         outAlloc.mappedData.queue = opencl.commandQueue;
@@ -63,11 +66,12 @@ cl_int UsmHelperOcl::deallocate(Alloc &alloc) {
     case UsmMemoryPlacement::Shared:
         retVal = alloc.usm.clMemFreeINTEL(alloc.context, alloc.ptr);
         break;
-    case UsmMemoryPlacement::NonUsm:
-        delete[] (static_cast<uint8_t *>(alloc.ptr));
-        break;
+    case UsmMemoryPlacement::NonUsm4KBAligned:
     case UsmMemoryPlacement::NonUsm2MBAligned:
-        free(alloc.ptr);
+        Allocator::alignedFree(alloc.ptr);
+        break;
+    case UsmMemoryPlacement::NonUsmMisaligned:
+        Allocator::misalignedFree(alloc.ptr, misalignedOffset);
         break;
     case UsmMemoryPlacement::NonUsmMapped:
         CL_SUCCESS_OR_RETURN(clEnqueueUnmapMemObject(alloc.mappedData.queue, alloc.mappedData.memObject, alloc.ptr, 0, nullptr, nullptr));

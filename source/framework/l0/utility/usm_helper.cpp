@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,27 +21,33 @@ ze_result_t allocate(UsmMemoryPlacement placement, LevelZero &levelZero, size_t 
         return zeMemAllocHost(levelZero.context, &hostAllocDesc, size, 0, buffer);
     case UsmMemoryPlacement::Shared:
         return zeMemAllocShared(levelZero.context, &deviceAllocDesc, &hostAllocDesc, size, 0, levelZero.device, buffer);
-    case UsmMemoryPlacement::NonUsmImported:
-    case UsmMemoryPlacement::NonUsmImported2MBAligned: {
-        if (placement == UsmMemoryPlacement::NonUsmImported2MBAligned) {
-            *buffer = alloc2MBAligned(size);
-        } else {
-            *buffer = malloc(size);
-        }
-        return levelZero.importHostPointer.importExternalPointer(levelZero.driver, *buffer, size);
-    }
-    case UsmMemoryPlacement::NonUsm:
+    case UsmMemoryPlacement::NonUsm4KBAligned:
+        *buffer = Allocator::alloc4KBAligned(size);
+        return ZE_RESULT_SUCCESS;
     case UsmMemoryPlacement::NonUsm2MBAligned: {
-        if (placement == UsmMemoryPlacement::NonUsm2MBAligned) {
-            *buffer = alloc2MBAligned(size);
-        } else {
-            *buffer = malloc(size);
-        }
+        *buffer = Allocator::alloc2MBAligned(size);
         return ZE_RESULT_SUCCESS;
     }
+    case UsmMemoryPlacement::NonUsmMisaligned: {
+        *buffer = Allocator::allocMisaligned(size, misalignedOffset);
+        return ZE_RESULT_SUCCESS;
+    }
+    case UsmMemoryPlacement::NonUsmImportedMisaligned:
+        *buffer = Allocator::allocMisaligned(size, misalignedOffset);
+        break;
+    case UsmMemoryPlacement::NonUsmImported4KBAligned:
+        *buffer = Allocator::alloc4KBAligned(size);
+        break;
+    case UsmMemoryPlacement::NonUsmImported2MBAligned:
+        *buffer = Allocator::alloc2MBAligned(size);
+        break;
     default:
         FATAL_ERROR("Unknown placement");
     }
+    if (requiresImport(placement)) {
+        return levelZero.importHostPointer.importExternalPointer(levelZero.driver, *buffer, size);
+    }
+    return ZE_RESULT_ERROR_UNKNOWN;
 }
 
 ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &levelZero, size_t size, void **buffer) {
@@ -78,15 +84,27 @@ ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &leve
 }
 
 ze_result_t deallocate(UsmMemoryPlacement placement, LevelZero &levelZero, void *buffer) {
-    if (placement == UsmMemoryPlacement::NonUsm || placement == UsmMemoryPlacement::NonUsm2MBAligned) {
-        free(buffer);
-        return ZE_RESULT_SUCCESS;
-    } else if (requiresImport(placement)) {
-        auto ret = levelZero.importHostPointer.releaseExternalPointer(levelZero.driver, buffer);
-        free(buffer);
-        return ret;
-    } else {
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    if (requiresImport(placement)) {
+        ret = levelZero.importHostPointer.releaseExternalPointer(levelZero.driver, buffer);
+    }
+    switch (placement) {
+    case UsmMemoryPlacement::Device:
+    case UsmMemoryPlacement::Host:
+    case UsmMemoryPlacement::Shared:
         return zeMemFree(levelZero.context, buffer);
+    case UsmMemoryPlacement::NonUsm4KBAligned:
+    case UsmMemoryPlacement::NonUsm2MBAligned:
+    case UsmMemoryPlacement::NonUsmImported4KBAligned:
+    case UsmMemoryPlacement::NonUsmImported2MBAligned:
+        Allocator::alignedFree(buffer);
+        return ret;
+    case UsmMemoryPlacement::NonUsmMisaligned:
+    case UsmMemoryPlacement::NonUsmImportedMisaligned:
+        Allocator::misalignedFree(buffer, misalignedOffset);
+        return ret;
+    default:
+        FATAL_ERROR("Unknown placement");
     }
 }
 

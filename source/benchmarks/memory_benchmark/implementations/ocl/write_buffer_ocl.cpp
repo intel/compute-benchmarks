@@ -50,8 +50,7 @@ static TestResult run(const WriteBufferArguments &arguments, Statistics &statist
     // Create hostptr
     HostptrReuseHelper::Alloc hostptrAlloc{};
     ASSERT_CL_SUCCESS(HostptrReuseHelper::allocateBufferHostptr(opencl, arguments.reuse, arguments.size, hostptrAlloc));
-    auto placement = arguments.reuse == HostptrReuseMode::Usm ? UsmMemoryPlacement::Host : UsmMemoryPlacement::NonUsm;
-    ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillUsmBufferOrHostPtr(opencl.commandQueue, hostptrAlloc.ptr, arguments.size, placement, arguments.contents));
+    ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillUsmBufferOrHostPtr(opencl.commandQueue, hostptrAlloc.ptr, arguments.size, arguments.reuse, arguments.contents));
 
     // Warmup
     ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, arguments.size, hostptrAlloc.ptr, 0, nullptr, nullptr));

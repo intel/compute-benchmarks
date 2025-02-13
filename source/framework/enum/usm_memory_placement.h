@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,15 +14,19 @@ enum class UsmMemoryPlacement {
     Host,
     Device,
     Shared,
-    NonUsm,
-    NonUsmImported,
     NonUsmMapped,
+    NonUsmMisaligned,
+    NonUsm4KBAligned,
     NonUsm2MBAligned,
-    NonUsmImported2MBAligned
+    NonUsmImportedMisaligned,
+    NonUsmImported4KBAligned,
+    NonUsmImported2MBAligned,
 };
 
 inline constexpr bool requiresImport(UsmMemoryPlacement inputType) {
-    if (inputType == UsmMemoryPlacement::NonUsmImported || inputType == UsmMemoryPlacement::NonUsmImported2MBAligned) {
+    if (inputType == UsmMemoryPlacement::NonUsmImportedMisaligned ||
+        inputType == UsmMemoryPlacement::NonUsmImported4KBAligned ||
+        inputType == UsmMemoryPlacement::NonUsmImported2MBAligned) {
         return true;
     }
     return false;
@@ -33,7 +37,8 @@ inline constexpr bool isUsmMemoryType(UsmMemoryPlacement inputType) {
     case UsmMemoryPlacement::Host:
     case UsmMemoryPlacement::Device:
     case UsmMemoryPlacement::Shared:
-    case UsmMemoryPlacement::NonUsmImported:
+    case UsmMemoryPlacement::NonUsmImportedMisaligned:
+    case UsmMemoryPlacement::NonUsmImported4KBAligned:
     case UsmMemoryPlacement::NonUsmImported2MBAligned:
         return true;
     default:

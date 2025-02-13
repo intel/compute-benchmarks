@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,13 +31,28 @@ cl_int BufferContentsHelperOcl::fillUsmBufferOrHostPtr(cl_command_queue queue, v
     case UsmMemoryPlacement::Host:
     case UsmMemoryPlacement::Shared:
         return fillUsmBuffer(queue, ptr, ptrSize, contents);
-    case UsmMemoryPlacement::NonUsm:
     case UsmMemoryPlacement::NonUsmMapped:
+    case UsmMemoryPlacement::NonUsmMisaligned:
+    case UsmMemoryPlacement::NonUsm4KBAligned:
     case UsmMemoryPlacement::NonUsm2MBAligned:
         fill(static_cast<uint8_t *>(ptr), ptrSize, contents);
         return CL_SUCCESS;
     default:
         FATAL_ERROR("Unknown usm memory placement");
+    }
+}
+
+cl_int BufferContentsHelperOcl::fillUsmBufferOrHostPtr(cl_command_queue queue, void *ptr, size_t ptrSize, HostptrReuseMode reuseMode, BufferContents contents) {
+    switch (reuseMode) {
+    case HostptrReuseMode::Usm:
+        return fillUsmBuffer(queue, ptr, ptrSize, contents);
+    case HostptrReuseMode::Aligned4KB:
+    case HostptrReuseMode::Misaligned:
+    case HostptrReuseMode::Map:
+        fill(static_cast<uint8_t *>(ptr), ptrSize, contents);
+        return CL_SUCCESS;
+    default:
+        FATAL_ERROR("Unknown host ptr reuse mode");
     }
 }
 

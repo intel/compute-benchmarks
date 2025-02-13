@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ INSTANTIATE_TEST_SUITE_P(
     ResetCommandListTest,
     ResetCommandListTest,
     ::testing::Combine(
-        ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared, UsmMemoryPlacement::NonUsm),
+        ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared, UsmMemoryPlacement::NonUsm4KBAligned),
         ::testing::Values(4,
                           1 * MemoryConstants::megaByte,
                           128 * MemoryConstants::megaByte),

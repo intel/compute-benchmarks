@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "framework/ocl/utility/hostptr_reuse_helper.h"
 
 #include "framework/ocl/utility/error.h"
+#include "framework/utility/aligned_allocator.h"
 
 cl_int HostptrReuseHelper::allocateBufferHostptr(Opencl &opencl,
                                                  HostptrReuseMode reuseMode,
@@ -19,8 +20,11 @@ cl_int HostptrReuseHelper::allocateBufferHostptr(Opencl &opencl,
 
     cl_int retVal{};
     switch (reuseMode) {
-    case HostptrReuseMode::None:
-        outAlloc.ptr = new uint8_t[size];
+    case HostptrReuseMode::Aligned4KB:
+        outAlloc.ptr = Allocator::alloc4KBAligned(size);
+        break;
+    case HostptrReuseMode::Misaligned:
+        outAlloc.ptr = Allocator::allocMisaligned(size, misalignedOffset);
         break;
     case HostptrReuseMode::Usm: {
         const auto usmFunctions = opencl.getExtensions().queryUsmFunctions();
@@ -48,8 +52,11 @@ cl_int HostptrReuseHelper::allocateBufferHostptr(Opencl &opencl,
 
 cl_int HostptrReuseHelper::deallocateBufferHostptr(Alloc alloc) {
     switch (alloc.reuseMode) {
-    case HostptrReuseMode::None:
-        delete[] (static_cast<uint8_t *>(alloc.ptr));
+    case HostptrReuseMode::Aligned4KB:
+        Allocator::alignedFree(alloc.ptr);
+        break;
+    case HostptrReuseMode::Misaligned:
+        Allocator::misalignedFree(alloc.ptr, misalignedOffset);
         break;
     case HostptrReuseMode::Usm:
         CL_SUCCESS_OR_RETURN(alloc.clMemFreeINTEL(alloc.context, alloc.ptr));

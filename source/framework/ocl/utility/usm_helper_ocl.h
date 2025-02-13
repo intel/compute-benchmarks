@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "framework/ocl/opencl.h"
 
 struct UsmHelperOcl {
+    static constexpr auto misalignedOffset = 4u;
     struct Alloc {
         void *ptr = nullptr;
         UsmMemoryPlacement placement = UsmMemoryPlacement::Unknown;

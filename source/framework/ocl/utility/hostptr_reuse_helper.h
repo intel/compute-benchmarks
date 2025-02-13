@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@
 #include "framework/test_case/test_result.h"
 
 struct HostptrReuseHelper {
+    static constexpr size_t misalignedOffset = 4u;
+
     struct Alloc {
         void *ptr = nullptr;
 
