@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,28 +7,18 @@
 
 // #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
-__kernel void readWithMultiplier(const __global STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict dummyOutput, STREAM_TYPE scalar, int multiplier) {
+__kernel void readWithMultiplier(const __global volatile STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict dummyOutput, STREAM_TYPE scalar, int multiplier) {
     int i = get_global_id(0);
     if(multiplier > 1){
         i = i * multiplier;
         if(i >= get_global_size(0)) return;
     }
     STREAM_TYPE value = x[i];
-
-    // A trick to ensure compiler won't optimize away the read
-    if (value == 0.37221) {
-        *dummyOutput = value;
-    }
 }
 
-__kernel void read(const __global STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict dummyOutput, STREAM_TYPE scalar) {
+__kernel void read(const __global volatile STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict dummyOutput, STREAM_TYPE scalar) {
     const int i = get_global_id(0);
     STREAM_TYPE value = x[i];
-
-    // A trick to ensure compiler won't optimize away the read
-    if (value == 0.37221) {
-        *dummyOutput = value;
-    }
 }
 
 __kernel void writeWithMultiplier(__global STREAM_TYPE *restrict x, STREAM_TYPE scalar, int multiplier) {
@@ -107,7 +97,7 @@ __kernel void remote_triad(const __global STREAM_TYPE *restrict x, const __globa
     z[g_id] = x[g_id] + y[g_id];
 }
 
-__kernel void remote_read(const __global STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict dummyOutput, uint workItemGroupSize, const int remoteAccessFraction) {
+__kernel void remote_read(const __global volatile STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict dummyOutput, uint workItemGroupSize, const int remoteAccessFraction) {
     int g_id = get_global_id(0);
     if (remoteAccessFraction != 0) {
         const size_t gws = get_global_size(0);
@@ -118,9 +108,6 @@ __kernel void remote_read(const __global STREAM_TYPE *restrict x, __global STREA
     }
 
     STREAM_TYPE value = x[g_id];
-    if (value == 37) {
-        *dummyOutput = value;
-    }
 }
 
 #ifdef ELEMENT_SIZE
@@ -200,7 +187,7 @@ __kernel void full_remote_block_read_xe_cores_distributed(const __global STREAM_
 }
 #endif
 
-__kernel void full_remote_scatter_read(const __global STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict dummyOutput, const uint bufferLength, const uint iterations) {
+__kernel void full_remote_scatter_read(const __global volatile STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict dummyOutput, const uint bufferLength, const uint iterations) {
     const uint gid = get_global_id(0);
     const size_t gws = get_global_size(0);
     // First half of workitems access memory starting from middle of the buffer
@@ -214,9 +201,6 @@ __kernel void full_remote_scatter_read(const __global STREAM_TYPE *restrict x, _
     for (uint i = 0; i < iterations; i++) {
         // Fold up calculated offset to prevent exceeding buffer length
         STREAM_TYPE value = x[startIndex + ((i * cachelineGap) & (bufferLength / 2 - 1))];
-        if (value == 33) {
-            *dummyOutput = value;
-        }
     }
 }
 

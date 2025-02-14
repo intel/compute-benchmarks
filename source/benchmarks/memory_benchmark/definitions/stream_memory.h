@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ struct StreamMemoryArguments : TestCaseArgumentContainer {
     BufferContentsArgument contents;
     UsmMemoryPlacementArgument memoryPlacement;
     PositiveIntegerArgument partialMultiplier;
+    PositiveIntegerArgument vectorSize;
 
     StreamMemoryArguments()
         : type(*this, "type", "Memory streaming type"),
@@ -27,7 +28,8 @@ struct StreamMemoryArguments : TestCaseArgumentContainer {
           useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
           contents(*this, "contents", "Buffer contents zeros/random"),
           memoryPlacement(*this, "memoryPlacement", "Memory type used for stream"),
-          partialMultiplier(*this, "multiplier", "multiplies id used for accessing the resources to simulate partials") {}
+          partialMultiplier(*this, "multiplier", "multiplies id used for accessing the resources to simulate partials"),
+          vectorSize(*this, "vectorSize", "size of uint vector type 1/2/4/8/16") {}
 };
 
 struct StreamMemory : TestCase<StreamMemoryArguments> {

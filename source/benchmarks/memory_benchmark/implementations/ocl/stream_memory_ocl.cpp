@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,10 +42,9 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true).setOoq(0);
     Opencl opencl(queueProperties);
     Timer timer;
-    bool useDoubles = opencl.getExtensions().areDoublesSupported();
 
-    size_t elementSize = useDoubles ? 8u : 4u;
-    const int64_t scalarValue = -999;
+    size_t elementSize = arguments.vectorSize * sizeof(uint32_t);
+    unsigned int scalarValue[16] = {9999999u};
     bool setScalarArgument = true;
     const bool printBuildInfo = true;
 
@@ -94,7 +93,11 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     // Create kernel
     CompilerOptionsBuilder compilerOptions;
-    compilerOptions.addDefinitionKeyValue("STREAM_TYPE", useDoubles ? "double" : "float");
+    std::string streamType = "uint";
+    if (arguments.vectorSize > 1) {
+        streamType += std::to_string(arguments.vectorSize);
+    }
+    compilerOptions.addDefinitionKeyValue("STREAM_TYPE", streamType.c_str());
     const char *programName = "memory_benchmark_stream_memory.cl";
     cl_program program{};
     if (auto result = ProgramHelperOcl::buildProgramFromSourceFile(opencl.context, opencl.device, programName, compilerOptions.str().c_str(), program); result != TestResult::Success) {

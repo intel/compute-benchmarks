@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,9 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (arguments.partialMultiplier > 1u) {
+        return TestResult::NoImplementation;
+    }
+    if (arguments.vectorSize > 1u) {
         return TestResult::NoImplementation;
     }
 
