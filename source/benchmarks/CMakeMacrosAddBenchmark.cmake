@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -45,6 +45,7 @@ function (add_benchmark_for_api BASE_TARGET_NAME APPEND_API_TO_TARGET_NAME REGIS
     if (APPEND_API_TO_TARGET_NAME)
         string(APPEND TARGET_NAME "_${APIS}")
     endif()
+    set(BENCHMARK_LIST "${BENCHMARK_LIST};${TARGET_NAME}" CACHE STRING "Benchmark target list" FORCE)
 
     # Log benchmark name
     if (LOG_BENCHMARK_TARGETS)
