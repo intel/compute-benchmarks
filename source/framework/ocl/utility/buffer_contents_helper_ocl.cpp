@@ -31,6 +31,7 @@ cl_int BufferContentsHelperOcl::fillUsmBufferOrHostPtr(cl_command_queue queue, v
     case UsmMemoryPlacement::Host:
     case UsmMemoryPlacement::Shared:
         return fillUsmBuffer(queue, ptr, ptrSize, contents);
+    case UsmMemoryPlacement::NonUsm:
     case UsmMemoryPlacement::NonUsmMapped:
     case UsmMemoryPlacement::NonUsmMisaligned:
     case UsmMemoryPlacement::NonUsm4KBAligned:

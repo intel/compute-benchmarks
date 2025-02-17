@@ -21,6 +21,9 @@ ze_result_t allocate(UsmMemoryPlacement placement, LevelZero &levelZero, size_t 
         return zeMemAllocHost(levelZero.context, &hostAllocDesc, size, 0, buffer);
     case UsmMemoryPlacement::Shared:
         return zeMemAllocShared(levelZero.context, &deviceAllocDesc, &hostAllocDesc, size, 0, levelZero.device, buffer);
+    case UsmMemoryPlacement::NonUsm:
+        *buffer = malloc(size);
+        return ZE_RESULT_SUCCESS;
     case UsmMemoryPlacement::NonUsm4KBAligned:
         *buffer = Allocator::alloc4KBAligned(size);
         return ZE_RESULT_SUCCESS;
@@ -93,6 +96,9 @@ ze_result_t deallocate(UsmMemoryPlacement placement, LevelZero &levelZero, void 
     case UsmMemoryPlacement::Host:
     case UsmMemoryPlacement::Shared:
         return zeMemFree(levelZero.context, buffer);
+    case UsmMemoryPlacement::NonUsm:
+        free(buffer);
+        return ret;
     case UsmMemoryPlacement::NonUsm4KBAligned:
     case UsmMemoryPlacement::NonUsm2MBAligned:
     case UsmMemoryPlacement::NonUsmImported4KBAligned:

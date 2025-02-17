@@ -14,6 +14,7 @@ enum class UsmMemoryPlacement {
     Host,
     Device,
     Shared,
+    NonUsm,
     NonUsmMapped,
     NonUsmMisaligned,
     NonUsm4KBAligned,

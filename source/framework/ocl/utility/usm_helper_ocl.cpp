@@ -32,6 +32,9 @@ cl_int UsmHelperOcl::allocate(Opencl &opencl,
     case UsmMemoryPlacement::Shared:
         outAlloc.ptr = outAlloc.usm.clSharedMemAllocINTEL(opencl.context, opencl.device, nullptr, bufferSize, 0, &retVal);
         break;
+    case UsmMemoryPlacement::NonUsm:
+        outAlloc.ptr = malloc(bufferSize);
+        break;
     case UsmMemoryPlacement::NonUsmMisaligned:
         outAlloc.ptr = Allocator::allocMisaligned(bufferSize, misalignedOffset);
         break;
@@ -65,6 +68,9 @@ cl_int UsmHelperOcl::deallocate(Alloc &alloc) {
     case UsmMemoryPlacement::Host:
     case UsmMemoryPlacement::Shared:
         retVal = alloc.usm.clMemFreeINTEL(alloc.context, alloc.ptr);
+        break;
+    case UsmMemoryPlacement::NonUsm:
+        free(alloc.ptr);
         break;
     case UsmMemoryPlacement::NonUsm4KBAligned:
     case UsmMemoryPlacement::NonUsm2MBAligned:
