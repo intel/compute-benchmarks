@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,14 @@
 
 #include <string>
 #include <unordered_map>
+
+#define ASSERT_TEST_RESULT_SUCCESS(retVal)             \
+    do {                                               \
+        const TestResult tempVarForDefine = (retVal);  \
+        if (tempVarForDefine != TestResult::Success) { \
+            return tempVarForDefine;                   \
+        }                                              \
+    } while (0)
 
 enum class TestResult {
     Success,                 // should be returned after a successful run

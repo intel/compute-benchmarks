@@ -111,6 +111,14 @@ WriteTimestamp|measures time required to write a timestamp on GPU.|<ul><li>--mea
 
 
 
+# graph_api_benchmark
+Graph Api Overhead Benchmark is a set of tests aimed at measuring CPU-side execution duration of SYCL Graphs API calls.
+| Test name | Description | Params | L0 | OCL |
+|-----------|-------------|--------|----|-----|
+SinKernelGraph|Benchmark running memory copy and kernel runs, with graphs and without graphs|<ul><li>--immediateAppendCmdList Use zeCommandListImmediateAppendCommandListsExp to submit graph (only valid for L0) (0 or 1)</li><li>--numKernels Number of kernel invocations</li><li>--withCopyOffload Enable driver copy offload (only valid for L0) (0 or 1)</li><li>--withGraphs Runs with or without graphs (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+
+
+
 # memory_benchmark
 Memory Benchmark is a set of tests aimed at measuring bandwidth of memory transfers.
 | Test name | Description | Params | L0 | OCL |

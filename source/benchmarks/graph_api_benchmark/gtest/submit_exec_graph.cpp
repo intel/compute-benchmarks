@@ -33,5 +33,5 @@ INSTANTIATE_TEST_SUITE_P(
     SubmitExecGraphTest,
     ::testing::Combine(
         ::testing::Values(false, true),
-        ::testing::Values(50, 100, 500),
+        ::testing::Values(20, 100),
         ::testing::Values(false, true)));

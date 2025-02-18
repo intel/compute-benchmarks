@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,18 +19,19 @@ UrState::UrState() {
     uint32_t adapter_count = 0;
     EXPECT_UR_RESULT_SUCCESS(urAdapterGet(0, nullptr, &adapter_count));
 
-    if (adapter_count != 1) {
-        FATAL_ERROR("Detected " + std::to_string(adapter_count) +
-                    " adapters, expected 1.");
+    if (adapter_count == 0) {
+        FATAL_ERROR("No adapters found");
     }
 
-    EXPECT_UR_RESULT_SUCCESS(urAdapterGet(adapter_count, &adapter, nullptr));
+    // if more than one adapter is found, select the first one
+
+    EXPECT_UR_RESULT_SUCCESS(urAdapterGet(1, &adapter, nullptr));
 
     uint32_t platform_count = 0;
-    EXPECT_UR_RESULT_SUCCESS(urPlatformGet(&adapter, adapter_count, 0, nullptr, &platform_count));
+    EXPECT_UR_RESULT_SUCCESS(urPlatformGet(&adapter, 1, 0, nullptr, &platform_count));
 
     std::vector<ur_platform_handle_t> platforms(platform_count);
-    EXPECT_UR_RESULT_SUCCESS(urPlatformGet(&adapter, adapter_count, platform_count, platforms.data(),
+    EXPECT_UR_RESULT_SUCCESS(urPlatformGet(&adapter, 1, platform_count, platforms.data(),
                                            nullptr));
 
     if (Configuration::get().urPlatformIndex >= platform_count) {
