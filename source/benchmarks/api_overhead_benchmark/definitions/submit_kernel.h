@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 struct SubmitKernelArguments : TestCaseArgumentContainer {
     BooleanArgument useProfiling;
     BooleanArgument inOrderQueue;
+    BooleanArgument useEnqueueFunctions;
     BooleanArgument discardEvents;
     PositiveIntegerArgument numKernels;
     PositiveIntegerArgument kernelExecutionTime;
@@ -21,6 +22,7 @@ struct SubmitKernelArguments : TestCaseArgumentContainer {
     SubmitKernelArguments()
         : useProfiling(*this, "Profiling", "Create the queue with the enable_profiling property"),
           inOrderQueue(*this, "Ioq", "Create the queue with the in_order property"),
+          useEnqueueFunctions(*this, "EnqueueFunctions", "Use the eventless SYCL enqueue functions"),
           discardEvents(*this, "DiscardEvents", "Create the queue with the discard_events property"),
           numKernels(*this, "NumKernels", "Number of kernels to submit to the queue"),
           kernelExecutionTime(*this, "KernelExecTime", "Approximately how long a single kernel executes, in us"),

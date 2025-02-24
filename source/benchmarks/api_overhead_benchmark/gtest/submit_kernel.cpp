@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<SubmitKernel> registerTestCase{};
 
-class SubmitKernelTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, bool, size_t, size_t, bool>> {
+class SubmitKernelTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, bool, bool, size_t, size_t, bool>> {
 };
 
 TEST_P(SubmitKernelTest, Test) {
@@ -22,10 +22,11 @@ TEST_P(SubmitKernelTest, Test) {
     args.api = std::get<0>(GetParam());
     args.useProfiling = std::get<1>(GetParam());
     args.inOrderQueue = std::get<2>(GetParam());
-    args.discardEvents = std::get<3>(GetParam());
-    args.numKernels = std::get<4>(GetParam());
-    args.kernelExecutionTime = std::get<5>(GetParam());
-    args.measureCompletionTime = std::get<6>(GetParam());
+    args.useEnqueueFunctions = std::get<3>(GetParam());
+    args.discardEvents = std::get<4>(GetParam());
+    args.numKernels = std::get<5>(GetParam());
+    args.kernelExecutionTime = std::get<6>(GetParam());
+    args.measureCompletionTime = std::get<7>(GetParam());
     SubmitKernel test;
     test.run(args);
 }
@@ -37,6 +38,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(false),         // useProfiling
         ::testing::Values(false, true),   // inOrderQueue
+        ::testing::Values(false, true),   // useEnqueueFunctions
         ::testing::Values(false, true),   // discardEvents
         ::testing::Values(10u),           // numKernels
         ::testing::Values(1u),            // kernelExecutionTime

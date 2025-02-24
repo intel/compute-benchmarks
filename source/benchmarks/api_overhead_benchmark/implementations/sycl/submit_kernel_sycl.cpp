@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,7 +72,11 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
-            queue.parallel_for(range, eat_time);
+            if (arguments.useEnqueueFunctions) {
+                sycl::ext::oneapi::experimental::nd_launch(queue, range, eat_time);
+            } else {
+                queue.parallel_for(range, eat_time);
+            }
         }
 
         if (!arguments.measureCompletionTime) {
