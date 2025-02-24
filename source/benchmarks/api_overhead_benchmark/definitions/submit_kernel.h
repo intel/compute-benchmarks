@@ -17,6 +17,7 @@ struct SubmitKernelArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument numKernels;
     PositiveIntegerArgument kernelExecutionTime;
     BooleanArgument measureCompletionTime;
+    BooleanArgument useEnqueueFunctions;
 
     SubmitKernelArguments()
         : useProfiling(*this, "Profiling", "Create the queue with the enable_profiling property"),
@@ -24,7 +25,8 @@ struct SubmitKernelArguments : TestCaseArgumentContainer {
           discardEvents(*this, "DiscardEvents", "Create the queue with the discard_events property"),
           numKernels(*this, "NumKernels", "Number of kernels to submit to the queue"),
           kernelExecutionTime(*this, "KernelExecTime", "Approximately how long a single kernel executes, in us"),
-          measureCompletionTime(*this, "MeasureCompletion", "Measures time taken to complete the submission (default is to measure only submit calls)") {}
+          measureCompletionTime(*this, "MeasureCompletion", "Measures time taken to complete the submission (default is to measure only submit calls)"),
+          useEnqueueFunctions(*this, "EnqueueFunctions", "Use the event-less SYCL enqueue functions instead of queue member functions") {}
 };
 
 struct SubmitKernel : TestCase<SubmitKernelArguments> {
