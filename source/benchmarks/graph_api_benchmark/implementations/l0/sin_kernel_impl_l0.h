@@ -39,13 +39,13 @@ class SinKernelGraphL0 : public SinKernelGraphBase {
     std::shared_ptr<LevelZero> levelzero;
 
     ze_group_count_t groupCount{64u, 1u, 1u};
-    ze_kernel_handle_t kernelAssign;
-    ze_kernel_handle_t kernelSin;
-    ze_module_handle_t moduleAssign;
-    ze_module_handle_t moduleSin;
-    ze_command_list_handle_t graphCmdList = nullptr;
-    ze_command_list_handle_t immCmdList;
-    ze_command_queue_handle_t cmdQueue;
-    ze_event_handle_t zeEvent;
-    ze_event_pool_handle_t zePool;
+    ze_kernel_handle_t kernelAssign{};
+    ze_kernel_handle_t kernelSin{};
+    ze_module_handle_t moduleAssign{};
+    ze_module_handle_t moduleSin{};
+    ze_command_list_handle_t graphCmdList{};
+    ze_command_list_handle_t immCmdList{};
+    ze_command_queue_handle_t cmdQueue{};
+    ze_event_handle_t zeEvent{};
+    ze_event_pool_handle_t zePool{};
 };

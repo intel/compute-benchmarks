@@ -28,13 +28,13 @@ SinKernelGraphL0::DataFloatPtr SinKernelGraphL0::allocDevice(uint32_t count) {
     ze_device_mem_alloc_desc_t deviceAllocationDesc = {
         ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
 
-    zeMemAllocDevice(levelzero->context, &deviceAllocationDesc,
-                     count * sizeof(float), 0, levelzero->device,
-                     &deviceptr);
+    EXPECT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero->context, &deviceAllocationDesc,
+                                              count * sizeof(float), 0, levelzero->device,
+                                              &deviceptr));
 
     auto copied = levelzero;
     return SinKernelGraphL0::DataFloatPtr(static_cast<float *>(deviceptr), [copied](float *ptr) {
-        zeMemFree(copied->context, ptr);
+        EXPECT_ZE_RESULT_SUCCESS(zeMemFree(copied->context, ptr));
     });
 }
 
@@ -43,12 +43,12 @@ SinKernelGraphL0::DataFloatPtr SinKernelGraphL0::allocHost(uint32_t count) {
     ze_host_mem_alloc_desc_t hostAllocationDesc = {
         ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
 
-    zeMemAllocHost(levelzero->context, &hostAllocationDesc,
-                   count * sizeof(float), 0, &hostptr);
+    EXPECT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero->context, &hostAllocationDesc,
+                                            count * sizeof(float), 0, &hostptr));
 
     auto copied = levelzero;
     return SinKernelGraphL0::DataFloatPtr(static_cast<float *>(hostptr), [copied](float *ptr) {
-        zeMemFree(copied->context, ptr);
+        EXPECT_ZE_RESULT_SUCCESS(zeMemFree(copied->context, ptr));
     });
 }
 
@@ -207,7 +207,7 @@ TestResult SinKernelGraphL0::runGraph(float *input_h) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListImmediateAppendCommandListsExp(
             immCmdList, 1, &graphCmdList, nullptr, 0, nullptr));
     } else {
-        zeCommandQueueExecuteCommandLists(cmdQueue, 1, &graphCmdList, nullptr);
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &graphCmdList, nullptr));
     }
 
     return TestResult::Success;
@@ -228,7 +228,7 @@ TestResult SinKernelGraphL0::runEager(float *input_h) {
 TestResult SinKernelGraphL0::waitCompletion() {
     if (!immediateAppendCmdList && withGraphs) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
-        zeEventHostReset(zeEvent);
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(zeEvent));
     } else {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(
             immCmdList, std::numeric_limits<uint64_t>::max()));
@@ -242,13 +242,13 @@ SinKernelGraphL0::~SinKernelGraphL0() {
         return;
 
     if (graphCmdList != nullptr)
-        zeCommandListDestroy(graphCmdList);
-    zeKernelDestroy(kernelAssign);
-    zeKernelDestroy(kernelSin);
-    zeModuleDestroy(moduleAssign);
-    zeModuleDestroy(moduleSin);
-    zeEventDestroy(zeEvent);
-    zeEventPoolDestroy(zePool);
-    zeCommandListDestroy(immCmdList);
-    zeCommandQueueDestroy(cmdQueue);
+        EXPECT_ZE_RESULT_SUCCESS(zeCommandListDestroy(graphCmdList));
+    EXPECT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernelAssign));
+    EXPECT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernelSin));
+    EXPECT_ZE_RESULT_SUCCESS(zeModuleDestroy(moduleAssign));
+    EXPECT_ZE_RESULT_SUCCESS(zeModuleDestroy(moduleSin));
+    EXPECT_ZE_RESULT_SUCCESS(zeEventDestroy(zeEvent));
+    EXPECT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(zePool));
+    EXPECT_ZE_RESULT_SUCCESS(zeCommandListDestroy(immCmdList));
+    EXPECT_ZE_RESULT_SUCCESS(zeCommandQueueDestroy(cmdQueue));
 }
