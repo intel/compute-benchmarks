@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "definitions/random_access.h"
 
+#include "framework/enum/measurement_type.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
 #include "framework/utility/memory_constants.h"
@@ -15,7 +16,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<RandomAccess> registerTestCase{};
 
-class RandomAccessTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, std::string, size_t>> {
+class RandomAccessTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, std::string, size_t, size_t>> {
 };
 
 TEST_P(RandomAccessTest, Test) {
@@ -25,6 +26,7 @@ TEST_P(RandomAccessTest, Test) {
     args.alignment = std::get<1>(GetParam());
     args.accessMode = std::get<2>(GetParam());
     args.randomAccessRange = std::get<3>(GetParam());
+    args.useEvents = std::get<4>(GetParam());
 
     RandomAccess test;
     test.run(args);
@@ -38,4 +40,15 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(256 * megaByte, 1 * gigaByte, 8 * gigaByte, 16 * gigaByte),
         ::testing::Values(64 * kiloByte, 1 * gigaByte),
         ::testing::Values("Read", "Write", "ReadWrite"),
-        ::testing::Values(100)));
+        ::testing::Values(100),
+        ::testing::Values(true, false)));
+
+INSTANTIATE_TEST_SUITE_P(
+    RandomAccessTestLIMITED,
+    RandomAccessTest,
+    ::testing::Combine(
+        ::testing::Values(3 * gigaByte, 7.5 * gigaByte),
+        ::testing::Values(64 * kiloByte),
+        ::testing::Values("ReadWrite"),
+        ::testing::Values(100),
+        ::testing::Values(true)));

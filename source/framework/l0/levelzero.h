@@ -13,9 +13,13 @@
 #include "framework/l0/queue_properties.h"
 #include "framework/l0/utility/error.h"
 #include "framework/l0/utility/queue_families_helper.h"
+#include "framework/utility/bit_operations_helper.h"
+#include "framework/utility/error.h"
 #include "framework/utility/timer.h"
 
+#include <cmath>
 #include <level_zero/ze_api.h>
+#include <ratio>
 
 namespace L0 {
 struct ImportHostPointerExtension {
@@ -124,6 +128,38 @@ struct LevelZero {
         }
 
         return submissionTime;
+    }
+
+    std::chrono::nanoseconds getAbsoluteTimestampTime(const uint64_t start, const uint64_t end, const uint64_t timerResolution, const uint64_t timestampValidBitMask) const {
+        uint64_t result = 0;
+        if (end > start) {
+            result = (end - start) * timerResolution;
+        } else {
+            result = ((timestampValidBitMask + 1ull) + end - start) * timerResolution;
+        }
+        return std::chrono::nanoseconds(result);
+    }
+
+    std::chrono::nanoseconds getAbsoluteKernelExecutionTime(const ze_kernel_timestamp_data_t &timestampResult) const {
+        const auto deviceProperties = getDeviceProperties(device);
+        uint64_t timerResolution = 0;
+
+        switch (deviceProperties.stype) {
+        case ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES:
+            timerResolution = deviceProperties.timerResolution;
+            break;
+        case ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2:
+            FATAL_ERROR_IF(deviceProperties.timerResolution == 0, "Invalid timer resolution. Division by 0.");
+            timerResolution = std::nano::den / deviceProperties.timerResolution;
+            break;
+        default:
+            FATAL_ERROR("Unknown device properties structure type.");
+        }
+
+        const auto kernelStart = BitHelper::isolateLowerNBits(timestampResult.kernelStart, deviceProperties.kernelTimestampValidBits);
+        const auto kernelEnd = BitHelper::isolateLowerNBits(timestampResult.kernelEnd, deviceProperties.kernelTimestampValidBits);
+
+        return getAbsoluteTimestampTime(kernelStart, kernelEnd, timerResolution, getKernelTimestampValidBitsMask(device));
     }
 
     void initializeExtension(const ExtensionProperties &extensionProperties);
