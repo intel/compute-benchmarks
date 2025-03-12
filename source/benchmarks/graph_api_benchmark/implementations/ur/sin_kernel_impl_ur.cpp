@@ -166,7 +166,7 @@ TestResult SinKernelGraphUR::runGraph(float *input_h) {
                                                 nullptr, nullptr));
     // run graph
     EXPECT_UR_RESULT_SUCCESS(
-        urCommandBufferEnqueueExp(cmdBuffer, queue, 0, nullptr, nullptr));
+        urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, nullptr));
 
     return TestResult::Success;
 }
