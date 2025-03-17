@@ -115,6 +115,7 @@ WriteTimestamp|measures time required to write a timestamp on GPU.|<ul><li>--mea
 Graph Api Overhead Benchmark is a set of tests aimed at measuring CPU-side execution duration of SYCL Graphs API calls.
 | Test name | Description | Params | L0 | OCL |
 |-----------|-------------|--------|----|-----|
+MutateGraph|The benchmark measures modification time, compared to time needed to recreate graph|<ul><li>--canUpdate If true, the benchmark modification using mutable calls, otherwise it creation from scratch. (0 or 1)</li><li>--changeRate What is a rate in which kernels should be changed (for exmaple 5 means that every 5th kernel will be changed)</li><li>--compareCreation If true, the benchmark time needed to create command list, otherwise time needed to modify (0 or 1)</li><li>--numKernels Number of kernels to exec in a graph</li></ul>|:heavy_check_mark:|:x:|
 SinKernelGraph|Benchmark running memory copy and kernel runs, with graphs and without graphs|<ul><li>--immediateAppendCmdList Use zeCommandListImmediateAppendCommandListsExp to submit graph (only valid for L0) (0 or 1)</li><li>--numKernels Number of kernel invocations</li><li>--withCopyOffload Enable driver copy offload (only valid for L0) (0 or 1)</li><li>--withGraphs Runs with or without graphs (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
 
 

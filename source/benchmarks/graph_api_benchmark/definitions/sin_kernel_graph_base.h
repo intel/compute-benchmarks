@@ -21,7 +21,7 @@
 class SinKernelGraphBase {
   public:
     SinKernelGraphBase(const SinKernelGraphArguments &arguments)
-        : numKernels(arguments.numKernels), size(65536), withGraphs(arguments.withGraphs), withCopyOffload(arguments.withCopyOffload), immediateAppendCmdList(arguments.immediateAppendCmdList), iterations(arguments.iterations), engine(0), distribution(-10.0, 10.0){};
+        : numKernels(arguments.numKernels), size(65536), withGraphs(arguments.withGraphs), withCopyOffload(arguments.withCopyOffload), immediateAppendCmdList(arguments.immediateAppendCmdList), iterations(arguments.iterations), engine(0), distribution(-10.0, 10.0) {};
 
     using DataFloatPtr = std::unique_ptr<float, std::function<void(float *)>>;
 

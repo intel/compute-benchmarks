@@ -12,6 +12,8 @@
 #include "framework/test_case/test_result.h"
 #include "framework/utility/file_helper.h"
 
+#include "implementations/l0/memory_helper.h"
+
 #include <iostream>
 #include <level_zero/ze_api.h>
 #include <math.h>
@@ -24,32 +26,11 @@ typedef struct _zex_intel_queue_copy_operations_offload_hint_exp_desc_t {
 #define ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES (ze_structure_type_t)0x0003001B
 
 SinKernelGraphL0::DataFloatPtr SinKernelGraphL0::allocDevice(uint32_t count) {
-    void *deviceptr = nullptr;
-    ze_device_mem_alloc_desc_t deviceAllocationDesc = {
-        ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-
-    EXPECT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero->context, &deviceAllocationDesc,
-                                              count * sizeof(float), 0, levelzero->device,
-                                              &deviceptr));
-
-    auto copied = levelzero;
-    return SinKernelGraphL0::DataFloatPtr(static_cast<float *>(deviceptr), [copied](float *ptr) {
-        EXPECT_ZE_RESULT_SUCCESS(zeMemFree(copied->context, ptr));
-    });
+    return mem_helper::allocDevice(levelzero, count);
 }
 
 SinKernelGraphL0::DataFloatPtr SinKernelGraphL0::allocHost(uint32_t count) {
-    void *hostptr = nullptr;
-    ze_host_mem_alloc_desc_t hostAllocationDesc = {
-        ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-
-    EXPECT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero->context, &hostAllocationDesc,
-                                            count * sizeof(float), 0, &hostptr));
-
-    auto copied = levelzero;
-    return SinKernelGraphL0::DataFloatPtr(static_cast<float *>(hostptr), [copied](float *ptr) {
-        EXPECT_ZE_RESULT_SUCCESS(zeMemFree(copied->context, ptr));
-    });
+    return mem_helper::allocHost(levelzero, count);
 }
 
 TestResult SinKernelGraphL0::runKernels(ze_command_list_handle_t cmdList) {
@@ -88,39 +69,14 @@ TestResult SinKernelGraphL0::runKernels(ze_command_list_handle_t cmdList) {
 TestResult SinKernelGraphL0::init() {
     levelzero = std::make_shared<LevelZero>();
 
-    auto spirvModuleA =
-        FileHelper::loadBinaryFile("graph_api_benchmark_kernel_assign.spv");
-    auto spirvModuleS =
-        FileHelper::loadBinaryFile("graph_api_benchmark_kernel_sin.spv");
-
-    if (spirvModuleA.size() == 0 || spirvModuleS.size() == 0) {
-        return TestResult::KernelNotFound;
+    TestResult kernelA_res = mem_helper::loadKernel(levelzero, "graph_api_benchmark_kernel_assign.spv", "kernel_assign", &kernelAssign, &moduleAssign);
+    if (kernelA_res != TestResult::Success) {
+        return kernelA_res;
     }
-
-    ze_module_desc_t moduleDescA{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    ze_module_desc_t moduleDescS{ZE_STRUCTURE_TYPE_MODULE_DESC};
-
-    moduleDescA.format = moduleDescS.format = ZE_MODULE_FORMAT_IL_SPIRV;
-
-    moduleDescA.pInputModule = reinterpret_cast<const uint8_t *>(spirvModuleA.data());
-    moduleDescS.pInputModule = reinterpret_cast<const uint8_t *>(spirvModuleS.data());
-
-    moduleDescA.inputSize = spirvModuleA.size();
-    moduleDescS.inputSize = spirvModuleS.size();
-
-    ze_kernel_desc_t kernelDescA{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    ze_kernel_desc_t kernelDescS{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-
-    kernelDescA.pKernelName = "kernel_assign";
-    kernelDescS.pKernelName = "kernel_sin";
-
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero->context, levelzero->device,
-                                            &moduleDescA, &moduleAssign, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero->context, levelzero->device,
-                                            &moduleDescS, &moduleSin, nullptr));
-
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(moduleAssign, &kernelDescA, &kernelAssign));
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(moduleSin, &kernelDescS, &kernelSin));
+    TestResult kernelB_res = mem_helper::loadKernel(levelzero, "graph_api_benchmark_kernel_sin.spv", "kernel_sin", &kernelSin, &moduleSin);
+    if (kernelB_res != TestResult::Success) {
+        return kernelB_res;
+    }
 
     uint32_t grpCnt[3] = {1, 1, 1};
 
