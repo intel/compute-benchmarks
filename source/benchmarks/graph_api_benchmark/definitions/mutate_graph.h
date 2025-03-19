@@ -8,19 +8,20 @@
 #pragma once
 
 #include "framework/argument/basic_argument.h"
+#include "framework/argument/enum/graph_operation_type_argument.h"
 #include "framework/test_case/test_case.h"
 
 struct MutateGraphArguments : TestCaseArgumentContainer {
     BooleanArgument canUpdate;
     PositiveIntegerArgument numKernels;
     PositiveIntegerArgument changeRate;
-    BooleanArgument compareCreation;
+    GraphOperationTypeArgument operationType;
 
     MutateGraphArguments()
         : canUpdate(*this, "canUpdate", "If true, the benchmark modification using mutable calls, otherwise it creation from scratch."),
           numKernels(*this, "numKernels", "Number of kernels to exec in a graph"),
           changeRate(*this, "changeRate", "What is a rate in which kernels should be changed (for exmaple 5 means that every 5th kernel will be changed)"),
-          compareCreation(*this, "compareCreation", "If true, the benchmark time needed to create command list, otherwise time needed to modify") {}
+          operationType(*this, "operationType", "Which operation type should be measured: creation, modification or execution") {}
 };
 
 struct MutateGraph : TestCase<MutateGraphArguments> {

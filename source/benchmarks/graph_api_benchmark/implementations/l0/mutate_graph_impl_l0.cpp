@@ -48,6 +48,7 @@ struct TestEnv {
         zeCommandQueueDestroy(cmdQueue);
     }
 };
+} // namespace
 TestResult create_command_list(TestEnv &env, ze_command_list_handle_t *graphCmdList) {
 
     ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
@@ -341,7 +342,6 @@ TestResult test_correctness(const MutateGraphArguments &arguments, TestEnv &env)
     }
     return TestResult::Success;
 }
-} // namespace
 
 static TestResult run(const MutateGraphArguments &arguments, Statistics &statistics) {
 
@@ -356,29 +356,50 @@ static TestResult run(const MutateGraphArguments &arguments, Statistics &statist
     TestEnv env;
     init_env(env);
     Timer timer;
+    float *basein = new float[env.size];
+    float *baseout = new float[env.size];
     for (uint32_t i = 0; i < env.size; ++i) {
-        env.inputData.get()[i] = env.distribution(env.engine);
+        basein[i] = env.distribution(env.engine);
+        baseout[i] = env.distribution(env.engine);
     }
 
     for (uint32_t i = 0; i < env.size; ++i) {
-        env.outputData.get()[i] = env.distribution(env.engine);
+        env.inputData.get()[i] = basein[i];
+        env.outputData.get()[i] = baseout[i];
     }
 
     ASSERT_TEST_RESULT_SUCCESS(test_correctness(arguments, env));
+
     for (uint32_t i = 0; i < arguments.iterations; ++i) {
         ze_command_list_handle_t cmdList;
         std::vector<uint64_t> identifiers;
-        if (!arguments.compareCreation) {
+        switch (arguments.operationType) {
+        case GraphOperationType::Mutate:
             if (arguments.canUpdate) {
                 ASSERT_TEST_RESULT_SUCCESS(create_mutable_list(env, &cmdList));
                 ASSERT_TEST_RESULT_SUCCESS(fill_mutable_list(arguments, env, cmdList, identifiers));
             } else {
                 ASSERT_TEST_RESULT_SUCCESS(create_command_list(env, &cmdList));
             }
+            break;
+        case GraphOperationType::Execute:
+            usleep(2000); // this sleep is needed, because otherwise program hangs
+            if (arguments.canUpdate) {
+                ASSERT_TEST_RESULT_SUCCESS(create_mutable_list(env, &cmdList));
+                ASSERT_TEST_RESULT_SUCCESS(fill_mutable_list(arguments, env, cmdList, identifiers));
+                ASSERT_TEST_RESULT_SUCCESS(mutate_list(env, cmdList, identifiers));
+            } else {
+                ASSERT_TEST_RESULT_SUCCESS(create_command_list(env, &cmdList));
+                ASSERT_TEST_RESULT_SUCCESS(fill_list(arguments, env, cmdList));
+            }
+            break;
+        default:
+            break;
         }
 
         timer.measureStart();
-        if (arguments.compareCreation) {
+        switch (arguments.operationType) {
+        case GraphOperationType::Init:
             if (arguments.canUpdate) {
                 ASSERT_TEST_RESULT_SUCCESS(create_mutable_list(env, &cmdList));
                 ASSERT_TEST_RESULT_SUCCESS(fill_mutable_list(arguments, env, cmdList, identifiers));
@@ -386,12 +407,23 @@ static TestResult run(const MutateGraphArguments &arguments, Statistics &statist
                 ASSERT_TEST_RESULT_SUCCESS(create_command_list(env, &cmdList));
                 ASSERT_TEST_RESULT_SUCCESS(fill_list_base(arguments, env, cmdList));
             }
-        } else {
+            break;
+        case GraphOperationType::Mutate:
             if (arguments.canUpdate) {
                 ASSERT_TEST_RESULT_SUCCESS(mutate_list(env, cmdList, identifiers));
             } else {
                 ASSERT_TEST_RESULT_SUCCESS(fill_list(arguments, env, cmdList));
             }
+            break;
+        case GraphOperationType::Execute:
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListImmediateAppendCommandListsExp(
+                env.immCmdList, 1, &cmdList, nullptr, 0, nullptr));
+
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(
+                env.immCmdList, std::numeric_limits<uint64_t>::max()));
+            break;
+        default:
+            break;
         }
         timer.measureEnd();
 
