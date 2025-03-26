@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  *
  * @file ze_ddi.h
- * @version v1.9-r1.9.1
+ * @version v1.12-r1.12.15
  *
  */
 #ifndef _ZE_DDI_H
@@ -153,10 +153,19 @@ typedef ze_result_t (ZE_APICALL *ze_pfnInit_t)(
     );
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zeInitDrivers 
+typedef ze_result_t (ZE_APICALL *ze_pfnInitDrivers_t)(
+    uint32_t*,
+    ze_driver_handle_t*,
+    ze_init_driver_type_desc_t*
+    );
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Table of Global functions pointers
 typedef struct _ze_global_dditable_t
 {
     ze_pfnInit_t                                                pfnInit;
+    ze_pfnInitDrivers_t                                         pfnInitDrivers;
 } ze_global_dditable_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -448,6 +457,20 @@ typedef ze_result_t (ZE_APICALL *ze_pfnDeviceGetRootDevice_t)(
     );
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zeDeviceImportExternalSemaphoreExt 
+typedef ze_result_t (ZE_APICALL *ze_pfnDeviceImportExternalSemaphoreExt_t)(
+    ze_device_handle_t,
+    const ze_external_semaphore_ext_desc_t*,
+    ze_external_semaphore_ext_handle_t*
+    );
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zeDeviceReleaseExternalSemaphoreExt 
+typedef ze_result_t (ZE_APICALL *ze_pfnDeviceReleaseExternalSemaphoreExt_t)(
+    ze_external_semaphore_ext_handle_t
+    );
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Table of Device functions pointers
 typedef struct _ze_device_dditable_t
 {
@@ -470,6 +493,8 @@ typedef struct _ze_device_dditable_t
     ze_pfnDeviceSetCacheAdviceExt_t                             pfnSetCacheAdviceExt;
     ze_pfnDevicePciGetPropertiesExt_t                           pfnPciGetPropertiesExt;
     ze_pfnDeviceGetRootDevice_t                                 pfnGetRootDevice;
+    ze_pfnDeviceImportExternalSemaphoreExt_t                    pfnImportExternalSemaphoreExt;
+    ze_pfnDeviceReleaseExternalSemaphoreExt_t                   pfnReleaseExternalSemaphoreExt;
 } ze_device_dditable_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1057,6 +1082,30 @@ typedef ze_result_t (ZE_APICALL *ze_pfnCommandListIsImmediate_t)(
     );
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zeCommandListAppendSignalExternalSemaphoreExt 
+typedef ze_result_t (ZE_APICALL *ze_pfnCommandListAppendSignalExternalSemaphoreExt_t)(
+    ze_command_list_handle_t,
+    uint32_t,
+    ze_external_semaphore_ext_handle_t*,
+    ze_external_semaphore_signal_params_ext_t*,
+    ze_event_handle_t,
+    uint32_t,
+    ze_event_handle_t*
+    );
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zeCommandListAppendWaitExternalSemaphoreExt 
+typedef ze_result_t (ZE_APICALL *ze_pfnCommandListAppendWaitExternalSemaphoreExt_t)(
+    ze_command_list_handle_t,
+    uint32_t,
+    ze_external_semaphore_ext_handle_t*,
+    ze_external_semaphore_wait_params_ext_t*,
+    ze_event_handle_t,
+    uint32_t,
+    ze_event_handle_t*
+    );
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Table of CommandList functions pointers
 typedef struct _ze_command_list_dditable_t
 {
@@ -1094,6 +1143,8 @@ typedef struct _ze_command_list_dditable_t
     ze_pfnCommandListGetOrdinal_t                               pfnGetOrdinal;
     ze_pfnCommandListImmediateGetIndex_t                        pfnImmediateGetIndex;
     ze_pfnCommandListIsImmediate_t                              pfnIsImmediate;
+    ze_pfnCommandListAppendSignalExternalSemaphoreExt_t         pfnAppendSignalExternalSemaphoreExt;
+    ze_pfnCommandListAppendWaitExternalSemaphoreExt_t           pfnAppendWaitExternalSemaphoreExt;
 } ze_command_list_dditable_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1169,6 +1220,25 @@ typedef ze_result_t (ZE_APICALL *ze_pfnCommandListUpdateMutableCommandWaitEvents
     );
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zeCommandListGetNextCommandIdWithKernelsExp 
+typedef ze_result_t (ZE_APICALL *ze_pfnCommandListGetNextCommandIdWithKernelsExp_t)(
+    ze_command_list_handle_t,
+    const ze_mutable_command_id_exp_desc_t*,
+    uint32_t,
+    ze_kernel_handle_t*,
+    uint64_t*
+    );
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zeCommandListUpdateMutableCommandKernelsExp 
+typedef ze_result_t (ZE_APICALL *ze_pfnCommandListUpdateMutableCommandKernelsExp_t)(
+    ze_command_list_handle_t,
+    uint32_t,
+    uint64_t*,
+    ze_kernel_handle_t*
+    );
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Table of CommandListExp functions pointers
 typedef struct _ze_command_list_exp_dditable_t
 {
@@ -1178,6 +1248,8 @@ typedef struct _ze_command_list_exp_dditable_t
     ze_pfnCommandListUpdateMutableCommandsExp_t                 pfnUpdateMutableCommandsExp;
     ze_pfnCommandListUpdateMutableCommandSignalEventExp_t       pfnUpdateMutableCommandSignalEventExp;
     ze_pfnCommandListUpdateMutableCommandWaitEventsExp_t        pfnUpdateMutableCommandWaitEventsExp;
+    ze_pfnCommandListGetNextCommandIdWithKernelsExp_t           pfnGetNextCommandIdWithKernelsExp;
+    ze_pfnCommandListUpdateMutableCommandKernelsExp_t           pfnUpdateMutableCommandKernelsExp;
 } ze_command_list_exp_dditable_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2167,11 +2239,20 @@ typedef ze_result_t (ZE_APICALL *ze_pfnKernelSchedulingHintExp_t)(
     );
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for zeKernelGetBinaryExp 
+typedef ze_result_t (ZE_APICALL *ze_pfnKernelGetBinaryExp_t)(
+    ze_kernel_handle_t,
+    size_t*,
+    uint8_t*
+    );
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Table of KernelExp functions pointers
 typedef struct _ze_kernel_exp_dditable_t
 {
     ze_pfnKernelSetGlobalOffsetExp_t                            pfnSetGlobalOffsetExp;
     ze_pfnKernelSchedulingHintExp_t                             pfnSchedulingHintExp;
+    ze_pfnKernelGetBinaryExp_t                                  pfnGetBinaryExp;
 } ze_kernel_exp_dditable_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2536,6 +2617,40 @@ typedef struct _ze_dditable_t
     ze_fabric_vertex_exp_dditable_t     FabricVertexExp;
     ze_fabric_edge_exp_dditable_t       FabricEdgeExp;
 } ze_dditable_t;
+/// @brief Container for all DDI tables with version and tables set by the Driver
+typedef struct _ze_dditable_driver_t
+{
+    ze_api_version_t    version;
+    uint8_t             isValidFlag;
+    ze_rtas_builder_exp_dditable_t *    RTASBuilderExp;
+    ze_rtas_parallel_operation_exp_dditable_t * RTASParallelOperationExp;
+    ze_global_dditable_t *              Global;
+    ze_driver_dditable_t *              Driver;
+    ze_driver_exp_dditable_t *          DriverExp;
+    ze_device_dditable_t *              Device;
+    ze_device_exp_dditable_t *          DeviceExp;
+    ze_context_dditable_t *             Context;
+    ze_command_queue_dditable_t *       CommandQueue;
+    ze_command_list_dditable_t *        CommandList;
+    ze_command_list_exp_dditable_t *    CommandListExp;
+    ze_image_dditable_t *               Image;
+    ze_image_exp_dditable_t *           ImageExp;
+    ze_mem_dditable_t *                 Mem;
+    ze_mem_exp_dditable_t *             MemExp;
+    ze_fence_dditable_t *               Fence;
+    ze_event_pool_dditable_t *          EventPool;
+    ze_event_dditable_t *               Event;
+    ze_event_exp_dditable_t *           EventExp;
+    ze_module_dditable_t *              Module;
+    ze_module_build_log_dditable_t *    ModuleBuildLog;
+    ze_kernel_dditable_t *              Kernel;
+    ze_kernel_exp_dditable_t *          KernelExp;
+    ze_sampler_dditable_t *             Sampler;
+    ze_physical_mem_dditable_t *        PhysicalMem;
+    ze_virtual_mem_dditable_t *         VirtualMem;
+    ze_fabric_vertex_exp_dditable_t *   FabricVertexExp;
+    ze_fabric_edge_exp_dditable_t *     FabricEdgeExp;
+} ze_dditable_driver_t;
 
 #if defined(__cplusplus)
 } // extern "C"
