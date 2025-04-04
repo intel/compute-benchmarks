@@ -33,6 +33,16 @@ inline constexpr bool requiresImport(UsmMemoryPlacement inputType) {
     return false;
 }
 
+inline constexpr bool isSharedSystemPointer(UsmMemoryPlacement inputType) {
+    if (inputType == UsmMemoryPlacement::NonUsm ||
+        inputType == UsmMemoryPlacement::NonUsmMisaligned ||
+        inputType == UsmMemoryPlacement::NonUsm4KBAligned ||
+        inputType == UsmMemoryPlacement::NonUsm2MBAligned) {
+        return true;
+    }
+    return false;
+}
+
 inline constexpr bool isUsmMemoryType(UsmMemoryPlacement inputType) {
     switch (inputType) {
     case UsmMemoryPlacement::Host:

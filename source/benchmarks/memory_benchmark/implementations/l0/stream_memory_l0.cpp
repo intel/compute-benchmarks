@@ -43,6 +43,16 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     if (levelzero.commandQueue == nullptr) {
         return TestResult::DeviceNotCapable;
     }
+    if (isSharedSystemPointer(arguments.memoryPlacement)) {
+        ze_device_memory_access_properties_t memoryAccessCapabilities = {};
+        ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetMemoryAccessProperties(levelzero.device, &memoryAccessCapabilities));
+        if (memoryAccessCapabilities.sharedSystemAllocCapabilities == 0) {
+            return TestResult::DeviceNotCapable;
+        }
+        if (arguments.contents != BufferContents::Zeros) {
+            return TestResult::NoImplementation;
+        }
+    }
     Timer timer;
 
     // Query double support
@@ -143,7 +153,11 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     // Enqueue filling of the buffers and set kernel arguments
     for (auto i = 0u; i < buffersCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffers[i], bufferSizes[i], arguments.contents, false));
+        if (isSharedSystemPointer(arguments.memoryPlacement)) {
+            memset(buffers[i], 0u, bufferSizes[i]);
+        } else {
+            ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffers[i], bufferSizes[i], arguments.contents, false));
+        }
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<int>(i), sizeof(buffers[i]), &buffers[i]));
     }
     if (setScalarArgument) {
@@ -165,6 +179,11 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
+        if (isSharedSystemPointer(arguments.memoryPlacement)) {
+            for (auto id = 0u; id < buffersCount; id++) {
+                memset(buffers[id], 0u, bufferSizes[id]);
+            }
+        }
         // Launch kernel
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, 0));
@@ -199,7 +218,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     for (size_t i = 0; i < buffersCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffers[i]));
+        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.memoryPlacement, levelzero, buffers[i]));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
