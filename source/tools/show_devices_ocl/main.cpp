@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,10 +90,27 @@ void showDevice(size_t indentLevel, cl_device_id device, const std::string &devi
     }
     std::cout << '\n';
 
+    cl_device_svm_capabilities svmCaps{};
+    clGetDeviceInfo(device, CL_DEVICE_SVM_CAPABILITIES, sizeof(svmCaps), &svmCaps, nullptr);
+    std::cout << indent1 << "SVM capabilities: ";
+    if (svmCaps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) {
+        std::cout << "CL_DEVICE_SVM_COARSE_GRAIN_BUFFER ";
+    }
+    if (svmCaps & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) {
+        std::cout << "CL_DEVICE_SVM_FINE_GRAIN_BUFFER ";
+    }
+    if (svmCaps & CL_DEVICE_SVM_FINE_GRAIN_SYSTEM) {
+        std::cout << "CL_DEVICE_SVM_FINE_GRAIN_SYSTEM ";
+    }
+    if (svmCaps & CL_DEVICE_SVM_ATOMICS) {
+        std::cout << "CL_DEVICE_SVM_ATOMICS ";
+    }
+    std::cout << '\n';
+
     // Print queue families support
     const bool queueuFamiliesSupported = ExtensionsHelper{device}.isCommandQueueFamiliesSupported();
     if (!queueuFamiliesSupported) {
-        std::cout << indent1 << "Extension cl_intel_command_queue_families is NOT SUPPORTED";
+        std::cout << indent1 << "Extension cl_intel_command_queue_families is NOT SUPPORTED\n";
         return;
     }
 
