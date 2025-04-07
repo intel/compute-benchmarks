@@ -51,10 +51,10 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         // Create kernel
         int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime);
         [[maybe_unused]] const auto eat_time = [=]([[maybe_unused]] auto u) {
-            volatile int value = 1u;
-            for (int i = 0; i < kernelOperationsCount; i++) {
-                value /= 2;
-                value *= 2;
+            if (kernelOperationsCount > 4) {
+                volatile int value = kernelOperationsCount;
+                while (--value)
+                    ;
             }
         };
 
