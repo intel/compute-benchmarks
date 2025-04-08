@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,8 +92,8 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        timer.measureStart();
         cpuCounter.measureStart();
+        timer.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
             EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
                 kernel, 0, sizeof(int), nullptr,
@@ -110,8 +110,8 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         }
 
         if (!arguments.measureCompletionTime) {
-            cpuCounter.measureEnd();
             timer.measureEnd();
+            cpuCounter.measureEnd();
             statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType(), "time");
             statistics.pushCpuCounter(cpuCounter.get(), typeSelectorHwI.getUnit(), typeSelectorHwI.getType(), "hw instructions");
         }
@@ -119,8 +119,8 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
 
         if (arguments.measureCompletionTime) {
-            cpuCounter.measureEnd();
             timer.measureEnd();
+            cpuCounter.measureEnd();
             statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType(), "time");
             statistics.pushCpuCounter(cpuCounter.get(), typeSelectorHwI.getUnit(), typeSelectorHwI.getType(), "hw instructions");
         }
