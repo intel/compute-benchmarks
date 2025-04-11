@@ -28,10 +28,10 @@ UrState::UrState() {
     EXPECT_UR_RESULT_SUCCESS(urAdapterGet(1, &adapter, nullptr));
 
     uint32_t platform_count = 0;
-    EXPECT_UR_RESULT_SUCCESS(urPlatformGet(&adapter, 1, 0, nullptr, &platform_count));
+    EXPECT_UR_RESULT_SUCCESS(urPlatformGet(adapter, 0, nullptr, &platform_count));
 
     std::vector<ur_platform_handle_t> platforms(platform_count);
-    EXPECT_UR_RESULT_SUCCESS(urPlatformGet(&adapter, 1, platform_count, platforms.data(),
+    EXPECT_UR_RESULT_SUCCESS(urPlatformGet(adapter, platform_count, platforms.data(),
                                            nullptr));
 
     if (Configuration::get().urPlatformIndex >= platform_count) {

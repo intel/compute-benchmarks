@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,10 +124,10 @@ static void printAvailableDevices() {
     UrState ur;
 
     uint32_t platform_count = 0;
-    EXPECT_UR_RESULT_SUCCESS(urPlatformGet(&ur.adapter, 1, 0, nullptr, &platform_count));
+    EXPECT_UR_RESULT_SUCCESS(urPlatformGet(ur.adapter, 0, nullptr, &platform_count));
 
     std::vector<ur_platform_handle_t> platforms(platform_count);
-    EXPECT_UR_RESULT_SUCCESS(urPlatformGet(&ur.adapter, 1, platform_count, platforms.data(),
+    EXPECT_UR_RESULT_SUCCESS(urPlatformGet(ur.adapter, platform_count, platforms.data(),
                                            nullptr));
 
     std::cout << "UR platforms: " << platform_count << std::endl;
