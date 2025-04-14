@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,8 +87,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
         // This isn't exactly what SYCL does, but it is a reasonable approximation.
         ze_event_handle_t signalEvent = nullptr;
-        if (!arguments.discardEvents) {
-
+        if (arguments.useEvents) {
             if (counterBasedEvents) {
                 ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &events[iteration]));
             } else {
@@ -100,7 +99,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, signalEvent, 0, nullptr));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
-    if (!arguments.discardEvents) {
+    if (arguments.useEvents) {
         for (auto event : events) {
             ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
         }
@@ -115,7 +114,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
             ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
             // This isn't exactly what SYCL does, but it is a reasonable approximation.
             ze_event_handle_t signalEvent = nullptr;
-            if (!arguments.discardEvents) {
+            if (arguments.useEvents) {
                 if (counterBasedEvents) {
                     ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &events[iteration]));
                 } else {
@@ -139,7 +138,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
             statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         }
 
-        if (!arguments.discardEvents) {
+        if (arguments.useEvents) {
             for (auto event : events) {
                 ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
             }

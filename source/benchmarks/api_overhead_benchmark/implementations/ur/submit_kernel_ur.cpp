@@ -58,9 +58,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     if (!arguments.inOrderQueue) {
         queueProperties.flags = UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     }
-    if (arguments.discardEvents) {
-        queueProperties.flags |= UR_QUEUE_FLAG_DISCARD_EVENTS;
-    }
 
     EXPECT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device,
                                            &queueProperties, &queue));
@@ -75,7 +72,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
                 reinterpret_cast<void *>(&kernelExecutionTime)));
 
             ur_event_handle_t *signalEvent = nullptr;
-            if (!arguments.discardEvents) {
+            if (arguments.useEvents) {
                 signalEvent = &events[iteration];
             }
 
@@ -100,7 +97,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
                 reinterpret_cast<void *>(&kernelExecutionTime)));
 
             ur_event_handle_t *signalEvent = nullptr;
-            if (!arguments.discardEvents) {
+            if (arguments.useEvents) {
                 signalEvent = &events[iteration];
             }
 

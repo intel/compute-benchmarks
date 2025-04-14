@@ -15,20 +15,11 @@
 
 static auto enableProfiling = sycl::property::queue::enable_profiling();
 static auto inOrder = sycl::property::queue::in_order();
-static auto discardEvents = sycl::ext::oneapi::property::queue::discard_events();
 
 static const sycl::property_list queueProps[] = {
     sycl::property_list{},
     sycl::property_list{enableProfiling},
     sycl::property_list{inOrder},
-    sycl::property_list{inOrder, enableProfiling},
-    // Note: discard_events cannot be used with enable_profiling!
-    // Note: empirically, discard_events also appears to be ignored for
-    // out-of-order queues, but this combination does not generate an error, so
-    // we will keep it.
-    sycl::property_list{discardEvents},
-    sycl::property_list{enableProfiling},
-    sycl::property_list{discardEvents, inOrder},
     sycl::property_list{inOrder, enableProfiling},
 };
 
@@ -44,7 +35,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     auto queuePropsIndex = 0;
     queuePropsIndex |= arguments.useProfiling ? 0x1 : 0;
     queuePropsIndex |= arguments.inOrderQueue ? 0x2 : 0;
-    queuePropsIndex |= arguments.discardEvents ? 0x4 : 0;
     sycl::queue queue{queueProps[queuePropsIndex]};
 
     Timer timer;
@@ -72,7 +62,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
-            if (arguments.useEnqueueFunctions) {
+            if (!arguments.useEvents) {
                 sycl::ext::oneapi::experimental::nd_launch(queue, range, eat_time);
             } else {
                 queue.parallel_for(range, eat_time);

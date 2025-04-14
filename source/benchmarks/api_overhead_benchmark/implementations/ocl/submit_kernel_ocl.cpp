@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,14 +46,14 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
     // Warmup
     cl_event event{};
-    cl_event *eventPtr = arguments.discardEvents ? nullptr : &event;
+    cl_event *eventPtr = arguments.useEvents ? &event : nullptr;
 
     for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
         // Note: this test calls clSetKernelArg each time to be closer to the SYCL behavior!
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(int), &kernelOperationsCount));
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, eventPtr));
         // Note: this test calls clReleaseEvent immediately after enqueuing the kernel to be closer to the SYCL behavior!
-        if (!arguments.discardEvents) {
+        if (arguments.useEvents) {
             ASSERT_CL_SUCCESS(clReleaseEvent(event));
         }
     }
@@ -67,7 +67,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
             ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(int), &kernelOperationsCount));
             ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, eventPtr));
             // Note: this test calls clReleaseEvent immediately after enqueuing the kernel to be closer to the SYCL behavior!
-            if (!arguments.discardEvents) {
+            if (arguments.useEvents) {
                 ASSERT_CL_SUCCESS(clReleaseEvent(event));
             }
         }
