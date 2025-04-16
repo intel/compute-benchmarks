@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@ enum class Api {
     OpenCL,
     L0,
     SYCL,
+    SYCLPREVIEW,
     OMP,
     UR,
 
@@ -38,6 +39,8 @@ inline std::string to_string(Api api) {
         return "l0";
     case Api::SYCL:
         return "sycl";
+    case Api::SYCLPREVIEW:
+        return "syclpreview";
     case Api::OMP:
         return "omp";
     case Api::UR:
@@ -56,6 +59,8 @@ inline std::string getUserFriendlyApiName(Api api) {
         return "LevelZero";
     case Api::SYCL:
         return "SYCL";
+    case Api::SYCLPREVIEW:
+        return "SYCL_PREVIEW";
     case Api::OMP:
         return "OpenMP";
     case Api::UR:
@@ -74,6 +79,8 @@ inline Api parseApi(const std::string &value) {
         return Api::All;
     } else if (value == "sycl") {
         return Api::SYCL;
+    } else if (value == "syclpreview") {
+        return Api::SYCLPREVIEW;
     } else if (value == "omp") {
         return Api::OMP;
     } else if (value == "ur") {
