@@ -70,17 +70,21 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         auto executable_graph = graph.finalize();
 
         // Warmup
-        queue.submit([&](sycl::handler &cgh) {
-            cgh.ext_oneapi_graph(executable_graph);
-        });
+        if (arguments.noEvents) {
+            sycl::ext::oneapi::experimental::execute_graph(queue, executable_graph);
+        } else {
+            queue.ext_oneapi_graph(executable_graph);
+        }
         queue.wait();
 
         // Benchmark
         for (auto i = 0u; i < arguments.iterations; i++) {
             timer.measureStart();
-            queue.submit([&](sycl::handler &cgh) {
-                cgh.ext_oneapi_graph(executable_graph);
-            });
+            if (arguments.noEvents) {
+                sycl::ext::oneapi::experimental::execute_graph(queue, executable_graph);
+            } else {
+                queue.ext_oneapi_graph(executable_graph);
+            }
 
             if (!arguments.measureCompletionTime) {
                 timer.measureEnd();
