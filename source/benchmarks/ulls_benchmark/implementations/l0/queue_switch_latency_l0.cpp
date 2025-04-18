@@ -23,9 +23,7 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
     }
 
     // Setup
-    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(
-        true);
-    LevelZero levelzero(extensionProperties);
+    LevelZero levelzero;
 
     const size_t lws = 32u;
     const size_t gws = lws;
@@ -62,12 +60,17 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    zex_counter_based_event_desc_t counterBasedEventDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
-    counterBasedEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.count = arguments.switchCount + 1;
+    ze_event_pool_handle_t eventPool;
+    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 0, nullptr, &eventPool));
+    ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
 
     std::vector<ze_event_handle_t> profilingEvents(arguments.switchCount + 1);
     for (auto eventId = 0u; eventId < arguments.switchCount + 1; eventId++) {
-        ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &profilingEvents[eventId]));
+        eventDesc.index = eventId;
+        ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &profilingEvents[eventId]));
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList1, kernel, &groupCount, profilingEvents[0], 0, nullptr));
