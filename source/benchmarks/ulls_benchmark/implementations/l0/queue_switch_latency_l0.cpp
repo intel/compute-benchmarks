@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,9 +23,7 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
     }
 
     // Setup
-    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(
-        true);
-    LevelZero levelzero(extensionProperties);
+    LevelZero levelzero;
 
     const size_t lws = 32u;
     const size_t gws = lws;
@@ -62,12 +60,20 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    zex_counter_based_event_desc_t counterBasedEventDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
-    counterBasedEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.count = static_cast<uint32_t>(arguments.switchCount + 1);
+    ze_event_pool_handle_t eventPool;
+    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 0, nullptr, &eventPool));
+
+    ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     std::vector<ze_event_handle_t> profilingEvents(arguments.switchCount + 1);
     for (auto eventId = 0u; eventId < arguments.switchCount + 1; eventId++) {
-        ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &profilingEvents[eventId]));
+        eventDesc.index = eventId;
+        ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &profilingEvents[eventId]));
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList1, kernel, &groupCount, profilingEvents[0], 0, nullptr));
@@ -93,6 +99,10 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(queue1, std::numeric_limits<uint64_t>::max()));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(queue2, std::numeric_limits<uint64_t>::max()));
 
+    for (auto &hEvent : profilingEvents) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(hEvent));
+    }
+
     // Benchmark
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(queue1, 1, &cmdList1, nullptr));
@@ -109,11 +119,17 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
             switchTime += std::chrono::nanoseconds((laterKernelTimestamp.global.kernelStart - earlierKernelTimestamp.global.kernelEnd) * timerResolution);
         }
         statistics.pushValue(switchTime / (arguments.switchCount), typeSelector.getUnit(), typeSelector.getType());
+
+        for (auto &hEvent : profilingEvents) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(hEvent));
+        }
     }
 
     for (auto &hEvent : profilingEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(hEvent));
     }
+
+    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList1));
