@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,8 +38,13 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     ASSERT_CL_SUCCESS(retVal);
 
     // Create kernel
-    const char *source = "__kernel void write(__global uint *outBuffer) {  \n"
-                         "   outBuffer[0u] = 1;             \n"
+    const char *source = "enum LSC_STCC {            \n"
+                         "  LSC_STCC_DEFAULT   = 0,  \n"
+                         "  LSC_STCC_L1UC_L3UC = 1   \n"
+                         "};                         \n"
+                         "void  __builtin_IB_lsc_store_global_uint  (__global uint *base, int immElemOff, uint val, enum LSC_STCC cacheOpt);\n"
+                         "__kernel void write(__global uint *outBuffer) {  \n"
+                         "  __builtin_IB_lsc_store_global_uint(outBuffer, 0, 1, LSC_STCC_L1UC_L3UC); \n"
                          "}";
     const auto sourceLength = strlen(source);
     cl_program program = clCreateProgramWithSource(opencl.context, 1, &source, &sourceLength, &retVal);
