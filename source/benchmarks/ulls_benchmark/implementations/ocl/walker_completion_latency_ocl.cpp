@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "framework/ocl/opencl.h"
 #include "framework/test_case/register_test_case.h"
+#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/walker_completion_latency.h"
@@ -39,14 +40,16 @@ static TestResult run(const WalkerCompletionLatencyArguments &arguments, Statist
     ASSERT_CL_SUCCESS(retVal);
 
     // Create kernel
-    const char *source = "__kernel void write(__global int *outBuffer) {  \n"
-                         "   outBuffer[get_global_id(0)] = 1;             \n"
-                         "}";
-    const auto sourceLength = strlen(source);
+    const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile("ulls_benchmark_write_one.cl");
+    if (kernelSource.size() == 0) {
+        return TestResult::KernelNotFound;
+    }
+    const char *source = reinterpret_cast<const char *>(kernelSource.data());
+    const size_t sourceLength = kernelSource.size();
     cl_program program = clCreateProgramWithSource(opencl.context, 1, &source, &sourceLength, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     ASSERT_CL_SUCCESS(clBuildProgram(program, 1, &opencl.device, nullptr, nullptr, nullptr));
-    cl_kernel kernel = clCreateKernel(program, "write", &retVal);
+    cl_kernel kernel = clCreateKernel(program, "write_one_uncached", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
     // Warmup run

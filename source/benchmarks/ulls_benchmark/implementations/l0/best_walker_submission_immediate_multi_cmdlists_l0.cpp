@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ static TestResult run(const BestWalkerSubmissionImmediateMultiCmdlistsArguments 
     ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;
-    kernelDesc.pKernelName = "write_one";
+    kernelDesc.pKernelName = "write_one_uncached";
     std::vector<ze_kernel_handle_t> kernels(arguments.cmdlistCount);
     for (auto i = 0u; i < arguments.cmdlistCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernels[i]));

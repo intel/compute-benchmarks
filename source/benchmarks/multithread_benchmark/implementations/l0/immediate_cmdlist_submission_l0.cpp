@@ -121,7 +121,7 @@ static TestResult run(const ImmediateCommandListSubmissionArguments &arguments, 
     ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;
-    kernelDesc.pKernelName = "write_one";
+    kernelDesc.pKernelName = "write_one_uncached";
 
     for (auto i = 0u; i < arguments.numberOfThreads; i++) {
 

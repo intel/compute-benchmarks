@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ static TestResult run(const BestWalkerNthSubmissionImmediateArguments &arguments
 
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;
-    kernelDesc.pKernelName = "write_one";
+    kernelDesc.pKernelName = "write_one_uncached";
 
     for (uint32_t i = 0; i < arguments.kernelCount; i++) {
         eventDesc.index = i;

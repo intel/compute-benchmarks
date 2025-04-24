@@ -7,6 +7,7 @@
 
 #include "framework/ocl/opencl.h"
 #include "framework/test_case/register_test_case.h"
+#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/best_walker_submission.h"
@@ -38,19 +39,16 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     ASSERT_CL_SUCCESS(retVal);
 
     // Create kernel
-    const char *source = "enum LSC_STCC {            \n"
-                         "  LSC_STCC_DEFAULT   = 0,  \n"
-                         "  LSC_STCC_L1UC_L3UC = 1   \n"
-                         "};                         \n"
-                         "void  __builtin_IB_lsc_store_global_uint  (__global uint *base, int immElemOff, uint val, enum LSC_STCC cacheOpt);\n"
-                         "__kernel void write(__global uint *outBuffer) {  \n"
-                         "  __builtin_IB_lsc_store_global_uint(outBuffer, 0, 1, LSC_STCC_L1UC_L3UC); \n"
-                         "}";
-    const auto sourceLength = strlen(source);
+    const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile("ulls_benchmark_write_one.cl");
+    if (kernelSource.size() == 0) {
+        return TestResult::KernelNotFound;
+    }
+    const char *source = reinterpret_cast<const char *>(kernelSource.data());
+    const size_t sourceLength = kernelSource.size();
     cl_program program = clCreateProgramWithSource(opencl.context, 1, &source, &sourceLength, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     ASSERT_CL_SUCCESS(clBuildProgram(program, 1, &opencl.device, nullptr, nullptr, nullptr));
-    cl_kernel kernel = clCreateKernel(program, "write", &retVal);
+    cl_kernel kernel = clCreateKernel(program, "write_one_uncached", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
     // Benchmark
