@@ -81,25 +81,29 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         // Warmup
         if (!arguments.useEvents) {
             sycl::ext::oneapi::experimental::execute_graph(queue, executable_graph);
+            queue.wait();
         } else {
-            queue.ext_oneapi_graph(executable_graph);
+            sycl::event event = queue.ext_oneapi_graph(executable_graph);
+            event.wait();
         }
-        queue.wait();
 
         // Benchmark
         for (auto i = 0u; i < arguments.iterations; i++) {
             timer.measureStart();
             if (!arguments.useEvents) {
                 sycl::ext::oneapi::experimental::execute_graph(queue, executable_graph);
+                if (!arguments.measureCompletionTime) {
+                    timer.measureEnd();
+                }
+                queue.wait();
+
             } else {
-                queue.ext_oneapi_graph(executable_graph);
+                sycl::event event = queue.ext_oneapi_graph(executable_graph);
+                if (!arguments.measureCompletionTime) {
+                    timer.measureEnd();
+                }
+                event.wait();
             }
-
-            if (!arguments.measureCompletionTime) {
-                timer.measureEnd();
-            }
-
-            queue.wait();
 
             if (arguments.measureCompletionTime) {
                 timer.measureEnd();

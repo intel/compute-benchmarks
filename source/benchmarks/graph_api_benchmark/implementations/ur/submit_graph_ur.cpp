@@ -58,14 +58,24 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
     ur_kernel_handle_t kernel;
     EXPECT_UR_RESULT_SUCCESS(urKernelCreate(program, kernelName, &kernel));
+    int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime);
+    EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
+        kernel, 0, sizeof(int), nullptr,
+        reinterpret_cast<void *>(&kernelOperationsCount)));
 
     ur_queue_handle_t queue;
     ur_queue_properties_t queueProperties = {};
 
+    ur_queue_flags_t queueFlags = 0;
     auto inOrder = arguments.inOrderQueue;
     if (!inOrder) {
-        queueProperties.flags = UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+        queueFlags |= UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     }
+    auto useProfiling = arguments.useProfiling;
+    if (useProfiling) {
+        queueFlags |= UR_QUEUE_FLAG_PROFILING_ENABLE;
+    }
+    queueProperties.flags = queueFlags;
 
     EXPECT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device,
                                            &queueProperties, &queue));
@@ -75,10 +85,10 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
     // Finalize the graph
     ur_exp_command_buffer_desc_t cmdBufferDesc = {
         UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
-        nullptr, // pNext
-        false,   // isUpdatable
-        inOrder, // isInOrder
-        false    // enableProfiling
+        nullptr,     // pNext
+        false,       // isUpdatable
+        inOrder,     // isInOrder
+        useProfiling // enableProfiling
     };
 
     EXPECT_UR_RESULT_SUCCESS(urCommandBufferCreateExp(
@@ -94,22 +104,43 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         cmdBuffer));
 
     // Warmup
-    EXPECT_UR_RESULT_SUCCESS(
-        urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, nullptr));
-    EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
+    if (!arguments.useEvents) {
+        EXPECT_UR_RESULT_SUCCESS(
+            urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, nullptr));
+        EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
+    } else {
+        ur_event_handle_t event;
+        EXPECT_UR_RESULT_SUCCESS(
+            urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, &event));
+        EXPECT_UR_RESULT_SUCCESS(urEventWait(1, &event));
+        EXPECT_UR_RESULT_SUCCESS(urEventRelease(event));
+    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
 
-        EXPECT_UR_RESULT_SUCCESS(
-            urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, nullptr));
+        if (!arguments.useEvents) {
+            EXPECT_UR_RESULT_SUCCESS(
+                urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, nullptr));
 
-        if (!arguments.measureCompletionTime) {
-            timer.measureEnd();
+            if (!arguments.measureCompletionTime) {
+                timer.measureEnd();
+            }
+
+            EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
+        } else {
+            ur_event_handle_t event;
+            EXPECT_UR_RESULT_SUCCESS(
+                urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, &event));
+
+            if (!arguments.measureCompletionTime) {
+                timer.measureEnd();
+            }
+
+            EXPECT_UR_RESULT_SUCCESS(urEventWait(1, &event));
+            EXPECT_UR_RESULT_SUCCESS(urEventRelease(event));
         }
-
-        EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
 
         if (arguments.measureCompletionTime) {
             timer.measureEnd();
