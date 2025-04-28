@@ -43,6 +43,9 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         queuePropsIndex |= arguments.inOrderQueue ? 0x2 : 0;
         sycl::queue queue{queueProps[queuePropsIndex]};
 
+        assert(queue.has_property<sycl::property::queue::in_order>() == arguments.inOrderQueue);
+        assert(queue.has_property<sycl::property::queue::enable_profiling>() == arguments.useProfiling);
+
         Timer timer;
         const size_t gws = 1u;
         const size_t lws = 1u;
@@ -60,17 +63,23 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
         // Building the graph without explicit dependencies
         sycl::ext::oneapi::experimental::command_graph graph(queue.get_context(), queue.get_device());
-        graph.begin_recording(queue);
-        for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
-            queue.parallel_for(range, eat_time);
+        if (arguments.useExplicit) {
+            for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
+                graph.add([&](sycl::handler &h) { h.parallel_for(range, eat_time); });
+            }
+        } else {
+            graph.begin_recording(queue);
+            for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
+                queue.parallel_for(range, eat_time);
+            }
+            graph.end_recording();
         }
-        graph.end_recording();
 
         // Finalize the graph
         auto executable_graph = graph.finalize();
 
         // Warmup
-        if (arguments.noEvents) {
+        if (!arguments.useEvents) {
             sycl::ext::oneapi::experimental::execute_graph(queue, executable_graph);
         } else {
             queue.ext_oneapi_graph(executable_graph);
@@ -80,7 +89,7 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         // Benchmark
         for (auto i = 0u; i < arguments.iterations; i++) {
             timer.measureStart();
-            if (arguments.noEvents) {
+            if (!arguments.useEvents) {
                 sycl::ext::oneapi::experimental::execute_graph(queue, executable_graph);
             } else {
                 queue.ext_oneapi_graph(executable_graph);

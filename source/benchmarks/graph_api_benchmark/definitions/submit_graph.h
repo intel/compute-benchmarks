@@ -13,7 +13,8 @@
 struct SubmitGraphArguments : TestCaseArgumentContainer {
     BooleanArgument useProfiling;
     BooleanArgument inOrderQueue;
-    BooleanArgument noEvents;
+    BooleanArgument useEvents;
+    BooleanArgument useExplicit;
     PositiveIntegerArgument numKernels;
     PositiveIntegerArgument kernelExecutionTime;
     BooleanArgument measureCompletionTime;
@@ -21,7 +22,8 @@ struct SubmitGraphArguments : TestCaseArgumentContainer {
     SubmitGraphArguments()
         : useProfiling(*this, "Profiling", "Create the queue with the enable_profiling property"),
           inOrderQueue(*this, "InOrderQueue", "Create the queue with the in_order property"),
-          noEvents(*this, "NoEvents", "Do not create and track events for synchronization"),
+          useEvents(*this, "UseEvents", "Do not create and track events for synchronization"),
+          useExplicit(*this, "UseExplicit", "Using Explicit Graph Creation mode vs. Record and Replay"),
           numKernels(*this, "NumKernels", "Number of kernels to submit to the queue"),
           kernelExecutionTime(*this, "KernelExecutionTime", "Approximately how long a single kernel executes, in us"),
           measureCompletionTime(*this, "MeasureCompletionTime", "Measures time taken to complete the submission (default is to measure only submit calls)") {}
