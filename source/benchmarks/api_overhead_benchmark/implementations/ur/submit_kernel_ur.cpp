@@ -65,26 +65,24 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     std::vector<ur_event_handle_t> events(arguments.numKernels);
 
     // warmup
-    for (auto i = 0u; i < arguments.iterations; i++) {
-        for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
-            EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
-                kernel, 0, sizeof(int), nullptr,
-                reinterpret_cast<void *>(&kernelExecutionTime)));
+    for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
+        EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
+            kernel, 0, sizeof(int), nullptr,
+            reinterpret_cast<void *>(&kernelExecutionTime)));
 
-            ur_event_handle_t *signalEvent = nullptr;
-            if (arguments.useEvents) {
-                signalEvent = &events[iteration];
-            }
-
-            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
-                queue, kernel, n_dimensions, nullptr, &local_size[0],
-                &global_size[0], 0, nullptr, signalEvent));
+        ur_event_handle_t *signalEvent = nullptr;
+        if (arguments.useEvents) {
+            signalEvent = &events[iteration];
         }
 
-        for (auto &event : events) {
-            if (event)
-                urEventRelease(event);
-        }
+        EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
+            queue, kernel, n_dimensions, nullptr, &local_size[0],
+            &global_size[0], 0, nullptr, signalEvent));
+    }
+
+    for (auto &event : events) {
+        if (event)
+            urEventRelease(event);
     }
 
     // Benchmark
