@@ -116,6 +116,7 @@ Graph Api Overhead Benchmark is a set of tests aimed at measuring CPU-side execu
 | Test name | Description | Params | L0 | OCL |
 |-----------|-------------|--------|----|-----|
 SinKernelGraph|Benchmark running memory copy and kernel runs, with graphs and without graphs|<ul><li>--immediateAppendCmdList Use zeCommandListImmediateAppendCommandListsExp to submit graph (only valid for L0) (0 or 1)</li><li>--numKernels Number of kernel invocations</li><li>--withCopyOffload Enable driver copy offload (only valid for L0) (0 or 1)</li><li>--withGraphs Runs with or without graphs (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+SubmitGraph|measures time spent in submitting a graph to a SYCL (or SYCL-like) queue on CPU.|<ul><li>--InOrderQueue Create the queue with the in_order property (0 or 1)</li><li>--KernelExecutionTime Approximately how long a single kernel executes, in us</li><li>--MeasureCompletionTime Measures time taken to complete the submission (default is to measure only submit calls) (0 or 1)</li><li>--NumKernels Number of kernels to submit to the queue</li><li>--Profiling Create the queue with the enable_profiling property (0 or 1)</li><li>--UseEvents Do not create and track events for synchronization (0 or 1)</li><li>--UseExplicit Using Explicit Graph Creation mode vs. Record and Replay (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
 
 
 
