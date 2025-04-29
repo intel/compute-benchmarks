@@ -37,7 +37,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::ValuesIn(EventScopeArgument::enumValues),
         ::testing::ValuesIn(EventScopeArgument::enumValues),
-        ::testing::Values(100u)));
+        ::testing::Values(1000u)));
 
 INSTANTIATE_TEST_SUITE_P(
     EventTimeTestLIMITED,
@@ -47,4 +47,4 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false),
         ::testing::Values(EventScope::scopeSubDevice),
         ::testing::Values(EventScope::scopeHost),
-        ::testing::Values(100u)));
+        ::testing::Values(1000u)));
