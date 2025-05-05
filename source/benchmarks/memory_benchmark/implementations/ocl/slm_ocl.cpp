@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,6 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
     }
     const cl_uint numThreadsPerEu = (gpuGen >= IntelGen::XeHpCore) ? 8 : 7;
 
-    const size_t numOfSends = 10U;
     const size_t numOfLoops = 128U;
     const size_t lws = 256;
     const size_t vectorSize = 4;
@@ -64,7 +63,7 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
 
     CompilerOptionsBuilder buildOptions{};
     buildOptions.addOption("-cl-no-signed-zeros ");
-    buildOptions.addOption("-cl-std=CL2.0 ");
+    buildOptions.addOption("-cl-std=CL3.0 ");
     buildOptions.addOption("-cl-mad-enable ");
     buildOptions.addOption("-cl-fast-relaxed-math ");
     buildOptions.addDefinitionKeyValue("KERNEL_LOOP_ITERATIONS", numOfLoops);
@@ -82,7 +81,7 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
     const cl_mem source = clCreateBuffer(opencl.context, memFlagsIn, inOutBuffSize, hostInBuffer.get(), &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    const cl_mem destination = clCreateBuffer(opencl.context, memFlagsOut, inOutBuffSize, nullptr, &retVal);
+    const cl_mem destination = clCreateBuffer(opencl.context, memFlagsOut, inOutBuffSize + vectorSize, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
     const size_t sharedDataSize = 256UL;
@@ -117,7 +116,7 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
             "\n"
             "\n__attribute__((intel_reqd_sub_group_size(16)))"
             "\n__kernel void slmRead_latencyTest(__global const uint4* restrict src, __global uint4* restrict dst,"
-            "\n    __global const uint* restrict pSharedData, const uint innerMaxLoops)"
+            "\n    __global const uint* restrict pSharedData)"
             "\n{"
             "\n    const size_t x = get_global_id(0);"
             "\n    __local uint  localBuffer[SLM_MAX_SIZE];"
@@ -133,25 +132,19 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
             "\n    }"
             "\n    barrier(CLK_LOCAL_MEM_FENCE);"
             "\n    uint4 data = (uint4)(0,0,0,0);"
-            "\n    if (innerMaxLoops > 0xFF) {"
-            "\n        data = src[x];"
-            "\n    }"
-            "\n    uint nLoop = 0;"
-            "\n    if(innerMaxLoops < 0xFF) {"
-            "\n        nLoop = KERNEL_LOOP_ITERATIONS;"
-            "\n    }"
+            "\n    uint nLoop = KERNEL_LOOP_ITERATIONS;"
             "\n    ulong timerON = 0;"
             "\n    ulong timerOFF = 0, time = 0;"
             "\n    for(uint j = 0; j < nLoop; j++) {"
             "\n        timerON = intel_get_cycle_counter();"
-            "\n        for (uint i = 1; i < innerMaxLoops; i++) {"
+            "\n        for (uint i = 1; i < nLoop; i++) {"
             "\n            data += loadSlmSharedData(localBuffer,data.xyzw, 0);"
             "\n            data ^= loadSlmSharedData(localBuffer,data.yzwx, 1);"
             "\n            data ^= loadSlmSharedData(localBuffer,data.zwxy, 2);"
             "\n            data ^= loadSlmSharedData(localBuffer,data.wxyz, 3);"
             "\n        }"
             "\n        timerOFF = intel_get_cycle_counter();"
-            "\n        time = ((timerOFF - timerON))/(innerMaxLoops*4);"
+            "\n        time = ((timerOFF - timerON))/(nLoop*4);"
             "\n        if( ((time >> 32) & 0xFFFFFFFF) > 0 ) {"
             "\n            time = 0xFFFFFFFF;"
             "\n            perfData[3] = 1U;  //overflow"
@@ -160,11 +153,8 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
             "\n        perfData[1] = min(perfData[1], (uint)time);               //min"
             "\n        perfData[2] = max(perfData[2], (uint)time);               //max"
             "\n    }"
-            "\n    if(innerMaxLoops > 0xFF) {"
-            "\n        dst[x] = data; }"
-            "\n    else {"
-            "\n        dst[x] = perfData;"
-            "\n    }"
+            "\n    dst[0] = data;"
+            "\n    dst[x + 1] = perfData;"
             "\n}";
         programSize = strlen(programSlmRead);
     } else {
@@ -192,13 +182,11 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
     cl_kernel kernel = clCreateKernel(program, "slmRead_latencyTest", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    cl_uint innerLoops = numOfSends;
     size_t gws = workSize / arguments.occupancyDivider;
 
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(source), &source));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, sizeof(destination), &destination));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(slmInitBuff), &slmInitBuff));
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 3, sizeof(innerLoops), &innerLoops));
     ASSERT_CL_SUCCESS(retVal);
 
     // Benchmark
@@ -211,7 +199,7 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
         const size_t dataReadSize = gws * vectorSize * sizeof(uint32_t);
         auto slmClocksBuffer = std::make_unique<uint32_t[]>(dataReadSize);
 
-        retVal |= clEnqueueReadBuffer(opencl.commandQueue, destination, true, 0, dataReadSize, slmClocksBuffer.get(), 0, nullptr, nullptr);
+        retVal |= clEnqueueReadBuffer(opencl.commandQueue, destination, true, vectorSize * sizeof(uint32_t), dataReadSize, slmClocksBuffer.get(), 0, nullptr, nullptr);
         retVal |= clFinish(opencl.commandQueue);
         ASSERT_CL_SUCCESS(retVal);
 
