@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 
 static constexpr size_t n_dimensions = 3;
+static constexpr size_t global_offsets[] = {0, 0, 0};
 static constexpr size_t global_size[] = {1, 1, 1};
 static constexpr size_t local_size[] = {1, 1, 1};
 
@@ -76,7 +77,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         }
 
         EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
-            queue, kernel, n_dimensions, nullptr, &local_size[0],
+            queue, kernel, n_dimensions, &global_offsets[0], &local_size[0],
             &global_size[0], 0, nullptr, signalEvent));
     }
 
@@ -100,7 +101,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
             }
 
             EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
-                queue, kernel, n_dimensions, nullptr,
+                queue, kernel, n_dimensions, &global_offsets[0],
                 &local_size[0], &global_size[0], 0, nullptr, signalEvent));
         }
 
