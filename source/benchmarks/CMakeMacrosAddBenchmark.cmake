@@ -125,6 +125,12 @@ function (add_benchmark_for_api BASE_TARGET_NAME APPEND_API_TO_TARGET_NAME REGIS
 endfunction()
 
 function(add_benchmark_dependency_on_workload BENCHMARK_BASE_NAME WORKLOAD API)
+    get_property(ALL_APIS GLOBAL PROPERTY APIS)
+    list(FIND ALL_APIS API API_ENABLED)
+    if (API_ENABLED STREQUAL "-1")
+        message(STATUS "${BENCHMARK_BASE_NAME}_${API} won't be added as ${API} is disabled")
+        return()
+    endif()
     foreach(BENCHMARK "${BENCHMARK_BASE_NAME}_${API}" "${BENCHMARK_BASE_NAME}")
         if (NOT TARGET ${WORKLOAD})
             message(FATAL_ERROR "Workload \"${WORKLOAD}\" does not exist")

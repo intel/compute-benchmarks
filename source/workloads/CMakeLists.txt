@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -28,16 +28,18 @@ function(add_workload TARGET_NAME API)
     setup_output_directory(${TARGET_NAME})
 endfunction()
 
-add_subdirectory(init_workload_l0)
-add_subdirectory(heat3d_workload_l0)
-add_subdirectory(single_queue_workload_l0)
-add_subdirectory(single_queue_workload_shared_buffer_l0)
-add_subdirectory(immediate_cmdlist_copy_workload_l0)
-add_subdirectory(immediate_cmdlist_walker_submission_workload_l0)
-if(MPI_FOUND)
-    add_subdirectory(mpi_workload_l0)
+if (BUILD_L0)
+    add_subdirectory(init_workload_l0)
+    add_subdirectory(heat3d_workload_l0)
+    add_subdirectory(single_queue_workload_l0)
+    add_subdirectory(single_queue_workload_shared_buffer_l0)
+    add_subdirectory(immediate_cmdlist_copy_workload_l0)
+    add_subdirectory(immediate_cmdlist_walker_submission_workload_l0)
+    if(MPI_FOUND)
+        add_subdirectory(mpi_workload_l0)
+    endif()
 endif()
-if (BUILD_HELLO_WORLD)
+if (BUILD_HELLO_WORLD AND BUILD_OCL)
     add_subdirectory(hello_world_template_workload_ocl)
     add_subdirectory(hello_world_workload_ocl)
 endif()
