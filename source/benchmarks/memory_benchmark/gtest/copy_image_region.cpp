@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,5 +39,14 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(Tuple(128, 128, 1), Tuple(128, 128, 128), Tuple(128, 1024, 1024), Tuple(1024, 16, 1024), Tuple(1024, 1024, 16)),
+        ::testing::Values(false),
+        ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    CopyImageRegionTestLIMITED,
+    CopyImageRegionTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0, Api::OpenCL),
+        ::testing::Values(Tuple(1024, 1024, 16)),
         ::testing::Values(false),
         ::testing::Values(true)));

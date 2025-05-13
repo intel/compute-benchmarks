@@ -46,16 +46,11 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     KernelSwitchLatencyTestLIMITED,
     KernelSwitchLatencyTest,
-    ::testing::ValuesIn([] {
-        std::vector<std::tuple<Api, size_t, size_t, bool, bool, bool, bool>> testCases;
-        testCases.emplace_back(Api::L0, 8, 200, false, false, false, false);
-        testCases.emplace_back(Api::L0, 8, 200, false, false, true, false);
-        testCases.emplace_back(Api::L0, 8, 200, false, false, true, true);
-        testCases.emplace_back(Api::L0, 8, 200, false, true, false, false);
-        testCases.emplace_back(Api::L0, 8, 200, false, true, true, false);
-        testCases.emplace_back(Api::L0, 8, 200, false, true, true, true);
-        testCases.emplace_back(Api::L0, 8, 200, true, false, false, false);
-        testCases.emplace_back(Api::L0, 8, 200, true, false, true, false);
-        testCases.emplace_back(Api::L0, 8, 200, true, false, true, true);
-        return testCases;
-    }()));
+    ::testing::Combine(
+        ::testing::Values(Api::L0, Api::OpenCL),
+        ::testing::Values(8),
+        ::testing::Values(200u),
+        ::testing::Values(true),
+        ::testing::Values(true),
+        ::testing::Values(true),
+        ::testing::Values(true)));

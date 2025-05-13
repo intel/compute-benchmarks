@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,3 +38,12 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1 * kiloByte, 16 * kiloByte, 32 * kiloByte, 64 * kiloByte),
         ::testing::Values(1 * kiloByte, 16 * kiloByte, 32 * kiloByte, 64 * kiloByte),
         ::testing::Values(128, 256)));
+
+INSTANTIATE_TEST_SUITE_P(
+    SlmSwitchLatencyTestLIMITED,
+    SlmSwitchLatencyTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(64 * kiloByte),
+        ::testing::Values(64 * kiloByte),
+        ::testing::Values(256)));

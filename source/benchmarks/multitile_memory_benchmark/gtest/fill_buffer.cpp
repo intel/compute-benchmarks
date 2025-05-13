@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,5 +48,18 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(128 * megaByte, 512 * megaByte),
         ::testing::Values(1, 16, 128),
         ::testing::Values(false, true),
+        ::testing::Values(true),
+        ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    FillBufferTestLIMITED,
+    FillBufferTest,
+    ::testing::Combine(
+        ::testing::Values(DeviceSelection::Root),
+        ::testing::Values(DeviceSelection::Root),
+        ::testing::Values(DeviceSelection::Host),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(128),
+        ::testing::Values(false),
         ::testing::Values(true),
         ::testing::Values(true)));

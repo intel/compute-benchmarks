@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,3 +34,10 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(128000000, 256000000, 512000000)));
+
+INSTANTIATE_TEST_SUITE_P(
+    Reduction4TestsLIMITED,
+    Reduction4Tests,
+    ::testing::Combine(
+        ::testing::Values(Api::OpenCL),
+        ::testing::Values(512000000)));

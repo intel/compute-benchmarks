@@ -29,8 +29,3 @@ INSTANTIATE_TEST_SUITE_P(
     DestroyCommandListTest,
     DestroyCommandListTest,
     ::testing::Values(100, 1000));
-
-INSTANTIATE_TEST_SUITE_P(
-    DestroyCommandListTestLIMITED,
-    DestroyCommandListTest,
-    ::testing::Values(1000));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,3 +29,8 @@ INSTANTIATE_TEST_SUITE_P(
     WalkerSubmissionEventsTest,
     WalkerSubmissionEventsTest,
     ::CommonGtestArgs::allApis());
+
+INSTANTIATE_TEST_SUITE_P(
+    WalkerSubmissionEventsTestLIMITED,
+    WalkerSubmissionEventsTest,
+    ::testing::Values(Api::L0, Api::OpenCL));

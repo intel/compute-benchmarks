@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,3 +42,14 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    KernelWithEventTestLIMITED,
+    KernelWithEventTest,
+    ::testing::Combine(
+        ::testing::Values(500),
+        ::testing::Values(100),
+        ::testing::Values(1),
+        ::testing::Values(false),
+        ::testing::Values(false),
+        ::testing::Values(true)));

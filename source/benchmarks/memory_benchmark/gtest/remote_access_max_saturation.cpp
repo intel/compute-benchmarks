@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,3 +42,14 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(true),
         ::testing::Values(64),
         ::testing::Values(1u, 4u, 8u, 16u, 32u, 64u, 128u, 256u, 512u, 1024u)));
+
+INSTANTIATE_TEST_SUITE_P(
+    RemoteAccessMaxSaturationTestLIMITED,
+    RemoteAccessMaxSaturationTest,
+    ::testing::Combine(
+        ::testing::Values(Api::OpenCL),
+        ::testing::Values(100),
+        ::testing::Values(1 * gigaByte),
+        ::testing::Values(true),
+        ::testing::Values(64),
+        ::testing::Values(1024u)));

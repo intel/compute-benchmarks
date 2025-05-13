@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,3 +61,15 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1, 64, 256),
         ::testing::Values(true),
         ::testing::Values(TestType::Extended)));
+
+INSTANTIATE_TEST_SUITE_P(
+    OneLocalAtomicExplicitTestLIMITED,
+    OneLocalAtomicExplicitTest,
+    ::testing::Combine(
+        ::testing::Values(DataType::Int32),
+        ::testing::Values(MathOperation::Inc),
+        ::testing::Values(AtomicScope::Device),
+        ::testing::Values(AtomicMemoryOrder::Relaxed),
+        ::testing::Values(1, 256),
+        ::testing::Values(true),
+        ::testing::Values(TestType::Regular)));

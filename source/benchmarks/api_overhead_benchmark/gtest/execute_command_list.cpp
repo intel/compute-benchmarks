@@ -30,8 +30,3 @@ INSTANTIATE_TEST_SUITE_P(
     ExecuteCommandListTest,
     ExecuteCommandListTest,
     ::testing::Values(false, true, false));
-
-INSTANTIATE_TEST_SUITE_P(
-    ExecuteCommandListTestLIMITED,
-    ExecuteCommandListTest,
-    ::testing::Values(true));

@@ -58,5 +58,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1),
         ::testing::Values(512 * megaByte),
         ::testing::Values(BufferContents::Random),
-        ::testing::Values(false),
+        ::testing::Values(true),
         ::testing::Values(false)));

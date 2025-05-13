@@ -36,12 +36,3 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false, true)));
-
-INSTANTIATE_TEST_SUITE_P(
-    EnqueueNdrNullLwsTestLIMITED,
-    EnqueueNdrNullLwsTest,
-    ::testing::Combine(
-        ::testing::Values(1000),
-        ::testing::Values(true),
-        ::testing::Values(true),
-        ::testing::Values(true)));

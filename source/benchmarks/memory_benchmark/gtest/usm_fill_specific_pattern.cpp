@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,4 +43,16 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(BufferContents::Zeros),
         ::testing::Values("0x01AA0B"),
         ::testing::Values(false, true),
+        ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    UsmFillSpecificPatternTestLIMITED,
+    UsmFillSpecificPatternTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0, Api::OpenCL),
+        ::testing::Values(UsmMemoryPlacement::Device),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(BufferContents::Zeros),
+        ::testing::Values("0x01AA0B"),
+        ::testing::Values(false),
         ::testing::Values(true)));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,3 +34,11 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(32),
         ::testing::Bool()));
+
+INSTANTIATE_TEST_SUITE_P(
+    IoqKernelSwitchLatencyTestLIMITED,
+    IoqKernelSwitchLatencyTest,
+    ::testing::Combine(
+        ::testing::Values(Api::OpenCL),
+        ::testing::Values(32),
+        ::testing::Values(true)));

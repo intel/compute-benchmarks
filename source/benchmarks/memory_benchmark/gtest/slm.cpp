@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,4 +35,12 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(8 * kiloByte),
         ::testing::Values(8, 4, 2, 1),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(
+    SlmTrafficTestLIMITED,
+    SlmTrafficTest,
+    ::testing::Combine(
+        ::testing::Values(8 * kiloByte),
+        ::testing::Values(8),
         ::testing::Values(false)));

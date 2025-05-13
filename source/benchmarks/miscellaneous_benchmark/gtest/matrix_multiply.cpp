@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,3 +38,12 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(128, 256, 512),
         ::testing::Values(128, 256, 512, 513),
         ::testing::Values(128, 256, 512, 513)));
+
+INSTANTIATE_TEST_SUITE_P(
+    MatrixMultiplyTestLIMITED,
+    MatrixMultiplyTest,
+    ::testing::Combine(
+        ::testing::Values(Api::OpenCL),
+        ::testing::Values(512),
+        ::testing::Values(512),
+        ::testing::Values(512)));

@@ -27,8 +27,8 @@ TEST_P(ExecuteCommandListTestWithIndirectTest, Test) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    ExecuteCommandListTestWithIndirectTestLIMITED,
+    ExecuteCommandListTestWithIndirectTest,
     ExecuteCommandListTestWithIndirectTest,
     ::testing::Combine(
-        ::testing::Values(100u),
-        ::testing::Values(UsmMemoryPlacement::Shared)));
+        ::testing::Values(0u, 10u, 100u, 1000u),
+        ::testing::Values(UsmMemoryPlacement::Shared, UsmMemoryPlacement::Host)));

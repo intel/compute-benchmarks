@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,3 +42,14 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::ValuesIn(HostptrBufferReuseModeArgument::enumValues)));
+
+INSTANTIATE_TEST_SUITE_P(
+    ReadBufferTestLIMITED,
+    ReadBufferTest,
+    ::testing::Combine(
+        ::testing::Values(Api::OpenCL),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(BufferContents::Zeros),
+        ::testing::Values(false),
+        ::testing::Values(true),
+        ::testing::Values(HostptrReuseMode::Aligned4KB)));

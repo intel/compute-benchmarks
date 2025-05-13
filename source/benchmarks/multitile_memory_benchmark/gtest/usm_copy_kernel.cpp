@@ -52,7 +52,7 @@ INSTANTIATE_TEST_SUITE_P(
     UsmCopyKernelTestLIMITED,
     UsmCopyKernelTest,
     ::testing::Combine(
-        ::testing::Values(Api::L0),
+        ::testing::Values(Api::L0, Api::OpenCL),
         ::testing::Values(DeviceSelection::Root),
         ::testing::Values(DeviceSelection::Root),
         ::testing::Values(DeviceSelection::Host),

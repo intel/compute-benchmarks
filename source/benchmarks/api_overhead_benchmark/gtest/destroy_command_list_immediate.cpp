@@ -31,10 +31,3 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(100, 1000),
         ::testing::Values(false, true)));
-
-INSTANTIATE_TEST_SUITE_P(
-    DestroyCommandListImmediateTestLIMITED,
-    DestroyCommandListImmediateTest,
-    ::testing::Combine(
-        ::testing::Values(1000),
-        ::testing::Values(false, true)));

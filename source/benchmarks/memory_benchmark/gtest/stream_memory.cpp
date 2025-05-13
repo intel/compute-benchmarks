@@ -50,24 +50,12 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     StreamMemoryTestLIMITED,
     StreamMemoryTest,
-    ::testing::ValuesIn([] {
-        std::vector<std::tuple<Api, StreamMemoryType, size_t, bool, BufferContents, UsmMemoryPlacement, size_t, size_t>> testCases;
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Read, 1 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Device, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Read, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Device, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Read, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Host, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Read, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Device, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Read, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Host, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Scale, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Device, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Scale, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Host, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Scale, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Device, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Scale, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Host, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Triad, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Device, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Triad, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Host, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Triad, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Device, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Triad, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Host, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Write, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Device, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Write, 512 * megaByte, true, BufferContents::Random, UsmMemoryPlacement::Host, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Write, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Device, 1u, 1u);
-        testCases.emplace_back(Api::OpenCL, StreamMemoryType::Write, 512 * megaByte, true, BufferContents::Zeros, UsmMemoryPlacement::Host, 1u, 1u);
-        return testCases;
-    }()));
+    ::testing::Combine(
+        ::testing::Values(Api::L0, Api::OpenCL),
+        ::testing::Values(StreamMemoryType::Triad),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(true),
+        ::testing::Values(BufferContents::Random),
+        ::testing::Values(UsmMemoryPlacement::Device),
+        ::testing::Values(1u),
+        ::testing::Values(4)));

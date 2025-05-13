@@ -31,10 +31,3 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(1, 10, 100),
         ::testing::Values(false, true)));
-
-INSTANTIATE_TEST_SUITE_P(
-    LifecycleCommandListTestLIMITED,
-    LifecycleCommandListTest,
-    ::testing::Combine(
-        ::testing::Values(100),
-        ::testing::Values(false)));

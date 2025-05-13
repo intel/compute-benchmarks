@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,4 +37,13 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(16 * megaByte),
         ::testing::Values(0, 1, 2, 4),
+        ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    ReadBufferMisalignedTestLIMITED,
+    ReadBufferMisalignedTest,
+    ::testing::Combine(
+        ::testing::Values(Api::OpenCL),
+        ::testing::Values(16 * megaByte),
+        ::testing::Values(4),
         ::testing::Values(true)));

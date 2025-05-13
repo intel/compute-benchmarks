@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,4 +34,12 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(1, 128),
         ::testing::Values(64, 128, 256, 512),
+        ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    Int64DivTestLIMITED,
+    Int64DivTest,
+    ::testing::Combine(
+        ::testing::Values(128),
+        ::testing::Values(512),
         ::testing::Values(true)));

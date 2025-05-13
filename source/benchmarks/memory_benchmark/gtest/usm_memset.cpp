@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ TEST_P(UsmMemsetTest, Test) {
     args.bufferSize = std::get<2>(GetParam());
     args.contents = std::get<3>(GetParam());
     args.forceBlitter = std::get<4>(GetParam());
-    args.useEvents = std::get<4>(GetParam());
+    args.useEvents = std::get<5>(GetParam());
 
     UsmMemset test;
     test.run(args);
@@ -41,4 +41,15 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(128 * megaByte, 512 * megaByte),
         ::testing::Values(BufferContents::Zeros),
         ::testing::Values(false, true),
+        ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    UsmMemsetTestLIMITED,
+    UsmMemsetTest,
+    ::testing::Combine(
+        ::testing::Values(Api::OpenCL),
+        ::testing::Values(UsmMemoryPlacement::Device),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(BufferContents::Zeros),
+        ::testing::Values(false),
         ::testing::Values(true)));

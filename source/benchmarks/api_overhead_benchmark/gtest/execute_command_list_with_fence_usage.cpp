@@ -28,8 +28,3 @@ INSTANTIATE_TEST_SUITE_P(
     ExecuteCommandListTestWithFenceUsageTest,
     ExecuteCommandListTestWithFenceUsageTest,
     ::testing::Values(Api::L0));
-
-INSTANTIATE_TEST_SUITE_P(
-    ExecuteCommandListTestWithFenceUsageTestLIMITED,
-    ExecuteCommandListTestWithFenceUsageTest,
-    ::testing::Values(Api::L0));

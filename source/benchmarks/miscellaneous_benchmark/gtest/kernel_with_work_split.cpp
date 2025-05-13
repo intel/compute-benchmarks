@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,4 +39,15 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(128, 1024, 8096),
         ::CommonGtestArgs::workgroupSize(),
         ::testing::Values(1u, 2u, 4u, 8u, 16u, 32u, 64u),
+        ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    KernelWithWorkSplitSubmissionTestLIMITED,
+    KernelWithWorkSplitSubmissionTest,
+    ::testing::Combine(
+        ::testing::Values(Api::OpenCL),
+        ::testing::Values(WorkItemIdUsage::Global),
+        ::testing::Values(8096),
+        ::testing::Values(256),
+        ::testing::Values(64u),
         ::testing::Values(true)));

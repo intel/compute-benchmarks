@@ -32,10 +32,3 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Bool(),
         ::testing::Values(8, 64, 256, 512, 1024, 2048)));
-
-INSTANTIATE_TEST_SUITE_P(
-    KernelSetArgumentValueImmediateTestLIMITED,
-    KernelSetArgumentValueImmediateTest,
-    ::testing::Combine(
-        ::testing::Values(true),
-        ::testing::Values(1024)));

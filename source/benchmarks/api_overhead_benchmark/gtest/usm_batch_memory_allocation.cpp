@@ -41,13 +41,3 @@ INSTANTIATE_TEST_SUITE_P(
                           512 * MemoryConstants::kiloByte,
                           4 * MemoryConstants::megaByte),
         ::testing::Values(AllocationMeasureMode::Allocate, AllocationMeasureMode::Free, AllocationMeasureMode::Both)));
-
-INSTANTIATE_TEST_SUITE_P(
-    UsmBatchMemoryAllocationTestLIMITED,
-    UsmBatchMemoryAllocationTest,
-    ::testing::Combine(
-        ::CommonGtestArgs::allApis(),
-        ::testing::Values(UsmRuntimeMemoryPlacement::Shared),
-        ::testing::Values(512),
-        ::testing::Values(4 * MemoryConstants::megaByte),
-        ::testing::Values(AllocationMeasureMode::Both)));

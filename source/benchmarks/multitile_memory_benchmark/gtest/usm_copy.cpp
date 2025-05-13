@@ -54,7 +54,7 @@ INSTANTIATE_TEST_SUITE_P(
     UsmCopyTestLIMITED,
     UsmCopyTest,
     ::testing::Combine(
-        ::testing::Values(Api::L0),
+        ::testing::Values(Api::L0, Api::OpenCL),
         ::testing::Values(DeviceSelection::Root),
         ::testing::Values(DeviceSelection::Root),
         ::testing::Values(DeviceSelection::Host),

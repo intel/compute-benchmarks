@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,4 +41,15 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(512 * megaByte),
         ::testing::Values(BufferContents::Zeros),
         ::testing::Values(false, true),
+        ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    UsmCopyImmediateTestLIMITED,
+    UsmCopyImmediateTest,
+    ::testing::Combine(
+        ::testing::Values(UsmMemoryPlacement::Device),
+        ::testing::Values(UsmMemoryPlacement::NonUsm4KBAligned),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(BufferContents::Zeros),
+        ::testing::Values(false),
         ::testing::Values(true)));

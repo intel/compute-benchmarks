@@ -43,14 +43,3 @@ INSTANTIATE_TEST_SUITE_P(
                           512 * MemoryConstants::kiloByte,
                           4 * MemoryConstants::megaByte),
         ::testing::Values(DistributionKind::Uniform, DistributionKind::LogUniform)));
-
-INSTANTIATE_TEST_SUITE_P(
-    UsmRandomMemoryAllocationTestLIMITED,
-    UsmRandomMemoryAllocationTest,
-    ::testing::Combine(
-        ::CommonGtestArgs::allApis(),
-        ::testing::Values(UsmRuntimeMemoryPlacement::Shared),
-        ::testing::Values(32),
-        ::testing::Values(1024),
-        ::testing::Values(4 * MemoryConstants::megaByte),
-        ::testing::Values(DistributionKind::LogUniform)));

@@ -55,7 +55,7 @@ INSTANTIATE_TEST_SUITE_P(
     CopyEntireImageTestLIMITED,
     CopyEntireImageTest,
     ::testing::Combine(
-        ::testing::Values(Api::OpenCL),
+        ::testing::Values(Api::L0, Api::OpenCL),
         ::testing::Values(
             ImageSize(16384, 1, 1) // 1D
             ),

@@ -43,13 +43,3 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::usmSharedSelections(),
         ::testing::Values(128 * megaByte, 512 * megaByte),
         ::testing::Values(false, true)));
-
-INSTANTIATE_TEST_SUITE_P(
-    UsmSharedMigrateCpuTestLIMITED,
-    UsmSharedMigrateCpuTest,
-    ::testing::Combine(
-        ::testing::Values(Api::L0),
-        ::testing::Values(DeviceSelection::Root),
-        ::testing::Values(DeviceSelection::Host | DeviceSelection::Root),
-        ::testing::Values(128 * megaByte),
-        ::testing::Values(false)));

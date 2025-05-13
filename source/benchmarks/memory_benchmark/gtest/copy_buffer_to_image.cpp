@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,6 +51,19 @@ INSTANTIATE_TEST_SUITE_P(
             ImageSize(512, 512, 64) // 3D
             ),
         ::testing::Values(UsmMemoryPlacement::Device, UsmMemoryPlacement::Host),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(false),
+        ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    CopyBufferToImageTestLIMITED,
+    CopyBufferToImageTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0, Api::OpenCL),
+        ::testing::Values(
+            ImageSize(16384, 1, 1) // 1D
+            ),
+        ::testing::Values(UsmMemoryPlacement::Device),
         ::testing::Values(512 * megaByte),
         ::testing::Values(false),
         ::testing::Values(true)));

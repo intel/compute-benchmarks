@@ -38,13 +38,3 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(100)));
-
-INSTANTIATE_TEST_SUITE_P(
-    FlushTimeTestLIMITED,
-    FlushTimeTest,
-    ::testing::Combine(
-        ::testing::Values(100),
-        ::testing::Values(256),
-        ::testing::Values(false),
-        ::testing::Values(true),
-        ::testing::Values(100)));

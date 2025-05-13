@@ -49,7 +49,7 @@ INSTANTIATE_TEST_SUITE_P(
     FillBufferTestLIMITED,
     FillBufferTest,
     ::testing::Combine(
-        ::CommonGtestArgs::allApis(),
+        ::testing::Values(Api::OpenCL),
         ::testing::Values(512 * megaByte),
         ::testing::Values(BufferContents::Zeros),
         ::testing::Values(1),

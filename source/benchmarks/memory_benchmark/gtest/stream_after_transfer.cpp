@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,3 +37,11 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(StreamMemoryTypeArgument::onlyReadAndTriad),
         ::testing::Values(1 * megaByte, 16 * megaByte, 64 * megaByte, 256 * megaByte, 1 * gigaByte),
         ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    StreamAfterTransferTestLIMITED,
+    StreamAfterTransferTest,
+    ::testing::Combine(
+        ::testing::Values(StreamMemoryType::Triad),
+        ::testing::Values(1 * gigaByte),
+        ::testing::Values(true)));
