@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,7 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
     bool srcUSM = arguments.srcUSM;
     bool dstUSM = arguments.dstUSM;
     size_t arraySize = allocSize / sizeof(int);
+    bool useBarrier = arguments.useBarrier;
 
     if (!useEvents && !inOrderQueue) {
         std::cerr << "In order queue must be used when events are not used" << std::endl;
@@ -98,6 +99,10 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
     } else {
         src_buffer = malloc(allocSize);
     }
+    if (src_buffer == nullptr) {
+        std::cerr << "Failed to allocate memory for src_buffer" << std::endl;
+        return TestResult::Error;
+    }
 
     memset(src_buffer, 99, allocSize);
 
@@ -121,13 +126,17 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         } else {
             dst_buffers.back() = malloc(allocSize * numOpsPerThread);
         }
+        if (dst_buffers.back() == nullptr) {
+            std::cerr << "Failed to allocate memory for dst_buffer" << std::endl;
+            return TestResult::Error;
+        }
         memset(dst_buffers.back(), 0, allocSize * numOpsPerThread);
     }
 
     auto worker = [&](size_t thread_id, Timer &timer) {
         std::vector<std::vector<ur_event_handle_t>> events(numOpsPerThread);
         for (auto &events_vec : events) {
-            events_vec.assign(3, nullptr);
+            events_vec.assign(4, nullptr);
         }
 
         timer.measureStart();
@@ -145,6 +154,10 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
             EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, usm_ptr, src_buffer, allocSize, 0, nullptr, memcpySignalEventPtr));
             EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(queue, kernel, n_dimensions, &global_offset, &arraySize, nullptr, useEvents, memcpySignalEventPtr, kernelSignalEventPtr));
             EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, host_dst, usm_ptr, allocSize, useEvents, kernelSignalEventPtr, finalSignalEventPtr));
+
+            if (useBarrier) {
+                EXPECT_UR_RESULT_SUCCESS(urEnqueueEventsWaitWithBarrier(queue, useEvents, finalSignalEventPtr, useEvents ? &events[i][3] : nullptr));
+            }
         }
 
         if (!measureCompletionTime)
@@ -206,18 +219,9 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         auto avgTime = aggregatedTime / arguments.numThreads;
 
 #ifndef NDEBUG
-        // verify the results
-        for (size_t t = 0; t < numThreads; t++) {
-            for (size_t i = 0; i < numOpsPerThread; i++) {
-                for (size_t j = 0; j < allocSize / sizeof(int); j++) {
-                    auto v = *(((char *)dst_buffers[t]) + i * allocSize + j * sizeof(int));
-                    if (v != 1) {
-                        std::cerr << "dst_buffers at: " << t << " " << i << " " << j << " , is: " << (int)v << std::endl;
-                        return TestResult::Error;
-                    }
-                }
-            }
-        }
+        auto res = verifyResults(numThreads, numOpsPerThread, allocSize, dst_buffers, 1);
+        if (res != TestResult::Success)
+            return res;
 #endif
 
         statistics.pushValue(avgTime, typeSelector.getUnit(), typeSelector.getType());

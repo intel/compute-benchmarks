@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<MemcpyExecute> registerTestCase{};
 
-class MemcpyExecuteTest : public ::testing::TestWithParam<std::tuple<Api, bool, size_t, size_t, size_t, bool, bool, bool, bool, bool>> {
+class MemcpyExecuteTest : public ::testing::TestWithParam<std::tuple<Api, bool, size_t, size_t, size_t, bool, bool, bool, bool, bool, bool>> {
 };
 
 TEST_P(MemcpyExecuteTest, Test) {
@@ -29,6 +29,7 @@ TEST_P(MemcpyExecuteTest, Test) {
     args.useQueuePerThread = std::get<7>(GetParam());
     args.srcUSM = std::get<8>(GetParam());
     args.dstUSM = std::get<9>(GetParam());
+    args.useBarrier = std::get<10>(GetParam());
     MemcpyExecute test;
     test.run(args);
 }
@@ -46,5 +47,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),   // useEvents
         ::testing::Values(true),          // useQueuePerThread
         ::testing::Values(true),          // srcUSM
-        ::testing::Values(true)           // dstUSM
+        ::testing::Values(true),          // dstUSM
+        ::testing::Values(false)          // useBarrier
         ));
