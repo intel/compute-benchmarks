@@ -288,7 +288,7 @@ TestResult mutateList(TestEnv &env,
         };
         zeCommandListUpdateMutableCommandsExp(cmdList, &desc);
     }
-    zeCommandListClose(cmdList);
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
     return TestResult::Success;
 }
 TestResult fillList(const MutateGraphArguments &arguments, TestEnv &env, ze_command_list_handle_t cmdList, bool modified) {
@@ -367,7 +367,7 @@ TestResult testCorrectness(const MutateGraphArguments &arguments, TestEnv &env) 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(
         env.immCmdList, std::numeric_limits<uint64_t>::max()));
 
-    zeCommandListDestroy(cmdList);
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     // if results don't match, fail the benchmark
     if (!checkResults(env, env.resData.get(), env.refResult.get())) {
         std::cout << "Check FAILED" << std::endl;
@@ -391,7 +391,7 @@ TestResult runInit(const MutateGraphArguments &arguments, Statistics &statistics
         }
         timer.measureEnd();
 
-        zeCommandListDestroy(cmdList);
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
 
         statistics.pushValue(timer.get(), env.typeSelector.getUnit(),
                              env.typeSelector.getType());
@@ -414,7 +414,7 @@ TestResult runMutate(const MutateGraphArguments &arguments, Statistics &statisti
             ASSERT_TEST_RESULT_SUCCESS(fillList(arguments, env, cmdList, true));
         }
         timer.measureEnd();
-        zeCommandListDestroy(cmdList);
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
 
         statistics.pushValue(timer.get(), env.typeSelector.getUnit(),
                              env.typeSelector.getType());
@@ -445,7 +445,7 @@ TestResult runExecute(const MutateGraphArguments &arguments, Statistics &statist
         statistics.pushValue(timer.get(), env.typeSelector.getUnit(),
                              env.typeSelector.getType());
     }
-    zeCommandListDestroy(cmdList);
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     return TestResult::Success;
 }
 } // namespace
