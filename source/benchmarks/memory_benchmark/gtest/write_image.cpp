@@ -36,7 +36,7 @@ INSTANTIATE_TEST_SUITE_P(
     WriteImageTest,
     WriteImageTest,
     ::testing::Combine(
-        ::CommonGtestArgs::allApis(),
+        ::testing::Values(Api::OpenCL),
         ::testing::Values(
             ImageSize(8192, 1, 1),  // 1D
             ImageSize(16384, 1, 1), // 1D

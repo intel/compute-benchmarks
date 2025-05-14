@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ INSTANTIATE_TEST_SUITE_P(
     UsmConcurrentCopyTest,
     UsmConcurrentCopyTest,
     ::testing::Combine(
-        ::CommonGtestArgs::allApis(),
+        ::testing::Values(Api::L0),
         ::testing::Values(256 * megaByte),
         ::testing::Values(Engine::Ccs0, Engine::Bcs),
         ::testing::Values(Engine::Ccs0, Engine::Bcs)));
