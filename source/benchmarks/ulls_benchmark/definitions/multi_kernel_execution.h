@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ struct MultiKernelExecutionArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument delay;
     BooleanArgument inOrderOverOOO;
     BooleanArgument profiling;
+    BooleanArgument useMCL;
 
     MultiKernelExecutionArguments()
         : kernelCount(*this, "count", "Count of kernels within command list"),
@@ -27,7 +28,8 @@ struct MultiKernelExecutionArguments : TestCaseArgumentContainer {
           workgroupCount(*this, "wkgCount", "work group count of each kernel"),
           delay(*this, "delay", "how much delay between atomic reads"),
           inOrderOverOOO(*this, "inOrderOverOOO", "use out of order queue to implement in order queue"),
-          profiling(*this, "profiling", "use profiling on the gpu to collect score") {}
+          profiling(*this, "profiling", "use profiling on the gpu to collect score"),
+          useMCL(*this, "useMCL", "Use mutable command list") {}
 };
 
 struct MultiKernelExecution : TestCase<MultiKernelExecutionArguments> {

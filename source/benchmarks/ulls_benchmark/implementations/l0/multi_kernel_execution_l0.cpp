@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,11 @@ static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics
     if (!arguments.inOrderOverOOO) {
         cmdListDesc.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
     }
-
+    ze_mutable_command_list_exp_desc_t mutableExpDesc{};
+    mutableExpDesc.stype = ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_DESC;
+    if (arguments.useMCL) {
+        cmdListDesc.pNext = &mutableExpDesc;
+    }
     ze_command_list_handle_t cmdList{};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
