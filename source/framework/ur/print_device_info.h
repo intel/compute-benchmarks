@@ -98,8 +98,8 @@ uint32_t getDeviceNumThreadPerEU(ur_device_handle_t device) {
     return getInfo<uint32_t>(device, urDeviceGetInfo, UR_DEVICE_INFO_GPU_HW_THREADS_PER_EU);
 }
 
-ur_adapter_backend_t getAdapterBackend(ur_adapter_handle_t adapter) {
-    return getInfo<ur_adapter_backend_t>(adapter, urAdapterGetInfo, UR_ADAPTER_INFO_BACKEND);
+ur_backend_t getAdapterBackend(ur_adapter_handle_t adapter) {
+    return getInfo<ur_backend_t>(adapter, urAdapterGetInfo, UR_ADAPTER_INFO_BACKEND);
 }
 
 void printDeviceInfo() {
