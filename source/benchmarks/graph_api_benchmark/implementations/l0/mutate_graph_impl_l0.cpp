@@ -164,16 +164,16 @@ TestResult initEnv(TestEnv &env, const MutateGraphArguments &arguments) {
 }
 
 TestResult destroyEnv(TestEnv &env) {
-    zeKernelDestroy(env.kernelSum);
-    zeKernelDestroy(env.kernelMul);
-    zeModuleDestroy(env.moduleSum);
-    zeModuleDestroy(env.moduleMul);
-    zeCommandListDestroy(env.immCmdList);
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(env.kernelSum));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(env.kernelMul));
+    ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(env.moduleSum));
+    ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(env.moduleMul));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(env.immCmdList));
     if (env.zePool != nullptr) {
         for (auto zeEvent : env.zeEvents) {
-            zeEventDestroy(zeEvent);
+            ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(zeEvent));
         }
-        zeEventPoolDestroy(env.zePool);
+        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(env.zePool));
     }
     return TestResult::Success;
 }
