@@ -80,6 +80,17 @@ TestResult SinKernelGraphUR::init() {
     return TestResult::Success;
 }
 
+TestResult SinKernelGraphUR::init() {
+    if (cmdBuffer != nullptr)
+        EXPECT_UR_RESULT_SUCCESS(urCommandBufferReleaseExp(cmdBuffer));
+    EXPECT_UR_RESULT_SUCCESS(urKernelRelease(kernelAssign));
+    EXPECT_UR_RESULT_SUCCESS(urKernelRelease(kernelSin));
+    EXPECT_UR_RESULT_SUCCESS(urProgramRelease(programA));
+    EXPECT_UR_RESULT_SUCCESS(urProgramRelease(programS));
+    EXPECT_UR_RESULT_SUCCESS(urQueueRelease(queue));
+    return TestResult::Success;
+}
+
 TestResult SinKernelGraphUR::runKernels() {
     size_t global_offset = 0;
     uint32_t n_dimensions = 1;
@@ -179,17 +190,4 @@ TestResult SinKernelGraphUR::runEager(float *input_h) {
     ASSERT_TEST_RESULT_SUCCESS(runKernels());
 
     return TestResult::Success;
-}
-
-SinKernelGraphUR::~SinKernelGraphUR() {
-    if (urstate == nullptr) // never inited, likely noop run
-        return;
-
-    if (cmdBuffer != nullptr)
-        EXPECT_UR_RESULT_SUCCESS(urCommandBufferReleaseExp(cmdBuffer));
-    EXPECT_UR_RESULT_SUCCESS(urKernelRelease(kernelAssign));
-    EXPECT_UR_RESULT_SUCCESS(urKernelRelease(kernelSin));
-    EXPECT_UR_RESULT_SUCCESS(urProgramRelease(programA));
-    EXPECT_UR_RESULT_SUCCESS(urProgramRelease(programS));
-    EXPECT_UR_RESULT_SUCCESS(urQueueRelease(queue));
 }

@@ -29,6 +29,7 @@ class SinKernelGraphBase {
     virtual DataFloatPtr allocHost(uint32_t count) = 0;
 
     virtual TestResult init() = 0;
+    virtual TestResult destroy() = 0;
 
     virtual TestResult recordGraph() = 0;
     virtual TestResult readResults(float *output_h) = 0;
@@ -89,7 +90,7 @@ class SinKernelGraphBase {
             return TestResult::Nooped;
         }
 
-        init();
+        ASSERT_TEST_RESULT_SUCCESS(init());
 
         TestResult result = TestResult::Success;
 
@@ -145,6 +146,7 @@ class SinKernelGraphBase {
                                  typeSelector.getType());
         }
 
+        ASSERT_TEST_RESULT_SUCCESS(destroy());
         return result;
     }
 

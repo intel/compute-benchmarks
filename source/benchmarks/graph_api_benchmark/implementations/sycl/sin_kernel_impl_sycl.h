@@ -19,12 +19,11 @@ class SinKernelGraphSYCL : public SinKernelGraphBase {
         : SinKernelGraphBase(arguments), queue(nullptr) {
     }
 
-    ~SinKernelGraphSYCL();
-
     DataFloatPtr allocDevice(uint32_t count) override;
     DataFloatPtr allocHost(uint32_t count) override;
 
     TestResult init() override;
+    TestResult destroy() override;
     TestResult recordGraph() override;
     TestResult readResults(float *output_h) override;
     TestResult runGraph(float *input_h) override;

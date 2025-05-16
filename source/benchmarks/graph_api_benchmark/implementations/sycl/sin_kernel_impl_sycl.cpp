@@ -44,6 +44,9 @@ TestResult SinKernelGraphSYCL::init() {
 
     return TestResult::Success;
 }
+TestResult SinKernelGraphSYCL::destroy() {
+    return TestResult::Success;
+}
 
 TestResult SinKernelGraphSYCL::runKernels() {
     float *source = graphInputData.get();
@@ -115,7 +118,4 @@ TestResult SinKernelGraphSYCL::runEager(float *input_h) {
     runKernels();
 
     return TestResult::Success;
-}
-
-SinKernelGraphSYCL::~SinKernelGraphSYCL() {
 }

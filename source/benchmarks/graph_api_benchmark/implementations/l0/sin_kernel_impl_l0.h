@@ -21,12 +21,11 @@ class SinKernelGraphL0 : public SinKernelGraphBase {
         : SinKernelGraphBase(arguments), levelzero(nullptr) {
     }
 
-    ~SinKernelGraphL0();
-
     DataFloatPtr allocDevice(uint32_t count) override;
     DataFloatPtr allocHost(uint32_t count) override;
 
     TestResult init() override;
+    TestResult destroy() override;
     TestResult recordGraph() override;
     TestResult readResults(float *output_h) override;
     TestResult runGraph(float *input_h) override;

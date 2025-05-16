@@ -21,12 +21,11 @@ class SinKernelGraphUR : public SinKernelGraphBase {
         : SinKernelGraphBase(arguments), urstate(nullptr), syncPoints(arguments.numKernels + 1) {
     }
 
-    ~SinKernelGraphUR();
-
     DataFloatPtr allocDevice(uint32_t count) override;
     DataFloatPtr allocHost(uint32_t count) override;
 
     TestResult init() override;
+    TestResult destroy() override;
     TestResult recordGraph() override;
     TestResult readResults(float *output_h) override;
     TestResult runGraph(float *input_h) override;

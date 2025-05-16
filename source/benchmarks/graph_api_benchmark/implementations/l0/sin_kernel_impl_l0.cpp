@@ -121,6 +121,20 @@ TestResult SinKernelGraphL0::init() {
     return TestResult::Success;
 }
 
+TestResult SinKernelGraphL0::destroy() {
+    if (graphCmdList != nullptr)
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(graphCmdList));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernelAssign));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernelSin));
+    ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(moduleAssign));
+    ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(moduleSin));
+    ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(zeEvent));
+    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(zePool));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(immCmdList));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueDestroy(cmdQueue));
+    return TestResult::Success;
+}
+
 TestResult SinKernelGraphL0::recordGraph() {
     ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
 
@@ -192,20 +206,4 @@ TestResult SinKernelGraphL0::waitCompletion() {
     }
 
     return TestResult::Success;
-}
-
-SinKernelGraphL0::~SinKernelGraphL0() {
-    if (levelzero == nullptr) // never inited, likely noop run
-        return;
-
-    if (graphCmdList != nullptr)
-        EXPECT_ZE_RESULT_SUCCESS(zeCommandListDestroy(graphCmdList));
-    EXPECT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernelAssign));
-    EXPECT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernelSin));
-    EXPECT_ZE_RESULT_SUCCESS(zeModuleDestroy(moduleAssign));
-    EXPECT_ZE_RESULT_SUCCESS(zeModuleDestroy(moduleSin));
-    EXPECT_ZE_RESULT_SUCCESS(zeEventDestroy(zeEvent));
-    EXPECT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(zePool));
-    EXPECT_ZE_RESULT_SUCCESS(zeCommandListDestroy(immCmdList));
-    EXPECT_ZE_RESULT_SUCCESS(zeCommandQueueDestroy(cmdQueue));
 }

@@ -41,22 +41,6 @@ struct TestEnv {
 
     mem_helper::DataFloatPtr graphInputData;
     mem_helper::DataFloatPtr graphOutputData;
-
-    ~TestEnv() {
-        if (kernelSum == nullptr)
-            return; // object was not initialized
-        zeKernelDestroy(kernelSum);
-        zeKernelDestroy(kernelMul);
-        zeModuleDestroy(moduleSum);
-        zeModuleDestroy(moduleMul);
-        zeCommandListDestroy(immCmdList);
-        if (zePool != nullptr) {
-            for (auto zeEvent : zeEvents) {
-                zeEventDestroy(zeEvent);
-            }
-            zeEventPoolDestroy(zePool);
-        }
-    }
 };
 TestResult createCommandList(TestEnv &env, bool useInOrder, bool isMutable, ze_command_list_handle_t *graphCmdList) {
 
@@ -122,7 +106,7 @@ bool checkResults(TestEnv &env, float *output_h, float *golden_h) {
     return true;
 }
 
-void initEnv(TestEnv &env, const MutateGraphArguments &arguments) {
+TestResult initEnv(TestEnv &env, const MutateGraphArguments &arguments) {
 
     env.levelzero = std::make_shared<LevelZero>();
 
@@ -131,12 +115,12 @@ void initEnv(TestEnv &env, const MutateGraphArguments &arguments) {
 
     uint32_t grpCnt[3] = {1, 1, 1};
 
-    ZE_RESULT_SUCCESS_OR_ERROR(zeKernelSuggestGroupSize(env.kernelSum, env.size, 1, 1, grpCnt,
-                                                        grpCnt + 1, grpCnt + 2));
-    ZE_RESULT_SUCCESS_OR_ERROR(zeKernelSetGroupSize(env.kernelSum, grpCnt[0], grpCnt[1], grpCnt[2]));
-    ZE_RESULT_SUCCESS_OR_ERROR(zeKernelSuggestGroupSize(env.kernelMul, env.size, 1, 1, grpCnt,
-                                                        grpCnt + 1, grpCnt + 2));
-    ZE_RESULT_SUCCESS_OR_ERROR(zeKernelSetGroupSize(env.kernelMul, grpCnt[0], grpCnt[1], grpCnt[2]));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(env.kernelSum, env.size, 1, 1, grpCnt,
+                                                      grpCnt + 1, grpCnt + 2));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(env.kernelSum, grpCnt[0], grpCnt[1], grpCnt[2]));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(env.kernelMul, env.size, 1, 1, grpCnt,
+                                                      grpCnt + 1, grpCnt + 2));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(env.kernelMul, grpCnt[0], grpCnt[1], grpCnt[2]));
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     cmdQueueDesc.ordinal = env.levelzero->commandQueueDesc.ordinal;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -145,7 +129,7 @@ void initEnv(TestEnv &env, const MutateGraphArguments &arguments) {
     }
     cmdQueueDesc.pNext = nullptr;
 
-    ZE_RESULT_SUCCESS_OR_ERROR(
+    ASSERT_ZE_RESULT_SUCCESS(
         zeCommandListCreateImmediate(env.levelzero->context, env.levelzero->device,
                                      &cmdQueueDesc, &env.immCmdList));
 
@@ -168,14 +152,30 @@ void initEnv(TestEnv &env, const MutateGraphArguments &arguments) {
         pdesc.count = static_cast<uint32_t>(arguments.numKernels - 1);
         pdesc.flags = 0;
         pdesc.pNext = nullptr;
-        ZE_RESULT_SUCCESS_OR_ERROR(zeEventPoolCreate(env.levelzero->context, &pdesc, 1, &env.levelzero->device, &env.zePool));
+        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(env.levelzero->context, &pdesc, 1, &env.levelzero->device, &env.zePool));
 
         env.zeEvents.resize(arguments.numKernels - 1);
         for (uint32_t index = 0; index < arguments.numKernels - 1; index++) {
             edesc.index = index;
-            ZE_RESULT_SUCCESS_OR_ERROR(zeEventCreate(env.zePool, &edesc, &env.zeEvents[index]));
+            ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(env.zePool, &edesc, &env.zeEvents[index]));
         }
     }
+    return TestResult::Success;
+}
+
+TestResult destroyEnv(TestEnv &env) {
+    zeKernelDestroy(env.kernelSum);
+    zeKernelDestroy(env.kernelMul);
+    zeModuleDestroy(env.moduleSum);
+    zeModuleDestroy(env.moduleMul);
+    zeCommandListDestroy(env.immCmdList);
+    if (env.zePool != nullptr) {
+        for (auto zeEvent : env.zeEvents) {
+            zeEventDestroy(zeEvent);
+        }
+        zeEventPoolDestroy(env.zePool);
+    }
+    return TestResult::Success;
 }
 
 TestResult resetEvents(TestEnv &env) {
@@ -459,7 +459,7 @@ static TestResult run(const MutateGraphArguments &arguments, Statistics &statist
         return TestResult::Nooped;
     }
 
-    initEnv(env, arguments);
+    ASSERT_TEST_RESULT_SUCCESS(initEnv(env, arguments));
     std::mt19937 gen{0};
     for (uint32_t position = 0; position < env.size; ++position) {
         env.inputData.get()[position] = static_cast<float>(env.distribution->get(gen)) / static_cast<float>(env.distribution->get(gen));
@@ -480,6 +480,7 @@ static TestResult run(const MutateGraphArguments &arguments, Statistics &statist
     default:
         break;
     }
+    ASSERT_TEST_RESULT_SUCCESS(destroyEnv(env));
     return TestResult::Success;
 };
 
