@@ -43,6 +43,10 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     if (levelzero.commandQueue == nullptr) {
         return TestResult::DeviceNotCapable;
     }
+    if (arguments.lws > levelzero.getDeviceComputeProperties().maxGroupSizeX) {
+        return TestResult::DeviceNotCapable;
+    }
+
     if (isSharedSystemPointer(arguments.memoryPlacement)) {
         ze_device_memory_access_properties_t memoryAccessCapabilities = {};
         ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetMemoryAccessProperties(levelzero.device, &memoryAccessCapabilities));
@@ -122,7 +126,8 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
 
     // Query maximum group size
-    const uint32_t groupSizeX = std::min(levelzero.getDeviceComputeProperties().maxGroupSizeX, gws);
+    uint32_t groupSizeX = static_cast<uint32_t>(arguments.lws);
+    groupSizeX = std::min(groupSizeX, gws);
 
     // Configure kernel group size
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, 1u, 1u));

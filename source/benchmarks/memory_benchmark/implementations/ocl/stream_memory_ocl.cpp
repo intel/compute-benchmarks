@@ -43,8 +43,15 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     Opencl opencl(queueProperties);
     Timer timer;
 
+    // Query max workgroup size
+    size_t maxWorkgroupSize = {};
+    clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(maxWorkgroupSize), &maxWorkgroupSize, nullptr);
+    if (arguments.lws > maxWorkgroupSize) {
+        return TestResult::DeviceNotCapable;
+    }
+
     size_t elementSize = arguments.vectorSize * sizeof(uint32_t);
-    unsigned int scalarValue[16] = {9999999u};
+    unsigned int scalarValue[16] = {2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u};
     bool setScalarArgument = true;
     const bool printBuildInfo = true;
 
@@ -125,13 +132,10 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(setScalarArgument ? buffersCount + 1 : buffersCount), 4u, &multiplier));
     }
 
-    // Query max workgroup size
-    size_t maxWorkgroupSize = {};
-    clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(maxWorkgroupSize), &maxWorkgroupSize, nullptr);
-
     // Warm up
     const size_t globalWorkSize = arguments.size / elementSize;
-    const size_t localWorkSize = std::min(maxWorkgroupSize, globalWorkSize);
+    size_t localWorkSize = arguments.lws;
+    localWorkSize = std::min(localWorkSize, globalWorkSize);
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 

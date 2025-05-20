@@ -21,6 +21,7 @@ struct StreamMemoryArguments : TestCaseArgumentContainer {
     UsmMemoryPlacementArgument memoryPlacement;
     PositiveIntegerArgument partialMultiplier;
     PositiveIntegerArgument vectorSize;
+    PositiveIntegerArgument lws;
 
     StreamMemoryArguments()
         : type(*this, "type", "Memory streaming type"),
@@ -29,7 +30,8 @@ struct StreamMemoryArguments : TestCaseArgumentContainer {
           contents(*this, "contents", "Buffer contents zeros/random"),
           memoryPlacement(*this, "memoryPlacement", "Memory type used for stream"),
           partialMultiplier(*this, "multiplier", "multiplies id used for accessing the resources to simulate partials"),
-          vectorSize(*this, "vectorSize", "size of uint vector type 1/2/4/8/16") {}
+          vectorSize(*this, "vectorSize", "size of uint vector type 1/2/4/8/16"),
+          lws(*this, "lws", "local work size") {}
 };
 
 struct StreamMemory : TestCase<StreamMemoryArguments> {
