@@ -80,7 +80,7 @@ TestResult SinKernelGraphUR::init() {
     return TestResult::Success;
 }
 
-TestResult SinKernelGraphUR::init() {
+TestResult SinKernelGraphUR::destroy() {
     if (cmdBuffer != nullptr)
         EXPECT_UR_RESULT_SUCCESS(urCommandBufferReleaseExp(cmdBuffer));
     EXPECT_UR_RESULT_SUCCESS(urKernelRelease(kernelAssign));
