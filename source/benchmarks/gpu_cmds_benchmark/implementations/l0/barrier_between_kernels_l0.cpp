@@ -60,18 +60,17 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
 
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, outputBuffer, outputBufferSize));
 
-    if (arguments.onlyReads == 0) {
-        // Create command list
+    {
+        // Initialize buffer data
         ze_command_list_desc_t cmdListDesc{};
         cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
         ze_command_list_handle_t cmdListForFill{};
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdListForFill));
-        uint32_t pattern = 1u;
+        uint32_t pattern = arguments.onlyReads == 0 ? 1u : 0u;
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdListForFill, outputBuffer, &pattern, sizeof(uint32_t), outputBufferSize, nullptr, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdListForFill));
 
-        // Warmup
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdListForFill, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
     }
