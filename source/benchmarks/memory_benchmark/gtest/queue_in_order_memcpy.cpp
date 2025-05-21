@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<QueueInOrderMemcpy> registerTestCase{};
 
-class QueueInOrderMemcpyTest : public ::testing::TestWithParam<std::tuple<Api, UsmMemoryPlacement, UsmMemoryPlacement, size_t, size_t, bool>> {};
+class QueueInOrderMemcpyTest : public ::testing::TestWithParam<std::tuple<Api, UsmMemoryPlacement, UsmMemoryPlacement, size_t, size_t, bool, bool>> {};
 
 TEST_P(QueueInOrderMemcpyTest, Test) {
     QueueInOrderMemcpyArguments args{};
@@ -24,6 +24,12 @@ TEST_P(QueueInOrderMemcpyTest, Test) {
     args.size = std::get<3>(GetParam());
     args.count = std::get<4>(GetParam());
     args.isCopyOnly = std::get<5>(GetParam());
+    args.withCopyOffload = std::get<6>(GetParam());
+
+    if (args.isCopyOnly && args.withCopyOffload) {
+        GTEST_SKIP(); // If copy offload were to be executed on blitter
+    }
+
     QueueInOrderMemcpy test;
     test.run(args);
 }
@@ -37,4 +43,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Shared, UsmMemoryPlacement::Device),
         ::testing::Values(1 * MemoryConstants::megaByte),
         ::testing::Values(10),
+        ::testing::Values(true, false),
         ::testing::Values(true, false)));

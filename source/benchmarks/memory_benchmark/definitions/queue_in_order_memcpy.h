@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,13 +17,15 @@ struct QueueInOrderMemcpyArguments : TestCaseArgumentContainer {
     UsmMemoryPlacementArgument destinationPlacement;
     ByteSizeArgument size;
     PositiveIntegerArgument count;
+    BooleanArgument withCopyOffload;
 
     QueueInOrderMemcpyArguments()
         : isCopyOnly(*this, "IsCopyOnly", "If true, Copy Engine is selected. If false, Compute Engine is selected"),
           sourcePlacement(*this, "sourcePlacement", "Placement of the source buffer"),
           destinationPlacement(*this, "destinationPlacement", "Placement of the destination buffer"),
           size(*this, "size", "Size of memory allocation"),
-          count(*this, "count", "Number of memcpy operations") {}
+          count(*this, "count", "Number of memcpy operations"),
+          withCopyOffload(*this, "withCopyOffload", "Enable driver copy offload (only valid for L0)") {}
 };
 
 struct QueueInOrderMemcpy : TestCase<QueueInOrderMemcpyArguments> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,13 +20,15 @@ struct ImmediateCommandListCompletionArguments : TestCaseArgumentContainer {
     StringArgument engineGroup;
     PositiveIntegerArgument copySize;
     EngineMaskArgument engineMask;
+    BooleanArgument withCopyOffload;
 
     ImmediateCommandListCompletionArguments()
         : numberOfThreads(*this, "numberOfThreads", "total number of threads"),
           threadsPerEngine(*this, "threadsPerEngine", "number of threads submitting commands to each engine"),
           engineGroup(*this, "engineGroup", "engine group to be used"),
           copySize(*this, "copySize", "copy size in bytes "),
-          engineMask(*this, "engineMask", "bit mask for selecting engines to be used for submission") {}
+          engineMask(*this, "engineMask", "bit mask for selecting engines to be used for submission"),
+          withCopyOffload(*this, "withCopyOffload", "Enable driver copy offload (only valid for L0)") {}
 };
 
 struct ImmediateCommandListCompletion : TestCase<ImmediateCommandListCompletionArguments> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ struct ExecuteCommandListImmediateCopyQueueArguments : TestCaseArgumentContainer
     UsmMemoryPlacementArgument destinationPlacement;
     ByteSizeArgument size;
     BooleanArgument useIoq;
+    BooleanArgument withCopyOffload;
 
     ExecuteCommandListImmediateCopyQueueArguments()
         : isCopyOnly(*this, "IsCopyOnly", "If true, Copy Engine is selected. If false, Compute Engine is selected"),
@@ -25,7 +26,8 @@ struct ExecuteCommandListImmediateCopyQueueArguments : TestCaseArgumentContainer
           sourcePlacement(*this, "src", "Placement of the source buffer"),
           destinationPlacement(*this, "dst", "Placement of the destination buffer"),
           size(*this, "size", "Size of the buffer"),
-          useIoq(*this, "ioq", "Use In order queue") {}
+          useIoq(*this, "ioq", "Use In order queue"),
+          withCopyOffload(*this, "withCopyOffload", "Enable driver copy offload (only valid for L0)") {}
 };
 
 struct ExecuteCommandListImmediateCopyQueue : TestCase<ExecuteCommandListImmediateCopyQueueArguments> {

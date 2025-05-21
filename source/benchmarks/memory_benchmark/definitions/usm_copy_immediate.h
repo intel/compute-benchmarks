@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ struct UsmCopyImmediateArguments : TestCaseArgumentContainer {
     BufferContentsArgument contents;
     BooleanArgument forceBlitter;
     BooleanArgument useEvents;
+    BooleanArgument withCopyOffload;
 
     UsmCopyImmediateArguments()
         : sourcePlacement(*this, "src", "Placement of the source buffer"),
@@ -27,7 +28,8 @@ struct UsmCopyImmediateArguments : TestCaseArgumentContainer {
           size(*this, "size", "Size of the buffer"),
           contents(*this, "contents", "Contents of the buffers"),
           forceBlitter(*this, "forceBlitter", CommonHelpMessage::forceBlitter()),
-          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
+          withCopyOffload(*this, "withCopyOffload", "Enable driver copy offload (only valid for L0)") {}
 };
 
 struct UsmCopyImmediate : TestCase<UsmCopyImmediateArguments> {

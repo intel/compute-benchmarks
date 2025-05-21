@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ struct UsmCopyImmediateArguments : TestCaseArgumentContainer {
     ByteSizeArgument size;
     BooleanArgument forceBlitter;
     BooleanArgument useEvents;
+    BooleanArgument withCopyOffload;
 
     UsmCopyImmediateArguments()
         : contextPlacement(*this, "context", "How context will be created"),
@@ -30,7 +31,8 @@ struct UsmCopyImmediateArguments : TestCaseArgumentContainer {
           dstPlacement(*this, "dst", "Placement of memory for the destination buffer"),
           size(*this, "size", "Size of the buffers"),
           forceBlitter(*this, "forceBlitter", CommonHelpMessage::forceBlitter()),
-          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
+          withCopyOffload(*this, "withCopyOffload", "Enable driver copy offload (only valid for L0)") {}
 
     bool validateArgumentsExtra() const override {
         return DeviceSelectionHelper::isSubset(contextPlacement, queuePlacement) &&

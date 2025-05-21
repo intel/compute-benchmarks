@@ -112,6 +112,12 @@ static TestResult run(const ImmediateCommandListCompletionArguments &arguments, 
     commandQueueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
+    zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffload = {ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES, nullptr, true};
+    if (arguments.withCopyOffload) {
+        commandQueueDesc.flags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+        commandQueueDesc.pNext = &copyOffload;
+    }
+
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = static_cast<uint32_t>(arguments.numberOfThreads);

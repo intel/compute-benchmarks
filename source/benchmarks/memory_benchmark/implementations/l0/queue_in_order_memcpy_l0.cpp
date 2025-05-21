@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,11 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
     }
 
     ze_command_list_handle_t cmdList{};
+    zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffload = {ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES, nullptr, true};
+    if (arguments.withCopyOffload) {
+        levelzero.commandQueueDesc.flags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+        levelzero.commandQueueDesc.pNext = &copyOffload;
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &levelzero.commandQueueDesc, &cmdList));
     // Warmup
     ze_event_handle_t signalEvent = events[0];

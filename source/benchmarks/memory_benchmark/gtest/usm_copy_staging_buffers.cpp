@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-class UsmCopyStagingBuffersTest : public ::testing::TestWithParam<std::tuple<Api, bool, UsmMemoryPlacement, size_t, size_t>> {
+class UsmCopyStagingBuffersTest : public ::testing::TestWithParam<std::tuple<Api, bool, UsmMemoryPlacement, size_t, size_t, bool>> {
 };
 
 TEST_P(UsmCopyStagingBuffersTest, DISABLED_Test) {
@@ -24,6 +24,11 @@ TEST_P(UsmCopyStagingBuffersTest, DISABLED_Test) {
     args.dstPlacement = std::get<2>(GetParam());
     args.size = std::get<3>(GetParam());
     args.chunks = std::get<4>(GetParam());
+    args.withCopyOffload = std::get<5>(GetParam());
+
+    if (args.forceBlitter && args.withCopyOffload) {
+        GTEST_SKIP(); // If copy offload were to be executed on blitter
+    }
 
     UsmCopyStagingBuffers test;
     test.run(args);
@@ -38,4 +43,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::Values(UsmMemoryPlacement::Device, UsmMemoryPlacement::Host),
         ::testing::Values(1 * kiloByte, 2 * kiloByte, 4 * kiloByte, 128 * kiloByte, 1 * megaByte, 2 * megaByte, 16 * megaByte, 32 * megaByte, 128 * megaByte, 512 * megaByte),
-        ::testing::Values(1, 2, 4, 8)));
+        ::testing::Values(1, 2, 4, 8),
+        ::testing::Values(true, false)));

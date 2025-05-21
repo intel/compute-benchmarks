@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,11 +15,13 @@ struct ImmediateCmdListCopyWorkloadArguments : WorkloadArgumentContainer {
     Uint32Argument ordinal;
     Uint32Argument engineIndex;
     PositiveIntegerArgument copySize;
+    BooleanArgument withCopyOffload;
 
     ImmediateCmdListCopyWorkloadArguments()
         : ordinal(*this, "ordinal", "ordinal of engine group to be used"),
           engineIndex(*this, "engineIndex", "physical engine index inside the engine group"),
-          copySize(*this, "copySize", "size in bytes to be used for copy operation") {}
+          copySize(*this, "copySize", "size in bytes to be used for copy operation"),
+          withCopyOffload(*this, "withCopyOffload", "Enable driver copy offload (only valid for L0)") {}
 };
 
 struct ImmediateCmdListCopyWorkload : Workload<ImmediateCmdListCopyWorkloadArguments> {};
@@ -47,6 +49,12 @@ TestResult run(const ImmediateCmdListCopyWorkloadArguments &arguments, Statistic
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     commandQueueDesc.ordinal = static_cast<uint32_t>(arguments.ordinal);
     commandQueueDesc.index = static_cast<uint32_t>(arguments.engineIndex);
+
+    zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffload = {ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES, nullptr, true};
+    if (arguments.withCopyOffload) {
+        commandQueueDesc.flags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+        commandQueueDesc.pNext = &copyOffload;
+    }
 
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;

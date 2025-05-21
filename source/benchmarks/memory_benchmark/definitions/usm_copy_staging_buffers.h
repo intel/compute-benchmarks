@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,12 +17,14 @@ struct UsmCopyStagingBuffersArguments : TestCaseArgumentContainer {
     UsmMemoryPlacementArgument dstPlacement;
     ByteSizeArgument size;
     PositiveIntegerArgument chunks;
+    BooleanArgument withCopyOffload;
 
     UsmCopyStagingBuffersArguments()
         : forceBlitter(*this, "forceBlitter", CommonHelpMessage::forceBlitter()),
           dstPlacement(*this, "dst", "Memory placement of destination"),
           size(*this, "size", "Size of the buffer"),
-          chunks(*this, "chunks", "How much memory chunks should the buffer be splitted into") {}
+          chunks(*this, "chunks", "How much memory chunks should the buffer be splitted into"),
+          withCopyOffload(*this, "withCopyOffload", "Enable driver copy offload (only valid for L0)") {}
 };
 
 struct UsmCopyStagingBuffers : TestCase<UsmCopyStagingBuffersArguments> {

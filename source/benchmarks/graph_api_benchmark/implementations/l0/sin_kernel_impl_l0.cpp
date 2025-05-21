@@ -19,13 +19,6 @@
 #include <level_zero/ze_api.h>
 #include <math.h>
 
-typedef struct _zex_intel_queue_copy_operations_offload_hint_exp_desc_t {
-    ze_structure_type_t stype;
-    const void *pNext;
-    ze_bool_t copyOffloadEnabled;
-} zex_intel_queue_copy_operations_offload_hint_exp_desc_t;
-#define ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES (ze_structure_type_t)0x0003001B
-
 SinKernelGraphL0::DataFloatPtr SinKernelGraphL0::allocDevice(uint32_t count) {
     return mem_helper::alloc(UsmMemoryPlacement::Device, levelzero, count);
 }

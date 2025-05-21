@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<ExecuteCommandListImmediateCopyQueue> registerTestCase{};
 
-class ExecuteCommandListImmediateCopyQueueTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, UsmMemoryPlacement, UsmMemoryPlacement, size_t, bool, TestType>> {
+class ExecuteCommandListImmediateCopyQueueTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, UsmMemoryPlacement, UsmMemoryPlacement, size_t, bool, bool, TestType>> {
 };
 
 TEST_P(ExecuteCommandListImmediateCopyQueueTest, Test) {
@@ -28,10 +28,14 @@ TEST_P(ExecuteCommandListImmediateCopyQueueTest, Test) {
     args.destinationPlacement = std::get<4>(GetParam());
     args.size = std::get<5>(GetParam());
     args.useIoq = std::get<6>(GetParam());
+    args.withCopyOffload = std::get<7>(GetParam());
 
-    const auto testType = std::get<7>(GetParam());
+    const auto testType = std::get<8>(GetParam());
     if (isTestSkipped(Configuration::get().reducedSizeCAL, testType)) {
         GTEST_SKIP();
+    }
+    if (args.isCopyOnly && args.withCopyOffload) {
+        GTEST_SKIP(); // If copy offload were to be executed on blitter
     }
 
     ExecuteCommandListImmediateCopyQueue test;
@@ -50,5 +54,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
         ::testing::Values(64 * megaByte),
+        ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(TestType::Regular)));

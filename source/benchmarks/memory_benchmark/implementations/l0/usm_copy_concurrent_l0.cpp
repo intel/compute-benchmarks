@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,15 @@ static TestResult run(const UsmConcurrentCopyArguments &arguments, Statistics &s
     auto d2hQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, arguments.d2hEngine);
     if (nullptr == d2hQueueDesc) {
         return TestResult::DeviceNotCapable;
+    }
+
+    zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffload = {ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES, nullptr, true};
+    if (arguments.withCopyOffload) {
+        h2dQueueDesc->desc.flags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+        d2hQueueDesc->desc.flags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+
+        h2dQueueDesc->desc.pNext = &copyOffload;
+        d2hQueueDesc->desc.pNext = &copyOffload;
     }
 
     // Create events
