@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2024 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,6 +12,8 @@ set(PREDEFINED_TARGETS_FOLDER "CustomTargets")
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+# Enable exporting a compile_commands.json for builds for use with clangd etc.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
 # Enable MT Compilation in VisualStudio

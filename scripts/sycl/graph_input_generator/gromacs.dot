@@ -1,0 +1,55 @@
+digraph dot {
+"0x41464890" [style=bold, label="ID = 0x41464890\nTYPE = CGBarrier \n"];
+"0x41464ab0" [style=bold, label="ID = 0x41464ab0\nTYPE = CGBarrier \n"];
+  "0x41464890" -> "0x41464ab0"
+"0x414573d0" [style=bold, label="ID = 0x414573d0\nTYPE = CGExecKernel \nNAME = _ZTS24PmeSplineAndSpreadKernelILi4ELb1ELb1ELb1ELb1ELi1ELb1EL14ThreadsPerAtom1ELi16EE\n"];
+  "0x41464ab0" -> "0x414573d0"
+"0x414bfcf0" [style=bold, label="ID = 0x414bfcf0\nTYPE = CGExecKernel \nNAME = real_fft_44x44_s\n"];
+  "0x414573d0" -> "0x414bfcf0"
+"0x414c0700" [style=bold, label="ID = 0x414c0700\nTYPE = CGExecKernel \nNAME = fft_44_colbatched_once_48_s\n"];
+  "0x414bfcf0" -> "0x414c0700"
+"0x41491bf0" [style=bold, label="ID = 0x41491bf0\nTYPE = CGExecKernel \nNAME = _ZTS14PmeSolveKernelIL12GridOrdering1ELb0ELi0ELi16EE\n"];
+  "0x414c0700" -> "0x41491bf0"
+"0x414c1a00" [style=bold, label="ID = 0x414c1a00\nTYPE = CGExecKernel \nNAME = fft_44_colbatched_once_48_s\n"];
+  "0x41491bf0" -> "0x414c1a00"
+"0x414c2300" [style=bold, label="ID = 0x414c2300\nTYPE = CGExecKernel \nNAME = real_fft_44x44_s\n"];
+  "0x414c1a00" -> "0x414c2300"
+"0x414c40a0" [style=bold, label="ID = 0x414c40a0\nTYPE = CGExecKernel \nNAME = _ZTS15PmeGatherKernelILi4ELb1ELb1ELi1ELb1EL14ThreadsPerAtom1ELi16EE\n"];
+  "0x414c2300" -> "0x414c40a0"
+"0x414c41f0" [style=bold, label="ID = 0x414c41f0\nTYPE = CGBarrier \n"];
+  "0x414c40a0" -> "0x414c41f0"
+"0x414c4690" [style=bold, label="ID = 0x414c4690\nTYPE = CGBarrier \n"];
+  "0x414bef60" -> "0x414c4690"
+  "0x414c41f0" -> "0x414c4690"
+"0x414c5300" [style=bold, label="ID = 0x414c5300\nTYPE = CGExecKernel \nNAME = _ZTS12ReduceKernelILb1ELb0EE\n"];
+  "0x414c4690" -> "0x414c5300"
+"0x414c5660" [style=bold, label="ID = 0x414c5660\nTYPE = CGBarrier \n"];
+  "0x414c5300" -> "0x414c5660"
+"0x414c6ad0" [style=bold, label="ID = 0x414c6ad0\nTYPE = CGExecKernel \nNAME = _ZTSN3gmx20NbnxmKernelPruneOnlyILb0ELNS_12PairlistTypeE3EEE\n"];
+  "0x414c5660" -> "0x414c6ad0"
+"0x414c6de0" [style=bold, label="ID = 0x414c6de0\nTYPE = CGFillUSM \n"];
+  "0x414c6ad0" -> "0x414c6de0"
+"0x414c7b50" [style=bold, label="ID = 0x414c7b50\nTYPE = CGBarrier \n"];
+  "0x41464890" -> "0x414c7b50"
+  "0x414c5660" -> "0x414c7b50"
+"0x414c89c0" [style=bold, label="ID = 0x414c89c0\nTYPE = CGExecKernel \nNAME = _ZTS14LeapFrogKernelILN3gmx18NumTempScaleValuesE0ELNS0_31ParrinelloRahmanVelocityScalingE0EE\n"];
+  "0x414c7b50" -> "0x414c89c0"
+"0x414ca2d0" [style=bold, label="ID = 0x414ca2d0\nTYPE = CGExecKernel \nNAME = _ZTSN3gmx15LincsKernelNameILb1ELb0ELb1EEE\n"];
+  "0x414c89c0" -> "0x414ca2d0"
+"0x414cb350" [style=bold, label="ID = 0x414cb350\nTYPE = CGExecKernel \nNAME = _ZTSN3gmx16SettleKernelNameILb1ELb0EEE\n"];
+  "0x414ca2d0" -> "0x414cb350"
+"0x414cb6b0" [style=bold, label="ID = 0x414cb6b0\nTYPE = CGBarrier \n"];
+  "0x414cb350" -> "0x414cb6b0"
+"0x414c7250" [style=bold, label="ID = 0x414c7250\nTYPE = CGFillUSM \n"];
+  "0x414c41f0" -> "0x414c7250"
+"0x414c76b0" [style=bold, label="ID = 0x414c76b0\nTYPE = CGFillUSM \n"];
+  "0x414c7250" -> "0x414c76b0"
+"0x41457860" [style=bold, label="ID = 0x41457860\nTYPE = CGBarrier \n"];
+  "0x41464890" -> "0x41457860"
+"0x41491b50" [style=bold, label="ID = 0x41491b50\nTYPE = CGExecKernel \nNAME = _ZTSN3gmx29NbnxmKernelTransformXToXqNameE\n"];
+  "0x41457860" -> "0x41491b50"
+"0x414bc360" [style=bold, label="ID = 0x414bc360\nTYPE = CGExecKernel \nNAME = _ZTS12BondedKernelILb0ELb0EE\n"];
+  "0x41491b50" -> "0x414bc360"
+"0x414bef60" [style=bold, label="ID = 0x414bef60\nTYPE = CGExecKernel \nNAME = _ZTSN3gmx11NbnxmKernelILb0ELb0ELNS_8ElecTypeE4ELNS_7VdwTypeE1ELi32EEE\n"];
+  "0x414bc360" -> "0x414bef60"
+}

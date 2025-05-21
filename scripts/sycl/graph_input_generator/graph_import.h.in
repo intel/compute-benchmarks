@@ -1,0 +1,28 @@
+/*
+ * Copyright (C) 2025 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+// This header is used as a template for graph_dot_to_cpp.py
+// clang-format off
+#pragma once
+
+#include <array>
+#include <vector>
+
+namespace graph_import {{
+enum class NodeType {{
+    Kernel,
+    Barrier
+}};
+
+struct node {{
+    NodeType Type;
+    std::vector<size_t> Successors;
+}};
+// GENERATED GRAPH STRUCTURES
+{graphStructures}
+
+}} // namespace graph_import
