@@ -18,7 +18,7 @@ struct DistributionKindArgument : EnumArgument<DistributionKindArgument, Distrib
         return *this;
     }
 
-    const static inline std::string enumName = "";
+    const static inline std::string enumName = "distribution kind";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[2] = {EnumType::Uniform, EnumType::LogUniform};
     const static inline std::string enumValuesNames[2] = {"Uniform", "LogUniform"};
