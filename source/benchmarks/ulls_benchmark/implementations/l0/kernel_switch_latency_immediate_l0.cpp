@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,7 +83,7 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
         flags |= ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     }
 
-    zex_counter_based_event_desc_t counterBasedEventDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+    zex_counter_based_event_desc_t counterBasedEventDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     counterBasedEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
     if (arguments.hostVisible) {
         counterBasedEventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
@@ -123,7 +123,7 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
         ze_event_handle_t eventHandle = nullptr;
 
         if (arguments.counterBasedEvents) {
-            zex_counter_based_event_desc_t profilingDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+            zex_counter_based_event_desc_t profilingDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
             profilingDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
 
             ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &profilingDesc, &eventHandle));
