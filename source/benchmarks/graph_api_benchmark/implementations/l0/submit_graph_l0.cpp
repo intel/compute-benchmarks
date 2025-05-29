@@ -15,7 +15,6 @@
 #include <iostream>
 
 static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, Statistics &statistics) {
-
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
@@ -80,25 +79,77 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(graphCmdList));
 
-    // Warmup
+    // cb event description
+    const bool counterBasedEvents = arguments.inOrderQueue;
+    zex_counter_based_event_desc_t counterBasedEventDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    counterBasedEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+    counterBasedEventDesc.flags |= arguments.useProfiling ? ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP : 0;
+    counterBasedEventDesc.signalScope = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    counterBasedEventDesc.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    // Create event pool (if not using counter based events)
+    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.flags |= arguments.useProfiling ? ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP : 0;
+    eventPoolDesc.count = static_cast<uint32_t>(arguments.numKernels); // ensures one unique event per kernel
+
+    ze_event_pool_handle_t eventPool = nullptr;
+    if (!counterBasedEvents) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
+    }
+
+    ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_handle_t event{};
+    ze_event_handle_t signalEvent = nullptr;
+
+    // warmup
+    if (arguments.useEvents) {
+        if (counterBasedEvents) {
+            ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(
+                levelzero.context, levelzero.device, &counterBasedEventDesc, &event));
+        } else {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
+        }
+        signalEvent = event;
+    }
+
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListImmediateAppendCommandListsExp(
-        cmdList, 1, &graphCmdList, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(
-        cmdList, std::numeric_limits<uint64_t>::max()));
+        cmdList, 1, &graphCmdList, signalEvent, 0, nullptr));
+
+    if (arguments.useEvents) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(
+            signalEvent, std::numeric_limits<uint64_t>::max()));
+        if (!counterBasedEvents) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
+        }
+    } else {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(
+            cmdList, std::numeric_limits<uint64_t>::max()));
+    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListImmediateAppendCommandListsExp(
-            cmdList, 1, &graphCmdList, nullptr, 0, nullptr));
+            cmdList, 1, &graphCmdList, signalEvent, 0, nullptr));
 
         if (!arguments.measureCompletionTime) {
             timer.measureEnd();
         }
 
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(
-            cmdList, std::numeric_limits<uint64_t>::max()));
+        if (arguments.useEvents) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(
+                signalEvent, std::numeric_limits<uint64_t>::max()));
+            if (!counterBasedEvents) {
+                ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
+            }
+        } else {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(
+                cmdList, std::numeric_limits<uint64_t>::max()));
+        }
 
         if (arguments.measureCompletionTime) {
             timer.measureEnd();
@@ -106,6 +157,13 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
+    // Cleanup
+    if (arguments.useEvents) {
+        EXPECT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
+        if (!counterBasedEvents) {
+            EXPECT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
+        }
+    }
     EXPECT_ZE_RESULT_SUCCESS(zeCommandListDestroy(graphCmdList));
     EXPECT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     EXPECT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));

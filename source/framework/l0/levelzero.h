@@ -19,6 +19,7 @@
 
 #include <cmath>
 #include <level_zero/ze_api.h>
+#include <level_zero/ze_stypes.h>
 #include <ratio>
 
 namespace L0 {

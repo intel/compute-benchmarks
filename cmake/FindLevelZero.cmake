@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,6 +15,10 @@ find_path(LevelZero_INCLUDE_DIR
   PATHS ${LevelZero_SEARCH_PATHS}
   PATH_SUFFIXES "include"
 )
+
+if(LevelZero_INCLUDE_DIR AND NOT EXISTS "${LevelZero_INCLUDE_DIR}/level_zero/ze_stypes.h")
+  unset(LevelZero_INCLUDE_DIR CACHE)
+endif()
 
 find_library(LevelZero_LIBRARY
   NAMES ze_loader
