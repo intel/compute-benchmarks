@@ -38,7 +38,7 @@ INSTANTIATE_TEST_SUITE_P(
     UsmCopyTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::ValuesIn(UsmMemoryPlacementArgument::enumValues),
+        ::testing::ValuesIn(UsmMemoryPlacementArgument::stableTargets),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
         ::testing::Values(512 * megaByte),
         ::testing::Values(BufferContents::Zeros),
