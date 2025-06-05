@@ -16,10 +16,6 @@ find_path(LevelZero_INCLUDE_DIR
   PATH_SUFFIXES "include"
 )
 
-if(LevelZero_INCLUDE_DIR AND NOT EXISTS "${LevelZero_INCLUDE_DIR}/level_zero/ze_stypes.h")
-  unset(LevelZero_INCLUDE_DIR CACHE)
-endif()
-
 find_library(LevelZero_LIBRARY
   NAMES ze_loader
   PATHS ${LevelZero_SEARCH_PATHS}

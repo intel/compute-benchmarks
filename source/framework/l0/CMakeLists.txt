@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,16 +11,12 @@ endif()
 # Get libraries and headers for the SDK
 find_package(LevelZero QUIET)
 if(NOT ${LevelZero_FOUND})
-    set(ADDITIONAL_PATH "${CMAKE_SOURCE_DIR}/third_party/level-zero-sdk")
-    message(STATUS "Level Zero installation not found. Trying ${ADDITIONAL_PATH}")
-
     if (WIN32)
         set(LIB_NAME ze_loader.lib)
     else()
         set(LIB_NAME libze_loader.so)
     endif()
-    set(LevelZero_LIBRARIES    "${ADDITIONAL_PATH}/lib/x64/${LIB_NAME}")
-    set(LevelZero_INCLUDE_DIRS "${ADDITIONAL_PATH}/include")
+    set(LevelZero_LIBRARIES "${CMAKE_SOURCE_DIR}/third_party/level-zero-sdk/lib/x64/${LIB_NAME}")
 else()
     message(STATUS "Level Zero installation found")
 endif()
@@ -36,6 +32,7 @@ target_link_libraries(${TARGET_NAME} PUBLIC ${LevelZero_LIBRARIES})
 target_link_libraries(${TARGET_NAME} PUBLIC compute_benchmarks_framework)
 target_include_directories(${TARGET_NAME} PUBLIC ${LevelZero_INCLUDE_DIRS})
 target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/third_party/level-zero-intel)
+target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/third_party/level-zero-sdk/include)
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER framework)
 add_subdirectories()
 setup_vs_folders(${TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR})
