@@ -63,17 +63,37 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-
-        timer.measureStart();
+        std::vector<Timer::Clock::duration> durations;
         for (auto j = 0u; j < arguments.eventCount; ++j) {
             eventDesc.index = j;
+            timer.measureStart();
             ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[j]));
-        }
-        timer.measureEnd();
-        for (auto j = 0u; j < arguments.eventCount; ++j) {
+            timer.measureEnd();
+            durations.push_back(timer.get());
+
             ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(events[j]));
         }
-        statistics.pushValue(timer.get() / arguments.eventCount, typeSelector.getUnit(), typeSelector.getType());
+
+        Timer::Clock::duration meanDuration(0);
+        for (auto j = 0u; j < arguments.eventCount; ++j) {
+            meanDuration += durations[j];
+        }
+        meanDuration /= arguments.eventCount;
+
+        std::vector<Timer::Clock::duration> validDurations;
+        for (auto duration : durations) {
+            if (duration >= 0.1 * meanDuration && duration <= 1.9 * meanDuration) {
+                validDurations.push_back(duration);
+            }
+        }
+
+        Timer::Clock::duration validDurationsMean(0);
+        for (auto j = 0u; j < validDurations.size(); ++j) {
+            validDurationsMean += validDurations[j];
+        }
+        validDurationsMean /= validDurations.size();
+
+        statistics.pushValue(validDurationsMean, typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
