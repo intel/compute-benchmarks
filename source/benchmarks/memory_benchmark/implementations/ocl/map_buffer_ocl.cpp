@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,11 @@
 #include <gtest/gtest.h>
 
 static TestResult run(const MapBufferArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
+    MeasurementUnit measurementUnit = MeasurementUnit::GigabytesPerSecond;
+    if (arguments.mapFlags == MapFlags::WriteInvalidate) {
+        measurementUnit = MeasurementUnit::Microseconds;
+    }
+    MeasurementFields typeSelector(measurementUnit, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
@@ -71,7 +75,17 @@ static TestResult run(const MapBufferArguments &arguments, Statistics &statistic
             cl_ulong timeNs{};
             ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
             ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-            statistics.pushValue(std::chrono::nanoseconds(timeNs), arguments.size, typeSelector.getUnit(), typeSelector.getType());
+
+            // WriteInvalidate can be faster than timer resolution
+            if (arguments.mapFlags == MapFlags::WriteInvalidate && timeNs == 0) {
+                retVal = clGetDeviceInfo(opencl.device, CL_DEVICE_PROFILING_TIMER_RESOLUTION, sizeof(cl_ulong), &timeNs, nullptr);
+                ASSERT_CL_SUCCESS(retVal);
+            }
+            if (typeSelector.getUnit() == MeasurementUnit::Microseconds) {
+                statistics.pushValue(std::chrono::nanoseconds(timeNs), typeSelector.getUnit(), typeSelector.getType());
+            } else {
+                statistics.pushValue(std::chrono::nanoseconds(timeNs), arguments.size, typeSelector.getUnit(), typeSelector.getType());
+            }
         } else {
             statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), typeSelector.getType());
         }
