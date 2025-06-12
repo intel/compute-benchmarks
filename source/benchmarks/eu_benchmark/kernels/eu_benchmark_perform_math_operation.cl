@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -141,7 +141,8 @@
     MATH_OPERATION(address, otherArgument);        \
     MATH_OPERATION(address, otherArgument);        \
     MATH_OPERATION(address, otherArgument);        \
-    MATH_OPERATION(address, otherArgument);
+    MATH_OPERATION(address, otherArgument);        \
+    ADDITIONAL_OPERATION(address, otherArgument);
 
 __kernel void do_math_operation(__global DATATYPE *buffer, const DATATYPE otherArgument, const uint iterations) {
     __global DATATYPE *address = buffer + get_global_id(0);

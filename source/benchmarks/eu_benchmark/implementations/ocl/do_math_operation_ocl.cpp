@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,13 @@ std::string getCompilerOptions(DataType dataType, MathOperation operation, bool 
         break;
     default:
         FATAL_ERROR("Invalid math operation");
+    }
+
+    // Avoid optimizing operation out.
+    if (operation == MathOperation::Xor) {
+        options.addMacro("ADDITIONAL_OPERATION", {"a", "b"}, "a=a^b");
+    } else {
+        options.addMacro("ADDITIONAL_OPERATION", {"a", "b"}, "");
     }
 
     if (largeGrfMode) {
