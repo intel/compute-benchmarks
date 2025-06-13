@@ -6,12 +6,12 @@
  */
 
 #pragma once
-#include "framework/argument/boolean_flag_argument.h"
+#include "framework/argument/basic_argument.h"
 #include "framework/argument/enum/graph_structure_argument.h"
 #include "framework/test_case/test_case.h"
 
 struct FinalizeGraphArguments : TestCaseArgumentContainer {
-    BooleanFlagArgument rebuildGraphEveryIter;
+    BooleanArgument rebuildGraphEveryIter;
     GraphStructureArgument graphStructure;
 
     FinalizeGraphArguments() : rebuildGraphEveryIter(*this, "rebuildGraphEveryIter", "Rebuild the modifiable graph on every iteration, otherwise finalize the same modifiable graph every iteration."),
