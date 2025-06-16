@@ -78,7 +78,7 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList1, kernel, &groupCount, profilingEvents[0], 0, nullptr));
     for (auto switchIdentifier = 0u; switchIdentifier < arguments.switchCount; switchIdentifier++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel((switchIdentifier % 2) == 1 ? cmdList2 : cmdList1, kernel, &groupCount, profilingEvents[switchIdentifier + 1], 1, &profilingEvents[switchIdentifier]));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel((switchIdentifier % 2) == 0 ? cmdList2 : cmdList1, kernel, &groupCount, profilingEvents[switchIdentifier + 1], 1, &profilingEvents[switchIdentifier]));
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList1));
