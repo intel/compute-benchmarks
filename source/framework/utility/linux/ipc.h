@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "framework/test_case/test_result.h"
 
+#include <iomanip>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <vector>
