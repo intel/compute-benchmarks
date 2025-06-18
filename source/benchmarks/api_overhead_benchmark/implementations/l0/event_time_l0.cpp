@@ -86,12 +86,8 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
     const uint32_t tolerance = 0.5; // tolerance 50%
     for (auto duration : durations) {
         if (duration >= tolerance * meanDuration && duration <= (1 + tolerance) * meanDuration) {
-            validDurations.push_back(duration);
+            statistics.pushValue(duration / arguments.eventCount, typeSelector.getUnit(), typeSelector.getType());
         }
-    }
-
-    for (auto duration : validDurations) {
-        statistics.pushValue(duration / arguments.eventCount, typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
