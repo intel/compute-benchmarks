@@ -62,6 +62,7 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
     }
 
     // Benchmark
+    std::vector<Timer::Clock::duration> durations;
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         timer.measureStart();
@@ -73,7 +74,24 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
         for (auto j = 0u; j < arguments.eventCount; ++j) {
             ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(events[j]));
         }
-        statistics.pushValue(timer.get() / arguments.eventCount, typeSelector.getUnit(), typeSelector.getType());
+        durations.push_back(timer.get());
+    }
+
+    Timer::Clock::duration meanDuration(0);
+    for (auto duration : durations)
+        meanDuration += duration;
+    meanDuration /= durations.size();
+
+    std::vector<Timer::Clock::duration> validDurations;
+    const uint32_t tolerance = 0.5; // tolerance 50%
+    for (auto duration : durations) {
+        if (duration >= tolerance * meanDuration && duration <= (1 + tolerance) * meanDuration) {
+            validDurations.push_back(duration);
+        }
+    }
+
+    for (auto duration : validDurations) {
+        statistics.pushValue(duration / arguments.eventCount, typeSelector.getUnit(), typeSelector.getType());
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
