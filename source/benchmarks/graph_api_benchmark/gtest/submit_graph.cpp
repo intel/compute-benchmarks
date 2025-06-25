@@ -14,19 +14,20 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<SubmitGraph> registerTestCase{};
 
-class SubmitGraphTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, bool, bool, size_t, size_t, bool>> {
+class SubmitGraphTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, bool, bool, bool, size_t, size_t, bool>> {
 };
 
 TEST_P(SubmitGraphTest, Test) {
     SubmitGraphArguments args{};
     args.api = std::get<0>(GetParam());
     args.useProfiling = std::get<1>(GetParam());
-    args.inOrderQueue = std::get<2>(GetParam());
-    args.useEvents = std::get<3>(GetParam());
-    args.useExplicit = std::get<4>(GetParam());
-    args.numKernels = std::get<5>(GetParam());
-    args.kernelExecutionTime = std::get<6>(GetParam());
-    args.measureCompletionTime = std::get<7>(GetParam());
+    args.useHostTasks = std::get<2>(GetParam());
+    args.inOrderQueue = std::get<3>(GetParam());
+    args.useEvents = std::get<4>(GetParam());
+    args.useExplicit = std::get<5>(GetParam());
+    args.numKernels = std::get<6>(GetParam());
+    args.kernelExecutionTime = std::get<7>(GetParam());
+    args.measureCompletionTime = std::get<8>(GetParam());
     SubmitGraph test;
     test.run(args);
 }
@@ -37,6 +38,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(false, true),      // useProfiling
+        ::testing::Values(false, true),      // useHostTasks
         ::testing::Values(false, true),      // inOrderQueue
         ::testing::Values(false, true),      // useEvents
         ::testing::Values(false, true),      // useExplicit

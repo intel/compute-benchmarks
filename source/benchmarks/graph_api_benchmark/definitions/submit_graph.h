@@ -12,6 +12,7 @@
 
 struct SubmitGraphArguments : TestCaseArgumentContainer {
     BooleanArgument useProfiling;
+    BooleanArgument useHostTasks;
     BooleanArgument inOrderQueue;
     BooleanArgument useEvents;
     BooleanArgument useExplicit;
@@ -21,6 +22,7 @@ struct SubmitGraphArguments : TestCaseArgumentContainer {
 
     SubmitGraphArguments()
         : useProfiling(*this, "Profiling", "Create the queue with the enable_profiling property"),
+          useHostTasks(*this, "UseHostTasks", "Submit SYCL host task after kernel enqueue"),
           inOrderQueue(*this, "InOrderQueue", "Create the queue with the in_order property"),
           useEvents(*this, "UseEvents", "Do not create and track events for synchronization"),
           useExplicit(*this, "UseExplicit", "Using Explicit Graph Creation mode vs. Record and Replay"),

@@ -67,10 +67,18 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
             for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
                 graph.add([&](sycl::handler &h) { h.parallel_for(range, eat_time); });
             }
+            if (arguments.useHostTasks) {
+                graph.add([&](sycl::handler &h) { h.host_task([=]() { eat_time(0); }); });
+            }
         } else {
             graph.begin_recording(queue);
             for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
                 queue.parallel_for(range, eat_time);
+            }
+            if (arguments.useHostTasks) {
+                queue.submit([&](sycl::handler &cgh) {
+                    cgh.host_task([=]() { eat_time(0); });
+                });
             }
             graph.end_recording();
         }
