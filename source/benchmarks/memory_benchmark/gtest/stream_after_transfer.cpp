@@ -15,7 +15,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<StreamAfterTransfer> registerTestCase{};
 
-class StreamAfterTransferTest : public ::testing::TestWithParam<std::tuple<StreamMemoryType, size_t, bool>> {
+class StreamAfterTransferTest : public ::testing::TestWithParam<std::tuple<StreamMemoryType, size_t>> {
 };
 
 TEST_P(StreamAfterTransferTest, Test) {
@@ -23,7 +23,6 @@ TEST_P(StreamAfterTransferTest, Test) {
     args.api = Api::OpenCL;
     args.type = std::get<0>(GetParam());
     args.size = std::get<1>(GetParam());
-    args.useEvents = std::get<2>(GetParam());
 
     StreamAfterTransfer test;
     test.run(args);
@@ -35,13 +34,11 @@ INSTANTIATE_TEST_SUITE_P(
     StreamAfterTransferTest,
     ::testing::Combine(
         ::testing::ValuesIn(StreamMemoryTypeArgument::onlyReadAndTriad),
-        ::testing::Values(1 * megaByte, 16 * megaByte, 64 * megaByte, 256 * megaByte, 1 * gigaByte),
-        ::testing::Values(false, true)));
+        ::testing::Values(1 * megaByte, 16 * megaByte, 64 * megaByte, 256 * megaByte, 1 * gigaByte)));
 
 INSTANTIATE_TEST_SUITE_P(
     StreamAfterTransferTestLIMITED,
     StreamAfterTransferTest,
     ::testing::Combine(
         ::testing::Values(StreamMemoryType::Triad),
-        ::testing::Values(1 * gigaByte),
-        ::testing::Values(true)));
+        ::testing::Values(1 * gigaByte)));

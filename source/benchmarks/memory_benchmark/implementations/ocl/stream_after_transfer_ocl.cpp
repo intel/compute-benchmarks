@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@
 using namespace MemoryConstants;
 
 static TestResult run(const StreamAfterTransferArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
@@ -32,7 +32,6 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
     cl_int retVal = {};
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true).setOoq(0);
     Opencl opencl(queueProperties);
-    Timer timer;
     bool useDoubles = opencl.getExtensions().areDoublesSupported();
 
     size_t elementSize = useDoubles ? 8u : 4u;
@@ -126,16 +125,13 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
 
         // emit transfers
         for (auto bufferId = 0u; bufferId < buffersCount; bufferId++) {
-            ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, buffers[bufferId], true, 0u, bufferSizes[bufferId], data.get(), 0u, nullptr, nullptr));
+            ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, buffers[bufferId], false, 0u, bufferSizes[bufferId], data.get(), 0u, nullptr, nullptr));
         }
 
         cl_event profilingEvent{};
-        cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;
 
-        timer.measureStart();
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, eventForEnqueue));
+        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, &profilingEvent));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-        timer.measureEnd();
 
         size_t transferSize = arguments.size;
         switch (arguments.type) {
@@ -149,15 +145,10 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
             break;
         }
 
-        if (eventForEnqueue) {
-            cl_ulong timeNs{};
-            ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
-            ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-
-            statistics.pushValue(std::chrono::nanoseconds(timeNs), transferSize, typeSelector.getUnit(), typeSelector.getType());
-        } else {
-            statistics.pushValue(timer.get(), transferSize, typeSelector.getUnit(), typeSelector.getType());
-        }
+        cl_ulong timeNs{};
+        ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
+        ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
+        statistics.pushValue(std::chrono::nanoseconds(timeNs), transferSize, typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup

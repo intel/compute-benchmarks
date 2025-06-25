@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,12 +15,10 @@
 struct StreamAfterTransferArguments : TestCaseArgumentContainer {
     StreamMemoryTypeArgument type;
     ByteSizeArgument size;
-    BooleanArgument useEvents;
 
     StreamAfterTransferArguments()
         : type(*this, "type", "Memory streaming type"),
-          size(*this, "size", "Size of the memory to stream. Must be divisible by datatype size."),
-          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
+          size(*this, "size", "Size of the memory to stream. Must be divisible by datatype size.") {}
 };
 
 struct StreamAfterTransfer : TestCase<StreamAfterTransferArguments> {
