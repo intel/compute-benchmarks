@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include <level_zero/ze_api.h>
+#include <level_zero/ze_intel_gpu.h>
 #include <level_zero/zex_driver.h>
 #include <level_zero/zex_event.h>
 
