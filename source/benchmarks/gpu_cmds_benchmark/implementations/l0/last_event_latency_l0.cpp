@@ -58,7 +58,7 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
     // Setup command list with CB event
     ze_command_list_handle_t cmdList;
     ze_event_handle_t event;
-    zeCommandListCreateImmediate(context, levelzero.device, nullptr, &cmdList);
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(context, levelzero.device, nullptr, &cmdList));
     levelzero.counterBasedEventCreate2(context, levelzero.device, nullptr, &event);
     auto eventOnKernel = !arguments.signalOnBarrier ? event : nullptr;
 
