@@ -47,6 +47,8 @@ struct LevelZero {
     size_t commandQueueMaxFillSize{};
     ImportHostPointerExtension importHostPointer{};
     L0CounterBasedEventCreate2 counterBasedEventCreate2 = nullptr;
+    L0DriverGetDefaultContext zeDriverGetDefaultContext = nullptr;
+    L0AppendLaunchKernelWithArguments zeCommandListAppendLaunchKernelWithArguments = nullptr;
 
     // Constructors, destructor
     LevelZero() : LevelZero(QueueProperties::create()) {}

@@ -17,10 +17,13 @@ using L0ImportExternalPointer = decltype(&zexDriverImportExternalPointer);
 using L0ReleaseImportedPointer = decltype(&zexDriverReleaseImportedPointer);
 using L0GetHostPointerBaseAddress = decltype(&zexDriverGetHostPointerBaseAddress);
 using L0CounterBasedEventCreate2 = decltype(&zexCounterBasedEventCreate2);
+using L0DriverGetDefaultContext = decltype(&zeDriverGetDefaultContext);
+using L0AppendLaunchKernelWithArguments = decltype(&zeCommandListAppendLaunchKernelWithArguments);
 
 struct ExtensionProperties {
     bool getImportHostPointerFunctions = false;
     bool getCounterBasedCreateFunctions = false;
+    bool getSimplifiedL0Functions = false;
 
     static ExtensionProperties create() {
         return ExtensionProperties();
@@ -33,6 +36,11 @@ struct ExtensionProperties {
 
     ExtensionProperties &setCounterBasedCreateFunctions(bool value) {
         getCounterBasedCreateFunctions = value;
+        return *this;
+    }
+
+    ExtensionProperties &setSimplifiedL0Functions(bool value) {
+        getSimplifiedL0Functions = value;
         return *this;
     }
 };

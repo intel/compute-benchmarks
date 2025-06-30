@@ -50,6 +50,7 @@ LevelZero::LevelZero(const QueueProperties &queueProperties, const ContextProper
         this->device = getDevice(contextProperties.deviceSelection);
     }
 
+    initializeExtension(extensionProperties);
     // Create context on the default device
     this->context = createContext(contextProperties);
     if (this->context == nullptr) {
@@ -62,8 +63,6 @@ LevelZero::LevelZero(const QueueProperties &queueProperties, const ContextProper
     this->commandQueueDesc = queueDesc.desc;
     this->commandQueueDevice = queueDesc.family.device;
     this->commandQueueMaxFillSize = queueDesc.family.maxFillSize;
-
-    initializeExtension(extensionProperties);
 }
 
 LevelZero::~LevelZero() noexcept(false) {
@@ -165,6 +164,20 @@ void LevelZero::initializeExtension(const ExtensionProperties &extensionProperti
                                                 "zexCounterBasedEventCreate2",
                                                 reinterpret_cast<void **>(&this->counterBasedEventCreate2)));
         FATAL_ERROR_IF(this->counterBasedEventCreate2 == nullptr, "zexCounterBasedEventCreate2 retrieved nullptr");
+    }
+
+    if (extensionProperties.getSimplifiedL0Functions) {
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zeDriverGetDefaultContext",
+                                                reinterpret_cast<void **>(&this->zeDriverGetDefaultContext)));
+        FATAL_ERROR_IF(this->zeDriverGetDefaultContext == nullptr, "zeDriverGetDefaultContext retrieved nullptr");
+
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zeCommandListAppendLaunchKernelWithArguments",
+                                                reinterpret_cast<void **>(&this->zeCommandListAppendLaunchKernelWithArguments)));
+        FATAL_ERROR_IF(this->zeCommandListAppendLaunchKernelWithArguments == nullptr, "zeCommandListAppendLaunchKernelWithArguments retrieved nullptr");
     }
 }
 
