@@ -20,6 +20,10 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
     }
+    if (!arguments.signalOnBarrier && !arguments.useSameCmdList) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
+    }
     Timer timer;
     ExtensionProperties extensionProperties = ExtensionProperties::create()
                                                   .setCounterBasedCreateFunctions(true)
@@ -61,12 +65,18 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(context, levelzero.device, nullptr, &cmdList));
     levelzero.counterBasedEventCreate2(context, levelzero.device, nullptr, &event);
     auto eventOnKernel = !arguments.signalOnBarrier ? event : nullptr;
+    ze_command_list_handle_t barrierCmdList = cmdList;
+    auto dependencyOnKernel = arguments.useSameCmdList ? 0 : 1;
+    if (!arguments.useSameCmdList) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(context, levelzero.device, nullptr, &barrierCmdList));
+        levelzero.counterBasedEventCreate2(context, levelzero.device, nullptr, &eventOnKernel);
+    }
 
     // Warmup
     auto ret = appendLaunchKernelWithArgumentsFunc(cmdList, kernel, wgc, wgs, kernelArgs, nullptr, eventOnKernel, 0, nullptr);
     ASSERT_ZE_RESULT_SUCCESS(ret);
     if (arguments.signalOnBarrier) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, event, 0, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(barrierCmdList, event, dependencyOnKernel, &eventOnKernel));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
 
@@ -76,7 +86,7 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
         ret = appendLaunchKernelWithArgumentsFunc(cmdList, kernel, wgc, wgs, kernelArgs, nullptr, eventOnKernel, 0, nullptr);
         ASSERT_ZE_RESULT_SUCCESS(ret);
         if (arguments.signalOnBarrier) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, event, 0, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(barrierCmdList, event, dependencyOnKernel, &eventOnKernel));
         }
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
 
@@ -89,6 +99,10 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
+    if (!arguments.useSameCmdList) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(barrierCmdList));
+        ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(eventOnKernel));
+    }
     return TestResult::Success;
 }
 

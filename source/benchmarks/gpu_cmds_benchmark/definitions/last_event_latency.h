@@ -8,14 +8,15 @@
 #pragma once
 
 #include "framework/argument/basic_argument.h"
-#include "framework/argument/enum/work_item_id_usage_argument.h"
 #include "framework/test_case/test_case.h"
 #include "framework/utility/common_help_message.h"
 
 struct LastEventLatencyArguments : TestCaseArgumentContainer {
     BooleanArgument signalOnBarrier;
+    BooleanArgument useSameCmdList;
 
-    LastEventLatencyArguments() : signalOnBarrier(*this, "signalOnBarrier", "Place signal event on barrier instead of launched kernel.") {}
+    LastEventLatencyArguments() : signalOnBarrier(*this, "signalOnBarrier", "Place signal event on barrier instead of launched kernel."),
+                                  useSameCmdList(*this, "useSameCmdList", "Synchronize on barrier using same cmd list.") {}
 };
 
 struct LastEventLatency : TestCase<LastEventLatencyArguments> {
