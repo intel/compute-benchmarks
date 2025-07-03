@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,8 @@ void printDeviceInfo() {
     std::cout << "LevelZero driver version: " << driverVersion << std::endl;
 
     ze_device_properties_t deviceProperties{ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_eu_count_ext_t zeEuCountDesc = {ZE_STRUCTURE_TYPE_EU_COUNT_EXT};
+    deviceProperties.pNext = &zeEuCountDesc;
     ZE_RESULT_SUCCESS_OR_ERROR(zeDeviceGetProperties(levelzero.device, &deviceProperties));
     IntelProduct intelProduct = getIntelProduct(deviceProperties);
     IntelGen intelGen = getIntelGen(intelProduct);
@@ -37,7 +39,7 @@ void printDeviceInfo() {
     std::cout << "\t\tdeviceId:     0x" << std::hex << deviceProperties.deviceId << " (intelProduct=" << std::to_string(intelProduct) << ", intelGen=" << std::to_string(intelGen) << ")\n";
     std::cout << "\t\tclockFreq:    " << std::dec << deviceProperties.coreClockRate << std::endl;
     std::cout << "\t\tconfig:       " << deviceProperties.numSlices << "x" << deviceProperties.numSubslicesPerSlice << "x" << deviceProperties.numEUsPerSubslice << std::endl;
-    std::cout << "\t\teuCount:      " << deviceProperties.numSlices * deviceProperties.numSubslicesPerSlice * deviceProperties.numEUsPerSubslice << std::endl;
+    std::cout << "\t\teuCount:      " << zeEuCountDesc.numTotalEUs << std::endl;
     std::cout << "\t\tthreadsPerEu: " << deviceProperties.numThreadsPerEU << std::endl;
 
     std::cout << std::endl;
