@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ Opencl::Opencl(const QueueProperties &queueProperties, const ContextProperties &
         for (uint32_t localPlatformIndex = 0u; localPlatformIndex < numPlatforms; localPlatformIndex++) {
             if (clGetDeviceIDs(platforms[localPlatformIndex], CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices) == CL_SUCCESS) {
                 platformIndex = localPlatformIndex;
+                break;
             }
         }
     }
