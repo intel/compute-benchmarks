@@ -11,4 +11,5 @@ enum class GraphStructure {
     Unknown,
     Gromacs,
     LLama,
+    Amr,
 };

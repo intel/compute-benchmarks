@@ -33,6 +33,6 @@ INSTANTIATE_TEST_SUITE_P(
     FinalizeGraphTest,
     ::testing::Combine(
         ::testing::Values(Api::SYCL),
-        ::testing::Values(true, false),                                   // firstFinalizeOnly
-        ::testing::Values(GraphStructure::Gromacs, GraphStructure::LLama) // graphStructure
+        ::testing::Values(true, false),                                                        // firstFinalizeOnly
+        ::testing::Values(GraphStructure::Gromacs, GraphStructure::LLama, GraphStructure::Amr) // graphStructure
         ));

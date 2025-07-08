@@ -20,6 +20,6 @@ struct GraphStructureArgument : EnumArgument<GraphStructureArgument, GraphStruct
 
     const static inline std::string enumName = "graph structure";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
-    const static inline EnumType enumValues[2] = {EnumType::Gromacs, EnumType::LLama};
-    const static inline std::string enumValuesNames[2] = {"Gromacs", "LLama"};
+    const static inline EnumType enumValues[3] = {EnumType::Gromacs, EnumType::LLama, EnumType::Amr};
+    const static inline std::string enumValuesNames[3] = {"Gromacs", "LLama", "Amr"};
 };

@@ -78,6 +78,10 @@ sycl_ext::command_graph<sycl_ext::graph_state::modifiable> constructGraph(GraphS
         buildGraphFromNodes(graph_import::llama, Graph);
         break;
     }
+    case GraphStructure::Amr: {
+        buildGraphFromNodes(graph_import::amr, Graph);
+        break;
+    }
     default:
         FATAL_ERROR("Invalid graph structure specified.");
     }
