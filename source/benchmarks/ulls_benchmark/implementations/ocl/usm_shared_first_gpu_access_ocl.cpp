@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,9 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
 
         ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, buffer));
     }
+
+    ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
+    ASSERT_CL_SUCCESS(clReleaseProgram(program));
 
     return TestResult::Success;
 }
