@@ -12,6 +12,9 @@ set(PREDEFINED_TARGETS_FOLDER "CustomTargets")
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Enable exporting a compile_commands.json for builds for use with clangd etc.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
