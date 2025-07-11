@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,11 @@
 #include "definitions/usm_fill_specific_pattern.h"
 
 #include <gtest/gtest.h>
+
+bool validateMemoryFillPatternSize(const size_t patternSize, const size_t maxMemoryFillPatternSize) {
+    const auto isPowerOfTwo = (patternSize & (patternSize - 1)) == 0;
+    return patternSize != 0 && isPowerOfTwo && patternSize <= maxMemoryFillPatternSize;
+}
 
 static TestResult run(const UsmFillSpecificPatternArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
@@ -35,8 +40,11 @@ static TestResult run(const UsmFillSpecificPatternArguments &arguments, Statisti
         requiresImport(arguments.usmMemoryPlacement));
 
     LevelZero levelzero(queueProperties, contextProperties, extensionProperties);
-    if (levelzero.commandQueue == nullptr || pattern.size() > levelzero.commandQueueMaxFillSize) {
+    if (levelzero.commandQueue == nullptr) {
         return TestResult::DeviceNotCapable;
+    }
+    if (!validateMemoryFillPatternSize(pattern.size(), levelzero.commandQueueMaxFillSize)) {
+        return TestResult::InvalidArgs;
     }
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);

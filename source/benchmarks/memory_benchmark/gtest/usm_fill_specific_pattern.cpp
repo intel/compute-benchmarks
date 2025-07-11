@@ -41,7 +41,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared),
         ::testing::Values(128 * megaByte, 512 * megaByte),
         ::testing::Values(BufferContents::Zeros),
-        ::testing::Values("0x01AA0B"),
+        ::testing::Values("0x0001AA0B"),
         ::testing::Values(false, true),
         ::testing::Values(true)));
 
@@ -53,6 +53,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(UsmMemoryPlacement::Device),
         ::testing::Values(512 * megaByte),
         ::testing::Values(BufferContents::Zeros),
-        ::testing::Values("0x01AA0B"),
+        ::testing::Values("0x0001AA0B"),
         ::testing::Values(false),
         ::testing::Values(true)));
