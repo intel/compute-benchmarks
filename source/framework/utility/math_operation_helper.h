@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "framework/enum/math_operation.h"
 
 #include <algorithm>
+#include <type_traits>
 
 struct MathOperationTestData {
     size_t sizeOfDataType;
@@ -49,12 +50,26 @@ inline MathOperationTestData MathOperationHelper::generateTestData(MathOperation
     case MathOperation::Add:
         initialValue = 1000;
         otherArgument = 3;
-        expectedValue = initialValue + otherArgument * static_cast<DataTypeT>(operationsCount);
+        if constexpr (std::is_floating_point_v<DataTypeT>) {
+            expectedValue = initialValue;
+            for (size_t i = 0; i < operationsCount; i++) {
+                expectedValue += otherArgument;
+            }
+        } else {
+            expectedValue = initialValue + otherArgument * static_cast<DataTypeT>(operationsCount);
+        }
         break;
     case MathOperation::Sub:
         initialValue = 1000;
         otherArgument = 3;
-        expectedValue = initialValue - otherArgument * static_cast<DataTypeT>(operationsCount);
+        if constexpr (std::is_floating_point_v<DataTypeT>) {
+            expectedValue = initialValue;
+            for (size_t i = 0; i < operationsCount; i++) {
+                expectedValue -= otherArgument;
+            }
+        } else {
+            expectedValue = initialValue - otherArgument * static_cast<DataTypeT>(operationsCount);
+        }
         break;
     case MathOperation::Div:
         initialValue = std::numeric_limits<DataTypeT>::max() - 1;
@@ -74,12 +89,26 @@ inline MathOperationTestData MathOperationHelper::generateTestData(MathOperation
     case MathOperation::Inc:
         initialValue = 12;
         otherArgument = 0;
-        expectedValue = initialValue + static_cast<DataTypeT>(operationsCount);
+        if constexpr (std::is_floating_point_v<DataTypeT>) {
+            expectedValue = initialValue;
+            for (size_t i = 0; i < operationsCount; i++) {
+                expectedValue += static_cast<DataTypeT>(1);
+            }
+        } else {
+            expectedValue = initialValue + static_cast<DataTypeT>(operationsCount);
+        }
         break;
     case MathOperation::Dec:
         initialValue = 43;
         otherArgument = 0;
-        expectedValue = initialValue - static_cast<DataTypeT>(operationsCount);
+        if constexpr (std::is_floating_point_v<DataTypeT>) {
+            expectedValue = initialValue;
+            for (size_t i = 0; i < operationsCount; i++) {
+                expectedValue -= static_cast<DataTypeT>(1);
+            }
+        } else {
+            expectedValue = initialValue - static_cast<DataTypeT>(operationsCount);
+        }
         break;
     case MathOperation::Min:
         initialValue = 100;

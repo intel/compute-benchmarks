@@ -91,22 +91,28 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents);
     Opencl opencl(queueProperties);
     cl_event profilingEvent{};
-    cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;
+    cl_event *pProfilingEvent = arguments.useEvents ? &profilingEvent : nullptr;
     Timer timer{};
     cl_int retVal{};
 
     // Prepare data
     const size_t lws = arguments.workgroupSize;
     const size_t gws = arguments.workgroupSize * arguments.workgroupCount;
-    const size_t loopIterations = 200u;                   // tweakable constant
-    const size_t operationsPerLoop = 128u;                // non-tweakable constant, this is hardcoded in the kernel code
-    const size_t enqueueCount = arguments.iterations + 1; // non-tweakable constant
+    const size_t loopIterations = 200u;                                // tweakable constant
+    const size_t operationsPerLoop = 128u;                             // non-tweakable constant, this is hardcoded in the kernel code
+    const size_t initIterations = 1 + arguments.mixGrfModes;           // warmup + mixGrf iterations
+    const size_t enqueueCount = arguments.iterations + initIterations; // non-tweakable constant
     const auto data = MathOperationHelper::generateTestData(arguments.dataType, arguments.operation, loopIterations, operationsPerLoop, enqueueCount);
 
     // Create and initialize the buffer with test data
     cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, gws * data.sizeOfDataType, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
-    ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, buffer, CL_FALSE, 0, data.sizeOfDataType, data.initialValue, 0, nullptr, nullptr));
+
+    std::vector<std::byte> initialData(gws * data.sizeOfDataType, std::byte{0});
+    for (size_t i = 0; i < gws; i++) {
+        std::memcpy(initialData.data() + i * data.sizeOfDataType, data.initialValue, data.sizeOfDataType);
+    }
+    ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, initialData.size(), initialData.data(), 0, nullptr, nullptr));
 
     // Create kernel
     cl_program program = nullptr;
@@ -133,24 +139,16 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
         ASSERT_CL_SUCCESS(clSetKernelArg(largeGrfKernel, 0, sizeof(buffer), &buffer));
         ASSERT_CL_SUCCESS(clSetKernelArg(largeGrfKernel, 1, data.sizeOfDataType, data.otherArgument));
         ASSERT_CL_SUCCESS(clSetKernelArg(largeGrfKernel, 2, sizeof(data.loopIterations), &data.loopIterations));
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, largeGrfKernel, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
+        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, largeGrfKernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-        if (eventForEnqueue) {
-            ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-        }
     }
 
     // Warmup
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, data.sizeOfDataType, data.otherArgument));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(data.loopIterations), &data.loopIterations));
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
+    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-    if (eventForEnqueue) {
-        ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-    }
-
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         auto kernelForExecution = kernel;
         if (arguments.mixGrfModes && i % 2 == 0) {
@@ -160,10 +158,10 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
         }
 
         timer.measureStart();
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernelForExecution, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
+        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernelForExecution, 1, nullptr, &gws, &lws, 0, nullptr, pProfilingEvent));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
-        if (eventForEnqueue) {
+        if (pProfilingEvent) {
             cl_ulong timeNs{};
             ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
             ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
@@ -174,10 +172,14 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
     }
 
     // Verify
-    std::byte result[8] = {};
-    ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, data.sizeOfDataType, result, 0, nullptr, nullptr));
-    if (std::memcmp(result, data.expectedValue, data.sizeOfDataType) != 0) {
-        return TestResult::VerificationFail;
+    auto testResult = TestResult::Success;
+    std::vector<std::byte> result(gws * data.sizeOfDataType);
+    ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, result.size(), result.data(), 0, nullptr, nullptr));
+    for (size_t i = 0; i < gws; i++) {
+        if (std::memcmp(result.data() + i * data.sizeOfDataType, data.expectedValue, data.sizeOfDataType) != 0) {
+            testResult = TestResult::VerificationFail;
+            break;
+        }
     }
 
     // Cleanup
@@ -190,7 +192,7 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
         ASSERT_CL_SUCCESS(clReleaseProgram(largeGrfProgram));
     }
 
-    return TestResult::Success;
+    return testResult;
 }
 
 static RegisterTestCaseImplementation<DoMathOperation> registerTestCase(run, Api::OpenCL);
