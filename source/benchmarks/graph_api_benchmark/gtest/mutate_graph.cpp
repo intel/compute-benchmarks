@@ -20,6 +20,19 @@ class MutateGraphTest : public ::testing::TestWithParam<std::tuple<bool, uint32_
 TEST_P(MutateGraphTest, Creation) {
     MutateGraphArguments args{};
     args.api = Api::L0;
+    args.operationType = GraphOperationType::Create;
+    args.useInOrder = std::get<0>(GetParam());
+    args.numKernels = std::get<1>(GetParam());
+    args.changeRate = std::get<2>(GetParam());
+    args.canUpdate = std::get<3>(GetParam());
+
+    MutateGraph test;
+    test.run(args);
+}
+
+TEST_P(MutateGraphTest, Fill) {
+    MutateGraphArguments args{};
+    args.api = Api::L0;
     args.operationType = GraphOperationType::Init;
     args.useInOrder = std::get<0>(GetParam());
     args.numKernels = std::get<1>(GetParam());

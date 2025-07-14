@@ -20,6 +20,6 @@ struct GraphOperationTypeArgument : EnumArgument<GraphOperationTypeArgument, Gra
 
     const static inline std::string enumName = "";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
-    const static inline EnumType enumValues[3] = {EnumType::Init, EnumType::Mutate, EnumType::Execute};
-    const static inline std::string enumValuesNames[3] = {"Initialize", "Mutate", "Execute"};
+    const static inline EnumType enumValues[4] = {EnumType::Init, EnumType::Mutate, EnumType::Execute, EnumType::Create};
+    const static inline std::string enumValuesNames[4] = {"Initialize", "Mutate", "Execute", "Create"};
 };

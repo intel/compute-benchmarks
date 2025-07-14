@@ -23,7 +23,7 @@ struct MutateGraphArguments : TestCaseArgumentContainer {
           changeRate(*this, "changeRate", "Rate at which kernels should be changed (for example, 5 means that every 5th kernel in the graph will be changed)"),
           numKernels(*this, "numKernels", "Number of kernels to use in a graph"),
           useInOrder(*this, "useInOrder", "If true, lists are created with ZE_COMMAND_LIST_FLAG_IN_ORDER flag, otherwise they are created without it"),
-          operationType(*this, "operationType", "Determines operation type that should be measured: creation, modification or execution") {}
+          operationType(*this, "operationType", "Determines operation type that should be measured: initialization, modification, execution or creation") {}
 };
 
 struct MutateGraph : TestCase<MutateGraphArguments> {

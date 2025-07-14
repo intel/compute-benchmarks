@@ -11,5 +11,6 @@ enum class GraphOperationType {
     Unknown,
     Init,
     Mutate,
-    Execute
+    Execute,
+    Create
 };
