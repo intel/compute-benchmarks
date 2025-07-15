@@ -11,7 +11,6 @@
 #pragma once
 #endif
 #include "level_zero/ze_stypes.h"
-
 #include <level_zero/ze_api.h>
 
 #if defined(__cplusplus)
@@ -199,6 +198,16 @@ typedef struct _zex_counter_based_event_desc_t {
                                                ///< default behavior is synchronization within the command list only, no
                                                ///< additional cache hierarchies are invalidated.
 } zex_counter_based_event_desc_t;
+
+const zex_counter_based_event_desc_t defaultCounterBasedEventDesc = {
+    .stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
+    .pNext = nullptr,
+    .flags = static_cast<zex_counter_based_event_exp_flags_t>(
+        ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE |
+        ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE |
+        ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE),
+    .signalScope = static_cast<ze_event_scope_flags_t>(ZE_EVENT_SCOPE_FLAG_HOST),
+    .waitScope = static_cast<ze_event_scope_flags_t>(ZE_EVENT_SCOPE_FLAG_DEVICE)};
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Initial Counter Based Event synchronization parameters. This structure may be

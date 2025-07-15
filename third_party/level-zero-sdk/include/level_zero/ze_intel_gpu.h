@@ -8,9 +8,9 @@
 #ifndef _ZE_INTEL_GPU_H
 #define _ZE_INTEL_GPU_H
 
-#include "ze_stypes.h"
-
 #include <level_zero/ze_api.h>
+
+#include "ze_stypes.h"
 
 #if defined(__cplusplus)
 #pragma once
@@ -174,6 +174,13 @@ typedef enum _zex_intel_queue_copy_operations_offload_hint_exp_version_t {
     ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
     ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zex_intel_queue_copy_operations_offload_hint_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Command queue flag for enabling copy operations offload
+///
+/// If set, try to offload copy operations to different engines. Applicable only for compute queues.
+/// This is only a hint. Driver may ignore it per append call, based on platform capabilities or internal heuristics.
+#define ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT ZE_BIT(2)
 
 #ifndef ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_NAME
 /// @brief Extension name for query to read the Intel Level Zero Driver Version String
@@ -595,8 +602,58 @@ ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
     uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before launching
     ze_event_handle_t *phWaitEvents);      ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieves a string describing the last error code returned by the
+///        default driver in the current thread.
+///
+/// @details
+///     - String returned is thread local.
+///     - String is only updated on calls returning an error, i.e., not on calls
+///       returning ::ZE_RESULT_SUCCESS.
+///     - String may be empty if driver considers error code is already explicit
+///       enough to describe cause.
+///     - Memory pointed to by ppString is owned by the driver.
+///     - String returned is null-terminated.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ppString`
+ze_result_t ZE_APICALL
+zerDriverGetLastErrorDescription(
+    const char **ppString ///< [in,out] pointer to a null-terminated array of characters describing
+                          ///< cause of error.
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
+
+const ze_device_mem_alloc_desc_t defaultDeviceMemDesc = {
+    ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC,                                        // stype
+    nullptr,                                                                        // pNext
+    static_cast<ze_device_mem_alloc_flags_t>(ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED), // flags
+    0                                                                               // ordinal
+};
+
+const ze_host_mem_alloc_desc_t defaultHostMemDesc = {
+    ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,                                                                                     // stype
+    nullptr,                                                                                                                   // pNext
+    static_cast<ze_host_mem_alloc_flags_t>(ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED | ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) // flags
+};
+
+const ze_command_queue_desc_t defaultCommandQueueDesc = {
+    .stype = ze_structure_type_t::ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
+    .pNext = nullptr,
+    .ordinal = 0,
+    .index = 0,
+    .flags = static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT),
+    .mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
+    .priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
+};
 
 #endif
