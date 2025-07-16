@@ -465,7 +465,6 @@ TestResult runMutate(const MutateGraphArguments &arguments, Statistics &statisti
 
         statistics.pushValue(timer.get(), env.typeSelector.getUnit(),
                              env.typeSelector.getType());
-        identifiers.clear();
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     return TestResult::Success;
