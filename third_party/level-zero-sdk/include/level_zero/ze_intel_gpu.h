@@ -596,8 +596,8 @@ ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
     ze_kernel_handle_t hKernel,            ///< [in] handle of the kernel object
     const ze_group_count_t groupCounts,    ///< [in] thread group counts
     const ze_group_size_t groupSizes,      ///< [in] thread group sizes
-    void **pArguments,                     ///< [in] kernel arguments; pointer to list where each argument represents a pointer to the argument value on specific index
-    void *pNext,                           ///< [in][optional] extensions
+    const void **pArguments,               ///< [in] kernel arguments; pointer to list where each argument represents a pointer to the argument value on specific index
+    const void *pNext,                     ///< [in][optional] extensions
     ze_event_handle_t hSignalEvent,        ///< [in][optional] handle of the event to signal on completion
     uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before launching
     ze_event_handle_t *phWaitEvents);      ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
@@ -647,13 +647,13 @@ const ze_host_mem_alloc_desc_t defaultHostMemDesc = {
 };
 
 const ze_command_queue_desc_t defaultCommandQueueDesc = {
-    .stype = ze_structure_type_t::ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
-    .pNext = nullptr,
-    .ordinal = 0,
-    .index = 0,
-    .flags = static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT),
-    .mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
-    .priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
+    ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,                                                                            // stype
+    nullptr,                                                                                                         // pNext
+    0,                                                                                                               // ordinal
+    0,                                                                                                               // index
+    static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT), // flags
+    ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,                                                                              // mode
+    ZE_COMMAND_QUEUE_PRIORITY_NORMAL                                                                                 // priority
 };
 
 #endif

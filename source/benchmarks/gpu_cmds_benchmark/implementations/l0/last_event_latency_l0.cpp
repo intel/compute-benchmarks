@@ -57,7 +57,7 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(context, levelzero.device, deviceUsmPtr, buffSize))
     size_t slmSize = 1024;
     uint32_t immData = 10u;
-    void *kernelArgs[3] = {&deviceUsmPtr, &slmSize, &immData};
+    const void *kernelArgs[3] = {&deviceUsmPtr, &slmSize, &immData};
 
     // Setup command list with CB event
     ze_command_list_handle_t cmdList;
