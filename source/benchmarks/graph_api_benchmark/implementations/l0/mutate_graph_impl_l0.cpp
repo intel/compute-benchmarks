@@ -213,14 +213,22 @@ TestResult fillMutableList(const MutateGraphArguments &arguments,
             ze_mutable_command_exp_flags_t mutationFlags =
                 ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
                 ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
+                ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
+            if (arguments.mutateIsa) {
+                mutationFlags |= ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
+            }
             ze_mutable_command_id_exp_desc_t cmdIdDesc = {
                 ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC, // stype
                 nullptr,                                       // pNext
                 mutationFlags};
             uint64_t mutableKernelCommandId = 0;
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &cmdIdDesc, 2, kernels, &mutableKernelCommandId));
+            uint32_t kernelGroupCount = 0;
+            ze_kernel_handle_t *kernelGroupHandles = nullptr;
+            if (arguments.mutateIsa) {
+                kernelGroupCount = 2;
+                kernelGroupHandles = kernels;
+            }
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &cmdIdDesc, kernelGroupCount, kernelGroupHandles, &mutableKernelCommandId));
             identifiers.push_back(mutableKernelCommandId);
         }
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(
@@ -233,13 +241,15 @@ TestResult fillMutableList(const MutateGraphArguments &arguments,
 TestResult mutateList(TestEnv &env,
                       ze_command_list_handle_t cmdList,
                       std::vector<uint64_t> &identifiers,
-                      uint32_t iteration) {
+                      uint32_t iteration,
+                      bool mutateIsa) {
     uint32_t grpSize[3] = {1, 1, 1};
 
     auto currentKernelHandle = (iteration % 2 == 0) ? env.kernelMul : env.kernelSum;
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(currentKernelHandle, env.size, 1, 1, grpSize,
                                                       grpSize + 1, grpSize + 2));
+
     float *dest = env.graphOutputData.get();
     float *source = env.graphInputData.get();
 
@@ -261,7 +271,9 @@ TestResult mutateList(TestEnv &env,
 
     for (uint64_t identifier : identifiers) {
 
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &identifier, &currentKernelHandle));
+        if (mutateIsa) {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &identifier, &currentKernelHandle));
+        }
 
         // modify group count
         ze_mutable_group_count_exp_desc_t groupCountDesc = {
@@ -348,6 +360,10 @@ TestResult fillList(const MutateGraphArguments &arguments, TestEnv &env, ze_comm
 }
 
 TestResult testCorrectness(const MutateGraphArguments &arguments, TestEnv &env) {
+    MutateGraphArguments testCorrectnessArguments = arguments;
+    // test correctness assumes kernel ISA mutation is ON
+    testCorrectnessArguments.mutateIsa = true;
+
     // reference results
     calcRefResults(env.size, arguments, env.inputData.get(), env.outputData.get(), env.refResult.get());
 
@@ -368,8 +384,8 @@ TestResult testCorrectness(const MutateGraphArguments &arguments, TestEnv &env) 
     ASSERT_TEST_RESULT_SUCCESS(createCommandList(env, arguments.useInOrder, arguments.canUpdate, &cmdList));
     if (arguments.canUpdate) {
         std::vector<uint64_t> identifiers;
-        ASSERT_TEST_RESULT_SUCCESS(fillMutableList(arguments, env, cmdList, identifiers));
-        ASSERT_TEST_RESULT_SUCCESS(mutateList(env, cmdList, identifiers, 0));
+        ASSERT_TEST_RESULT_SUCCESS(fillMutableList(testCorrectnessArguments, env, cmdList, identifiers));
+        ASSERT_TEST_RESULT_SUCCESS(mutateList(env, cmdList, identifiers, 0, testCorrectnessArguments.mutateIsa));
     } else {
         ASSERT_TEST_RESULT_SUCCESS(fillList(arguments, env, cmdList, true));
     }
@@ -456,7 +472,7 @@ TestResult runMutate(const MutateGraphArguments &arguments, Statistics &statisti
     for (uint32_t iteration = 0; iteration < arguments.iterations; ++iteration) {
         timer.measureStart();
         if (arguments.canUpdate) {
-            ASSERT_TEST_RESULT_SUCCESS(mutateList(env, cmdList, identifiers, iteration));
+            ASSERT_TEST_RESULT_SUCCESS(mutateList(env, cmdList, identifiers, iteration, arguments.mutateIsa));
         } else {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListReset(cmdList));
             ASSERT_TEST_RESULT_SUCCESS(fillList(arguments, env, cmdList, true));
@@ -478,7 +494,7 @@ TestResult runExecute(const MutateGraphArguments &arguments, Statistics &statist
     ASSERT_TEST_RESULT_SUCCESS(createCommandList(env, arguments.useInOrder, arguments.canUpdate, &cmdList));
     if (arguments.canUpdate) {
         ASSERT_TEST_RESULT_SUCCESS(fillMutableList(arguments, env, cmdList, identifiers));
-        ASSERT_TEST_RESULT_SUCCESS(mutateList(env, cmdList, identifiers, 0));
+        ASSERT_TEST_RESULT_SUCCESS(mutateList(env, cmdList, identifiers, 0, arguments.mutateIsa));
     } else {
         ASSERT_TEST_RESULT_SUCCESS(fillList(arguments, env, cmdList, true));
     }

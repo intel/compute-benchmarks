@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<MutateGraph> registerTestCase{};
 
-class MutateGraphTest : public ::testing::TestWithParam<std::tuple<bool, uint32_t, uint32_t, bool>> {
+class MutateGraphTest : public ::testing::TestWithParam<std::tuple<bool, uint32_t, uint32_t, bool, bool>> {
 };
 
 TEST_P(MutateGraphTest, Creation) {
@@ -25,6 +25,7 @@ TEST_P(MutateGraphTest, Creation) {
     args.numKernels = std::get<1>(GetParam());
     args.changeRate = std::get<2>(GetParam());
     args.canUpdate = std::get<3>(GetParam());
+    args.mutateIsa = std::get<4>(GetParam());
 
     MutateGraph test;
     test.run(args);
@@ -38,6 +39,7 @@ TEST_P(MutateGraphTest, Fill) {
     args.numKernels = std::get<1>(GetParam());
     args.changeRate = std::get<2>(GetParam());
     args.canUpdate = std::get<3>(GetParam());
+    args.mutateIsa = std::get<4>(GetParam());
 
     MutateGraph test;
     test.run(args);
@@ -51,6 +53,7 @@ TEST_P(MutateGraphTest, Mutation) {
     args.numKernels = std::get<1>(GetParam());
     args.changeRate = std::get<2>(GetParam());
     args.canUpdate = std::get<3>(GetParam());
+    args.mutateIsa = std::get<4>(GetParam());
 
     MutateGraph test;
     test.run(args);
@@ -64,6 +67,7 @@ TEST_P(MutateGraphTest, Execution) {
     args.numKernels = std::get<1>(GetParam());
     args.changeRate = std::get<2>(GetParam());
     args.canUpdate = std::get<3>(GetParam());
+    args.mutateIsa = std::get<4>(GetParam());
 
     MutateGraph test;
     test.run(args);
@@ -76,4 +80,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::Values(100, 200, 500),
         ::testing::Values(1, 5, 10),
+        ::testing::Values(false, true),
         ::testing::Values(false, true)));
