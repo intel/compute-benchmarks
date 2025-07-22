@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,21 +8,20 @@
 #include "framework/sycl/sycl.h"
 #include "framework/sycl/utility/usm_helper.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/timer.h"
+#include "framework/utility/combo_profiler.h"
 
 #include "definitions/queue_memcpy.h"
 
 static TestResult run(const QueueMemcpyArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats prof(Configuration::get().profilerType);
 
     if (isNoopRun()) {
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        prof.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
     // Setup
     Sycl sycl{sycl::device{sycl::gpu_selector_v}};
-    Timer timer;
 
     // Create buffers
     constexpr size_t alignment = 512;
@@ -43,11 +42,10 @@ static TestResult run(const QueueMemcpyArguments &arguments, Statistics &statist
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        timer.measureStart();
+        prof.measureStart();
         sycl.queue.memcpy(destination, source, arguments.size).wait();
-        timer.measureEnd();
-
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        prof.measureEnd();
+        prof.pushStats(statistics);
     }
 
     // Cleanup

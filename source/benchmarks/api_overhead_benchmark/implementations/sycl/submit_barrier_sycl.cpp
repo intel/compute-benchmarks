@@ -6,24 +6,23 @@
  */
 
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/timer.h"
+#include "framework/utility/combo_profiler.h"
 
 #include "definitions/submit_barrier.h"
 
 #include <sycl/sycl.hpp>
 
 static TestResult run(const SubmitBarrierArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats prof(Configuration::get().profilerType);
 
     if (isNoopRun() || (arguments.getLastEvent && !arguments.inOrderQueue)) {
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        prof.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
     // Setup
     sycl::queue queue{arguments.inOrderQueue ? sycl::property_list{sycl::property::queue::in_order()} : sycl::property_list{}};
 
-    Timer timer;
     const size_t gws = 1u;
     const size_t lws = 1u;
     sycl::nd_range<1> range(gws, lws);
@@ -66,7 +65,7 @@ static TestResult run(const SubmitBarrierArguments &arguments, Statistics &stati
             });
         }
 
-        timer.measureStart();
+        prof.measureStart();
 
         if (arguments.submitBarrier) {
             queue.ext_oneapi_submit_barrier();
@@ -76,9 +75,8 @@ static TestResult run(const SubmitBarrierArguments &arguments, Statistics &stati
             queue.ext_oneapi_get_last_event();
         }
 
-        timer.measureEnd();
-
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        prof.measureEnd();
+        prof.pushStats(statistics);
     }
     queue.wait();
 

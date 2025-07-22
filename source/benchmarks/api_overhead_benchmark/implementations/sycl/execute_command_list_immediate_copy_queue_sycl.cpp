@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,22 +8,21 @@
 #include "framework/sycl/sycl.h"
 #include "framework/sycl/utility/usm_helper.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/timer.h"
+#include "framework/utility/combo_profiler.h"
 
 #include "definitions/execute_command_list_immediate_copy_queue.h"
 
 #include <gtest/gtest.h>
 
 static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats prof(Configuration::get().profilerType);
 
     if (isNoopRun()) {
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        prof.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
     // Setup
-    Timer timer;
     Sycl sycl{sycl::device{sycl::gpu_selector_v}};
 
     // Create buffers
@@ -35,20 +34,20 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        timer.measureStart();
+        prof.measureStart();
         sycl.queue.memcpy(dstBuffer, srcBuffer, arguments.size);
 
         if (!arguments.measureCompletionTime) {
-            timer.measureEnd();
-            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+            prof.measureEnd();
         }
 
         sycl.queue.wait();
 
         if (arguments.measureCompletionTime) {
-            timer.measureEnd();
-            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+            prof.measureEnd();
         }
+
+        prof.pushStats(statistics);
     }
 
     // Cleanup

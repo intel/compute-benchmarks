@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ perf_event_open(struct perf_event_attr *hw_event, pid_t pid,
     return ret;
 }
 
-bool excludeKernelEvents = []() {
+inline bool excludeKernelEvents = []() {
     auto env = getenv("BENCHMARKS_PERF_EXCLUDE_KERNEL_EVENTS");
     if (env) {
         return std::stoi(env);

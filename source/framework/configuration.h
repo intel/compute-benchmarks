@@ -12,6 +12,7 @@
 #include "framework/argument/boolean_flag_argument.h"
 #include "framework/argument/enum/api_argument.h"
 #include "framework/argument/enum/device_selection_argument.h"
+#include "framework/argument/enum/profiler_type_argument.h"
 #include "framework/argument/string_argument.h"
 #include "framework/argument/string_list_argument.h"
 #include "framework/utility/command_line_argument.h"
@@ -79,6 +80,7 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument markTimers;
     BooleanFlagArgument measurePower;
     BooleanFlagArgument printAllResults;
+    ProfilerTypeArgument profilerType;
 
     // Test specific params
     BooleanFlagArgument extended;

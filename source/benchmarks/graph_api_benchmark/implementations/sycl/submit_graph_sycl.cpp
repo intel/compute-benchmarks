@@ -6,7 +6,7 @@
  */
 
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/timer.h"
+#include "framework/utility/combo_profiler.h"
 
 #include "definitions/submit_graph.h"
 
@@ -29,10 +29,10 @@ static auto inOrder = sycl::property::queue::in_order();
 
 static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, Statistics &statistics) {
     try {
-        MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        ComboProfilerWithStats prof(Configuration::get().profilerType);
 
         if (isNoopRun()) {
-            statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+            prof.pushNoop(statistics);
             return TestResult::Nooped;
         }
 
@@ -46,7 +46,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         assert(queue.has_property<sycl::property::queue::in_order>() == arguments.inOrderQueue);
         assert(queue.has_property<sycl::property::queue::enable_profiling>() == arguments.useProfiling);
 
-        Timer timer;
         const size_t gws = 1u;
         const size_t lws = 1u;
         sycl::nd_range<1> range(gws, lws);
@@ -97,26 +96,26 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
         // Benchmark
         for (auto i = 0u; i < arguments.iterations; i++) {
-            timer.measureStart();
+            prof.measureStart();
             if (!arguments.useEvents) {
                 sycl::ext::oneapi::experimental::execute_graph(queue, executable_graph);
                 if (!arguments.measureCompletionTime) {
-                    timer.measureEnd();
+                    prof.measureEnd();
                 }
                 queue.wait();
 
             } else {
                 sycl::event event = queue.ext_oneapi_graph(executable_graph);
                 if (!arguments.measureCompletionTime) {
-                    timer.measureEnd();
+                    prof.measureEnd();
                 }
                 event.wait();
             }
 
             if (arguments.measureCompletionTime) {
-                timer.measureEnd();
+                prof.measureEnd();
             }
-            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+            prof.pushStats(statistics);
         }
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,23 +7,22 @@
 
 #include "framework/sycl/sycl.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/timer.h"
+#include "framework/utility/combo_profiler.h"
 
 #include "definitions/execute_command_list_immediate.h"
 
 #include <gtest/gtest.h>
 
 static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats prof(Configuration::get().profilerType);
 
     if (isNoopRun()) {
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        prof.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
     // Setup
     Sycl sycl{sycl::device{sycl::gpu_selector_v}};
-    Timer timer;
     const size_t gws = 1u;
     const size_t lws = 1u;
     sycl::nd_range<1> range(gws, lws);
@@ -41,7 +40,7 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        timer.measureStart();
+        prof.measureStart();
         for (auto iteration = 0u; iteration < arguments.amountOfCalls; iteration++) {
             if (arguments.useEventForHostSync) {
                 event = sycl.queue.parallel_for(range, event, empty);
@@ -57,8 +56,8 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
                 sycl.queue.wait();
             }
         }
-        timer.measureEnd();
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        prof.measureEnd();
+        prof.pushStats(statistics);
     }
     sycl.queue.wait();
 

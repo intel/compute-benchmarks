@@ -6,7 +6,7 @@
  */
 
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/timer.h"
+#include "framework/utility/combo_profiler.h"
 
 #include "definitions/submit_kernel.h"
 
@@ -24,10 +24,10 @@ static const sycl::property_list queueProps[] = {
 };
 
 static TestResult run(const SubmitKernelArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats prof(Configuration::get().profilerType);
 
     if (isNoopRun()) {
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        prof.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
@@ -37,7 +37,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     queuePropsIndex |= arguments.inOrderQueue ? 0x2 : 0;
     sycl::queue queue{queueProps[queuePropsIndex]};
 
-    Timer timer;
     const size_t gws = 1u;
     const size_t lws = 1u;
     sycl::nd_range<1> range(gws, lws);
@@ -60,7 +59,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        timer.measureStart();
+        prof.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
             if (!arguments.useEvents) {
                 sycl::ext::oneapi::experimental::nd_launch(queue, range, eat_time);
@@ -70,16 +69,16 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         }
 
         if (!arguments.measureCompletionTime) {
-            timer.measureEnd();
-            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+            prof.measureEnd();
         }
 
         queue.wait();
 
         if (arguments.measureCompletionTime) {
-            timer.measureEnd();
-            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+            prof.measureEnd();
         }
+
+        prof.pushStats(statistics);
     }
     queue.wait();
 
