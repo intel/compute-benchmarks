@@ -47,8 +47,8 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     const auto eat_time = [=]([[maybe_unused]] auto u) {
         if (kernelOperationsCount > 4) {
             volatile int value = kernelOperationsCount;
-            while (--value)
-                ;
+            while (value > 1)
+                value -= 1;
         }
     };
 
