@@ -56,8 +56,9 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         [[maybe_unused]] const auto eat_time = [=]([[maybe_unused]] auto u) {
             if (kernelOperationsCount > 4) {
                 volatile int value = kernelOperationsCount;
-                while (--value)
-                    ;
+                while (value) {
+                    value = value - 1;
+                }
             }
         };
 

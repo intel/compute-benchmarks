@@ -33,8 +33,9 @@ static TestResult run(const SubmitBarrierArguments &arguments, Statistics &stati
     const auto eat_time = [=]([[maybe_unused]] auto u) {
         if (kernelOperationsCount > 4) {
             volatile int value = kernelOperationsCount;
-            while (--value)
-                ;
+            while (value) {
+                value = value -1;
+            }
         }
     };
 
