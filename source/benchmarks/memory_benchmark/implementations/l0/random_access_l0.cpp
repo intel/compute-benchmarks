@@ -49,8 +49,7 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
     const size_t randomAccessRange = arguments.randomAccessRange;
     const MeasurementType measurementType = arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu;
 
-    // both gpu and cpu timers return time in nanoseconds
-    MeasurementFields typeSelector(MeasurementUnit::Nanoseconds, measurementType);
+    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, measurementType);
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
@@ -199,13 +198,13 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
             ze_kernel_timestamp_result_t timestampResult{};
             ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(event, &timestampResult));
             auto commandTime = levelzero.getAbsoluteKernelExecutionTime(timestampResult.global);
-            statistics.pushValue(commandTime, bytesTransferred, MeasurementUnit::GigabytesPerSecond, typeSelector.getType());
+            statistics.pushValue(commandTime, bytesTransferred, typeSelector.getUnit(), typeSelector.getType());
 
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
         } else {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
             timer.measureEnd();
-            statistics.pushValue(timer.get(), bytesTransferred, MeasurementUnit::GigabytesPerSecond, typeSelector.getType());
+            statistics.pushValue(timer.get(), bytesTransferred, typeSelector.getUnit(), typeSelector.getType());
         }
     }
 
