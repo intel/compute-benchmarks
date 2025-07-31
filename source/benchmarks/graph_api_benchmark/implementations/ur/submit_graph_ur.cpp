@@ -18,7 +18,6 @@
 
 static constexpr size_t n_dimensions = 3;
 static constexpr size_t global_size[] = {1, 1, 1};
-static constexpr size_t local_size[] = {1, 1, 1};
 static constexpr size_t global_offset = 0;
 
 static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, Statistics &statistics) {

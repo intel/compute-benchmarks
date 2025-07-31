@@ -101,7 +101,7 @@ if(BUILD_SYCL)
 endif()
 
 if(BUILD_OMP)
-    set(CMAKE_CXX_COMPILER "icpx")
+    set(CMAKE_CXX_COMPILER "icpx" CACHE STRING "Compiler for OpenMP")
 endif()
 
 if(BUILD_MPI)

@@ -33,8 +33,6 @@ struct Sycl {
             queue = sycl::queue(device, sycl::property_list{sycl::property::queue::in_order(), properties...});
         }
     }
-
-    ~Sycl();
 };
 } // namespace SYCL
 

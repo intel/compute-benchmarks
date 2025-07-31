@@ -126,7 +126,7 @@ endfunction()
 
 function(add_benchmark_dependency_on_workload BENCHMARK_BASE_NAME WORKLOAD API)
     get_property(ALL_APIS GLOBAL PROPERTY APIS)
-    list(FIND ALL_APIS API API_ENABLED)
+    list(FIND ALL_APIS ${API} API_ENABLED)
     if (API_ENABLED STREQUAL "-1")
         message(STATUS "${BENCHMARK_BASE_NAME}_${API} won't be added as ${API} is disabled")
         return()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -251,6 +251,8 @@ int main(int argc, char **argv) {
                 break;
             case OverrideMemType::RANDOM:
                 overrideMemoryRandom(memory);
+                break;
+            case OverrideMemType::NONE:
                 break;
             }
 

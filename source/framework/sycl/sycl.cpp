@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,5 +20,4 @@ Sycl::Sycl(const sycl::device &device, bool useOOQ) : device{device} {
     }
 }
 
-Sycl::~Sycl() {}
 } // namespace SYCL

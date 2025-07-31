@@ -1,10 +1,15 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 if (NOT BUILD_SYCL)
+    return()
+endif()
+
+if (NOT SYCL_FOUND)
+    message(STATUS "SYCL not found - show_devices_sycl tool will not be built")
     return()
 endif()
 
