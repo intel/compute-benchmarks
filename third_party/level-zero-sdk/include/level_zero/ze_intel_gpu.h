@@ -175,12 +175,16 @@ typedef enum _zex_intel_queue_copy_operations_offload_hint_exp_version_t {
     ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zex_intel_queue_copy_operations_offload_hint_exp_version_t;
 
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
+
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Command queue flag for enabling copy operations offload
 ///
 /// If set, try to offload copy operations to different engines. Applicable only for compute queues.
 /// This is only a hint. Driver may ignore it per append call, based on platform capabilities or internal heuristics.
 #define ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT ZE_BIT(2)
+
+#endif // ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
 
 #ifndef ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_NAME
 /// @brief Extension name for query to read the Intel Level Zero Driver Version String
@@ -473,63 +477,6 @@ zeIntelMemGetFormatModifiersSupportedExp(
     uint64_t *pDrmFormatModifiers                  ///< [in,out][optional][range(0, *pCount)] array of supported DRM format modifiers
 );
 
-/// @brief Get default context associated with driver
-///
-/// @details
-///     - The application may call this function from simultaneous threads.
-///     - The implementation of this function should be lock-free.
-///     - Default context contains all devices within driver instance
-/// @returns
-///     - Context handle associated with driver
-ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(ze_driver_handle_t hDriver); ///> [in] handle of the driver
-
-/// @brief Get default context associated with default driver
-///
-/// @details
-///     - The application may call this function from simultaneous threads.
-///     - The implementation of this function should be lock-free.
-///     - Default context contains all devices within default driver instance
-/// @returns
-///     - Context handle associated with default driver
-ze_context_handle_t ZE_APICALL zerDriverGetDefaultContext();
-
-/// @brief Get Device Identifier
-///
-/// @details
-///     - The application may call this function from simultaneous threads.
-///     - The implementation of this function should be lock-free.
-///     - Returned identifier is a 32-bit unsigned integer that is unique to the driver.
-///     - The identifier can be used then in zerIdentifierTranslateToDeviceHandle to get the device handle.
-/// @returns
-///     - 32-bit unsigned integer identifier
-uint32_t ZE_APICALL zerDeviceTranslateToIdentifier(ze_device_handle_t hDevice); ///< [in] handle of the device
-
-/// @brief Translate Device Identifier to Device Handle from default Driver
-///
-/// @details
-///    - The application may call this function from simultaneous threads.
-///    - The implementation of this function should be lock-free.
-///    - Returned device is associated to default driver handle.
-/// @returns
-///     - device handle associated with the identifier
-ze_device_handle_t ZE_APICALL zerIdentifierTranslateToDeviceHandle(uint32_t identifier); ///< [in] integer identifier of the device
-
-/// @brief Global device synchronization
-///
-/// @details
-///    - The application may call this function from simultaneous threads.
-///    - The implementation of this function should be lock-free.
-///    - Ensures that everything that was submitted to the device is completed.
-///    - Ensures that all submissions in all queues on device are completed.
-///    - It is not allowed to call this function while some command list are in graph capture mode.
-///    - Returns error if error is detected during execution on device.
-///    - Hangs indefinitely if GPU execution is blocked on non signaled event.
-///
-/// @returns
-///     - ::ZE_RESULT_SUCCESS
-///     - ::ZE_RESULT_ERROR_DEVICE_LOST
-ze_result_t ZE_APICALL zeDeviceSynchronize(ze_device_handle_t hDevice); ///> [in] handle of the device
-
 /// @brief Get priority levels
 ///
 /// @details
@@ -559,6 +506,65 @@ typedef struct _ze_queue_priority_desc_t {
     const void *pNext;         ///< [in][optional] must be null or a pointer to an extension-specific structure
     int priority;              ///< [in] priority of the queue
 } ze_queue_priority_desc_t;
+
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
+
+/// @brief Get default context associated with driver
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///     - Default context contains all devices within driver instance
+/// @returns
+///     - Context handle associated with driver
+ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(ze_driver_handle_t hDriver); ///> [in] handle of the driver
+
+/// @brief Get default context associated with default driver
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///     - Default context contains all devices within default driver instance
+/// @returns
+///     - Context handle associated with default driver
+ze_context_handle_t ZE_APICALL zerGetDefaultContext();
+
+/// @brief Get Device Identifier
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///     - Returned identifier is a 32-bit unsigned integer that is unique to the driver.
+///     - The identifier can be used then in zerTranslateIdentifierToDeviceHandle to get the device handle.
+/// @returns
+///     - 32-bit unsigned integer identifier
+uint32_t ZE_APICALL zerTranslateDeviceHandleToIdentifier(ze_device_handle_t hDevice); ///< [in] handle of the device
+
+/// @brief Translate Device Identifier to Device Handle from default Driver
+///
+/// @details
+///    - The application may call this function from simultaneous threads.
+///    - The implementation of this function should be lock-free.
+///    - Returned device is associated to default driver handle.
+/// @returns
+///     - device handle associated with the identifier
+ze_device_handle_t ZE_APICALL zerTranslateIdentifierToDeviceHandle(uint32_t identifier); ///< [in] integer identifier of the device
+
+/// @brief Global device synchronization
+///
+/// @details
+///    - The application may call this function from simultaneous threads.
+///    - The implementation of this function should be lock-free.
+///    - Ensures that everything that was submitted to the device is completed.
+///    - Ensures that all submissions in all queues on device are completed.
+///    - It is not allowed to call this function while some command list are in graph capture mode.
+///    - Returns error if error is detected during execution on device.
+///    - Hangs indefinitely if GPU execution is blocked on non signaled event.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+ze_result_t ZE_APICALL zeDeviceSynchronize(ze_device_handle_t hDevice); ///> [in] handle of the device
 
 /// @brief Append with arguments
 ///
@@ -624,14 +630,18 @@ ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
 ///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
 ///         + `nullptr == ppString`
 ze_result_t ZE_APICALL
-zerDriverGetLastErrorDescription(
+zerGetLastErrorDescription(
     const char **ppString ///< [in,out] pointer to a null-terminated array of characters describing
                           ///< cause of error.
 );
 
+#endif // ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
+
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
 
 const ze_device_mem_alloc_desc_t defaultDeviceMemDesc = {
     ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC,                                        // stype
@@ -655,5 +665,7 @@ const ze_command_queue_desc_t defaultCommandQueueDesc = {
     ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,                                                                              // mode
     ZE_COMMAND_QUEUE_PRIORITY_NORMAL                                                                                 // priority
 };
+
+#endif // ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
 
 #endif
