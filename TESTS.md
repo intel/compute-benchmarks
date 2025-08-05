@@ -240,6 +240,14 @@ UsmImmediateCopyMultipleBlits|allocates two unified device memory buffers on sep
 
 
 
+# record_and_replay_benchmark
+Record and Replay Benchmark is a set of tests aimed at measuring performance of recording and execution of commandlist graphs.
+| Test name | Description | Params | L0 | OCL |
+|-----------|-------------|--------|----|-----|
+RecordGraph|measures overhead of recording a graph.|<ul><li>--emulate Emulate record and replay graph API using regular commandlists. (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+
+
+
 # ulls_benchmark
 Ulls Benchmark is a set of tests aimed at measuring Ultra Low Latency Submission (ULLS) performance impact.
 | Test name | Description | Params | L0 | OCL |
