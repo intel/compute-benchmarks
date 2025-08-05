@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,8 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
         ASSERT_ZE_RESULT_SUCCESS(L0::UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, 4096u, &allocations[allocationId]));
     }
 
+    bool reverseOrder = false;
+
     for (auto argumentId = 0u; argumentId < arguments.argumentCount; ++argumentId) {
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, argumentId, sizeof(void *), &allocations[argumentId]));
     }
@@ -86,8 +88,12 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
         if (arguments.measureSetKernelArg) {
             timer.measureStart();
         }
+        if (arguments.reverseOrder) {
+            reverseOrder = !reverseOrder;
+        }
+
         for (auto argumentId = 0u; argumentId < arguments.argumentCount; ++argumentId) {
-            ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, argumentId, sizeof(void *), &allocations[argumentId]));
+            ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, argumentId, sizeof(void *), &allocations[reverseOrder ? arguments.argumentCount - 1 - argumentId : argumentId]));
         }
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListReset(cmdList));

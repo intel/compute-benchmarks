@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ struct MultiArgumentKernelTimeArguments : TestCaseArgumentContainer {
     BooleanArgument exec;
     PositiveIntegerArgument lws;
     PositiveIntegerArgument groupCount;
+    BooleanArgument reverseOrder;
 
     MultiArgumentKernelTimeArguments()
         : argumentCount(*this, "argumentCount", "argument count in a kernel, supported values 1,4,8,16,32,64"),
@@ -26,7 +27,8 @@ struct MultiArgumentKernelTimeArguments : TestCaseArgumentContainer {
           count(*this, "count", "how many kernel launches are measured"),
           exec(*this, "exec", "measure execute as well"),
           lws(*this, "lws", "local work size"),
-          groupCount(*this, "groupCount", "total amount of work groups") {}
+          groupCount(*this, "groupCount", "total amount of work groups"),
+          reverseOrder(*this, "reverseOrder", "set kernel arguments in reverse order") {}
 };
 
 struct MultiArgumentKernelTime : TestCase<MultiArgumentKernelTimeArguments> {
@@ -37,6 +39,6 @@ struct MultiArgumentKernelTime : TestCase<MultiArgumentKernelTimeArguments> {
     }
 
     std::string getHelp() const override {
-        return "measures time spent in clEnqueueNDRangeKernel on CPU for kernels with mulitple arguments.";
+        return "measures time spent in clEnqueueNDRangeKernel on CPU for kernels with multiple arguments.";
     }
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<MultiArgumentKernelTime> registerTestCase{};
 
-class MultiArgumentKernelTest : public ::testing::TestWithParam<std::tuple<Api, size_t, bool, bool, size_t, bool, size_t, size_t>> {
+class MultiArgumentKernelTest : public ::testing::TestWithParam<std::tuple<Api, size_t, bool, bool, size_t, bool, size_t, size_t, bool>> {
 };
 
 TEST_P(MultiArgumentKernelTest, Test) {
@@ -27,6 +27,7 @@ TEST_P(MultiArgumentKernelTest, Test) {
     args.exec = std::get<5>(GetParam());
     args.lws = std::get<6>(GetParam());
     args.groupCount = std::get<7>(GetParam());
+    args.reverseOrder = std::get<8>(GetParam());
 
     MultiArgumentKernelTime test;
     test.run(args);
@@ -43,4 +44,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1),
         ::testing::Values(false),
         ::testing::Values(32),
-        ::testing::Values(8)));
+        ::testing::Values(8),
+        ::testing::Bool()));

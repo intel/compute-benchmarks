@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,14 +64,19 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 3, nullptr, gws, lws, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
+    auto reverseOrder = false;
+
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (arguments.measureSetKernelArg) {
             timer.measureStart();
         }
+        if (arguments.reverseOrder) {
+            reverseOrder = !reverseOrder;
+        }
 
         for (auto argumentId = 0u; argumentId < arguments.argumentCount; argumentId++) {
-            ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, argumentId, allocations[argumentId].ptr));
+            ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, argumentId, allocations[reverseOrder ? arguments.argumentCount - argumentId - 1 : argumentId].ptr));
         }
 
         if (!arguments.measureSetKernelArg) {
