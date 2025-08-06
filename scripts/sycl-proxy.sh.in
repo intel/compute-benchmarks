@@ -1,18 +1,18 @@
 #!/bin/env bash
 
 #
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 # substitute first argument with SYCL compiler name
-# if the command line contains -fsycl,
+# if compiler is acpp or the command line contains -fsycl,
 # otherwise run as is
 
 set -e
 
-if [[ " $@ " =~ .*\ -fsycl\ .* ]]; then
+if [[ "@SYCL_COMPILER@" == "acpp" || " $@ " =~ .*\ -fsycl\ .* ]]; then
     @SYCL_COMPILER@ "${@:2}"
 else
     "$@"

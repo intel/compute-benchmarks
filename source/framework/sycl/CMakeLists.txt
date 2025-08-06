@@ -41,6 +41,8 @@ else()
 
     # Create libraries for sycl and sycl_preview
     create_sycl_library(sycl "")
-    create_sycl_library(syclpreview "-fpreview-breaking-changes")
+    if (NOT SYCL_COMPILER STREQUAL "acpp")
+        create_sycl_library(syclpreview "-fpreview-breaking-changes")
+    endif()
 
 endif()

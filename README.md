@@ -34,6 +34,8 @@ make memory_benchmark_ocl -j`nproc`
 
 ### Building with SYCL support
 
+#### Building with DPC++
+
 SYCL implementations of benchmarks will be built if the following conditions are met:
 
 * oneAPI is installed with support for DPC++;
@@ -42,7 +44,7 @@ SYCL implementations of benchmarks will be built if the following conditions are
 
 Note that building SYCL benchmarks is currently only supported on Linux.
 
-#### Example
+##### Example
 
 ```
 git clone --recurse-submodules https://github.com/intel/compute-benchmarks
@@ -53,6 +55,29 @@ cd build
 cmake .. -DBUILD_SYCL=ON
 cmake --build . --config Release
 ```
+
+#### Building with AdaptiveCpp
+
+The SYCL implementations of the benchmarks can also be built with AdaptiveCpp:
+
+* `acpp` must be in your path;
+* `SYCL_COMPILER_ROOT` must be set manually to point at AdaptiveCpp;
+* `SYCL_COMPILER` must be set manually to point at AdaptiveCpp;
+* `ALLOW_WARNINGS` must be set to `ON`;
+
+It is recommended to set the optimization flags explicitly, because
+AdaptiveCpp's defaults are less agressive than those of DPC++.
+
+##### Example
+
+```
+git clone --recurse-submodules https://github.com/intel/compute-benchmarks
+cd compute-benchmarks
+mkdir build
+cmake .. -DBUILD_SYCL=ON -DSYCL_COMPILER_ROOT=/path/to/AdaptiveCpp/install/ -DSYCL_COMPILER=acpp -DALLOW_WARNINGS=ON -DCMAKE_CXX_FLAGS="-O3"
+cmake --build . --config Release
+```
+
 
 ### Building with MPI support
 

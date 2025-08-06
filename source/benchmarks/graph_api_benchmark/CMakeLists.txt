@@ -4,4 +4,8 @@
 # SPDX-License-Identifier: MIT
 #
 
-add_benchmark(graph_api_benchmark sycl l0 ur syclpreview ocl all)
+if(SYCL_COMPILER STREQUAL "acpp")
+    add_benchmark(graph_api_benchmark l0 ur ocl all)
+else()
+    add_benchmark(graph_api_benchmark sycl l0 ur syclpreview ocl all)
+endif()

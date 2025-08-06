@@ -39,6 +39,7 @@ if (BUILD_L0)
         add_subdirectory(mpi_workload_l0)
     endif()
 endif()
+
 if (BUILD_HELLO_WORLD AND BUILD_OCL)
     add_subdirectory(hello_world_template_workload_ocl)
     add_subdirectory(hello_world_workload_ocl)

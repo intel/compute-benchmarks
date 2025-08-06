@@ -62,7 +62,13 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         prof.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
             if (!arguments.useEvents) {
+#ifndef __ACPP__
                 sycl::ext::oneapi::experimental::nd_launch(queue, range, eat_time);
+#else
+                // AdaptiveCpp does not support oneAPI extensions.
+                // The "coarse-grained events" extension may be similar.
+                queue.parallel_for(range, eat_time);
+#endif
             } else {
                 queue.parallel_for(range, eat_time);
             }
