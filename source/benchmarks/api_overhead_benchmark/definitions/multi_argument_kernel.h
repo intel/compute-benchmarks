@@ -19,6 +19,7 @@ struct MultiArgumentKernelTimeArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument lws;
     PositiveIntegerArgument groupCount;
     BooleanArgument reverseOrder;
+    BooleanArgument useL0NewArgApi;
 
     MultiArgumentKernelTimeArguments()
         : argumentCount(*this, "argumentCount", "argument count in a kernel, supported values 1,4,8,16,32,64"),
@@ -28,7 +29,8 @@ struct MultiArgumentKernelTimeArguments : TestCaseArgumentContainer {
           exec(*this, "exec", "measure execute as well"),
           lws(*this, "lws", "local work size"),
           groupCount(*this, "groupCount", "total amount of work groups"),
-          reverseOrder(*this, "reverseOrder", "set kernel arguments in reverse order") {}
+          reverseOrder(*this, "reverseOrder", "set kernel arguments in reverse order"),
+          useL0NewArgApi(*this, "newApi", "utilize zeCommandListAppendLaunchKernelWithArguments for L0 submissions") {}
 };
 
 struct MultiArgumentKernelTime : TestCase<MultiArgumentKernelTimeArguments> {

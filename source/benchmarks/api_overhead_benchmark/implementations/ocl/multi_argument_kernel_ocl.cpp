@@ -23,6 +23,10 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
         return TestResult::Nooped;
     }
 
+    if (arguments.useL0NewArgApi) {
+        return TestResult::ApiNotCapable;
+    }
+
     // Setup
     Opencl opencl;
     cl_int retVal{};

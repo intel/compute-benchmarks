@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<MultiArgumentKernelTime> registerTestCase{};
 
-class MultiArgumentKernelTest : public ::testing::TestWithParam<std::tuple<Api, size_t, bool, bool, size_t, bool, size_t, size_t, bool>> {
+class MultiArgumentKernelTest : public ::testing::TestWithParam<std::tuple<Api, size_t, bool, bool, size_t, bool, size_t, size_t, bool, bool>> {
 };
 
 TEST_P(MultiArgumentKernelTest, Test) {
@@ -28,6 +28,7 @@ TEST_P(MultiArgumentKernelTest, Test) {
     args.lws = std::get<6>(GetParam());
     args.groupCount = std::get<7>(GetParam());
     args.reverseOrder = std::get<8>(GetParam());
+    args.useL0NewArgApi = std::get<9>(GetParam());
 
     MultiArgumentKernelTime test;
     test.run(args);
@@ -45,4 +46,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false),
         ::testing::Values(32),
         ::testing::Values(8),
+        ::testing::Bool(),
         ::testing::Bool()));

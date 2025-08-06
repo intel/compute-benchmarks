@@ -24,7 +24,8 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
     }
 
     // Setup
-    LevelZero levelzero;
+    ExtensionProperties extensionProperties = ExtensionProperties::create().setSimplifiedL0Functions(true);
+    LevelZero levelzero(extensionProperties);
     Timer timer;
 
     // Create kernel
@@ -51,19 +52,20 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
 
     // Configure kernel
-    uint32_t groupSizeX = static_cast<uint32_t>(arguments.lws);
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, 1u, 1u));
+    ze_group_size_t groupSizes = {static_cast<uint32_t>(arguments.lws), 1u, 1u};
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizes.groupSizeX, groupSizes.groupSizeY, groupSizes.groupSizeZ));
 
     std::vector<void *> allocations(arguments.argumentCount);
+    std::vector<void *> kernelArguments;
+    std::vector<void *> reversedKernelArguments(arguments.argumentCount);
 
     for (auto allocationId = 0u; allocationId < arguments.argumentCount; allocationId++) {
         ASSERT_ZE_RESULT_SUCCESS(L0::UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, 4096u, &allocations[allocationId]));
+        kernelArguments.push_back((void *)&allocations[allocationId]);
     }
 
-    bool reverseOrder = false;
-
-    for (auto argumentId = 0u; argumentId < arguments.argumentCount; ++argumentId) {
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, argumentId, sizeof(void *), &allocations[argumentId]));
+    for (auto index = 0llu; index < arguments.argumentCount; index++) {
+        reversedKernelArguments[arguments.argumentCount - index - 1] = kernelArguments[index];
     }
 
     // Create command list and warmup
@@ -73,9 +75,20 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
     ze_command_list_handle_t cmdList;
     cmdListDesc.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
-    for (auto j = 0u; j < arguments.count; ++j) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
+
+    bool reverseOrder = false;
+
+    if (arguments.useL0NewArgApi) {
+        ASSERT_ZE_RESULT_SUCCESS(levelzero.zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, dispatchTraits, groupSizes, kernelArguments.data(), nullptr, nullptr, 0u, nullptr));
+    } else {
+        for (auto argumentId = 0u; argumentId < arguments.argumentCount; ++argumentId) {
+            ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, argumentId, sizeof(void *), &allocations[argumentId]));
+        }
+        for (auto j = 0u; j < arguments.count; ++j) {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
+        }
     }
+
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
     if (arguments.exec) {
@@ -85,34 +98,38 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; ++i) {
-        if (arguments.measureSetKernelArg) {
-            timer.measureStart();
-        }
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListReset(cmdList));
         if (arguments.reverseOrder) {
             reverseOrder = !reverseOrder;
         }
 
-        for (auto argumentId = 0u; argumentId < arguments.argumentCount; ++argumentId) {
-            ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, argumentId, sizeof(void *), &allocations[reverseOrder ? arguments.argumentCount - 1 - argumentId : argumentId]));
-        }
-
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListReset(cmdList));
-
-        if (!arguments.measureSetKernelArg) {
+        if (arguments.useL0NewArgApi) {
             timer.measureStart();
-        }
+            for (auto kernelId = 0u; kernelId < arguments.count; ++kernelId) {
+                ASSERT_ZE_RESULT_SUCCESS(levelzero.zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, dispatchTraits, groupSizes, reverseOrder ? reversedKernelArguments.data() : kernelArguments.data(), nullptr, nullptr, 0u, nullptr));
+            }
+        } else {
+            for (auto kernelId = 0u; kernelId < arguments.count; ++kernelId) {
+                if (arguments.measureSetKernelArg) {
+                    timer.measureStart();
+                }
 
-        for (auto kernelId = 0u; kernelId < arguments.count; ++kernelId) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
-        }
+                for (auto argumentId = 0u; argumentId < arguments.argumentCount; ++argumentId) {
+                    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, argumentId, sizeof(void *), &allocations[reverseOrder ? arguments.argumentCount - 1 - argumentId : argumentId]));
+                }
 
+                if (!arguments.measureSetKernelArg) {
+                    timer.measureStart();
+                }
+                ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
+            }
+        }
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
         if (arguments.exec) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
             ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
         }
-
         timer.measureEnd();
 
         statistics.pushValue(timer.get() / arguments.count, typeSelector.getUnit(), typeSelector.getType());
