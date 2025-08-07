@@ -244,7 +244,7 @@ UsmImmediateCopyMultipleBlits|allocates two unified device memory buffers on sep
 Record and Replay Benchmark is a set of tests aimed at measuring performance of recording and execution of commandlist graphs.
 | Test name | Description | Params | L0 | OCL |
 |-----------|-------------|--------|----|-----|
-RecordGraph|measures overhead of recording a graph.|<ul><li>--emulate Emulate record and replay graph API using regular commandlists. (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+RecordGraph|measures overhead of recording a graph.|<ul><li>--emulate Emulate record and replay graph API using regular commandlists. (0 or 1)</li><li>--mDest Take graph destroy phase into account in perf measurment. (0 or 1)</li><li>--mInst Take graph instantion phase into account in perf measurment. (0 or 1)</li><li>--mRec Take graph recording phase into account in perf measurment. (0 or 1)</li><li>--nAppendCopy Number of appendCopy calls per command set</li><li>--nAppendKern Number of appendLaunchKernel calls per command set.</li><li>--nCmdSetsInLvl Number of command sets per level.</li><li>--nForksInLvl Number of forks to introduce in the graph per graph level.</li><li>--nInstantiations Number of executable graphs to instantiate.</li><li>--nLvls Number of levels (nesting) in the graph using forks.</li></ul>|:heavy_check_mark:|:x:|
 
 
 
