@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,6 +48,9 @@ class AllTestsGtestListener : public ::testing::EmptyTestEventListener {
         }
         if (Configuration::get().dumpErrorsImmediately) {
             dumpErrors();
+        }
+        if (Configuration::get().sleepFor > 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(Configuration::get().sleepFor));
         }
     }
 

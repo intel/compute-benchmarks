@@ -29,6 +29,7 @@ Configuration::Configuration()
       verbose(*this, "verbose", "dump results from all iterations"),
       interactivePrints(*this, "interactivePrints", "display test name before running it. May cause unexcpected results when redirecting output to files."),
       iterations(*this, "iterations", "select how many times each test will be run"),
+      sleepFor(*this, "sleepFor", "sleep for specified amount of time after running each test, in milliseconds"),
       selectedApi(*this, "api", "Compute API to be used"),
       noIntelExtensions(*this, "no-intel-extensions", "do not run benchmark requiring Intel specific extensions"),
       dumpCommandLines(*this, "dumpCommandLines", "output commandline arguments to run the each test"),
@@ -74,6 +75,7 @@ Configuration::Configuration()
     verbose = false;
     interactivePrints = false;
     iterations = 10;
+    sleepFor = 20;
     selectedApi = Api::All;
     noIntelExtensions = false;
     dumpCommandLines = false;

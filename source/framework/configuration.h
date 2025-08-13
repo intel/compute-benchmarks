@@ -65,6 +65,7 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument verbose;
     BooleanFlagArgument interactivePrints;
     PositiveIntegerArgument iterations;
+    IntegerArgument sleepFor;
     ApiArgument selectedApi;
     BooleanFlagArgument noIntelExtensions;
     BooleanFlagArgument dumpCommandLines;
