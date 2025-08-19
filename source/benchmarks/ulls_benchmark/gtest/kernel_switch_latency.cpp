@@ -48,9 +48,9 @@ INSTANTIATE_TEST_SUITE_P(
     KernelSwitchLatencyTest,
     ::testing::Combine(
         ::testing::Values(Api::L0, Api::OpenCL),
-        ::testing::Values(8),
+        ::testing::Values(8, 16),
         ::testing::Values(200u),
         ::testing::Values(true),
         ::testing::Values(true),
-        ::testing::Values(true),
-        ::testing::Values(true)));
+        ::testing::Values(true, false),
+        ::testing::Values(true, false)));
