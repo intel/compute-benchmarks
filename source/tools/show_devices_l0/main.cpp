@@ -95,6 +95,22 @@ int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
         std::cout << static_cast<uint32_t>(deviceProperties.uuid.id[i]) << " ";
     }
     std::cout << "\n";
+    // Print each flag as a string
+    std::string flagStr;
+    ze_device_property_flags_t flags = deviceProperties.flags;
+    if (flags == 0) {
+        flagStr += " NONE";
+    } else {
+        if (flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE)
+            flagStr += " ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE";
+        if (flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED)
+            flagStr += " ZE_DEVICE_PROPERTY_FLAG_INTEGRATED";
+        if (flags & ZE_DEVICE_PROPERTY_FLAG_ECC)
+            flagStr += " ZE_DEVICE_PROPERTY_FLAG_ECC";
+        if (flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING)
+            flagStr += " ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING";
+    }
+    std::cout << tabDelimiter << "\tflags: [" << flagStr << " ]\n";
 
     ze_device_memory_properties_t memoryProperties = {};
     uint32_t count = 0u;
@@ -234,22 +250,20 @@ int printDevicesWithTheSameBdfAddress(std::vector<ze_device_handle_t> &devices) 
 int main() {
     Configuration::loadDefaultConfiguration();
 
-    ze_result_t res = zeInit(ZE_INIT_FLAG_GPU_ONLY);
-    if (res != ZE_RESULT_SUCCESS) {
-        std::cerr << "zeInit failed\n";
-        return -1;
-    }
-
+    ze_init_driver_type_desc_t initDesc = {};
+    initDesc.stype = ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC;
+    initDesc.pNext = nullptr;
+    initDesc.flags = UINT32_MAX;
     uint32_t driverCount = 0;
-    res = zeDriverGet(&driverCount, nullptr);
+    ze_result_t res = zeInitDrivers(&driverCount, nullptr, &initDesc);
     if (driverCount == 0 || res != ZE_RESULT_SUCCESS) {
-        std::cerr << "zeDriverGet failed\n";
+        std::cerr << "zeInitDrivers failed\n";
         return -1;
     }
     std::vector<ze_driver_handle_t> drivers(driverCount);
-    res = zeDriverGet(&driverCount, drivers.data());
+    res = zeInitDrivers(&driverCount, drivers.data(), &initDesc);
     if (res != ZE_RESULT_SUCCESS) {
-        std::cerr << "zeDriverGet failed\n";
+        std::cerr << "zeInitDrivers failed during driver handle retrieval\n";
         return -1;
     }
 
