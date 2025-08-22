@@ -16,7 +16,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<RandomAccess> registerTestCase{};
 
-class RandomAccessTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, std::string, size_t, size_t>> {
+class RandomAccessTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, std::string, size_t, size_t, uint32_t>> {
 };
 
 TEST_P(RandomAccessTest, Test) {
@@ -27,6 +27,7 @@ TEST_P(RandomAccessTest, Test) {
     args.accessMode = std::get<2>(GetParam());
     args.randomAccessRange = std::get<3>(GetParam());
     args.useEvents = std::get<4>(GetParam());
+    args.randomAccessSeed = std::get<5>(GetParam());
 
     RandomAccess test;
     test.run(args);
@@ -41,7 +42,8 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(64 * kiloByte, 1 * gigaByte),
         ::testing::Values("Read", "Write", "ReadWrite"),
         ::testing::Values(100),
-        ::testing::Values(true, false)));
+        ::testing::Values(true, false),
+        ::testing::Values(0xBEEFu)));
 
 INSTANTIATE_TEST_SUITE_P(
     RandomAccessTestLIMITED,
@@ -51,4 +53,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(64 * kiloByte),
         ::testing::Values("ReadWrite"),
         ::testing::Values(100),
-        ::testing::Values(true)));
+        ::testing::Values(true),
+        ::testing::Values(0xBEEFu)));

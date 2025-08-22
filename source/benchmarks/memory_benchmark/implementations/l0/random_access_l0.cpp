@@ -99,8 +99,8 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
 
     // Prepare Offset bufffer
     uint32_t *randBuff = reinterpret_cast<uint32_t *>(offsetBuffer);
-    std::random_device randomDevice;
-    std::mt19937 generator(randomDevice());
+    const auto rngSeed = arguments.randomAccessSeed;
+    std::mt19937 generator(rngSeed);
     std::uniform_int_distribution<uint32_t> distr(0, static_cast<uint32_t>(maxPossibleAccessIndex) - 1);
     for (auto index = 0u; index < workItemCnt; index++) {
         randBuff[index] = distr(generator);
