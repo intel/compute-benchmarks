@@ -38,7 +38,7 @@ INSTANTIATE_TEST_SUITE_P(
     RandomAccessTest,
     RandomAccessTest,
     ::testing::Combine(
-        ::testing::Values(256 * megaByte, 1 * gigaByte, 8 * gigaByte, 16 * gigaByte),
+        ::testing::Values(8 * megaByte - 500 * kiloByte, 8 * megaByte, 256 * megaByte, 1 * gigaByte, 8 * gigaByte, 16 * gigaByte),
         ::testing::Values(64 * kiloByte, 1 * gigaByte),
         ::testing::Values("Read", "Write", "ReadWrite"),
         ::testing::Values(100),
