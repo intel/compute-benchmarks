@@ -6,6 +6,7 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/buffer_contents_helper_l0.h"
 #include "framework/l0/utility/usm_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/file_helper.h"
@@ -53,6 +54,11 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
     // Create buffers
     void *srcBuffer{}, *dstBuffer{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &srcBuffer));
+    if (isUsmMemoryType(arguments.sourcePlacement)) {
+        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, srcBuffer, arguments.size, BufferContents::Zeros, true));
+    } else {
+        memset(srcBuffer, 0, arguments.size);
+    }
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.destinationPlacement, levelzero, arguments.size, &dstBuffer));
 
     // Create an immediate command list
