@@ -99,6 +99,9 @@ class TestCase : public TestCaseBase {
         if (testResult == TestResult::Success) {
             DEVELOPER_WARNING_IF(!statistics.isFull(), "test did not generate as many values as expected");
             statistics.printStatistics(testCaseNameWithConfig);
+            if (Configuration::get().sleepFor > 0) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(Configuration::get().sleepFor));
+            }
         } else if (testResult == TestResult::Nooped) {
             statistics.printStatistics(testCaseNameWithConfig);
         } else {
