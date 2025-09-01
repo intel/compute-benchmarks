@@ -58,9 +58,11 @@ static TestResult run(const NonUsmCopyArguments &arguments, Statistics &statisti
             if (sourceNonUsm) {
                 ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.sourcePlacement, levelzero, source));
                 ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &source));
+                memset(source, 1u, arguments.size);
             } else {
                 ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.destinationPlacement, levelzero, destination));
                 ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.destinationPlacement, levelzero, arguments.size, &destination));
+                memset(destination, 1u, arguments.size);
             }
         }
 
