@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,12 +54,12 @@ static TestResult run(const CopyBufferToImageArguments &arguments, Statistics &s
     imageDescription.image_slice_pitch = 0u;
     imageDescription.num_mip_levels = 0u;
     imageDescription.num_samples = 0u;
-    auto size = imageDescription.image_width * imageDescription.image_height * imageDescription.image_depth;
-    cl_mem srcBuffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, size, nullptr, &retVal);
+
     ASSERT_CL_SUCCESS(retVal);
     cl_mem dstImage = clCreateImage(opencl.context, 0, &imageFormat, &imageDescription, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     const auto imageSizeInBytes = ImageHelperOcl::getImageSizeInBytes(channelOrder, channelFormat, arguments.region);
+    cl_mem srcBuffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, imageSizeInBytes, nullptr, &retVal);
 
     // Warmup
     const size_t origin[] = {0, 0, 0};
