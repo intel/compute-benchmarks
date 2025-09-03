@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "framework/ocl/opencl.h"
+#include "framework/ocl/utility/buffer_contents_helper_ocl.h"
 #include "framework/ocl/utility/compression_helper.h"
+#include "framework/ocl/utility/hostptr_reuse_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/timer.h"
 
@@ -36,7 +38,9 @@ static TestResult run(const WriteBufferRectArguments &arguments, Statistics &sta
     const cl_mem_flags compressionHint = CompressionHelper::getCompressionFlags(arguments.compressed, arguments.noIntelExtensions);
     const cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | compressionHint, arguments.size, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
-    auto cpuBuffer = std::make_unique<uint8_t[]>(arguments.size);
+    HostptrReuseHelper::Alloc cpuBuffer{};
+    ASSERT_CL_SUCCESS(HostptrReuseHelper::allocateBufferHostptr(opencl, arguments.reuse, arguments.size, cpuBuffer));
+    ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillUsmBufferOrHostPtr(opencl.commandQueue, cpuBuffer.ptr, arguments.size, arguments.reuse, arguments.contents));
 
     // Check buffer compression
     const auto compressionStatus = CompressionHelper::verifyCompression(buffer, arguments.compressed, arguments.noIntelExtensions);
@@ -55,7 +59,7 @@ static TestResult run(const WriteBufferRectArguments &arguments, Statistics &sta
     ASSERT_CL_SUCCESS(clEnqueueWriteBufferRect(opencl.commandQueue, buffer, CL_BLOCKING,
                                                bufferOffset, arguments.origin, arguments.region,
                                                arguments.rPitch, arguments.sPitch, arguments.rPitch, arguments.sPitch,
-                                               cpuBuffer.get(), 0, nullptr, nullptr));
+                                               cpuBuffer.ptr, 0, nullptr, nullptr));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -63,12 +67,12 @@ static TestResult run(const WriteBufferRectArguments &arguments, Statistics &sta
         ASSERT_CL_SUCCESS(clEnqueueWriteBufferRect(opencl.commandQueue, buffer, CL_NON_BLOCKING,
                                                    bufferOffset, arguments.origin, arguments.region,
                                                    arguments.rPitch, arguments.sPitch, arguments.rPitch, arguments.sPitch,
-                                                   cpuBuffer.get(), 0, nullptr, nullptr));
+                                                   cpuBuffer.ptr, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue))
         timer.measureEnd();
         statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), typeSelector.getType());
     }
-
+    ASSERT_CL_SUCCESS(HostptrReuseHelper::deallocateBufferHostptr(cpuBuffer));
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
     return TestResult::Success;
 }

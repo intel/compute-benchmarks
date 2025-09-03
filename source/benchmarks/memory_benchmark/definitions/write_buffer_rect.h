@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #pragma once
 
 #include "framework/argument/compression_argument.h"
+#include "framework/argument/enum/buffer_contents_argument.h"
+#include "framework/argument/enum/hostptr_reuse_mode_argument.h"
 #include "framework/argument/three_component_uint_argument.h"
 #include "framework/test_case/test_case.h"
 #include "framework/utility/common_help_message.h"
@@ -20,6 +22,8 @@ struct WriteBufferRectArguments : TestCaseArgumentContainer {
     ByteSizeArgument rPitch;
     ByteSizeArgument sPitch;
     BooleanArgument inOrderQueue;
+    HostptrBufferReuseModeArgument reuse;
+    BufferContentsArgument contents;
 
     WriteBufferRectArguments()
         : size(*this, "size", "Size of the buffer"),
@@ -28,7 +32,9 @@ struct WriteBufferRectArguments : TestCaseArgumentContainer {
           region(*this, "region", "Size of the rectangle"),
           rPitch(*this, "rPitch", "Row pitch of the rectangle"),
           sPitch(*this, "sPitch", "Silice pitch of the rectangle"),
-          inOrderQueue(*this, "inOrderQueue", "If set use IOQ, otherwise OOQ. Applicable only for OCL.") {}
+          inOrderQueue(*this, "inOrderQueue", "If set use IOQ, otherwise OOQ. Applicable only for OCL."),
+          reuse(*this, "reuse", CommonHelpMessage::hostptrBufferReuse()),
+          contents(*this, "contents", "Contents of the buffer") {}
 };
 
 struct WriteBufferRect : TestCase<WriteBufferRectArguments> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 [[maybe_unused]] static const inline RegisterTestCase<WriteBufferRect> registerTestCase{};
 
 using Tuple = ThreeComponentUintArgument::TupleType;
-class WriteBufferRectTestEntireBuffer : public ::testing::TestWithParam<std::tuple<bool, Tuple, bool>> {
+class WriteBufferRectTestEntireBuffer : public ::testing::TestWithParam<std::tuple<bool, Tuple, bool, HostptrReuseMode, BufferContents>> {
 };
 
 TEST_P(WriteBufferRectTestEntireBuffer, Test) {
@@ -30,6 +30,8 @@ TEST_P(WriteBufferRectTestEntireBuffer, Test) {
     args.rPitch = args.region[0];
     args.sPitch = args.region[0] * args.region[1];
     args.inOrderQueue = std::get<2>(GetParam());
+    args.reuse = std::get<3>(GetParam());
+    args.contents = std::get<4>(GetParam());
 
     WriteBufferRect test;
     test.run(args);
@@ -41,4 +43,6 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(false, true),
         ::testing::Values(Tuple(128, 128, 1), Tuple(128, 128, 128), Tuple(128, 1024, 1024), Tuple(1024, 16, 1024), Tuple(1024, 1024, 16)),
-        ::testing::Values(false, true)));
+        ::testing::Values(false, true),
+        ::testing::Values(HostptrReuseMode::Aligned4KB, HostptrReuseMode::Misaligned),
+        ::testing::Values(BufferContents::Zeros)));
