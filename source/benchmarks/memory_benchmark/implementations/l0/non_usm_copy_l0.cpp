@@ -30,7 +30,7 @@ static TestResult run(const NonUsmCopyArguments &arguments, Statistics &statisti
     Timer timer;
     // Create an immediate command list
     ze_command_list_handle_t cmdList{};
-    auto status = zeCommandListCreateImmediate(levelzero.context, levelzero.device, nullptr, &cmdList);
+    auto status = zeCommandListCreateImmediate(levelzero.context, levelzero.device, &defaultCommandQueueDesc, &cmdList);
     if (status != ZE_RESULT_SUCCESS) {
         return TestResult::DeviceNotCapable;
     }
