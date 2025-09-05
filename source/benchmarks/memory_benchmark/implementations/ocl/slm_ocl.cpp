@@ -41,9 +41,7 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
     // Check platform we're on
     IntelProduct intelProduct = getIntelProduct(opencl);
     IntelGen gpuGen = getIntelGen(intelProduct);
-    if (gpuGen == IntelGen::Unknown) {
-        return TestResult::ApiNotCapable;
-    }
+
     const cl_uint numThreadsPerEu = (gpuGen >= IntelGen::XeHpCore) ? 8 : 7;
 
     const size_t numOfLoops = 128U;

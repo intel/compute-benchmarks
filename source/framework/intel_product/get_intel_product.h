@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,14 +12,16 @@
 
 // clang-format off
 #define INTEL_GEN(GEN) GEN,
-enum class IntelGen {
+enum class IntelGen : uint32_t {
     #include "framework/intel_product/intel_products.inl"
+    Unknown = 0xFFFFFFFFu
 };
 #undef INTEL_GEN
 
 #define INTEL_PRODUCT(PRODUCT, GEN) PRODUCT,
-enum class IntelProduct {
-     #include "framework/intel_product/intel_products.inl"
+enum class IntelProduct : uint32_t {
+    #include "framework/intel_product/intel_products.inl"
+    Unknown = 0xFFFFFFFFu 
 };
 #undef INTEL_PRODUCT
 

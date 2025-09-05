@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 // clang-format off
 #ifdef INTEL_GEN
-    INTEL_GEN(Unknown)
     INTEL_GEN(Gen8)
     INTEL_GEN(Gen9)
     INTEL_GEN(Gen11)
@@ -19,8 +18,6 @@
 #endif
 
 #ifdef INTEL_PRODUCT
-    INTEL_PRODUCT(Unknown,  Unknown)
-
     INTEL_PRODUCT(Bdw,      Gen8)
 
     INTEL_PRODUCT(Bxt,      Gen9)

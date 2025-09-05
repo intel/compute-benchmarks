@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,13 +37,6 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     Opencl opencl(queueProperties);
 
-    // Check platform we're on
-    IntelProduct intelProduct = getIntelProduct(opencl);
-    IntelGen gpuGen = getIntelGen(intelProduct);
-    if (gpuGen == IntelGen::Unknown) {
-        return TestResult::NoImplementation;
-    }
-
     const size_t subgroupSize = 16;
     const size_t vectorSize = 4;
     const size_t singleSendSizeInBytes = subgroupSize * vectorSize * sizeof(float);
@@ -53,6 +46,10 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
     size_t euNum = 0;
 
     ASSERT_CL_SUCCESS(clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(euNum), &euNum, nullptr));
+
+    // Check platform we're on
+    IntelProduct intelProduct = getIntelProduct(opencl);
+    IntelGen gpuGen = getIntelGen(intelProduct);
 
     const bool useLargeGRF = gpuGen > IntelGen::Gen12lp ? true : false;
     const std::string largeGrfOpt = useLargeGRF ? " -cl-intel-256-GRF-per-thread " : " ";
