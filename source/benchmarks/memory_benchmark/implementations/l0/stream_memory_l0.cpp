@@ -159,7 +159,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     // Enqueue filling of the buffers and set kernel arguments
     for (auto i = 0u; i < buffersCount; i++) {
         if (isSharedSystemPointer(arguments.memoryPlacement)) {
-            memset(buffers[i], 0u, bufferSizes[i]);
+            memset(buffers[i], (rand() & 0xff), bufferSizes[i]);
         } else {
             ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffers[i], bufferSizes[i], arguments.contents, false));
         }
