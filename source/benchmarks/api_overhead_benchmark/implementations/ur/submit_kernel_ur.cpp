@@ -8,9 +8,8 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/ur/error.h"
 #include "framework/ur/ur.h"
-#include "framework/utility/cpu_counter.h"
+#include "framework/utility/combo_profiler.h"
 #include "framework/utility/file_helper.h"
-#include "framework/utility/timer.h"
 
 #include "definitions/submit_kernel.h"
 
@@ -21,11 +20,10 @@ static constexpr size_t global_size[] = {1, 1, 1};
 static constexpr size_t local_size[] = {1, 1, 1};
 
 static TestResult run(const SubmitKernelArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelectorHwI(MeasurementUnit::CpuHardwareCounter, MeasurementType::Cpu);
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        profiler.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
@@ -33,8 +31,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
     // Setup
     UrState ur;
-    Timer timer;
-    CpuCounter cpuCounter;
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_eat_time.spv");
@@ -87,8 +83,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        cpuCounter.measureStart();
-        timer.measureStart();
+        profiler.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
             EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
                 kernel, 0, sizeof(int), nullptr,
@@ -105,20 +100,15 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         }
 
         if (!arguments.measureCompletionTime) {
-            timer.measureEnd();
-            cpuCounter.measureEnd();
-            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType(), "time");
-            statistics.pushCpuCounter(cpuCounter.get(), typeSelectorHwI.getUnit(), typeSelectorHwI.getType(), "hw instructions");
+            profiler.measureEnd();
         }
 
         EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
 
         if (arguments.measureCompletionTime) {
-            timer.measureEnd();
-            cpuCounter.measureEnd();
-            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType(), "time");
-            statistics.pushCpuCounter(cpuCounter.get(), typeSelectorHwI.getUnit(), typeSelectorHwI.getType(), "hw instructions");
+            profiler.measureEnd();
         }
+        profiler.pushStats(statistics);
 
         for (auto &event : events) {
             if (event)
