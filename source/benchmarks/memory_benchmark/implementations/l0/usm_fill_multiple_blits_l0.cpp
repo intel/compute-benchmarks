@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,13 +19,13 @@
 static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
 
+    if (arguments.memoryPlacement == UsmMemoryPlacement::NonUsmMapped) {
+        return TestResult::ApiNotCapable;
+    }
+
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
-    }
-
-    if (arguments.memoryPlacement == UsmMemoryPlacement::NonUsmMapped) {
-        return TestResult::ApiNotCapable;
     }
 
     ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(

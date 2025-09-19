@@ -17,13 +17,13 @@
 static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
 
+    if (arguments.counterBasedEvents && !arguments.inOrder) {
+        return TestResult::ApiNotCapable;
+    }
+
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
-    }
-
-    if (arguments.counterBasedEvents && !arguments.inOrder) {
-        return TestResult::ApiNotCapable;
     }
 
     // Setup

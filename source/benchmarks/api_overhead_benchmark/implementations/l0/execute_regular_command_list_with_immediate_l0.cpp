@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,6 @@
 static TestResult run(const ExecuteRegularCommandListWithImmediateArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
-    if (isNoopRun()) {
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
-        return TestResult::Nooped;
-    }
-
     if (arguments.counterBasedEvents && !arguments.inOrder) {
         return TestResult::ApiNotCapable;
     }
@@ -32,6 +27,11 @@ static TestResult run(const ExecuteRegularCommandListWithImmediateArguments &arg
 
     if (arguments.waitEvent && !arguments.useEvent) {
         return TestResult::ApiNotCapable;
+    }
+
+    if (isNoopRun()) {
+        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        return TestResult::Nooped;
     }
 
     // Setup

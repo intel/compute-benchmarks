@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,12 +17,13 @@
 static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
 
+    if (arguments.counterBasedEvents) {
+        return TestResult::ApiNotCapable;
+    }
+
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
-    }
-    if (arguments.counterBasedEvents) {
-        return TestResult::ApiNotCapable;
     }
 
     // Setup

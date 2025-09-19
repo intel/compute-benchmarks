@@ -18,13 +18,13 @@
 static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
+    if (arguments.useL0NewArgApi) {
+        return TestResult::ApiNotCapable;
+    }
+
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
-    }
-
-    if (arguments.useL0NewArgApi) {
-        return TestResult::ApiNotCapable;
     }
 
     // Setup

@@ -23,13 +23,13 @@ bool validateMemoryFillPatternSize(const size_t patternSize, const size_t maxMem
 static TestResult run(const UsmFillSpecificPatternArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
+    if (arguments.usmMemoryPlacement == UsmMemoryPlacement::NonUsmMapped) {
+        return TestResult::ApiNotCapable;
+    }
+
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
-    }
-
-    if (arguments.usmMemoryPlacement == UsmMemoryPlacement::NonUsmMapped) {
-        return TestResult::ApiNotCapable;
     }
 
     const std::vector<uint8_t> &pattern = arguments.pattern;
