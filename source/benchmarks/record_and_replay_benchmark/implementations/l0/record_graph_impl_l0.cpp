@@ -240,6 +240,8 @@ struct ForkConfig {
     ze_command_list_handle_t target = nullptr;
 };
 
+using RecordGraphConfigStatus = TestResult;
+
 struct RecordGraphConfig final {
     RecordGraphConfig(const RecordGraphArguments &arguments, LevelZero &levelzero) : l0env{levelzero} {
         ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr};
@@ -276,7 +278,8 @@ struct RecordGraphConfig final {
         // Create kernel
         auto spirvModule = FileHelper::loadBinaryFile("graph_api_benchmark_kernel_assign.spv");
         if (spirvModule.size() == 0) {
-            std::abort();
+            this->status = RecordGraphConfigStatus::KernelNotFound;
+            return;
         }
         ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
         moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
@@ -288,6 +291,7 @@ struct RecordGraphConfig final {
         zeKernelCreate(l0env.module, &kernelDesc, &this->kernel);
 
         this->kernelGroupCount = {8, 8, 1};
+        this->status = RecordGraphConfigStatus::Success;
     }
 
     ~RecordGraphConfig() {
@@ -333,6 +337,8 @@ struct RecordGraphConfig final {
 
         ImmCmdListInfos cmdListInfos;
     } l0env;
+
+    RecordGraphConfigStatus status = RecordGraphConfigStatus::Error;
 };
 
 template <bool emulated>
@@ -427,6 +433,9 @@ static TestResult run(const RecordGraphArguments &arguments, Statistics &statist
     GraphApi graphApi = loadGraphApi(levelzero.driver);
 
     RecordGraphConfig cfg{arguments, levelzero};
+    if (TestResult status = cfg.status; status != TestResult::Success) {
+        return status;
+    }
 
     auto recordGraphOnce = [&]() { return recordFunc(levelzero, graphApi, cfg); };
 

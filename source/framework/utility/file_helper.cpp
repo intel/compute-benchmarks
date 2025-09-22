@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 std::vector<uint8_t> FileHelper::loadFile(const std::string &filePath, std::ios_base::openmode openMode) {
     std::ifstream stream(filePath, openMode);
     if (!stream.good()) {
+        std::cerr << "ERROR: Failed to open file: " << filePath << ".\n";
         return {};
     }
 
