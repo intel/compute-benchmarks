@@ -86,8 +86,9 @@ typedef clCommandNDRangeKernelKHR_t *
 
 static TestResult run(const SubmitGraphArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
-
-    if (isNoopRun()) {
+    if (!arguments.emulateGraphs || arguments.useHostTasks || arguments.useExplicit) {
+        return TestResult::ApiNotCapable;
+    } else if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
     }

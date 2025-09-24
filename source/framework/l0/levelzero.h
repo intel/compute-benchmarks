@@ -29,6 +29,16 @@ struct ImportHostPointerExtension {
     L0GetHostPointerBaseAddress getHostPointerBaseAddress = nullptr;
 };
 
+struct GraphExtension {
+    L0GraphCreate graphCreate = nullptr;
+    L0CommandListBeginCaptureIntoGraph commandListBeginCaptureIntoGraph = nullptr;
+    L0CommandListEndGraphCapture commandListEndGraphCapture = nullptr;
+    L0CommandListInstantiateGraph commandListInstantiateGraph = nullptr;
+    L0CommandListAppendGraph commandListAppendGraph = nullptr;
+    L0GraphDestroy graphDestroy = nullptr;
+    L0ExecutableGraphDestroy executableGraphDestroy = nullptr;
+};
+
 // Class handles regular LevelZero boilerplate code, such as querying driver handle, devices, creating contexts,
 // and queues. It is configurable by the QueueProperties and ContextProperties objects, allowing to perform the
 // setup in a different way than usual. Default constructor always creates both the context and the queue.
@@ -46,6 +56,7 @@ struct LevelZero {
     ze_device_handle_t commandQueueDevice{};
     size_t commandQueueMaxFillSize{};
     ImportHostPointerExtension importHostPointer{};
+    GraphExtension graphExtension{};
     L0CounterBasedEventCreate2 counterBasedEventCreate2 = nullptr;
     L0DriverGetDefaultContext zeDriverGetDefaultContext = nullptr;
     L0AppendLaunchKernelWithArguments zeCommandListAppendLaunchKernelWithArguments = nullptr;

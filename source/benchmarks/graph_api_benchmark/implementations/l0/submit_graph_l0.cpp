@@ -16,19 +16,29 @@
 
 static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
-
-    if (isNoopRun()) {
+    if (arguments.useHostTasks || arguments.useExplicit) {
+        return TestResult::ApiNotCapable;
+    } else if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
     }
 
     // Setup
-    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(
-        arguments.inOrderQueue);
+    ExtensionProperties extensionProperties = ExtensionProperties::create()
+                                                  .setCounterBasedCreateFunctions(arguments.inOrderQueue)
+                                                  .setGraphFunctions(!arguments.emulateGraphs);
     LevelZero levelzero(extensionProperties);
 
     Timer timer;
     const ze_group_count_t groupCount{1, 1, 1};
+
+    // Only used when emulateGraphs is 0
+    ze_graph_handle_t graph{};
+    ze_executable_graph_handle_t execGraph{};
+
+    if (!arguments.emulateGraphs) {
+        ASSERT_ZE_RESULT_SUCCESS(levelzero.graphExtension.graphCreate(levelzero.context, &graph, nullptr));
+    }
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_eat_time.spv");
@@ -68,16 +78,26 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
     // Configure kernel
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime);
 
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
 
-    // Append kernel to graph command list
+    // Begin recording stage
+    if (!arguments.emulateGraphs) {
+        ASSERT_ZE_RESULT_SUCCESS(levelzero.graphExtension.commandListBeginCaptureIntoGraph(graphCmdList, graph, nullptr));
+    }
+
     for (uint32_t i = 0; i < arguments.numKernels; ++i) {
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(
             graphCmdList, kernel, &groupCount, nullptr, 0, nullptr));
     }
 
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(graphCmdList));
+    // End recording stage
+    if (!arguments.emulateGraphs) {
+        ASSERT_ZE_RESULT_SUCCESS(levelzero.graphExtension.commandListEndGraphCapture(graphCmdList, &graph, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(levelzero.graphExtension.commandListInstantiateGraph(graph, &execGraph, nullptr));
+    } else {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(graphCmdList));
+    }
 
     // cb event description
     const bool counterBasedEvents = arguments.inOrderQueue;
@@ -115,8 +135,13 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         signalEvent = event;
     }
 
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListImmediateAppendCommandListsExp(
-        cmdList, 1, &graphCmdList, signalEvent, 0, nullptr));
+    if (!arguments.emulateGraphs) {
+        ASSERT_ZE_RESULT_SUCCESS(levelzero.graphExtension.commandListAppendGraph(
+            cmdList, execGraph, nullptr, signalEvent, 0, nullptr));
+    } else {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListImmediateAppendCommandListsExp(
+            cmdList, 1, &graphCmdList, signalEvent, 0, nullptr));
+    }
 
     if (arguments.useEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(
@@ -133,8 +158,13 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
 
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListImmediateAppendCommandListsExp(
-            cmdList, 1, &graphCmdList, signalEvent, 0, nullptr));
+        if (!arguments.emulateGraphs) {
+            ASSERT_ZE_RESULT_SUCCESS(levelzero.graphExtension.commandListAppendGraph(
+                cmdList, execGraph, nullptr, signalEvent, 0, nullptr));
+        } else {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListImmediateAppendCommandListsExp(
+                cmdList, 1, &graphCmdList, signalEvent, 0, nullptr));
+        }
 
         if (!arguments.measureCompletionTime) {
             timer.measureEnd();
@@ -164,6 +194,13 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
             EXPECT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
         }
     }
+
+    // Cleanup graph objects if used
+    if (!arguments.emulateGraphs) {
+        EXPECT_ZE_RESULT_SUCCESS(levelzero.graphExtension.executableGraphDestroy(execGraph));
+        EXPECT_ZE_RESULT_SUCCESS(levelzero.graphExtension.graphDestroy(graph));
+    }
+
     EXPECT_ZE_RESULT_SUCCESS(zeCommandListDestroy(graphCmdList));
     EXPECT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     EXPECT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));

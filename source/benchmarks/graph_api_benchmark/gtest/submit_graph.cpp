@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<SubmitGraph> registerTestCase{};
 
-class SubmitGraphTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, bool, bool, bool, size_t, size_t, bool>> {
+class SubmitGraphTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, bool, bool, bool, bool, size_t, size_t, bool>> {
 };
 
 TEST_P(SubmitGraphTest, Test) {
@@ -25,9 +25,10 @@ TEST_P(SubmitGraphTest, Test) {
     args.inOrderQueue = std::get<3>(GetParam());
     args.useEvents = std::get<4>(GetParam());
     args.useExplicit = std::get<5>(GetParam());
-    args.numKernels = std::get<6>(GetParam());
-    args.kernelExecutionTime = std::get<7>(GetParam());
-    args.measureCompletionTime = std::get<8>(GetParam());
+    args.emulateGraphs = std::get<6>(GetParam());
+    args.numKernels = std::get<7>(GetParam());
+    args.kernelExecutionTime = std::get<8>(GetParam());
+    args.measureCompletionTime = std::get<9>(GetParam());
     SubmitGraph test;
     test.run(args);
 }
@@ -42,6 +43,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),      // inOrderQueue
         ::testing::Values(false, true),      // useEvents
         ::testing::Values(false, true),      // useExplicit
+        ::testing::Values(false, true),      // emulateGraphs
         ::testing::Values(4u, 8u, 16u, 32u), // numKernels
         ::testing::Values(1u),               // kernelExecutionTime
         ::testing::Values(false, true)));    // measureCompletionTime

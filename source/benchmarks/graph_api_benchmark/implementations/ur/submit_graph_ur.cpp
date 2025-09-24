@@ -21,10 +21,10 @@ static constexpr size_t global_size[] = {1, 1, 1};
 static constexpr size_t global_offset = 0;
 
 static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, Statistics &statistics) {
-
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
-
-    if (isNoopRun()) {
+    if (!arguments.emulateGraphs || arguments.useHostTasks || arguments.useExplicit) {
+        return TestResult::ApiNotCapable;
+    } else if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
     }

@@ -30,8 +30,9 @@ static auto inOrder = sycl::property::queue::in_order();
 static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, Statistics &statistics) {
     try {
         ComboProfilerWithStats prof(Configuration::get().profilerType);
-
-        if (isNoopRun()) {
+        if (arguments.emulateGraphs) {
+            return TestResult::ApiNotCapable;
+        } else if (isNoopRun()) {
             prof.pushNoop(statistics);
             return TestResult::Nooped;
         }

@@ -179,6 +179,50 @@ void LevelZero::initializeExtension(const ExtensionProperties &extensionProperti
                                                 reinterpret_cast<void **>(&this->zeCommandListAppendLaunchKernelWithArguments)));
         FATAL_ERROR_IF(this->zeCommandListAppendLaunchKernelWithArguments == nullptr, "zeCommandListAppendLaunchKernelWithArguments retrieved nullptr");
     }
+
+    if (extensionProperties.getGraphFunctions) {
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zeGraphCreateExp",
+                                                reinterpret_cast<void **>(&this->graphExtension.graphCreate)));
+        FATAL_ERROR_IF(this->graphExtension.graphCreate == nullptr, "zeGraphCreateExp retrieved nullptr");
+
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zeCommandListBeginCaptureIntoGraphExp",
+                                                reinterpret_cast<void **>(&this->graphExtension.commandListBeginCaptureIntoGraph)));
+        FATAL_ERROR_IF(this->graphExtension.commandListBeginCaptureIntoGraph == nullptr, "zeCommandListBeginCaptureIntoGraphExp retrieved nullptr");
+
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zeCommandListEndGraphCaptureExp",
+                                                reinterpret_cast<void **>(&this->graphExtension.commandListEndGraphCapture)));
+        FATAL_ERROR_IF(this->graphExtension.commandListEndGraphCapture == nullptr, "zeCommandListEndGraphCaptureExp retrieved nullptr");
+
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zeCommandListInstantiateGraphExp",
+                                                reinterpret_cast<void **>(&this->graphExtension.commandListInstantiateGraph)));
+        FATAL_ERROR_IF(this->graphExtension.commandListInstantiateGraph == nullptr, "zeCommandListInstantiateGraphExp retrieved nullptr");
+
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zeCommandListAppendGraphExp",
+                                                reinterpret_cast<void **>(&this->graphExtension.commandListAppendGraph)));
+        FATAL_ERROR_IF(this->graphExtension.commandListAppendGraph == nullptr, "zeCommandListAppendGraphExp retrieved nullptr");
+
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zeGraphDestroyExp",
+                                                reinterpret_cast<void **>(&this->graphExtension.graphDestroy)));
+        FATAL_ERROR_IF(this->graphExtension.graphDestroy == nullptr, "zeGraphDestroyExp retrieved nullptr");
+
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zeExecutableGraphDestroyExp",
+                                                reinterpret_cast<void **>(&this->graphExtension.executableGraphDestroy)));
+        FATAL_ERROR_IF(this->graphExtension.executableGraphDestroy == nullptr, "zeExecutableGraphDestroyExp retrieved nullptr");
+    }
 }
 
 ze_mutable_command_list_exp_properties_t LevelZero::getDeviceMclProperties(ze_device_handle_t deviceHandle) const {
