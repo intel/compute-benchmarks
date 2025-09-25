@@ -34,11 +34,12 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
     }
 
     // Create timestamp buffer
-    const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    ze_host_mem_alloc_desc_t timestampHostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    timestampHostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     void *timestampBuffer = nullptr;
     const auto timestampBufferSize = sizeof(uint64_t) * 100;
-    ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostAllocationDesc, timestampBufferSize, 0, &timestampBuffer));
+    ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &timestampHostDesc, timestampBufferSize, 0, &timestampBuffer));
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, timestampBuffer, timestampBufferSize))
     uint64_t *beginTimestamp = static_cast<uint64_t *>(timestampBuffer);
     uint64_t *endTimestamp = beginTimestamp + 1;
@@ -55,6 +56,7 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
             ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, outputBufferSize, 0, levelzero.getDevice(DeviceSelection::Tile0), &outputBuffer));
         }
     } else {
+        ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostAllocationDesc, outputBufferSize, 0, &outputBuffer));
     }
 
