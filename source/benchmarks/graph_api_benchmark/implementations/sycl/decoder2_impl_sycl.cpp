@@ -116,3 +116,8 @@ TestResult Decoder2GraphSYCL::runGraph() {
 
     return TestResult::Success;
 }
+
+bool Decoder2GraphSYCL::isUnsupported() {
+    // Emulation mode is for L0 only
+    return emulateGraphs;
+}

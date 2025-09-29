@@ -32,6 +32,7 @@ class Decoder2GraphSYCL : public Decoder2GraphBase<Decoder2GraphSYCL> {
 
     TestResult runLayer();
     TestResult runAllLayers();
+    bool isUnsupported();
 
   private:
     std::shared_ptr<sycl::queue> queue;

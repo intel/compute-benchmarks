@@ -15,11 +15,13 @@
 struct Decoder2GraphArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument numTokens;
     BooleanArgument useGraphs;
+    BooleanArgument emulateGraphs;
     BooleanArgument useHostTasks;
 
     Decoder2GraphArguments()
         : numTokens(*this, "NumTokens", "Number of tokens"),
           useGraphs(*this, "UseGraphs", "Use graphs (1) or execute eagerly (0)"),
+          emulateGraphs(*this, "EmulateGraphs", "Emulate graph execution (1) or not (0) for L0 backend. Must be 0 for other backends"),
           useHostTasks(*this, "UseHostTasks", "Use host task for single graph execution per token (1) or no host tasks for single graph per layer (0)") {}
 };
 

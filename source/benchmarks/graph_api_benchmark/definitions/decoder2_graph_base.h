@@ -25,7 +25,12 @@ template <typename Decoder2GraphImpl>
 class Decoder2GraphBase {
   public:
     Decoder2GraphBase(const Decoder2GraphArguments &arguments)
-        : size(1), iterations(arguments.iterations), numTokens(arguments.numTokens), useGraphs(arguments.useGraphs), useHostTasks(arguments.useHostTasks) {}
+        : size(1u),
+          iterations(static_cast<uint32_t>(arguments.iterations)),
+          numTokens(static_cast<uint32_t>(arguments.numTokens)),
+          useGraphs(arguments.useGraphs),
+          emulateGraphs(arguments.emulateGraphs),
+          useHostTasks(arguments.useHostTasks) {}
 
     using DataIntPtr = std::unique_ptr<int, std::function<void(int *)>>;
 
@@ -59,6 +64,10 @@ class Decoder2GraphBase {
 
     TestResult readResults(int *actualSum, int *actualSignalCount) {
         return static_cast<Decoder2GraphImpl *>(this)->readResults(actualSum, actualSignalCount);
+    }
+
+    bool isUnsupported() {
+        return static_cast<Decoder2GraphImpl *>(this)->isUnsupported();
     }
 
     TestResult calcRefResults(int *refSum, int *refSignalCount) {
@@ -97,26 +106,31 @@ class Decoder2GraphBase {
                 if (useHostTasks) {
                     com.waitGPU();
                 } else {
-                    // Graph must be executed once per layer to synchronize without host tasks.
                     ASSERT_TEST_RESULT_SUCCESS(runGraph());
-                    waitCompletion();
+                    // Emulation modes must explicitly synchronize between graph submissions
+                    if (emulateGraphs) {
+                        waitCompletion();
+                    }
                 }
-                cpuWork();
                 if (useHostTasks)
                     com.notify();
             }
-            // We only need to wait on the queue once between tokens with host task case
-            if (useHostTasks)
+            // We only need to wait on the queue once between tokens outside the loop with the host task case and in non
+            // emulation modes.
+            if (useHostTasks || !emulateGraphs) {
                 waitCompletion();
+            }
         }
         return TestResult::Success;
     }
 
     TestResult run(Statistics &statistics) {
         MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
 
-        if (isNoopRun()) {
+        if (isUnsupported()) {
+            return TestResult::ApiNotCapable;
+        } else if (isNoopRun()) {
+            statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
             return TestResult::Nooped;
         }
 
@@ -151,13 +165,6 @@ class Decoder2GraphBase {
         }
         ASSERT_TEST_RESULT_SUCCESS(destroy());
         return result;
-    }
-
-    void cpuWork() {
-        auto start = std::chrono::steady_clock::now();
-        auto duration = std::chrono::nanoseconds(1000 * CPU_TIMEOUT);
-        while (std::chrono::steady_clock::now() - start < duration)
-            ;
     }
 
     void gpuHostTask() {
@@ -211,6 +218,7 @@ class Decoder2GraphBase {
     uint32_t iterations;
     uint32_t numTokens;
     bool useGraphs;
+    bool emulateGraphs;
     bool useHostTasks;
 
     DataIntPtr graphData;
