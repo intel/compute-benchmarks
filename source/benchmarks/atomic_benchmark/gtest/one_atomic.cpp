@@ -16,19 +16,19 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<OneAtomic> registerTestCase{};
 
-class OneAtomicTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, CommonGtestArgs::EnqueueSize, bool, TestType>> {
+class OneAtomicTest : public ::testing::TestWithParam<std::tuple<Api, DataType, MathOperation, CommonGtestArgs::EnqueueSize, bool, TestType>> {
 };
 
 TEST_P(OneAtomicTest, Test) {
     OneAtomicArguments args{};
-    args.api = Api::OpenCL;
-    args.dataType = std::get<0>(GetParam());
-    args.atomicOperation = std::get<1>(GetParam());
-    args.workgroupCount = std::get<2>(GetParam()).workgroupCount;
-    args.workgroupSize = std::get<2>(GetParam()).workgroupSize;
-    args.useEvents = std::get<3>(GetParam());
+    args.api = std::get<0>(GetParam());
+    args.dataType = std::get<1>(GetParam());
+    args.atomicOperation = std::get<2>(GetParam());
+    args.workgroupCount = std::get<3>(GetParam()).workgroupCount;
+    args.workgroupSize = std::get<3>(GetParam()).workgroupSize;
+    args.useEvents = std::get<4>(GetParam());
 
-    const auto testType = std::get<4>(GetParam());
+    const auto testType = std::get<5>(GetParam());
     if (isTestSkipped(Configuration::get().extended, testType)) {
         GTEST_SKIP();
     }
@@ -40,17 +40,18 @@ TEST_P(OneAtomicTest, Test) {
 INSTANTIATE_TEST_SUITE_P(
     OneAtomicTest,
     OneAtomicTest,
-    ::testing::Combine(
-        ::testing::Values(DataType::Float, DataType::Int32),
-        ::CommonGtestArgs::reducedAtomicMathOperations(),
-        ::CommonGtestArgs::reducedEnqueueSizesForAtomics(),
-        ::testing::Values(true),
-        ::testing::Values(TestType::Regular)));
+    ::testing::Combine(::testing::Values(Api::OpenCL, Api::L0),
+                       ::testing::Values(DataType::Float, DataType::Int32),
+                       ::CommonGtestArgs::reducedAtomicMathOperations(),
+                       ::CommonGtestArgs::reducedEnqueueSizesForAtomics(),
+                       ::testing::Values(true),
+                       ::testing::Values(TestType::Regular)));
 
 INSTANTIATE_TEST_SUITE_P(
     OneAtomicExtendedTest,
     OneAtomicTest,
     ::testing::Combine(
+        ::testing::Values(Api::OpenCL, Api::L0),
         ::testing::Values(DataType::Float, DataType::Int32),
         ::CommonGtestArgs::allAtomicMathOperations(),
         ::CommonGtestArgs::enqueueSizesForAtomics(),
@@ -61,6 +62,7 @@ INSTANTIATE_TEST_SUITE_P(
     OneAtomicTestLIMITED,
     OneAtomicTest,
     ::testing::Combine(
+        ::testing::Values(Api::OpenCL, Api::L0),
         ::testing::Values(DataType::Int32),
         ::testing::Values(MathOperation::Inc),
         ::testing::Values(

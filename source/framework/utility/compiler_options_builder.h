@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 class CompilerOptionsBuilder {
   public:
     void addOption(const char *option);
-    void addOptionOpenCl20();
+    void addOptionOpenCl30();
 
     void addDefinition(const char *key);
     void addDefinitionKeyValue(const char *key, const char *value);

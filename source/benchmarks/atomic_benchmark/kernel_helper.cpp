@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ std::string KernelHelper::getCompilerOptions(DataType dataType, MathOperation op
     CompilerOptionsBuilder options{};
     addAtomicOpMacro(options, operation);
     if (MathOperationHelper::requiresIntelGlobalAtomicsExtension(operation, dataType)) {
-        options.addOptionOpenCl20();
+        options.addOptionOpenCl30();
         options.addDefinition("cl_intel_global_float_atomics");
         options.addDefinition("USE_GLOBAL_FLOAT_ATOMICS");
     }
@@ -38,7 +38,7 @@ std::string KernelHelper::getCompilerOptionsExplicit(DataType dataType, MathOper
                                                      AtomicScope scope, size_t otherArgumentBufferSize) {
     CompilerOptionsBuilder options{};
     addExplicitAtomicOpMacro(options, operation, order, scope);
-    options.addOptionOpenCl20();
+    options.addOptionOpenCl30();
     options.addDefinition("OCL_20");
     if (MathOperationHelper::requiresIntelGlobalAtomicsExtension(operation, dataType)) {
         options.addDefinition("cl_intel_global_float_atomics");

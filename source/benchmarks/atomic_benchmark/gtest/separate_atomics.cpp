@@ -16,24 +16,24 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<SeparateAtomics> registerTestCase{};
 
-class SeparateAtomicsTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, size_t, CommonGtestArgs::EnqueueSize, bool, TestType>> {
+class SeparateAtomicsTest : public ::testing::TestWithParam<std::tuple<Api, DataType, MathOperation, size_t, CommonGtestArgs::EnqueueSize, bool, TestType>> {
 };
 
 TEST_P(SeparateAtomicsTest, Test) {
     SeparateAtomicsArguments args{};
-    args.api = Api::OpenCL;
-    args.dataType = std::get<0>(GetParam());
-    args.atomicOperation = std::get<1>(GetParam());
-    args.atomicsPerCacheline = std::get<2>(GetParam());
-    args.workgroupCount = std::get<3>(GetParam()).workgroupCount;
-    args.workgroupSize = std::get<3>(GetParam()).workgroupSize;
-    args.useEvents = std::get<4>(GetParam());
+    args.api = std::get<0>(GetParam());
+    args.dataType = std::get<1>(GetParam());
+    args.atomicOperation = std::get<2>(GetParam());
+    args.atomicsPerCacheline = std::get<3>(GetParam());
+    args.workgroupCount = std::get<4>(GetParam()).workgroupCount;
+    args.workgroupSize = std::get<4>(GetParam()).workgroupSize;
+    args.useEvents = std::get<5>(GetParam());
 
     if (args.atomicsPerCacheline > args.workgroupCount * args.workgroupSize) {
         GTEST_SKIP();
     }
 
-    const auto testType = std::get<5>(GetParam());
+    const auto testType = std::get<6>(GetParam());
     if (isTestSkipped(Configuration::get().extended, testType)) {
         GTEST_SKIP();
     }
@@ -46,6 +46,7 @@ INSTANTIATE_TEST_SUITE_P(
     SeparateAtomicsTest,
     SeparateAtomicsTest,
     ::testing::Combine(
+        ::testing::Values(Api::OpenCL, Api::L0),
         ::testing::Values(DataType::Float, DataType::Int32),
         ::CommonGtestArgs::reducedAtomicMathOperations(),
         ::testing::Values(1, 4),
@@ -57,6 +58,7 @@ INSTANTIATE_TEST_SUITE_P(
     SeparateAtomicsExtendedTest,
     SeparateAtomicsTest,
     ::testing::Combine(
+        ::testing::Values(Api::OpenCL, Api::L0),
         ::testing::Values(DataType::Float, DataType::Int32),
         ::CommonGtestArgs::allAtomicMathOperations(),
         ::testing::Values(1, 4),
@@ -68,6 +70,7 @@ INSTANTIATE_TEST_SUITE_P(
     SeparateAtomicsTestLIMITED,
     SeparateAtomicsTest,
     ::testing::Combine(
+        ::testing::Values(Api::OpenCL, Api::L0),
         ::testing::Values(DataType::Int32),
         ::testing::Values(MathOperation::Inc),
         ::testing::Values(1, 4),

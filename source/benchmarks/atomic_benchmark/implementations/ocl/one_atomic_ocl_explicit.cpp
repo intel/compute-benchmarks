@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,13 +47,13 @@ static TestResult run(const OneAtomicExplicitArguments &arguments, Statistics &s
 
     // Buffer sizes
     const size_t atomicBufferSize = data.sizeOfDataType; // only one atomic value
-    const size_t otherArguemtnsBufferEntryCount = 4u;    // we only need 1 value, but storing in multiple can prevent some compiler opts
-    const size_t otherArgumentsBufferSize = otherArguemtnsBufferEntryCount * data.sizeOfDataType;
+    const size_t otherArgumentsBufferEntryCount = 4u;    // we only need 1 value, but storing in multiple can prevent some compiler opts
+    const size_t otherArgumentsBufferSize = otherArgumentsBufferEntryCount * data.sizeOfDataType;
 
     // Create kernel
     cl_program program = nullptr;
     const char *programName = "atomic_benchmark_kernel.cl";
-    const std::string compilerOptions = KernelHelper::getCompilerOptionsExplicit(arguments.dataType, arguments.atomicOperation, arguments.memoryOrder, arguments.scope, otherArguemtnsBufferEntryCount);
+    const std::string compilerOptions = KernelHelper::getCompilerOptionsExplicit(arguments.dataType, arguments.atomicOperation, arguments.memoryOrder, arguments.scope, otherArgumentsBufferEntryCount);
     if (auto result = ProgramHelperOcl::buildProgramFromSourceFile(opencl.context, opencl.device, programName, compilerOptions.c_str(), program); result != TestResult::Success) {
         return result;
     }

@@ -22,6 +22,8 @@
 #include <level_zero/ze_stypes.h>
 #include <ratio>
 
+#define ZE_MODULE_FORMAT_OCLC (ze_module_format_t)3U
+
 namespace L0 {
 struct ImportHostPointerExtension {
     L0ImportExternalPointer importExternalPointer = nullptr;
@@ -114,6 +116,30 @@ struct LevelZero {
     ze_mutable_command_list_exp_properties_t getDeviceMclProperties(DeviceSelection deviceSelection) const { return getDeviceMclProperties(getDevice(deviceSelection)); }
     ze_mutable_command_list_exp_properties_t getDeviceMclProperties(ze_device_handle_t deviceHandle) const;
 
+    std::vector<ze_driver_extension_properties_t>
+    getExtensionProperties() {
+        uint32_t count = 0;
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionProperties(driver, &count, nullptr));
+        std::vector<ze_driver_extension_properties_t> properties(count);
+        memset(properties.data(), 0,
+               sizeof(ze_driver_extension_properties_t) * count);
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionProperties(driver, &count, properties.data()));
+        return properties;
+    }
+    bool isExtensionSupported(const char *extensionName) {
+        auto driverExtensionProperties = getExtensionProperties();
+        for (auto &extension : driverExtensionProperties) {
+            if (strcmp(extension.name, extensionName) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+    bool isGlobalFloatAtomicsSupported() {
+        return isExtensionSupported("cl_intel_global_float_atomics");
+    }
     bool isMclExtensionAvailable(uint32_t major, uint32_t minor) const;
 
     uint64_t getTimerResolution(DeviceSelection deviceSelection) const { return getDeviceProperties(deviceSelection).timerResolution; }

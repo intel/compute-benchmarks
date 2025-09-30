@@ -16,26 +16,26 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<SeparateAtomicsExplicit> registerTestCase{};
 
-class SeparateAtomicsExplicitTest : public ::testing::TestWithParam<std::tuple<DataType, MathOperation, size_t, AtomicScope, AtomicMemoryOrder, CommonGtestArgs::EnqueueSize, bool, TestType>> {
+class SeparateAtomicsExplicitTest : public ::testing::TestWithParam<std::tuple<Api, DataType, MathOperation, size_t, AtomicScope, AtomicMemoryOrder, CommonGtestArgs::EnqueueSize, bool, TestType>> {
 };
 
 TEST_P(SeparateAtomicsExplicitTest, Test) {
     SeparateAtomicsExplicitArguments args{};
-    args.api = Api::OpenCL;
-    args.dataType = std::get<0>(GetParam());
-    args.atomicOperation = std::get<1>(GetParam());
-    args.atomicsPerCacheline = std::get<2>(GetParam());
-    args.scope = std::get<3>(GetParam());
-    args.memoryOrder = std::get<4>(GetParam());
-    args.workgroupCount = std::get<5>(GetParam()).workgroupCount;
-    args.workgroupSize = std::get<5>(GetParam()).workgroupSize;
-    args.useEvents = std::get<6>(GetParam());
+    args.api = std::get<0>(GetParam());
+    args.dataType = std::get<1>(GetParam());
+    args.atomicOperation = std::get<2>(GetParam());
+    args.atomicsPerCacheline = std::get<3>(GetParam());
+    args.scope = std::get<4>(GetParam());
+    args.memoryOrder = std::get<5>(GetParam());
+    args.workgroupCount = std::get<6>(GetParam()).workgroupCount;
+    args.workgroupSize = std::get<6>(GetParam()).workgroupSize;
+    args.useEvents = std::get<7>(GetParam());
 
     if (args.atomicsPerCacheline > args.workgroupCount * args.workgroupSize) {
         GTEST_SKIP();
     }
 
-    const auto testType = std::get<7>(GetParam());
+    const auto testType = std::get<8>(GetParam());
     if (isTestSkipped(Configuration::get().extended, testType)) {
         GTEST_SKIP();
     }
@@ -48,6 +48,7 @@ INSTANTIATE_TEST_SUITE_P(
     SeparateAtomicsExplicitTest,
     SeparateAtomicsExplicitTest,
     ::testing::Combine(
+        ::testing::Values(Api::OpenCL, Api::L0),
         ::testing::Values(DataType::Float, DataType::Int32),
         ::CommonGtestArgs::reducedAtomicMathOperations(),
         ::testing::Values(1, 4),
@@ -61,6 +62,7 @@ INSTANTIATE_TEST_SUITE_P(
     SeparateAtomicsExplicitExtendedTest,
     SeparateAtomicsExplicitTest,
     ::testing::Combine(
+        ::testing::Values(Api::OpenCL, Api::L0),
         ::testing::Values(DataType::Float, DataType::Int32),
         ::CommonGtestArgs::allAtomicMathOperations(),
         ::testing::Values(1, 4),
@@ -74,9 +76,12 @@ INSTANTIATE_TEST_SUITE_P(
     SeparateAtomicsExplicitTestLIMITED,
     SeparateAtomicsExplicitTest,
     ::testing::ValuesIn([] {
-        std::vector<std::tuple<DataType, MathOperation, size_t, AtomicScope, AtomicMemoryOrder, CommonGtestArgs::EnqueueSize, bool, TestType>> testCases;
-        testCases.emplace_back(DataType::Int32, MathOperation::Add, 1, AtomicScope::Workgroup, AtomicMemoryOrder::AcquireRelease, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
-        testCases.emplace_back(DataType::Int32, MathOperation::Add, 1, AtomicScope::Workgroup, AtomicMemoryOrder::SequentialConsitent, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
-        testCases.emplace_back(DataType::Int32, MathOperation::Add, 4, AtomicScope::Device, AtomicMemoryOrder::AcquireRelease, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
+        std::vector<std::tuple<Api, DataType, MathOperation, size_t, AtomicScope, AtomicMemoryOrder, CommonGtestArgs::EnqueueSize, bool, TestType>> testCases;
+        testCases.emplace_back(Api::OpenCL, DataType::Int32, MathOperation::Add, 1, AtomicScope::Workgroup, AtomicMemoryOrder::AcquireRelease, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
+        testCases.emplace_back(Api::OpenCL, DataType::Int32, MathOperation::Add, 1, AtomicScope::Workgroup, AtomicMemoryOrder::SequentialConsitent, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
+        testCases.emplace_back(Api::OpenCL, DataType::Int32, MathOperation::Add, 4, AtomicScope::Device, AtomicMemoryOrder::AcquireRelease, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
+        testCases.emplace_back(Api::L0, DataType::Int32, MathOperation::Add, 1, AtomicScope::Workgroup, AtomicMemoryOrder::AcquireRelease, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
+        testCases.emplace_back(Api::L0, DataType::Int32, MathOperation::Add, 1, AtomicScope::Workgroup, AtomicMemoryOrder::SequentialConsitent, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
+        testCases.emplace_back(Api::L0, DataType::Int32, MathOperation::Add, 4, AtomicScope::Device, AtomicMemoryOrder::AcquireRelease, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
         return testCases;
     }()));

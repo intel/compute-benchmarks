@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,8 @@ void CompilerOptionsBuilder::addOption(const char *option) {
     options << option << ' ';
 }
 
-void CompilerOptionsBuilder::addOptionOpenCl20() {
-    addOption("-cl-std=CL2.0");
+void CompilerOptionsBuilder::addOptionOpenCl30() {
+    addOption("-cl-std=CL3.0");
 }
 
 void CompilerOptionsBuilder::addDefinition(const char *key) {
