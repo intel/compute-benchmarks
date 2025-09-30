@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-class NonUsmCopyTest : public ::testing::TestWithParam<std::tuple<UsmMemoryPlacement, UsmMemoryPlacement, size_t, bool, bool>> {
+class NonUsmCopyTest : public ::testing::TestWithParam<std::tuple<UsmMemoryPlacement, UsmMemoryPlacement, size_t, bool, bool, bool>> {
 };
 
 TEST_P(NonUsmCopyTest, Test) {
@@ -25,6 +25,7 @@ TEST_P(NonUsmCopyTest, Test) {
     args.size = std::get<2>(GetParam());
     args.updateOnHost = std::get<3>(GetParam());
     args.reallocate = std::get<4>(GetParam());
+    args.prefetch = std::get<5>(GetParam());
 
     NonUsmCopy test;
     test.run(args);
@@ -39,7 +40,8 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(UsmMemoryPlacementArgument::nonUsmTargets),
         ::testing::Values(512 * megaByte),
         ::testing::Values(false, true),
-        ::testing::Values(false, true)));
+        ::testing::Values(false, true),
+        ::testing::Values(false)));
 
 INSTANTIATE_TEST_SUITE_P(
     NonUsmCopyTestH2D,
@@ -49,7 +51,30 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(UsmMemoryPlacement::Device),
         ::testing::Values(512 * megaByte),
         ::testing::Values(false, true),
-        ::testing::Values(false, true)));
+        ::testing::Values(false, true),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(
+    NonUsmCopyTestPrefetchD2H,
+    NonUsmCopyTest,
+    ::testing::Combine(
+        ::testing::Values(UsmMemoryPlacement::Device),
+        ::testing::ValuesIn(UsmMemoryPlacementArgument::nonUsmTargets),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(false, true),
+        ::testing::Values(false, true),
+        ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    NonUsmCopyTestPrefetchH2D,
+    NonUsmCopyTest,
+    ::testing::Combine(
+        ::testing::ValuesIn(UsmMemoryPlacementArgument::nonUsmTargets),
+        ::testing::Values(UsmMemoryPlacement::Device),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(false, true),
+        ::testing::Values(false, true),
+        ::testing::Values(true)));
 
 INSTANTIATE_TEST_SUITE_P(
     NonUsmCopyTestLIMITED,
@@ -59,4 +84,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(UsmMemoryPlacement::NonUsm4KBAligned),
         ::testing::Values(512 * megaByte),
         ::testing::Values(true),
-        ::testing::Values(false, true)));
+        ::testing::Values(false, true),
+        ::testing::Values(false)));

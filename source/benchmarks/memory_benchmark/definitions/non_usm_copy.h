@@ -19,13 +19,15 @@ struct NonUsmCopyArguments : TestCaseArgumentContainer {
     ByteSizeArgument size;
     BooleanArgument updateOnHost;
     BooleanArgument reallocate;
+    BooleanArgument prefetch;
 
     NonUsmCopyArguments()
         : sourcePlacement(*this, "src", "Placement of the source buffer"),
           destinationPlacement(*this, "dst", "Placement of the destination buffer"),
           size(*this, "size", "Size of the buffer"),
           updateOnHost(*this, "updateOnHost", "memory is updated on the host between copies"),
-          reallocate(*this, "reallocate", "reallocate buffers before each copy") {}
+          reallocate(*this, "reallocate", "reallocate buffers before each copy"),
+          prefetch(*this, "prefetch", "prefetch shared system buffer before each copy") {}
 };
 
 struct NonUsmCopy : TestCase<NonUsmCopyArguments> {

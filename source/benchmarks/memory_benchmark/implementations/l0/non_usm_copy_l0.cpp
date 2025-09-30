@@ -65,14 +65,21 @@ static TestResult run(const NonUsmCopyArguments &arguments, Statistics &statisti
                 memset(destination, 1u, arguments.size);
             }
         }
+        if (arguments.prefetch) {
+            if (sourceNonUsm) {
+                ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryPrefetch(cmdList, source, arguments.size));
+            } else {
+                ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryPrefetch(cmdList, destination, arguments.size));
+            }
+        }
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, arguments.size, nullptr, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
         if (arguments.updateOnHost) {
             if (sourceNonUsm) {
-                memset(source, 1u, arguments.size);
+                memset(source, (rand() & 0xff), arguments.size);
             } else {
-                memset(destination, 1u, arguments.size);
+                memset(destination, (rand() & 0xff), arguments.size);
             }
         }
 
