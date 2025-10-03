@@ -30,7 +30,7 @@ TEST_P(Decoder2GraphTest, Test) {
 INSTANTIATE_TEST_SUITE_P(
     Decoder2GraphTest, Decoder2GraphTest,
     ::testing::Combine(
-        ::testing::Values(Api::SYCL, Api::L0),
+        ::testing::Values(Api::SYCL, Api::UR, Api::L0),
         ::testing::Values(20, 40, 100, 200), // numTokens
         ::testing::Values(true, false),      // useGraphs
         ::testing::Values(true, false),      // emulateGraphs (L0 only)
