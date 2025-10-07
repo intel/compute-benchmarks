@@ -26,6 +26,7 @@ It is structured into two sections:
 - [2. Contributing to Compute Benchmarks](#benchmarks-contributing)
   - [2.1 Adding new benchmarks](#adding-new-benchmark)
   - [2.2 Generating documentation](#benchmarks-docs)
+  - [2.3 SPIR-V translation](#spirv-translation)
 
 ## 1. Contribution process overview <a id="contribution-overview"></a>
 ### 1.1 Commit message <a id="commit-message"></a>
@@ -112,3 +113,29 @@ A good way to add new benchmarks is to mimic the existing ones and tweak them to
 
 ### 2.2 Generating documentation <a id="benchmarks-docs"></a>
 Test documentation is generated from the code and stored in the [TESTS.md](TESTS.md) file. Contributors are required to regenerate the documentation by building the `run_docs_generator` target. [TESTS.md](TESTS.md) should be generated with *only* OpenCL and Level Zero enabled - otherwise, the generated file may contain incorrect contents. No further parameters are needed. After generating, include `TESTS.md` as part of the commit.
+
+### 2.3 SPIRV translation <a id="spirv-translation"></a>
+OpenCL kernel files (\*.cl) can be translated into SPIR-V representation files (\*.spv) using `ocloc` (OpenCL Offline Compiler) tool developed and maintained in [compute-runtime](https://github.com/intel/compute-runtime/tree/master/shared/offline_compiler) repository. Compute Benchmarks provide [compile_to_spv.sh](https://github.com/intel/compute-benchmarks/blob/master/scripts/compile_to_spv.sh) utility script to help with the procedure. Script requires the `ocloc` binary to be present in your PATH. The `ocloc` binary can be acquired from [compute-runtime releases](https://github.com/intel/compute-runtime/releases/) (using the [latest](https://github.com/intel/compute-runtime/releases/latest) release is strongly recommended).
+
+*Note: At the time of writing this guide, latest release is `25.35.35096.9` and such version will be used in the following examples.*
+
+To generate SPIR-V files using the script, follow these steps:
+1. Download and install the `ocloc` package.
+```
+wget https://github.com/intel/compute-runtime/releases/download/25.35.35096.9/intel-ocloc_25.35.35096.9-0_amd64.deb
+dpkg -i intel-ocloc_25.35.35096.9-0_amd64.deb
+```
+2. Download and install the `igc-core` package to satisfy the `libigdfcl.so.2` dependency for `ocloc`:
+```
+wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.18.5/intel-igc-core-2_2.18.5+19820_amd64.deb
+dpkg -i intel-igc-core-2_2.18.5+19820_amd64.deb
+```
+3. Add `/usr/local/lib` to the `LD_LIBRARY_PATH`:
+```
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+```
+4. Run the script (replace with your kernel path):
+```
+./scripts/compile_to_spv.sh /compute-benchmarks/source/benchmarks/record_and_replay_benchmark/kernels/graph_api_benchmark_kernel_assign.cl
+```
+5. The generated .spv file will be written to your current directory.
