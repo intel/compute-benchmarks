@@ -116,7 +116,10 @@ int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
     uint32_t count = 0u;
     res = zeDeviceGetMemoryProperties(device, &count, nullptr);
     if (res == ZE_RESULT_SUCCESS && count == 1) {
-        zeDeviceGetMemoryProperties(device, &count, &memoryProperties);
+        if (zeDeviceGetMemoryProperties(device, &count, &memoryProperties) != ZE_RESULT_SUCCESS) {
+            std::cerr << "zeDeviceGetMemoryProperties failed\n";
+            return -1;
+        }
         std::cout << tabDelimiter << "Memory properties: \n";
         std::cout << tabDelimiter << "\ttotal size: " << std::dec << memoryProperties.totalSize << "\n";
         std::cout << tabDelimiter << "\tmax clock rate: " << memoryProperties.maxClockRate << "\n";
@@ -127,7 +130,7 @@ int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
     res = zeDeviceGetMemoryAccessProperties(device, &memoryAccessCapabilities);
 
     if (res != ZE_RESULT_SUCCESS) {
-        std::cerr << "zeDeviceGetProperties failed\n";
+        std::cerr << "zeDeviceGetMemoryAccessProperties failed\n";
         return -1;
     }
     std::cout << tabDelimiter << "Memory access capabilities: \n";

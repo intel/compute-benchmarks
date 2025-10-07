@@ -59,8 +59,7 @@ static TestResult run(const RandomAccessMultiResourceArguments &arguments, Stati
         return TestResult::DeviceNotCapable;
     }
 
-    if ((firstSize / srcBufferAccessElementSize) > pow(2, offsetAccessBytesPerThread * 8u) ||
-        (secondSize / srcBufferAccessElementSize) > pow(2, offsetAccessBytesPerThread * 8u)) {
+    if ((firstSize / srcBufferAccessElementSize) > std::numeric_limits<uint32_t>::max() || (secondSize / srcBufferAccessElementSize) > std::numeric_limits<uint32_t>::max()) {
         return TestResult::InvalidArgs;
     }
 
