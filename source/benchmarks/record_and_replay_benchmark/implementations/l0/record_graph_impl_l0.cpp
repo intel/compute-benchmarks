@@ -440,41 +440,47 @@ static TestResult run(const RecordGraphArguments &arguments, Statistics &statist
     auto recordGraphOnce = [&]() { return recordFunc(levelzero, graphApi, cfg); };
 
     Timer timer;
+    auto startMeasureIfInactive = [&timer](bool &isActive) {
+        if (!isActive) {
+            isActive = true;
+            timer.measureStart();
+        }
+    };
+    auto stopMeasureIfActive = [&timer](bool &isActive) {
+        auto out = decltype(timer.get()){};
+        if (isActive) {
+            timer.measureEnd();
+            out = timer.get();
+            isActive = false;
+        }
+        return out;
+    };
+
     for (auto i = 0u; i < arguments.iterations; i++) {
         decltype(timer.get()) firstPartTime = {};
         bool isMeasuring = false;
+
         if (arguments.mRec) {
-            isMeasuring = true;
-            timer.measureStart();
+            startMeasureIfInactive(isMeasuring);
         }
 
-        [[maybe_unused]] auto graph = recordGraphOnce();
-
-        if (!isMeasuring && arguments.mInst) {
-            isMeasuring = true;
-            timer.measureStart();
-        }
+        auto graph = recordGraphOnce();
 
         if (arguments.mInst) {
-            graph->instantiateExecutableGraphs(static_cast<int>(arguments.nInstantiations), recordGraphOnce);
-        } else if (isMeasuring) {
-            timer.measureEnd();
-            firstPartTime = timer.get();
-            isMeasuring = false;
-            graph->instantiateExecutableGraphs(static_cast<int>(arguments.nInstantiations), recordGraphOnce);
+            startMeasureIfInactive(isMeasuring);
+        } else {
+            firstPartTime = stopMeasureIfActive(isMeasuring);
         }
 
-        if (!isMeasuring && arguments.mDest) {
-            isMeasuring = true;
-            timer.measureStart();
-        }
+        graph->instantiateExecutableGraphs(static_cast<int>(arguments.nInstantiations), recordGraphOnce);
 
         if (arguments.mDest) {
+            startMeasureIfInactive(isMeasuring);
             graph.reset();
         }
 
-        timer.measureEnd();
-        statistics.pushValue(firstPartTime + timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        auto secondPartTime = stopMeasureIfActive(isMeasuring);
+        statistics.pushValue(firstPartTime + secondPartTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
     return TestResult::Success;
