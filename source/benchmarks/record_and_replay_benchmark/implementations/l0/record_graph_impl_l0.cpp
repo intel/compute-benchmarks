@@ -199,11 +199,11 @@ struct RecordedGraph<true> : RecordGraphImplBase<RecordedGraph<true>> {
         cmdListDesc.commandQueueGroupOrdinal = cmdListInfo.desc.ordinal;
         cmdListDesc.flags |= (0 != (cmdListInfo.desc.flags & ZE_COMMAND_QUEUE_FLAG_IN_ORDER)) ? static_cast<ze_command_list_flags_t>(ZE_COMMAND_LIST_FLAG_IN_ORDER) : 0U;
         zeCommandListCreate(ctx, cmdListInfo.hDevice, &cmdListDesc, &newRegularCmdList);
-        cmdListStack.push_back(root);
+        cmdListStack.push_back(newRegularCmdList);
     }
 
     void endRecordingImpl() {
-        zeCommandListClose(root);
+        zeCommandListClose(*cmdListStack.begin());
     }
 
     void forkImpl(ze_command_list_handle_t forkTo) {
@@ -223,7 +223,7 @@ struct RecordedGraph<true> : RecordGraphImplBase<RecordedGraph<true>> {
     }
 
     void instantiateExecutableGraphs([[maybe_unused]] int num, std::function<std::unique_ptr<RecordedGraphBase>()> rerecordFunc) override {
-        if (0 == num) {
+        if (num <= 1) {
             return; // NOOP, recorded command lists already contain native commands
         }
         instantiatedGraphs.reserve(num - 1);
