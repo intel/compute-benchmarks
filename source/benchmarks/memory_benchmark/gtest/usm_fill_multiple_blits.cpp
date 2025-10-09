@@ -36,7 +36,7 @@ INSTANTIATE_TEST_SUITE_P(
     UsmFillMultipleBlitsTest,
     UsmFillMultipleBlitsTest,
     ::testing::Combine(
-        ::CommonGtestArgs::allApis(),
+        ::testing::Values(Api::L0, Api::OpenCL),
         ::testing::Values(UsmMemoryPlacement::Device),
         ::testing::Values(512 * megaByte),
         ::testing::Values(1),
@@ -47,9 +47,9 @@ INSTANTIATE_TEST_SUITE_P(
     UsmFillMultipleBlitsTestLIMITED,
     UsmFillMultipleBlitsTest,
     ::testing::Combine(
-        ::testing::Values(Api::L0, Api::OpenCL),
+        ::testing::Values(Api::L0),
         ::testing::Values(UsmMemoryPlacement::Device),
         ::testing::Values(512 * megaByte),
         ::testing::Values(1),
         ::testing::Values(BufferContents::Zeros, BufferContents::Random),
-        ::testing::Values("000000111")));
+        ::testing::Values("000000001")));
