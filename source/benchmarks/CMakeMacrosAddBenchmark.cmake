@@ -88,7 +88,6 @@ function (add_benchmark_for_api BASE_TARGET_NAME APPEND_API_TO_TARGET_NAME REGIS
     foreach(DIR ${API_AGNOSTIC_SOURCE_DIRECTORIES})
         add_sources_to_benchmark(${TARGET_NAME} ${DIR})
     endforeach()
-    add_kernels_to_benchmark(${TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/kernels)
 
     # API specific sources
     set(API_SPECIFIC_SOURCE_DIRECTORIES
@@ -107,16 +106,6 @@ function (add_benchmark_for_api BASE_TARGET_NAME APPEND_API_TO_TARGET_NAME REGIS
             add_sources_to_benchmark(${TARGET_NAME} ${DIR})
         endforeach()
     endforeach()
-
-    # Create kernel copy targets
-    set(COPY_KERNEL_TARGET_NAME "copy_kernel_files_${BASE_TARGET_NAME}")
-    if(NOT TARGET ${COPY_KERNEL_TARGET_NAME})
-        add_custom_target(${COPY_KERNEL_TARGET_NAME})
-        set_target_properties(${COPY_KERNEL_TARGET_NAME} PROPERTIES FOLDER "copy_kernel_files")
-        set(KERNEL_OUTPUT_DIR ${OUTPUT_DIR})
-        copy_kernels_to_bin_directory_of_target(${COPY_KERNEL_TARGET_NAME} ${TARGET_NAME} ${KERNEL_OUTPUT_DIR})
-    endif()
-    add_dependencies(${TARGET_NAME} ${COPY_KERNEL_TARGET_NAME})
 
     # Additional setup
     setup_vs_folders(${TARGET_NAME} ${BENCHMARKS_SOURCE_ROOT})
@@ -144,8 +133,6 @@ function(add_benchmark_dependency_on_workload BENCHMARK_BASE_NAME WORKLOAD API)
                 $<TARGET_FILE:${WORKLOAD}>
                 $<TARGET_FILE_DIR:${BENCHMARK}>/$<TARGET_FILE_NAME:${WORKLOAD}>
             )
-            get_target_property(KERNEL_OUTPUT_DIR ${BENCHMARK} RUNTIME_OUTPUT_DIRECTORY)
-            copy_kernels_to_bin_directory_of_target(${BENCHMARK} ${WORKLOAD} ${KERNEL_OUTPUT_DIR})
         endif()
     endforeach()
 endfunction()

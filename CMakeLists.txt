@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-cmake_minimum_required(VERSION 3.10.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 project(ComputeBenchmarks)
 include(CMakeOptions.cmake)
 include(CheckSymbolExists)
@@ -110,6 +110,8 @@ endif()
 
 check_symbol_exists(SYS_pidfd_getfd "sys/syscall.h" HAVE_SYS_PIDFD_GETFD)
 check_symbol_exists(SYS_pidfd_open "sys/syscall.h" HAVE_SYS_PIDFD_OPEN)
+
+include(${CMAKE_MODULE_PATH}/CopyKernels.cmake)
 
 add_subdirectory(source)
 set_directory_properties(PROPERTIES VS_STARTUP_PROJECT ulls_benchmark_ocl)

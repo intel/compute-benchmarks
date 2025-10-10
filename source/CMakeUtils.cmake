@@ -1,25 +1,8 @@
 #
-# Copyright (C) 2022-2024 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
-
-function(copy_kernels_to_bin_directory_of_target TARGET_NAME TARGET_KERNEL_OWNER TARGET_DIR)
-    get_target_property(KERNELS ${TARGET_KERNEL_OWNER} KERNELS)
-    if (KERNELS STREQUAL "KERNELS-NOTFOUND")
-        return()
-    endif()
-    foreach(KERNEL ${KERNELS})
-        get_filename_component(KERNEL_NAME ${KERNEL} NAME)
-        add_custom_command(
-            TARGET ${TARGET_NAME}
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-            ${KERNEL}
-            ${TARGET_DIR}/${KERNEL_NAME}
-        )
-    endforeach()
-endfunction()
 
 function(setup_vs_folders TARGET_NAME BASE_DIR)
     if (MSVC)
@@ -75,12 +58,4 @@ endfunction()
 function(add_sources_to_benchmark TARGET_NAME DIR)
     file(GLOB SOURCES ${DIR}/*.cpp ${DIR}/*.h)
     target_sources(${TARGET_NAME} PRIVATE ${SOURCES})
-endfunction()
-
-function (add_kernels_to_benchmark TARGET_NAME DIR)
-    file(GLOB_RECURSE SOURCE_KERNELS ${DIR}/*.cl)
-    target_sources(${TARGET_NAME} PRIVATE ${SOURCE_KERNELS})
-
-    file(GLOB KERNELS ${DIR}/*.spv ${DIR}/*.cl)
-    set_property(TARGET ${TARGET_NAME} APPEND PROPERTY KERNELS ${KERNELS})
 endfunction()
