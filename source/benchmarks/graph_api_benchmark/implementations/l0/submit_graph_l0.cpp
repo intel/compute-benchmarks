@@ -64,7 +64,7 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
-    // Create a regular command list that represents command graph
+    // Create command list that represents command graph
     ze_command_list_handle_t graphCmdList{};
 
     ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
@@ -72,8 +72,16 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     cmdListDesc.flags = arguments.inOrderQueue ? ZE_COMMAND_LIST_FLAG_IN_ORDER : 0;
 
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(
-        levelzero.context, levelzero.device, &cmdListDesc, &graphCmdList));
+    if (!arguments.emulateGraphs) {
+        ze_command_queue_desc_t capturedQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+        capturedQueueDesc.flags = arguments.inOrderQueue ? ZE_COMMAND_QUEUE_FLAG_IN_ORDER : 0;
+        capturedQueueDesc.ordinal = levelzero.commandQueueDesc.ordinal;
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(
+            levelzero.context, levelzero.device, &capturedQueueDesc, &graphCmdList));
+    } else {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(
+            levelzero.context, levelzero.device, &cmdListDesc, &graphCmdList));
+    }
 
     // Configure kernel
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime);
