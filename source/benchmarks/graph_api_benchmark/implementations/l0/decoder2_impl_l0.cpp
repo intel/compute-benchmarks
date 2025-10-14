@@ -86,7 +86,7 @@ TestResult Decoder2GraphL0::runLayer() {
     for (uint32_t i = 0; i < KERNELS_PER_LAYER; ++i) {
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernelDecoder2, 0, sizeof(uint32_t), &numIncrements));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernelDecoder2, 1, sizeof(int *), &data));
-        if (useGraphs) {
+        if (useGraphs && emulateGraphs) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernelDecoder2, &groupCount,
                                                                      nullptr, 0, nullptr));
         } else {
@@ -108,9 +108,9 @@ TestResult Decoder2GraphL0::runAllLayers() {
 
 TestResult Decoder2GraphL0::recordGraph() {
     if (useGraphs && !emulateGraphs) {
-        ASSERT_ZE_RESULT_SUCCESS(levelzero->graphExtension.commandListBeginCaptureIntoGraph(cmdList, graph, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(levelzero->graphExtension.commandListBeginCaptureIntoGraph(immCmdList, graph, nullptr));
         runLayer();
-        ASSERT_ZE_RESULT_SUCCESS(levelzero->graphExtension.commandListEndGraphCapture(cmdList, &graph, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(levelzero->graphExtension.commandListEndGraphCapture(immCmdList, &graph, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(levelzero->graphExtension.commandListInstantiateGraph(graph, &execGraph, nullptr));
     } else if (useGraphs) { // Emulation mode
         runLayer();
