@@ -75,13 +75,13 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     SeparateAtomicsExplicitTestLIMITED,
     SeparateAtomicsExplicitTest,
-    ::testing::ValuesIn([] {
-        std::vector<std::tuple<Api, DataType, MathOperation, size_t, AtomicScope, AtomicMemoryOrder, CommonGtestArgs::EnqueueSize, bool, TestType>> testCases;
-        testCases.emplace_back(Api::OpenCL, DataType::Int32, MathOperation::Add, 1, AtomicScope::Workgroup, AtomicMemoryOrder::AcquireRelease, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
-        testCases.emplace_back(Api::OpenCL, DataType::Int32, MathOperation::Add, 1, AtomicScope::Workgroup, AtomicMemoryOrder::SequentialConsitent, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
-        testCases.emplace_back(Api::OpenCL, DataType::Int32, MathOperation::Add, 4, AtomicScope::Device, AtomicMemoryOrder::AcquireRelease, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
-        testCases.emplace_back(Api::L0, DataType::Int32, MathOperation::Add, 1, AtomicScope::Workgroup, AtomicMemoryOrder::AcquireRelease, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
-        testCases.emplace_back(Api::L0, DataType::Int32, MathOperation::Add, 1, AtomicScope::Workgroup, AtomicMemoryOrder::SequentialConsitent, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
-        testCases.emplace_back(Api::L0, DataType::Int32, MathOperation::Add, 4, AtomicScope::Device, AtomicMemoryOrder::AcquireRelease, CommonGtestArgs::EnqueueSize{32, 64}, true, TestType::Regular);
-        return testCases;
-    }()));
+    ::testing::Combine(
+        ::testing::Values(Api::OpenCL, Api::L0),
+        ::testing::Values(DataType::Int32),
+        ::testing::Values(MathOperation::Add),
+        ::testing::Values(1, 4),
+        ::testing::ValuesIn(AtomicScopeHelper::allValues),
+        ::testing::Values(AtomicMemoryOrder::AcquireRelease, AtomicMemoryOrder::SequentialConsitent),
+        ::testing::Values(CommonGtestArgs::EnqueueSize{32, 64}),
+        ::testing::Values(true),
+        ::testing::Values(TestType::Regular)));
