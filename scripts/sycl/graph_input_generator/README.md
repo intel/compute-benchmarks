@@ -20,6 +20,11 @@ for this representation.
 ## Python Requirements
 
 Requirements can be installed with `pip` via the provided `requirements.txt`.
+The graphviz package needs to be installed. For example, in Ubuntu:
+
+```
+sudo apt install graphviz-dev
+```
 
 ## Limitations
 
