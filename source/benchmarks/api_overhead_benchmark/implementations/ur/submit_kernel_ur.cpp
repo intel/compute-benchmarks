@@ -76,6 +76,8 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
             &global_size[0], 0, nullptr, 0, nullptr, signalEvent));
     }
 
+    EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
+
     for (auto &event : events) {
         if (event)
             urEventRelease(event);
