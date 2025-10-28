@@ -5,6 +5,11 @@
 #
 
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+if(POLICY CMP0091)
+    # Use legacy MSVC runtime library flags
+    cmake_policy(SET CMP0091 OLD)
+endif()
+
 project(ComputeBenchmarks)
 include(CMakeOptions.cmake)
 include(CheckSymbolExists)
