@@ -15,6 +15,7 @@
 #include "definitions/non_usm_copy.h"
 
 #include <gtest/gtest.h>
+#include <level_zero/zer_api.h>
 
 static TestResult run(const NonUsmCopyArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
@@ -30,7 +31,7 @@ static TestResult run(const NonUsmCopyArguments &arguments, Statistics &statisti
     Timer timer;
     // Create an immediate command list
     ze_command_list_handle_t cmdList{};
-    auto status = zeCommandListCreateImmediate(levelzero.context, levelzero.device, &defaultCommandQueueDesc, &cmdList);
+    auto status = zeCommandListCreateImmediate(levelzero.context, levelzero.device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdList);
     if (status != ZE_RESULT_SUCCESS) {
         return TestResult::DeviceNotCapable;
     }

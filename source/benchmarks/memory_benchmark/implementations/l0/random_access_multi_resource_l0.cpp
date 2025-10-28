@@ -18,6 +18,7 @@
 
 #include <gtest/gtest.h>
 #include <iostream>
+#include <level_zero/zer_api.h>
 #include <random>
 
 static TestResult run(const RandomAccessMultiResourceArguments &arguments, Statistics &statistics) {
@@ -114,7 +115,7 @@ static TestResult run(const RandomAccessMultiResourceArguments &arguments, Stati
 
     // Create command list
     ze_command_list_handle_t cmdList;
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &defaultCommandQueueDesc, &cmdList));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdList));
 
     // Create event for gpu time measurement
     zex_counter_based_event_desc_t counterBasedEventDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};

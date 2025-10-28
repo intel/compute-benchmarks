@@ -13,6 +13,7 @@
 #include "definitions/last_event_latency.h"
 
 #include <gtest/gtest.h>
+#include <level_zero/zer_api.h>
 
 static TestResult run([[maybe_unused]] const LastEventLatencyArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
@@ -53,7 +54,7 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
     const ze_group_size_t wgs{32u, 1u, 1u};
     auto buffSize = wgc.groupCountX * wgs.groupSizeX * sizeof(uint32_t);
     void *deviceUsmPtr = nullptr;
-    ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(context, &defaultDeviceMemDesc, buffSize, 0, levelzero.device, &deviceUsmPtr));
+    ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(context, &zeDefaultGPUDeviceMemAllocDesc, buffSize, 0, levelzero.device, &deviceUsmPtr));
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(context, levelzero.device, deviceUsmPtr, buffSize))
     size_t slmSize = 1024;
     uint32_t immData = 10u;
@@ -62,13 +63,13 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
     // Setup command list with CB event
     ze_command_list_handle_t cmdList;
     ze_event_handle_t event;
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(context, levelzero.device, &defaultCommandQueueDesc, &cmdList));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(context, levelzero.device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdList));
     levelzero.counterBasedEventCreate2(context, levelzero.device, &defaultCounterBasedEventDesc, &event);
     auto eventOnKernel = !arguments.signalOnBarrier ? event : nullptr;
     ze_command_list_handle_t barrierCmdList = cmdList;
     auto dependencyOnKernel = arguments.useSameCmdList ? 0 : 1;
     if (!arguments.useSameCmdList) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(context, levelzero.device, &defaultCommandQueueDesc, &barrierCmdList));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(context, levelzero.device, &zeDefaultGPUImmediateCommandQueueDesc, &barrierCmdList));
         levelzero.counterBasedEventCreate2(context, levelzero.device, &defaultCounterBasedEventDesc, &eventOnKernel);
     }
 

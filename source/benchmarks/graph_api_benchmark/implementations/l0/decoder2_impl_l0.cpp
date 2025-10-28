@@ -14,12 +14,13 @@
 
 #include <cstdint>
 #include <level_zero/ze_api.h>
+#include <level_zero/zer_api.h>
 #include <limits>
 
 Decoder2GraphL0::DataIntPtr Decoder2GraphL0::allocDevice(uint32_t count) {
     void *ptr = nullptr;
     size_t bytes = count * sizeof(int);
-    EXPECT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero->context, &defaultDeviceMemDesc, bytes, 1, levelzero->device, &ptr));
+    EXPECT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero->context, &zeDefaultGPUDeviceMemAllocDesc, bytes, 1, levelzero->device, &ptr));
     clearDeviceBuffer(static_cast<int *>(ptr), count);
     return DataIntPtr(static_cast<int *>(ptr), [levelzero = this->levelzero](int *ptr) {
         zeMemFree(levelzero->context, ptr);
@@ -45,7 +46,7 @@ TestResult Decoder2GraphL0::init() {
 
     ASSERT_ZE_RESULT_SUCCESS(
         zeCommandListCreateImmediate(levelzero->context, levelzero->device,
-                                     &defaultCommandQueueDesc, &immCmdList));
+                                     &zeDefaultGPUImmediateCommandQueueDesc, &immCmdList));
 
     if (useGraphs && !emulateGraphs) {
         ASSERT_ZE_RESULT_SUCCESS(levelzero->graphExtension.graphCreate(levelzero->context, &graph, nullptr));
