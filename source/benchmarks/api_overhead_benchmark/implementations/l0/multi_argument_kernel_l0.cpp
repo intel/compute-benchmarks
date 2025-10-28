@@ -24,8 +24,7 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
     }
 
     // Setup
-    ExtensionProperties extensionProperties = ExtensionProperties::create().setSimplifiedL0Functions(true);
-    LevelZero levelzero(extensionProperties);
+    LevelZero levelzero{};
     Timer timer;
 
     // Create kernel
@@ -79,7 +78,7 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
     bool reverseOrder = false;
 
     if (arguments.useL0NewArgApi) {
-        ASSERT_ZE_RESULT_SUCCESS(levelzero.zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, dispatchTraits, groupSizes, kernelArguments.data(), nullptr, nullptr, 0u, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, dispatchTraits, groupSizes, kernelArguments.data(), nullptr, nullptr, 0u, nullptr));
     } else {
         for (auto argumentId = 0u; argumentId < arguments.argumentCount; ++argumentId) {
             ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, argumentId, sizeof(void *), &allocations[argumentId]));
@@ -106,7 +105,7 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
         if (arguments.useL0NewArgApi) {
             timer.measureStart();
             for (auto kernelId = 0u; kernelId < arguments.count; ++kernelId) {
-                ASSERT_ZE_RESULT_SUCCESS(levelzero.zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, dispatchTraits, groupSizes, reverseOrder ? reversedKernelArguments.data() : kernelArguments.data(), nullptr, nullptr, 0u, nullptr));
+                ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, dispatchTraits, groupSizes, reverseOrder ? reversedKernelArguments.data() : kernelArguments.data(), nullptr, nullptr, 0u, nullptr));
             }
         } else {
             for (auto kernelId = 0u; kernelId < arguments.count; ++kernelId) {

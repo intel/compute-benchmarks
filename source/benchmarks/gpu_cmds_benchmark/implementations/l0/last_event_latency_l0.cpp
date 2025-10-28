@@ -27,11 +27,9 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
     }
     Timer timer;
     ExtensionProperties extensionProperties = ExtensionProperties::create()
-                                                  .setCounterBasedCreateFunctions(true)
-                                                  .setSimplifiedL0Functions(true);
+                                                  .setCounterBasedCreateFunctions(true);
     LevelZero levelzero(QueueProperties::create().disable(), ContextProperties::create().disable(), extensionProperties);
-    auto appendLaunchKernelWithArgumentsFunc = levelzero.zeCommandListAppendLaunchKernelWithArguments;
-    auto context = levelzero.zeDriverGetDefaultContext(levelzero.driver);
+    auto context = zeDriverGetDefaultContext(levelzero.driver);
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("gpu_cmds_benchmark_write_one_global_ids.spv");
@@ -74,7 +72,7 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
     }
 
     // Warmup
-    auto ret = appendLaunchKernelWithArgumentsFunc(cmdList, kernel, wgc, wgs, kernelArgs, nullptr, eventOnKernel, 0, nullptr);
+    auto ret = zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, wgc, wgs, kernelArgs, nullptr, eventOnKernel, 0, nullptr);
     ASSERT_ZE_RESULT_SUCCESS(ret);
     if (arguments.signalOnBarrier) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(barrierCmdList, event, dependencyOnKernel, &eventOnKernel));
@@ -84,7 +82,7 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
         timer.measureStart();
 
-        ret = appendLaunchKernelWithArgumentsFunc(cmdList, kernel, wgc, wgs, kernelArgs, nullptr, eventOnKernel, 0, nullptr);
+        ret = zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, wgc, wgs, kernelArgs, nullptr, eventOnKernel, 0, nullptr);
         ASSERT_ZE_RESULT_SUCCESS(ret);
         if (arguments.signalOnBarrier) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(barrierCmdList, event, dependencyOnKernel, &eventOnKernel));

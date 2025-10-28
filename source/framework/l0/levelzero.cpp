@@ -166,20 +166,6 @@ void LevelZero::initializeExtension(const ExtensionProperties &extensionProperti
         FATAL_ERROR_IF(this->counterBasedEventCreate2 == nullptr, "zexCounterBasedEventCreate2 retrieved nullptr");
     }
 
-    if (extensionProperties.getSimplifiedL0Functions) {
-        EXPECT_ZE_RESULT_SUCCESS(
-            zeDriverGetExtensionFunctionAddress(this->driver,
-                                                "zeDriverGetDefaultContext",
-                                                reinterpret_cast<void **>(&this->zeDriverGetDefaultContext)));
-        FATAL_ERROR_IF(this->zeDriverGetDefaultContext == nullptr, "zeDriverGetDefaultContext retrieved nullptr");
-
-        EXPECT_ZE_RESULT_SUCCESS(
-            zeDriverGetExtensionFunctionAddress(this->driver,
-                                                "zeCommandListAppendLaunchKernelWithArguments",
-                                                reinterpret_cast<void **>(&this->zeCommandListAppendLaunchKernelWithArguments)));
-        FATAL_ERROR_IF(this->zeCommandListAppendLaunchKernelWithArguments == nullptr, "zeCommandListAppendLaunchKernelWithArguments retrieved nullptr");
-    }
-
     if (extensionProperties.getGraphFunctions) {
         EXPECT_ZE_RESULT_SUCCESS(
             zeDriverGetExtensionFunctionAddress(this->driver,
