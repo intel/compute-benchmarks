@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2024 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -27,6 +27,7 @@ benchmark_option(BUILD_SYCL OFF)
 benchmark_option(BUILD_SYCL_WITH_CUDA OFF)
 benchmark_option(BUILD_OMP OFF)
 benchmark_option(BUILD_MPI OFF)
+benchmark_option(NULL_L0 OFF)
 if(BUILD_SYCL AND MSVC)
     set(BUILD_SYCL OFF)
     message(WARNING "Building SYCL benchmarks is disabled on Windows because of incompatibility of the dynamically-linked Visual C++ Runtime, required for DPC++, with GoogleTest")

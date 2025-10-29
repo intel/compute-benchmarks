@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include <cerrno>
 #include <chrono>
 #include <cstdio>
 #include <framework/configuration.h>
@@ -40,10 +41,10 @@ inline PerfLib &Perf() {
 static long
 perf_event_open(struct perf_event_attr *hw_event, pid_t pid,
                 int cpu, int group_fd, unsigned long flags) {
-    int ret;
-    ret = syscall(__NR_perf_event_open, hw_event, pid, cpu,
-                  group_fd, flags);
-    return ret;
+    // in case of getting permission denied one should call as root:
+    // sysctl -w kernel.perf_event_paranoid=0
+    return syscall(__NR_perf_event_open, hw_event, pid, cpu,
+                   group_fd, flags);
 }
 
 inline bool excludeKernelEvents = []() {
@@ -67,7 +68,7 @@ struct PerfLib {
         performanceEvent.exclude_hv = 1;
         fd = perf_event_open(&performanceEvent, 0, -1, -1, 0);
         if (fd == -1) {
-            fprintf(stderr, "Error opening leader %llx\n", performanceEvent.config);
+            fprintf(stderr, "Error opening leader %llx: %s\n", performanceEvent.config, strerror(errno));
             exit(EXIT_FAILURE);
         }
     }
