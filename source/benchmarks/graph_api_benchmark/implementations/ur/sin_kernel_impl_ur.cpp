@@ -67,14 +67,15 @@ TestResult SinKernelGraphUR::init() {
         return TestResult::KernelNotFound;
 
     char opts[] = "-ze-intel-enable-auto-large-GRF-mode -ze-opt-level=2";
+    ur_exp_program_flags_t programFlags{};
     EXPECT_UR_RESULT_SUCCESS(urProgramCreateWithIL(urstate->context, spirvModuleA.data(),
                                                    spirvModuleA.size(), nullptr, &programA));
-    EXPECT_UR_RESULT_SUCCESS(urProgramBuildExp(programA, 1, &urstate->device, opts));
+    EXPECT_UR_RESULT_SUCCESS(urProgramBuildExp(programA, 1, &urstate->device, programFlags, opts));
     EXPECT_UR_RESULT_SUCCESS(urKernelCreate(programA, "kernel_assign", &kernelAssign));
 
     EXPECT_UR_RESULT_SUCCESS(urProgramCreateWithIL(urstate->context, spirvModuleS.data(),
                                                    spirvModuleS.size(), nullptr, &programS));
-    EXPECT_UR_RESULT_SUCCESS(urProgramBuildExp(programS, 1, &urstate->device, opts));
+    EXPECT_UR_RESULT_SUCCESS(urProgramBuildExp(programS, 1, &urstate->device, programFlags, opts));
     EXPECT_UR_RESULT_SUCCESS(urKernelCreate(programS, "kernel_sin", &kernelSin));
 
     return TestResult::Success;
