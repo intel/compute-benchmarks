@@ -29,6 +29,8 @@ find_package_handle_standard_args(LevelZero
 )
 
 if(LevelZero_FOUND)
+  cmake_path(GET LevelZero_LIBRARY PARENT_PATH LevelZero_LIBRARIES_PATH)
   list(APPEND LevelZero_LIBRARIES ${LevelZero_LIBRARY} ${CMAKE_DL_LIBS})
   list(APPEND LevelZero_INCLUDE_DIRS ${LevelZero_INCLUDE_DIR})
+  set(LevelZero_LIBRARIES_DIR ${LevelZero_LIBRARIES_PATH})
 endif()

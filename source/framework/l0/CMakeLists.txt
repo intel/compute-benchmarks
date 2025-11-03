@@ -9,16 +9,20 @@ if (NOT BUILD_L0)
 endif()
 
 # Get libraries and headers for the SDK
-find_package(LevelZero QUIET)
-if(NOT ${LevelZero_FOUND})
+if(USE_SYSTEM_LEVEL_ZERO)
+    find_package(LevelZero QUIET)
+endif()
+if(NOT LevelZero_FOUND)
     if (WIN32)
         set(LIB_NAME ze_loader.lib)
     else()
         set(LIB_NAME libze_loader.so)
     endif()
     set(LevelZero_LIBRARIES "${CMAKE_SOURCE_DIR}/third_party/level-zero-sdk/lib/x64/${LIB_NAME}")
+    set(LevelZero_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/third_party/level-zero-sdk/include" "${CMAKE_SOURCE_DIR}/third_party/level-zero-sdk/include/level_zero")
+    message(STATUS "Using Level Zero from SDK sources")
 else()
-    message(STATUS "Level Zero installation found")
+    message(STATUS "Level Zero installation found in ${LevelZero_LIBRARIES_DIR}")
 endif()
 
 # Get sources
