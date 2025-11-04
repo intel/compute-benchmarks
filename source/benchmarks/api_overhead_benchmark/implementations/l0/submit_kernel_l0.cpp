@@ -46,12 +46,13 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     kernelDesc.pKernelName = "eat_time";
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
 
+    zex_counter_based_event_exp_flags_t cbFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+    if (arguments.useProfiling) {
+        cbFlags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+    }
+
     const bool counterBasedEvents = arguments.inOrderQueue;
-    zex_counter_based_event_desc_t counterBasedEventDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
-    counterBasedEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
-    counterBasedEventDesc.flags |= arguments.useProfiling ? ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP : 0;
-    counterBasedEventDesc.signalScope = ZE_EVENT_SCOPE_FLAG_DEVICE;
-    counterBasedEventDesc.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    const zex_counter_based_event_desc_t counterBasedEventDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, .pNext = nullptr, .flags = cbFlags, .signalScope = ZE_EVENT_SCOPE_FLAG_DEVICE, .waitScope = ZE_EVENT_SCOPE_FLAG_HOST};
 
     // Create event pool
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};

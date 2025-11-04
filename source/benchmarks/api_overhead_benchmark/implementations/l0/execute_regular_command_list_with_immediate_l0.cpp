@@ -62,19 +62,34 @@ static TestResult run(const ExecuteRegularCommandListWithImmediateArguments &arg
     std::vector<ze_event_handle_t> events(numEvents);
     ze_event_pool_handle_t eventPool{};
     if (arguments.useEvent) {
-        ze_event_pool_flags_t flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+        zex_counter_based_event_exp_flags_t counterBasedDescFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+        ze_event_pool_flags_t poolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
         if (arguments.useProfiling) {
-            flags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+            poolFlags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+            counterBasedDescFlags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
         }
-        const ze_event_pool_counter_based_exp_desc_t counterBasedDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC, nullptr, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE};
 
-        ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, arguments.counterBasedEvents ? &counterBasedDesc : nullptr, flags, static_cast<uint32_t>(numEvents)};
+        const ze_event_scope_flags_t signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+        const ze_event_scope_flags_t waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
-        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
+        const zex_counter_based_event_desc_t counterBasedEventDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, .pNext = nullptr, .flags = counterBasedDescFlags, .signalScope = signalScope, .waitScope = waitScope};
+
+        const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, poolFlags, static_cast<uint32_t>(numEvents)};
+
+        if (!arguments.counterBasedEvents) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
+        }
+
+        ze_event_desc_t eventDesc = {.stype = ZE_STRUCTURE_TYPE_EVENT_DESC, .pNext = nullptr, .index = 0, .signal = signalScope, .wait = waitScope};
 
         for (auto i = 0u; i < numEvents; i++) {
-            ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, i, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST};
-            ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[i]));
+            if (arguments.counterBasedEvents) {
+                ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &events[i]));
+            } else {
+                eventDesc.index = i;
+                ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[i]));
+            }
         }
     }
 
@@ -133,7 +148,9 @@ static TestResult run(const ExecuteRegularCommandListWithImmediateArguments &arg
         for (auto &event : events) {
             ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
         }
-        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
+        if (!arguments.counterBasedEvents) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
+        }
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
