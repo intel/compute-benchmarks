@@ -8,6 +8,7 @@
 #ifdef NULL_L0
 
 #include "level_zero/zes_api.h"
+#include "level_zero/zex_event.h"
 #include "levelzero.h"
 
 #define FAIL_NOT_IMPLEMENTED                                             \
@@ -61,44 +62,6 @@ ZE_MOCK_SUCCESS(null_zeCommandListIsGraphCaptureEnabledExp, ze_command_list_hand
 ZE_MOCK_SUCCESS(null_zeGraphIsEmptyExp, ze_graph_handle_t)
 ZE_MOCK_SUCCESS(null_zeGraphDumpContentsExp, ze_graph_handle_t, const char *, void *)
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDriverGetExtensionFunctionAddress(
-    ze_driver_handle_t hDriver,
-    const char *name,
-    void **ppFunctionAddress) {
-    (void)hDriver;
-    if (!name || !ppFunctionAddress)
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-
-    struct NameAddr {
-        const char *fname;
-        void *fptr;
-    };
-    static const NameAddr table[] = {
-        {"zeGraphCreateExp", (void *)&null_zeGraphCreateExp},
-        {"zeCommandListBeginGraphCaptureExp", (void *)&null_zeCommandListBeginGraphCaptureExp},
-        {"zeCommandListBeginCaptureIntoGraphExp", (void *)&null_zeCommandListBeginCaptureIntoGraphExp},
-        {"zeCommandListEndGraphCaptureExp", (void *)&null_zeCommandListEndGraphCaptureExp},
-        {"zeCommandListInstantiateGraphExp", (void *)&null_zeCommandListInstantiateGraphExp},
-        {"zeCommandListAppendGraphExp", (void *)&null_zeCommandListAppendGraphExp},
-        {"zeGraphDestroyExp", (void *)&null_zeGraphDestroyExp},
-        {"zeExecutableGraphDestroyExp", (void *)&null_zeExecutableGraphDestroyExp},
-        {"zeCommandListIsGraphCaptureEnabledExp", (void *)&null_zeCommandListIsGraphCaptureEnabledExp},
-        {"zeGraphIsEmptyExp", (void *)&null_zeGraphIsEmptyExp},
-        {"zeGraphDumpContentsExp", (void *)&null_zeGraphDumpContentsExp},
-    };
-
-    for (const auto &entry : table) {
-        if (strcmp(name, entry.fname) == 0) {
-            *ppFunctionAddress = entry.fptr;
-            return ZE_RESULT_SUCCESS;
-        }
-    }
-
-    std::cerr << __func__ << " not implemented case of " << name << " in null_levelzero.cpp\n";
-    abort();
-}
-
 ZE_MOCK_SUCCESS(zeInit, ze_init_flags_t)
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGet(uint32_t *pCount,
@@ -112,7 +75,16 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGet(uint32_t *pCount,
 
 ZE_MOCK_SUCCESS(zeInitDrivers, uint32_t *, ze_driver_handle_t *, ze_init_driver_type_desc_t *)
 ZE_MOCK_SUCCESS(zeDriverGetApiVersion, ze_driver_handle_t, ze_api_version_t *)
-ZE_MOCK_FAILURE(zeDriverGetProperties, ze_driver_handle_t, ze_driver_properties_t *)
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetProperties(ze_driver_handle_t hDriver, ze_driver_properties_t *pDriverProperties) {
+    (void)hDriver;
+    pDriverProperties->driverVersion = 0x00010000;
+    pDriverProperties->stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
+    pDriverProperties->uuid = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    pDriverProperties->pNext = nullptr;
+    return ZE_RESULT_SUCCESS;
+}
+
 ZE_MOCK_FAILURE(zeDriverGetIpcProperties, ze_driver_handle_t, ze_driver_ipc_properties_t *)
 ZE_MOCK_SUCCESS(zeDriverGetExtensionProperties, ze_driver_handle_t, uint32_t *, ze_driver_extension_properties_t *)
 // zeDriverGetExtensionFunctionAddress is defined earlier
@@ -142,7 +114,41 @@ zeDeviceGetSubDevices(
     return ZE_RESULT_SUCCESS;
 }
 
-ZE_MOCK_FAILURE(zeDeviceGetProperties, ze_device_handle_t, ze_device_properties_t *)
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDeviceGetProperties(
+    ze_device_handle_t hDevice,
+    ze_device_properties_t *pDeviceProperties) {
+    (void)hDevice;
+    pDeviceProperties->stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    pDeviceProperties->pNext = nullptr;
+
+    pDeviceProperties->type = ZE_DEVICE_TYPE_GPU;
+    pDeviceProperties->vendorId = 0x8086;
+    pDeviceProperties->deviceId = 0x1234;
+
+    pDeviceProperties->flags = ZE_DEVICE_PROPERTY_FLAG_INTEGRATED | ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
+    pDeviceProperties->subdeviceId = 0x5678;
+
+    pDeviceProperties->coreClockRate = 1000;
+    pDeviceProperties->maxMemAllocSize = 4096 * 1024;
+    pDeviceProperties->maxHardwareContexts = 8;
+    pDeviceProperties->maxCommandQueuePriority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    pDeviceProperties->numThreadsPerEU = 7;
+    pDeviceProperties->physicalEUSimdWidth = 8;
+    pDeviceProperties->numEUsPerSubslice = 8;
+    pDeviceProperties->numSubslicesPerSlice = 3;
+    pDeviceProperties->numSlices = 1;
+    pDeviceProperties->timerResolution = 10;
+
+    pDeviceProperties->timestampValidBits = 36;
+    pDeviceProperties->kernelTimestampValidBits = 36;
+    memset(pDeviceProperties->uuid.id, 0, sizeof(pDeviceProperties->uuid.id));
+    strcpy(pDeviceProperties->name, "Null L0 Device");
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ZE_MOCK_FAILURE(zeDeviceGetComputeProperties, ze_device_handle_t, ze_device_compute_properties_t *)
 ZE_MOCK_FAILURE(zeDeviceGetModuleProperties, ze_device_handle_t, ze_device_module_properties_t *)
 
@@ -241,7 +247,24 @@ ZE_MOCK_SUCCESS(zeImageGetProperties, ze_device_handle_t, const ze_image_desc_t 
 ZE_MOCK_SUCCESS(zeImageCreate, ze_context_handle_t, ze_device_handle_t, const ze_image_desc_t *, ze_image_handle_t *)
 ZE_MOCK_SUCCESS(zeImageDestroy, ze_image_handle_t)
 ZE_MOCK_SUCCESS(zeMemAllocShared, ze_context_handle_t, const ze_device_mem_alloc_desc_t *const, const ze_host_mem_alloc_desc_t *const, size_t, size_t, ze_device_handle_t, void **)
-ZE_MOCK_SUCCESS(zeMemAllocDevice, ze_context_handle_t, const ze_device_mem_alloc_desc_t *const, size_t, size_t, ze_device_handle_t, void **)
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemAllocDevice(
+    ze_context_handle_t hContext,
+    const ze_device_mem_alloc_desc_t *device_desc,
+    size_t size,
+    size_t alignment,
+    ze_device_handle_t hDevice,
+    void **pptr) {
+    (void)hContext;
+    (void)device_desc;
+    (void)size;
+    (void)alignment;
+    (void)hDevice;
+    *pptr = reinterpret_cast<void *>(0x1000);
+    return ZE_RESULT_SUCCESS;
+}
+
 ZE_MOCK_SUCCESS(zeMemAllocHost, ze_context_handle_t, const ze_host_mem_alloc_desc_t *const, size_t, size_t, void **)
 ZE_MOCK_SUCCESS(zeMemFree, ze_context_handle_t, void *)
 ZE_MOCK_SUCCESS(zeMemGetAllocProperties, ze_context_handle_t, const void *, ze_memory_allocation_properties_t *, ze_device_handle_t *)
@@ -552,6 +575,69 @@ ze_result_t zerGetLastErrorDescription(const char **ppString) {
     static const char *errorString = "mock error string";
     *ppString = errorString;
     return ZE_RESULT_SUCCESS;
+}
+
+// zex_event.h
+
+ZE_MOCK_SUCCESS(null_zexIntelAllocateNetworkInterrupt, ze_context_handle_t, uint32_t &)
+ZE_MOCK_SUCCESS(null_zexIntelReleaseNetworkInterrupt, ze_context_handle_t, uint32_t)
+ZE_MOCK_SUCCESS(null_zexCounterBasedEventCreate2, ze_context_handle_t, ze_device_handle_t, const zex_counter_based_event_desc_t *, ze_event_handle_t *)
+
+ZE_APIEXPORT ze_result_t ZE_APICALL null_zexCounterBasedEventGetIpcHandle(ze_event_handle_t hEvent, zex_ipc_counter_based_event_handle_t *phIpc) {
+    (void)hEvent;
+    memset(phIpc->data, '*', sizeof(phIpc->data));
+    return ZE_RESULT_SUCCESS;
+}
+
+ZE_MOCK_SUCCESS(null_zexCounterBasedEventOpenIpcHandle, ze_context_handle_t, zex_ipc_counter_based_event_handle_t, ze_event_handle_t *)
+ZE_MOCK_SUCCESS(null_zexCounterBasedEventCloseIpcHandle, ze_event_handle_t)
+
+// -----------------
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDriverGetExtensionFunctionAddress(
+    ze_driver_handle_t hDriver,
+    const char *name,
+    void **ppFunctionAddress) {
+    (void)hDriver;
+    if (!name || !ppFunctionAddress)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+
+    struct NameAddr {
+        const char *fname;
+        void *fptr;
+    };
+    static const NameAddr table[] = {
+        {"zeGraphCreateExp", (void *)&null_zeGraphCreateExp},
+        {"zeCommandListBeginGraphCaptureExp", (void *)&null_zeCommandListBeginGraphCaptureExp},
+        {"zeCommandListBeginCaptureIntoGraphExp", (void *)&null_zeCommandListBeginCaptureIntoGraphExp},
+        {"zeCommandListEndGraphCaptureExp", (void *)&null_zeCommandListEndGraphCaptureExp},
+        {"zeCommandListInstantiateGraphExp", (void *)&null_zeCommandListInstantiateGraphExp},
+        {"zeCommandListAppendGraphExp", (void *)&null_zeCommandListAppendGraphExp},
+        {"zeDriverGetDefaultContext", (void *)&zeDriverGetDefaultContext},
+        {"zeGraphDestroyExp", (void *)&null_zeGraphDestroyExp},
+        {"zeExecutableGraphDestroyExp", (void *)&null_zeExecutableGraphDestroyExp},
+        {"zeCommandListIsGraphCaptureEnabledExp", (void *)&null_zeCommandListIsGraphCaptureEnabledExp},
+        {"zeGraphIsEmptyExp", (void *)&null_zeGraphIsEmptyExp},
+        {"zeGraphDumpContentsExp", (void *)&null_zeGraphDumpContentsExp},
+        {"zeDriverGetDefaultContext", (void *)&zeDriverGetDefaultContext},
+        {"zexIntelAllocateNetworkInterrupt", (void *)(&null_zexIntelAllocateNetworkInterrupt)},
+        {"zexIntelReleaseNetworkInterrupt", (void *)&null_zexIntelReleaseNetworkInterrupt},
+        {"zexCounterBasedEventCreate2", (void *)&null_zexCounterBasedEventCreate2},
+        {"zexCounterBasedEventGetIpcHandle", (void *)&null_zexCounterBasedEventGetIpcHandle},
+        {"zexCounterBasedEventOpenIpcHandle", (void *)&null_zexCounterBasedEventOpenIpcHandle},
+        {"zexCounterBasedEventCloseIpcHandle", (void *)&null_zexCounterBasedEventCloseIpcHandle},
+    };
+
+    for (const auto &entry : table) {
+        if (strcmp(name, entry.fname) == 0) {
+            *ppFunctionAddress = entry.fptr;
+            return ZE_RESULT_SUCCESS;
+        }
+    }
+
+    std::cerr << __func__ << " not implemented case of " << name << " in null_levelzero.cpp\n";
+    abort();
 }
 
 #endif
