@@ -23,6 +23,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Enable exporting a compile_commands.json for builds for use with clangd etc.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+file(READ ".branch" BRANCH_TYPE)
+string(STRIP "${BRANCH_TYPE}" BRANCH_TYPE)
+set(BRANCH_DIR_SUFFIX "/${BRANCH_TYPE}")
+if(NOT "${BRANCH_TYPE}" STREQUAL "")
+  set(BRANCH_DIR_SUFFIX "${BRANCH_DIR_SUFFIX}/")
+endif()
 
 # Enable MT Compilation in VisualStudio
 if (MSVC)
