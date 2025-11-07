@@ -45,15 +45,7 @@ TestResult init_level_zero(L0Context &ctx) {
     ze_device_handle_t device = devices[0];
 
     // context
-    ze_context_handle_t context;
-    decltype(&zeDriverGetDefaultContext) zeDriverGetDefaultContext = nullptr;
-    ASSERT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(driver,
-                                                                 "zeDriverGetDefaultContext",
-                                                                 reinterpret_cast<void **>(&zeDriverGetDefaultContext)));
-    if (zeDriverGetDefaultContext == nullptr) {
-        throw std::runtime_error("zeDriverGetDefaultContext retrieved nullptr");
-    }
-    context = zeDriverGetDefaultContext(driver);
+    ze_context_handle_t context = zeDriverGetDefaultContext(driver);
 
     ze_command_list_handle_t cmdListImmediate_1;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(context, device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdListImmediate_1));
