@@ -53,9 +53,6 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         if (memoryAccessCapabilities.sharedSystemAllocCapabilities == 0) {
             return TestResult::DeviceNotCapable;
         }
-        if (arguments.contents != BufferContents::Zeros) {
-            return TestResult::NoImplementation;
-        }
     }
     Timer timer;
 
@@ -159,7 +156,11 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     // Enqueue filling of the buffers and set kernel arguments
     for (auto i = 0u; i < buffersCount; i++) {
         if (isSharedSystemPointer(arguments.memoryPlacement)) {
-            memset(buffers[i], (rand() & 0xff), bufferSizes[i]);
+            if (arguments.contents == BufferContents::Zeros) {
+                memset(buffers[i], (0u), bufferSizes[i]);
+            } else {
+                memset(buffers[i], (rand() & 0xff), bufferSizes[i]);
+            }
         } else {
             ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffers[i], bufferSizes[i], arguments.contents, false));
         }
@@ -186,7 +187,11 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (isSharedSystemPointer(arguments.memoryPlacement)) {
             for (auto id = 0u; id < buffersCount; id++) {
-                memset(buffers[id], 0u, bufferSizes[id]);
+                if (arguments.contents == BufferContents::Zeros) {
+                    memset(buffers[id], (0u), bufferSizes[id]);
+                } else {
+                    memset(buffers[id], (rand() & 0xff), bufferSizes[id]);
+                }
             }
         }
         // Launch kernel
