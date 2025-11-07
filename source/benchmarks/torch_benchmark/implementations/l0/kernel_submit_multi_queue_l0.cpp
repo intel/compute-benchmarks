@@ -72,18 +72,15 @@ inline TestResult launch_kernel_l0(ze_command_list_handle_t cmdListImmediate,
                                    data_type *res,
                                    data_type *data_1,
                                    data_type *data_2,
-                                   ze_event_handle_t signal_event = nullptr,
-                                   ze_event_handle_t wait_event = nullptr) {
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, wgs, 1u, 1u));
-    void *kernelArguments[3] = {res, data_1, data_2};
+                                   ze_event_handle_t signal_event,
+                                   ze_event_handle_t wait_event) {
+    void *kernelArguments[3] = {&res, &data_1, &data_2};
     ze_group_size_t groupSizes = {wgs, 1u, 1u};
-    if (wait_event) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdListImmediate, kernel, dispatch, groupSizes,
-                                                                              kernelArguments, nullptr, nullptr, 1, &wait_event));
-    } else {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdListImmediate, kernel, dispatch, groupSizes,
-                                                                              kernelArguments, nullptr, signal_event, 0, nullptr));
-    }
+
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdListImmediate, kernel, dispatch, groupSizes,
+                                                                          kernelArguments, nullptr, signal_event,
+                                                                          wait_event ? 1 : 0,
+                                                                          wait_event ? &wait_event : nullptr));
     return TestResult::Success;
 }
 
@@ -152,17 +149,17 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
     if (!counterBasedEventCreate2) {
         throw std::runtime_error("Driver does not support Counter-Based Event");
     }
-    counterBasedEventCreate2(l0.context, l0.device, &desc, &q2_last_event);
+    ASSERT_ZE_RESULT_SUCCESS(counterBasedEventCreate2(l0.context, l0.device, &desc, &q2_last_event));
 
     for (size_t i = 0; i < arguments.iterations; i++) {
         // submit several kernels into cmdlist_1
         for (int j = 0; j < arguments.kernelsPerQueue; j++) {
 
-            ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[0], d_b[0], d_c[0]));
+            ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[0], d_b[0], d_c[0], nullptr, nullptr));
         }
         // submit several kernels into cmdlist_2
         for (int j = 0; j < arguments.kernelsPerQueue - 1; j++) {
-            ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[1], d_b[1], d_c[1]));
+            ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[1], d_b[1], d_c[1], nullptr, nullptr));
         }
         ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[1], d_b[1], d_c[1], q2_last_event, nullptr));
         // mark the last kernel in cmdlist_2
