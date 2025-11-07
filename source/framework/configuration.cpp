@@ -47,7 +47,8 @@ Configuration::Configuration()
       printAllResults(*this, "printAllResults", "Prints all test results"),
       profilerType(*this, "profilerType", "If supported by the benchmark, dictates the profiler/statistic used/reported by the benchmark"),
       extended(*this, "extended", "Run the benchmark with extended parameters"),
-      reducedSizeCAL(*this, "reducedSizeCAL", "Run benchmark with lower buffer size") {
+      reducedSizeCAL(*this, "reducedSizeCAL", "Run benchmark with lower buffer size"),
+      additionalConfiguration(*this) {
 
     // Diagnostic params
     help = false;

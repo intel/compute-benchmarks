@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 namespace CommonGtestArgs {
 inline auto allApis() {
-    return ::testing::Values(Api::OpenCL, Api::L0, Api::SYCL, Api::OMP, Api::UR);
+    return ::testing::Values(Api::OpenCL, Api::L0, Api::SYCL, Api::OMP, Api::UR, Api::OPT);
 }
 
 inline auto workgroupCount() {

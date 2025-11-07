@@ -9,6 +9,8 @@
 
 #include "framework/utility/error.h"
 
+#include "api_additional.h"
+
 #include <string>
 
 enum class Api {
@@ -22,11 +24,12 @@ enum class Api {
     SYCLPREVIEW,
     OMP,
     UR,
+    OPT,
 
     // Special values
     COUNT,
     FIRST = OpenCL,
-    LAST = UR,
+    LAST = OPT,
     All = 0xffff,
 };
 
@@ -46,7 +49,7 @@ inline std::string to_string(Api api) {
     case Api::UR:
         return "ur";
     default:
-        FATAL_ERROR("Unknown API");
+        return to_string_additional(api);
     }
 }
 } // namespace std
@@ -66,7 +69,7 @@ inline std::string getUserFriendlyApiName(Api api) {
     case Api::UR:
         return "UnifiedRuntime";
     default:
-        FATAL_ERROR("Unknown API");
+        return getUserFriendlyAdditionalApiName(api);
     }
 }
 
@@ -86,7 +89,7 @@ inline Api parseApi(const std::string &value) {
     } else if (value == "ur") {
         return Api::UR;
     } else {
-        return Api::Unknown;
+        return parseAdditionalApi(value);
     }
 }
 
@@ -97,6 +100,7 @@ inline bool validateApi(Api api) {
     case Api::SYCL:
     case Api::OMP:
     case Api::UR:
+    case Api::OPT:
         return true;
     default:
         return false;

@@ -9,7 +9,7 @@ kernel void init_temperature(global float* subDomain,
                              uint nPointsX, uint nPointsY, uint nPointsZ,
                              uint subDomainCoordX, uint subDomainCoordY, uint subDomainCoordZ,
                              float deltaSpace)
-{source/CMakeUtils.cmake
+{
     // We do the loop from 1st to nPoints_th
     const size_t xId = get_global_id(0) + 1;
     const size_t yId = get_global_id(1) + 1;

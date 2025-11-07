@@ -17,6 +17,8 @@
 #include "framework/argument/string_list_argument.h"
 #include "framework/utility/command_line_argument.h"
 
+#include "additional_configuration.h"
+
 #include <memory>
 
 struct Configuration : ArgumentContainer {
@@ -86,6 +88,9 @@ struct Configuration : ArgumentContainer {
     // Test specific params
     BooleanFlagArgument extended;
     BooleanFlagArgument reducedSizeCAL;
+
+    // Additional configuration
+    AdditionalConfiguration additionalConfiguration;
 };
 
 inline bool isNoopRun() {

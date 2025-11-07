@@ -90,20 +90,35 @@ function (add_benchmark_for_api BASE_TARGET_NAME APPEND_API_TO_TARGET_NAME REGIS
     endforeach()
 
     # API specific sources
-    set(API_SPECIFIC_SOURCE_DIRECTORIES
-        ${BENCHMARKS_SOURCE_ROOT}/common
-        ${CMAKE_CURRENT_SOURCE_DIR}/implementations
-        ${CMAKE_CURRENT_SOURCE_DIR}/utility
-    )
+    if(NOT DEFINED BENCHMARK_API_SPECIFIC_SUBDIRECTORY)
+        set(BENCHMARK_API_SPECIFIC_SUBDIRECTORY "")
+    endif()
+    
     foreach(API ${APIS})
-        foreach(PARENT_DIR ${API_SPECIFIC_SOURCE_DIRECTORIES})
-            if (${API} STREQUAL "syclpreview")
-                set(DIR ${PARENT_DIR}/sycl)
-            else()
-                set(DIR ${PARENT_DIR}/${API})
+        set(API_DIR ${API})
+        if (${API} STREQUAL "syclpreview")
+            set(API_DIR "sycl")
+        endif()
+        
+        if(BENCHMARK_API_SPECIFIC_SUBDIRECTORY)
+            set(COMMON_DIR "${BENCHMARKS_SOURCE_ROOT}/common/${BENCHMARK_API_SPECIFIC_SUBDIRECTORY}/${API_DIR}")
+            set(IMPL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/implementations/${BENCHMARK_API_SPECIFIC_SUBDIRECTORY}/${API_DIR}")
+            set(UTIL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/utility/${BENCHMARK_API_SPECIFIC_SUBDIRECTORY}/${API_DIR}")
+        else()
+            set(COMMON_DIR "${BENCHMARKS_SOURCE_ROOT}/common/${API_DIR}")
+            set(IMPL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/implementations/${API_DIR}")
+            set(UTIL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/utility/${API_DIR}")
+        endif()
+        
+        get_filename_component(COMMON_DIR "${COMMON_DIR}" ABSOLUTE)
+        get_filename_component(IMPL_DIR "${IMPL_DIR}" ABSOLUTE)
+        get_filename_component(UTIL_DIR "${UTIL_DIR}" ABSOLUTE)
+        
+        foreach(DIR ${COMMON_DIR} ${IMPL_DIR} ${UTIL_DIR})
+            if(EXISTS "${DIR}")
+                message(STATUS "Adding sources from ${DIR} to ${TARGET_NAME}")
+                add_sources_to_benchmark(${TARGET_NAME} ${DIR})
             endif()
-            message(STATUS "Adding sources from ${DIR} to ${TARGET_NAME}")
-            add_sources_to_benchmark(${TARGET_NAME} ${DIR})
         endforeach()
     endforeach()
 

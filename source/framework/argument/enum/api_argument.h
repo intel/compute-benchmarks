@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,6 @@ struct ApiArgument : EnumArgument<ApiArgument, Api> {
 
     const static inline std::string enumName = "api";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
-    const static inline EnumType enumValues[5] = {EnumType::OpenCL, EnumType::L0, EnumType::SYCL, EnumType::OMP, EnumType::All};
-    const static inline std::string enumValuesNames[5] = {"ocl", "l0", "sycl", "omp", "all"};
+    const static inline EnumType enumValues[6] = {EnumType::OpenCL, EnumType::L0, EnumType::SYCL, EnumType::OMP, EnumType::OPT, EnumType::All};
+    const static inline std::string enumValuesNames[6] = {"ocl", "l0", "sycl", "omp", "opt", "all"};
 };
