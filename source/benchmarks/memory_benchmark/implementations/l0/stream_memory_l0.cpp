@@ -161,6 +161,9 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
             } else {
                 memset(buffers[i], (rand() & 0xff), bufferSizes[i]);
             }
+            if (arguments.prefetch) {
+                ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryPrefetch(cmdList, buffers[i], bufferSizes[i]));
+            }
         } else {
             ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffers[i], bufferSizes[i], arguments.contents, false));
         }
