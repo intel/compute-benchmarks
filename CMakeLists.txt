@@ -30,6 +30,8 @@ if(NOT "${BRANCH_TYPE}" STREQUAL "")
   set(BRANCH_DIR_SUFFIX "${BRANCH_DIR_SUFFIX}/")
 endif()
 
+include(${BRANCH_TYPE}/CustomConfig.cmake OPTIONAL)
+
 # Enable MT Compilation in VisualStudio
 if (MSVC)
     add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
