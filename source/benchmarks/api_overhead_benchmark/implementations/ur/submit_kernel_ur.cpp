@@ -73,7 +73,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
         EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
             queue, kernel, n_dimensions, nullptr, &local_size[0],
-            &global_size[0], 0, nullptr, 0, nullptr, signalEvent));
+            &global_size[0], nullptr, 0, nullptr, signalEvent));
     }
 
     EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
@@ -98,7 +98,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
             EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
                 queue, kernel, n_dimensions, nullptr,
-                &local_size[0], &global_size[0], 0, nullptr, 0, nullptr, signalEvent));
+                &local_size[0], &global_size[0], nullptr, 0, nullptr, signalEvent));
         }
 
         if (!arguments.measureCompletionTime) {

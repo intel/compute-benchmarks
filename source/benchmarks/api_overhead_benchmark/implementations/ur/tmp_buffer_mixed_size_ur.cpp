@@ -41,7 +41,7 @@ TestResult execKernel(UrState &ur, ur_kernel_handle_t kernel, QueueData queueDat
 
     constexpr size_t globalOffset[] = {0};
     size_t globalSize[] = {bufferSize / sizeof(int)};
-    ASSERT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(queueData.queue, kernel, 1, globalOffset, globalSize, nullptr, 0, nullptr, 0, nullptr, nullptr));
+    ASSERT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(queueData.queue, kernel, 1, globalOffset, globalSize, nullptr, nullptr, 0, nullptr, nullptr));
 
     if (arguments.strategy == TmpMemoryStrategy::Sync) {
         ASSERT_UR_RESULT_SUCCESS(urQueueFinish(queueData.queue));

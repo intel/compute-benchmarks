@@ -152,7 +152,7 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
             ur_event_handle_t *finalSignalEventPtr = useEvents ? &events[i][2] : nullptr;
 
             EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, usm_ptr, src_buffer, allocSize, 0, nullptr, memcpySignalEventPtr));
-            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(queue, kernel, n_dimensions, &global_offset, &arraySize, nullptr, 0, nullptr, useEvents, memcpySignalEventPtr, kernelSignalEventPtr));
+            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(queue, kernel, n_dimensions, &global_offset, &arraySize, nullptr, nullptr, useEvents, memcpySignalEventPtr, kernelSignalEventPtr));
             EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, host_dst, usm_ptr, allocSize, useEvents, kernelSignalEventPtr, finalSignalEventPtr));
 
             if (useBarrier) {

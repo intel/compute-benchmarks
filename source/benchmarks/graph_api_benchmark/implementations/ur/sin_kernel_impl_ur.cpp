@@ -113,7 +113,7 @@ TestResult SinKernelGraphUR::runKernels() {
         assert(queue != nullptr && "Queue is not initialized");
         EXPECT_UR_RESULT_SUCCESS(
             urEnqueueKernelLaunch(queue, kernelAssign, n_dimensions, &global_offset,
-                                  global_size, nullptr, 0, nullptr, 0, nullptr, nullptr));
+                                  global_size, nullptr, nullptr, 0, nullptr, nullptr));
     }
 
     for (uint32_t i = 0; i < numKernels; ++i) {
@@ -133,7 +133,7 @@ TestResult SinKernelGraphUR::runKernels() {
         } else {
             EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
                 queue, kernelSin, n_dimensions, &global_offset, global_size,
-                nullptr, 0, nullptr, 0, nullptr, nullptr));
+                nullptr, nullptr, 0, nullptr, nullptr));
         }
     }
 

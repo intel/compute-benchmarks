@@ -114,7 +114,7 @@ TestResult Decoder2GraphUR::runLayer() {
             // Eager submission
             EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
                 queue, kernel, nDimensions, &globalOffset, globalWorkGroupSize,
-                nullptr, 0, nullptr, 0, nullptr, nullptr));
+                nullptr, nullptr, 0, nullptr, nullptr));
         }
     }
 
