@@ -161,9 +161,6 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
             } else {
                 memset(buffers[i], (rand() & 0xff), bufferSizes[i]);
             }
-            if (arguments.prefetch) {
-                ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryPrefetch(cmdList, buffers[i], bufferSizes[i]));
-            }
         } else {
             ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffers[i], bufferSizes[i], arguments.contents, false));
         }
@@ -177,6 +174,12 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, 0));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListReset(cmdList));
+
+    if (arguments.prefetch) {
+        for (auto i = 0u; i < buffersCount; i++) {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryPrefetch(cmdList, buffers[i], bufferSizes[i]));
+        }
+    }
 
     // Enqueue kernel to command list
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
