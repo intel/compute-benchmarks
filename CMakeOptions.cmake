@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: MIT
 #
 
+include(${BRANCH_TYPE}/CustomConfig.cmake OPTIONAL)
+
 macro(benchmark_option NAME DEFAULT_VALUE)
     if (NOT DEFINED ${NAME})
         set(${NAME} ${DEFAULT_VALUE})
@@ -29,7 +31,9 @@ benchmark_option(BUILD_OMP OFF)
 benchmark_option(BUILD_MPI OFF)
 benchmark_option(NULL_L0 OFF)
 benchmark_option(USE_SYSTEM_LEVEL_ZERO ON)
-benchmark_option(BUILD_OPT OFF)
+if(COMMAND add_custom_benchmark_options)
+    add_custom_benchmark_options()
+endif()
 if(BUILD_SYCL AND MSVC)
     set(BUILD_SYCL OFF)
     message(WARNING "Building SYCL benchmarks is disabled on Windows because of incompatibility of the dynamically-linked Visual C++ Runtime, required for DPC++, with GoogleTest")
@@ -64,6 +68,6 @@ benchmark_option(LOG_BENCHMARK_TARGETS OFF)
 benchmark_option(ALLOW_WARNINGS OFF)
 
 # Additional checks
-if (NOT BUILD_L0 AND NOT BUILD_OCL AND NOT BUILD_SYCL AND NOT BUILD_UR AND NOT BUILD_OMP AND NOT BUILD_OPT)
+if (NOT BUILD_L0 AND NOT BUILD_OCL AND NOT BUILD_SYCL AND NOT BUILD_UR AND NOT BUILD_OMP)
     message(FATAL_ERROR "No API was selected for testing. No benchmarks will be produced")
 endif()

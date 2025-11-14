@@ -11,6 +11,14 @@ if(POLICY CMP0091)
 endif()
 
 project(ComputeBenchmarks)
+
+file(READ ".branch" BRANCH_TYPE)
+string(STRIP "${BRANCH_TYPE}" BRANCH_TYPE)
+set(BRANCH_DIR_SUFFIX "/${BRANCH_TYPE}")
+if(NOT "${BRANCH_TYPE}" STREQUAL "")
+  set(BRANCH_DIR_SUFFIX "${BRANCH_DIR_SUFFIX}/")
+endif()
+
 include(CMakeOptions.cmake)
 include(CheckSymbolExists)
 set(PREDEFINED_TARGETS_FOLDER "CustomTargets")
