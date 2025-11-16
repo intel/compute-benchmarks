@@ -123,6 +123,14 @@ SubmitGraph|measures time spent in submitting a graph to a SYCL (or SYCL-like) q
 
 
 
+# host_function_benchmark
+Host Function Benchmark is a set of tests aimed at measuring performance of host function execution.
+| Test name | Description | Params | L0 | OCL |
+|-----------|-------------|--------|----|-----|
+HostFunction|measures overhead of host function.|<ul><li>--CallsCount amount of calls that is being meassured</li><li>--HostFunctionColdRun When enabled don't warmup host function workers (0 or 1)</li><li>--KernelExecTime How long a single kernel executes, in us</li><li>--MeasureCompletion Measures time taken to complete the submission (default is to measure only Immediate call) (0 or 1)</li><li>--ioq Use In order queue (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+
+
+
 # memory_benchmark
 Memory Benchmark is a set of tests aimed at measuring bandwidth of memory transfers.
 | Test name | Description | Params | L0 | OCL |
