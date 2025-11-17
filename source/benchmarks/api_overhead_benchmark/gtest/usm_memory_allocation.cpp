@@ -45,3 +45,18 @@ INSTANTIATE_TEST_SUITE_P(
                           512 * MemoryConstants::megaByte,
                           1 * MemoryConstants::gigaByte),
         ::testing::Values(AllocationMeasureMode::Allocate, AllocationMeasureMode::Free, AllocationMeasureMode::Both)));
+
+INSTANTIATE_TEST_SUITE_P(
+    UsmMemoryAllocationTestLIMITED,
+    UsmMemoryAllocationTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(UsmRuntimeMemoryPlacement::Host, UsmRuntimeMemoryPlacement::Device),
+        ::testing::Values(4,
+                          64,
+                          512,
+                          4 * MemoryConstants::kiloByte,
+                          64 * MemoryConstants::kiloByte,
+                          512 * MemoryConstants::kiloByte,
+                          1 * MemoryConstants::megaByte),
+        ::testing::Values(AllocationMeasureMode::Allocate, AllocationMeasureMode::Free, AllocationMeasureMode::Both)));
