@@ -102,7 +102,7 @@ static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &sta
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(highPriorityQueue, highPriorityKernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(highPriorityQueue));
     ASSERT_CL_SUCCESS(retVal);
-    std::this_thread::sleep_for(std::chrono::milliseconds(arguments.sleepTime));
+    sleep(std::chrono::milliseconds(arguments.sleepTime));
 
     // benchmark
     size_t gwsLowPriority = 64 * 1024 * 1024;
@@ -112,7 +112,7 @@ static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &sta
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(lowPriorityQueue, lowPriorityKernel, 1, nullptr, &gwsLowPriority, &lws, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFlush(lowPriorityQueue));
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(arguments.sleepTime));
+        sleep(std::chrono::milliseconds(arguments.sleepTime));
 
         // now submit high priority kernel
         timer.measureStart();
@@ -122,7 +122,7 @@ static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &sta
         ASSERT_CL_SUCCESS(retVal);
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         ASSERT_CL_SUCCESS(clFinish(lowPriorityQueue));
-        std::this_thread::sleep_for(std::chrono::milliseconds(arguments.sleepTime));
+        sleep(std::chrono::milliseconds(arguments.sleepTime));
     }
 
     // Cleanup

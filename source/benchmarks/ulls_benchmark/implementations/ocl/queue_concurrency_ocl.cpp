@@ -9,13 +9,13 @@
 #include "framework/ocl/utility/queue_families_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/file_helper.h"
+#include "framework/utility/sleep.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/queue_concurrency.h"
 
 #include <chrono>
 #include <gtest/gtest.h>
-#include <thread>
 
 static TestResult run(const QueueConcurrencyArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
