@@ -15,6 +15,7 @@
 #include "framework/test_map.h"
 #include "framework/utility/common_help_message.h"
 #include "framework/utility/error.h"
+#include "framework/utility/sleep.h"
 #include "framework/utility/string_utils.h"
 
 #include <functional>
@@ -100,7 +101,7 @@ class TestCase : public TestCaseBase {
             DEVELOPER_WARNING_IF(!statistics.isFull(), "test did not generate as many values as expected");
             statistics.printStatistics(testCaseNameWithConfig);
             if (Configuration::get().sleepFor > 0) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(Configuration::get().sleepFor));
+                sleep(std::chrono::milliseconds(Configuration::get().sleepFor));
             }
         } else if (testResult == TestResult::Nooped) {
             statistics.printStatistics(testCaseNameWithConfig);

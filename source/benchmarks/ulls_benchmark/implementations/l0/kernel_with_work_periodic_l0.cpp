@@ -9,12 +9,13 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/file_helper.h"
 #include "framework/utility/power_meter.h"
+#include "framework/utility/sleep.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/kernel_with_work_periodic.h"
 
 #include <gtest/gtest.h>
-#include <thread>
+
 static TestResult run(const KernelWithWorkPeriodicArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
@@ -72,11 +73,11 @@ static TestResult run(const KernelWithWorkPeriodicArguments &arguments, Statisti
     const auto submissionDelay = std::chrono::microseconds(arguments.timeBetweenSubmissions);
     for (auto i = 0u; i < arguments.iterations; ++i) {
         const auto sleepToTimeoutUllsController = std::chrono::microseconds(10000);
-        std::this_thread::sleep_for(sleepToTimeoutUllsController);
+        sleep(sleepToTimeoutUllsController);
         Timer::Clock::duration executionTime(0);
         ASSERT_ZE_RESULT_SUCCESS(powerMeter.measureStart());
         for (auto numKernel = 0u; numKernel < arguments.numSubmissions; ++numKernel) {
-            std::this_thread::sleep_for(submissionDelay);
+            sleep(submissionDelay);
             timer.measureStart();
             ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
             ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
