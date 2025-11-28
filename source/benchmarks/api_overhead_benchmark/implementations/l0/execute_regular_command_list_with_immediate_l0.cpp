@@ -35,7 +35,8 @@ static TestResult run(const ExecuteRegularCommandListWithImmediateArguments &arg
     }
 
     // Setup
-    LevelZero levelzero;
+    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(true);
+    LevelZero levelzero(extensionProperties);
     Timer timer;
 
     // Create kernel
