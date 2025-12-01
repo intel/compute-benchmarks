@@ -58,11 +58,14 @@ function (add_benchmark_for_api BASE_TARGET_NAME APPEND_API_TO_TARGET_NAME REGIS
     endif()
 
     # Define target
+    get_benchmark_info("${CMAKE_CURRENT_SOURCE_DIR}" "${BRANCH_TYPE}" "${BASE_TARGET_NAME}" BENCHMARK_ROOT BENCHMARK_NAME BENCHMARK_SUBDIR)
+    set(BENCHMARK_SOURCE_PATH "${BENCHMARK_ROOT}/${BENCHMARK_NAME}")
+
     add_executable(${TARGET_NAME} CMakeLists.txt)
     foreach(API ${APIS})
         target_link_libraries(${TARGET_NAME} PRIVATE compute_benchmarks_framework_${API})
     endforeach()
-    target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(${TARGET_NAME} PRIVATE ${BENCHMARK_SOURCE_PATH})
     set_target_properties(${TARGET_NAME} PROPERTIES FOLDER ${TARGET_FOLDER_NAME})
     set_property(GLOBAL PROPERTY ${TARGET_NAME}_LOCATION "")
     if (BUILD_FOR_PUBLISHING)
@@ -80,36 +83,28 @@ function (add_benchmark_for_api BASE_TARGET_NAME APPEND_API_TO_TARGET_NAME REGIS
     # API agnostic sources
     set(API_AGNOSTIC_SOURCE_DIRECTORIES
         ${BENCHMARKS_SOURCE_ROOT}/common
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/gtest
-        ${CMAKE_CURRENT_SOURCE_DIR}/definitions
-        ${CMAKE_CURRENT_SOURCE_DIR}/utility
+        ${BENCHMARK_SOURCE_PATH}
+        ${BENCHMARK_SOURCE_PATH}/gtest
+        ${BENCHMARK_SOURCE_PATH}/definitions
+        ${BENCHMARK_SOURCE_PATH}/utility
     )
     foreach(DIR ${API_AGNOSTIC_SOURCE_DIRECTORIES})
         add_sources_to_benchmark(${TARGET_NAME} ${DIR})
     endforeach()
 
     # API specific sources
-    if(NOT DEFINED BENCHMARK_API_SPECIFIC_SUBDIRECTORY)
-        set(BENCHMARK_API_SPECIFIC_SUBDIRECTORY "")
-    endif()
-    
     foreach(API ${APIS})
         set(API_DIR ${API})
         if (${API} STREQUAL "syclpreview")
             set(API_DIR "sycl")
         endif()
-        
-        if(BENCHMARK_API_SPECIFIC_SUBDIRECTORY)
-            set(COMMON_DIR "${BENCHMARKS_SOURCE_ROOT}/common/${BENCHMARK_API_SPECIFIC_SUBDIRECTORY}/${API_DIR}")
-            set(IMPL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/implementations/${BENCHMARK_API_SPECIFIC_SUBDIRECTORY}/${API_DIR}")
-            set(UTIL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/utility/${BENCHMARK_API_SPECIFIC_SUBDIRECTORY}/${API_DIR}")
-        else()
-            set(COMMON_DIR "${BENCHMARKS_SOURCE_ROOT}/common/${API_DIR}")
-            set(IMPL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/implementations/${API_DIR}")
-            set(UTIL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/utility/${API_DIR}")
-        endif()
-        
+
+        set(API_SUBPATH "${BENCHMARK_SUBDIR}${API_DIR}")
+
+        set(COMMON_DIR "${BENCHMARKS_SOURCE_ROOT}/common/${API_SUBPATH}")
+        set(IMPL_DIR "${BENCHMARK_SOURCE_PATH}/implementations/${API_SUBPATH}")
+        set(UTIL_DIR "${BENCHMARK_SOURCE_PATH}/utility/${API_SUBPATH}")
+
         get_filename_component(COMMON_DIR "${COMMON_DIR}" ABSOLUTE)
         get_filename_component(IMPL_DIR "${IMPL_DIR}" ABSOLUTE)
         get_filename_component(UTIL_DIR "${UTIL_DIR}" ABSOLUTE)
@@ -150,4 +145,22 @@ function(add_benchmark_dependency_on_workload BENCHMARK_BASE_NAME WORKLOAD API)
             )
         endif()
     endforeach()
+endfunction()
+
+function(get_benchmark_info CURRENT_DIR BRANCH_TYPE BENCHMARK_NAME OUT_ROOT OUT_NAME OUT_SUBDIR)
+    get_filename_component(ROOT "${CURRENT_DIR}" DIRECTORY)
+    get_filename_component(BENCHMARK_DIR "${CURRENT_DIR}" NAME)
+
+    set(NAME "${BENCHMARK_DIR}")
+    set(SUBDIR "")
+
+    if(BENCHMARK_DIR STREQUAL "${BRANCH_TYPE}" AND NOT "${BRANCH_TYPE}" STREQUAL "")
+        get_filename_component(ROOT "${ROOT}" DIRECTORY)
+        set(NAME "${BENCHMARK_NAME}")
+        set(SUBDIR "${BENCHMARK_DIR}/")
+    endif()
+
+    set(${OUT_ROOT} "${ROOT}" PARENT_SCOPE)
+    set(${OUT_NAME} "${NAME}" PARENT_SCOPE)
+    set(${OUT_SUBDIR} "${SUBDIR}" PARENT_SCOPE)
 endfunction()
