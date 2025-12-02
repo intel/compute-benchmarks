@@ -16,7 +16,7 @@
 [[maybe_unused]] static const inline RegisterTestCase<ReadImage> registerTestCase{};
 
 using ImageSize = ThreeComponentUintArgument::TupleType;
-class ReadImageTest : public ::testing::TestWithParam<std::tuple<Api, ImageSize, bool, HostptrReuseMode, bool>> {
+class ReadImageTest : public ::testing::TestWithParam<std::tuple<Api, ImageSize, bool, HostptrReuseMode, bool, size_t>> {
 };
 
 TEST_P(ReadImageTest, Test) {
@@ -26,6 +26,7 @@ TEST_P(ReadImageTest, Test) {
     args.forceBlitter = std::get<2>(GetParam());
     args.hostPtrPlacement = std::get<3>(GetParam());
     args.useEvents = std::get<4>(GetParam());
+    args.hostPtrAlignment = std::get<5>(GetParam());
 
     ReadImage test;
     test.run(args);
@@ -42,12 +43,14 @@ INSTANTIATE_TEST_SUITE_P(
             ImageSize(16384, 1, 1), // 1D
             ImageSize(256, 512, 1), // 2D
             ImageSize(512, 512, 1), // 2D
+            ImageSize(513, 512, 1), // 2D
             ImageSize(512, 512, 2), // 3D
             ImageSize(512, 512, 64) // 3D
             ),
         ::testing::Values(false),
         ::testing::ValuesIn(HostptrBufferReuseModeArgument::enumValues),
-        ::testing::Values(true, false)));
+        ::testing::Values(true, false),
+        ::testing::Values(1u, 256u)));
 
 INSTANTIATE_TEST_SUITE_P(
     ReadImageTestLIMITED,
@@ -59,4 +62,5 @@ INSTANTIATE_TEST_SUITE_P(
             ),
         ::testing::Values(false),
         ::testing::Values(HostptrReuseMode::Aligned4KB),
-        ::testing::Values(true)));
+        ::testing::Values(true),
+        ::testing::Values(1u, 256u)));

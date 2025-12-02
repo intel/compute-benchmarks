@@ -5,15 +5,12 @@
  *
  */
 
+#include "alignment.h"
+
 #include <cstddef>
 #include <cstdint>
 
 struct Allocator {
-    static constexpr inline size_t alignUp(size_t before, size_t alignment) {
-        auto mask = alignment - 1;
-        return (before + mask) & ~mask;
-    }
-
     static constexpr size_t sizeOf4KB = 4u * 1024u;
 
     static constexpr size_t sizeOf2MB = 2u * 1024u * 1024u;

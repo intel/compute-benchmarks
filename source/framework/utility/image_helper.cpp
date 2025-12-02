@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "image_helper.h"
 
+#include "framework/utility/alignment.h"
 #include "framework/utility/error.h"
 
 ImageType ImageHelper::getImageTypeFromDimensions(const size_t *dimensions) {
@@ -41,6 +42,14 @@ size_t ImageHelper::getChannelFormatSize(ChannelFormat format) {
     }
 }
 
+size_t ImageHelper::getRowSizeInBytes(ChannelOrder order, ChannelFormat format, const size_t *dimensions, size_t alignment) {
+    return alignUp(getChannelCount(order) * getChannelFormatSize(format) * dimensions[0], alignment);
+}
+
+size_t ImageHelper::getImageSizeInBytes(ChannelOrder order, ChannelFormat format, const size_t *dimensions, size_t alignment) {
+    return getRowSizeInBytes(order, format, dimensions, alignment) * dimensions[1] * dimensions[2];
+}
+
 size_t ImageHelper::getImageSizeInBytes(ChannelOrder order, ChannelFormat format, const size_t *dimensions) {
-    return getChannelCount(order) * getChannelFormatSize(format) * dimensions[0] * dimensions[1] * dimensions[2];
+    return getRowSizeInBytes(order, format, dimensions, 1u) * dimensions[1] * dimensions[2];
 }

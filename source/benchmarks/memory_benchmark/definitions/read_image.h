@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,12 +18,14 @@ struct ReadImageArguments : TestCaseArgumentContainer {
     BooleanArgument forceBlitter;
     HostptrBufferReuseModeArgument hostPtrPlacement;
     BooleanArgument useEvents;
+    IntegerArgument hostPtrAlignment;
 
     ReadImageArguments()
         : size(*this, "size", "Size of the image"),
           forceBlitter(*this, "forceBlitter", CommonHelpMessage::forceBlitter()),
           hostPtrPlacement(*this, "ptrPlacement", "memory placement of host_ptr passed to ReadImage call"),
-          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
+          hostPtrAlignment(*this, "ptrAlignment", "host pointer alignment") {}
 };
 
 struct ReadImage : TestCase<ReadImageArguments> {

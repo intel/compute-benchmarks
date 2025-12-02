@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,4 +28,6 @@ struct ImageHelper {
     static size_t getChannelCount(ChannelOrder order);
     static size_t getChannelFormatSize(ChannelFormat format);
     static size_t getImageSizeInBytes(ChannelOrder order, ChannelFormat format, const size_t *dimensions);
+    static size_t getImageSizeInBytes(ChannelOrder order, ChannelFormat format, const size_t *dimensions, size_t alignment);
+    static size_t getRowSizeInBytes(ChannelOrder order, ChannelFormat format, const size_t *dimensions, size_t alignment);
 };

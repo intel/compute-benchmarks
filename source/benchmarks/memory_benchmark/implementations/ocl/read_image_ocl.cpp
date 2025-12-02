@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ static TestResult run(const ReadImageArguments &arguments, Statistics &statistic
     imageDescription.num_samples = 0u;
     cl_mem image = clCreateImage(opencl.context, 0, &imageFormat, &imageDescription, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
-    const auto imageSizeInBytes = ImageHelperOcl::getImageSizeInBytes(channelOrder, channelFormat, arguments.size);
+    const auto imageSizeInBytes = ImageHelperOcl::getImageSizeInBytes(channelOrder, channelFormat, arguments.size, arguments.hostPtrAlignment);
     // Create hostptr
     HostptrReuseHelper::Alloc hostptrAlloc{};
     ASSERT_CL_SUCCESS(HostptrReuseHelper::allocateBufferHostptr(opencl, arguments.hostPtrPlacement, imageSizeInBytes, hostptrAlloc));
@@ -72,7 +72,7 @@ static TestResult run(const ReadImageArguments &arguments, Statistics &statistic
         cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;
 
         timer.measureStart();
-        ASSERT_CL_SUCCESS(clEnqueueReadImage(opencl.commandQueue, image, true, origin, region, 0, 0, hostptrAlloc.ptr, 0, nullptr, eventForEnqueue));
+        ASSERT_CL_SUCCESS(clEnqueueReadImage(opencl.commandQueue, image, true, origin, region, ImageHelperOcl::getRowSizeInBytes(channelOrder, channelFormat, arguments.size, arguments.hostPtrAlignment), 0, hostptrAlloc.ptr, 0u, nullptr, eventForEnqueue));
         timer.measureEnd();
 
         if (eventForEnqueue) {
