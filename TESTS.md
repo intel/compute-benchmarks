@@ -123,6 +123,15 @@ SubmitGraph|measures time spent in submitting a graph to a SYCL (or SYCL-like) q
 
 
 
+# host_function_benchmark
+Host Function Benchmark is a set of tests aimed at measuring performance of host function execution.
+| Test name | Description | Params | L0 | OCL |
+|-----------|-------------|--------|----|-----|
+HostFunctionCmdListImmediate|Measures the overhead of the host function.|<ul><li>--CallsCount The number of calls that are being measured.</li><li>--KernelExecTime Execution time of a single kernel (in us).</li><li>--MeasureCompletion Add completion time in the measurement. (0 or 1)</li><li>--UseEmptyHostFunction When enabled, the test will use an empty host function, otherwise it will use a function with a 1ms busy spin. (0 or 1)</li><li>--UseKernels Use kernels and a host function in between during the test. (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+HostFunctionCmdListRegular|Measures the overhead of the host function.|<ul><li>--CallsCount The number of calls that are being measured.</li><li>--KernelExecTime Execution time of a single kernel (in us).</li><li>--MeasureCompletion Add completion time in the measurement. (0 or 1)</li><li>--UseEmptyHostFunction When enabled, the test will use an empty host function, otherwise it will use a function with a 1ms busy spin. (0 or 1)</li><li>--UseKernels Use kernels and a host function in between during the test. (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+
+
+
 # memory_benchmark
 Memory Benchmark is a set of tests aimed at measuring bandwidth of memory transfers.
 | Test name | Description | Params | L0 | OCL |

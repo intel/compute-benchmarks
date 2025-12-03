@@ -178,6 +178,36 @@ struct LevelZero {
         return std::chrono::nanoseconds(result);
     }
 
+    std::optional<std::chrono::nanoseconds> getAbsoluteTimeBetweenTwoKernels(const ze_event_handle_t &startEvent,
+                                                                             const ze_event_handle_t &endEvent) const {
+        const auto deviceProperties = getDeviceProperties(device);
+        uint64_t timerResolution = 0;
+        switch (deviceProperties.stype) {
+        case ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES:
+            timerResolution = deviceProperties.timerResolution;
+            break;
+        case ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2:
+            FATAL_ERROR_IF(deviceProperties.timerResolution == 0, "Invalid timer resolution. Division by 0.");
+            timerResolution = std::nano::den / deviceProperties.timerResolution;
+            break;
+        default:
+            FATAL_ERROR("Unknown device properties structure type.");
+        }
+
+        ze_kernel_timestamp_result_t startTimestamp{};
+        ze_kernel_timestamp_result_t endTimestamp{};
+        if (zeEventQueryKernelTimestamp(startEvent, &startTimestamp) != ZE_RESULT_SUCCESS) {
+            return std::nullopt;
+        }
+        if (zeEventQueryKernelTimestamp(endEvent, &endTimestamp) != ZE_RESULT_SUCCESS) {
+            return std::nullopt;
+        }
+
+        const auto startKernelEnd = BitHelper::isolateLowerNBits(startTimestamp.global.kernelEnd, deviceProperties.kernelTimestampValidBits);
+        const auto endKernelStart = BitHelper::isolateLowerNBits(endTimestamp.global.kernelStart, deviceProperties.kernelTimestampValidBits);
+        return getAbsoluteTimestampTime(startKernelEnd, endKernelStart, timerResolution, getKernelTimestampValidBitsMask(device));
+    }
+
     std::chrono::nanoseconds getAbsoluteKernelExecutionTime(const ze_kernel_timestamp_data_t &timestampResult) const {
         const auto deviceProperties = getDeviceProperties(device);
         uint64_t timerResolution = 0;
