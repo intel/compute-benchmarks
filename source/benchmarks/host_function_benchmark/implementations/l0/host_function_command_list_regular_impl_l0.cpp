@@ -29,7 +29,7 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
     HostFunctionApi hostFunctionApi = loadHostFunctionApi(levelzero.driver);
     HostFunctions hostFunctions = getHostFunctions(arguments.useEmptyHostFunction);
     const bool useKernels = arguments.useKernels;
-    auto nCalls = arguments.amountOfCalls;
+    auto &nCalls = arguments.amountOfCalls;
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_eat_time.spv");

@@ -27,7 +27,7 @@ static TestResult run(const HostFunctionCommandListImmediateArguments &arguments
     // Setup
     LevelZero levelzero;
     Timer timer;
-    auto nCalls = arguments.amountOfCalls;
+    auto &nCalls = arguments.amountOfCalls;
 
     HostFunctionApi hostFunctionApi = loadHostFunctionApi(levelzero.driver);
     HostFunctions hostFunctions = getHostFunctions(arguments.useEmptyHostFunction);
