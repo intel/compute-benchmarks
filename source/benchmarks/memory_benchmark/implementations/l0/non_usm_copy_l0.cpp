@@ -36,6 +36,12 @@ static TestResult run(const NonUsmCopyArguments &arguments, Statistics &statisti
         return TestResult::DeviceNotCapable;
     }
 
+    ze_device_memory_access_properties_t memoryAccessCapabilities = {};
+    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetMemoryAccessProperties(levelzero.device, &memoryAccessCapabilities));
+    if (memoryAccessCapabilities.sharedSystemAllocCapabilities == 0 && arguments.prefetch) {
+        return TestResult::DeviceNotCapable;
+    }
+
     auto sourceNonUsm = isSharedSystemPointer(arguments.sourcePlacement);
 
     void *source{}, *destination{};
