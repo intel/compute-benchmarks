@@ -264,6 +264,7 @@ Torch Benchmark is a set of tests aimed at measuring performance of workloads ge
 | Test name | Description | Params | L0 | OCL |
 |-----------|-------------|--------|----|-----|
 KernelSubmitMultiQueue|Measures submit kernel from 2 queues.|<ul><li>--kernelsPerQueue Number of kernels per queue.</li><li>--workgroupCount Number of workgroups.</li><li>--workgroupSize Size of workgroup.</li></ul>|:heavy_check_mark:|:x:|
+KernelSubmitSlmSize|Measures submit with SLM size specified.|<ul><li>--batchSize Sychronization interval.</li><li>--slmNum Size of used shared local memory.</li><li>--warmupIterations Number of warmup iterations.</li></ul>|:heavy_check_mark:|:x:|
 
 
 

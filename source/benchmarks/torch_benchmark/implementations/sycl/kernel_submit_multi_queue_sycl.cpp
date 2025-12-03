@@ -1,17 +1,16 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/combo_profiler.h"
+#include "framework/utility/timer.h"
 
 #include "definitions/kernel_submit_multi_queue.h"
 #include "definitions/sycl_kernels.h"
 
-#include <gtest/gtest.h>
 #include <sycl/sycl.hpp>
 
 #define NUM_OF_QUEUES 2

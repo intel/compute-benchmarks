@@ -5,7 +5,7 @@
  *
  */
 
-__kernel void elementwise_sum_2(__global const int *src0,
+__kernel void torch_benchmark_elementwise_sum_2(__global const int *src0,
                                 __global const int *src1,
                                 __global int *dst) {
     int gid = get_global_id(0);

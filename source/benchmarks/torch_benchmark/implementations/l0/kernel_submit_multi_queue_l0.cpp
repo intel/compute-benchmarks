@@ -5,67 +5,25 @@
  *
  */
 
-#include "framework/l0/levelzero.h"
-#include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
-
-#include "../../../../../third_party/level-zero-sdk/include/level_zero/ze_api.h"
-#include "../../../../framework/l0/utility/error.h"
-#include "../../../../framework/test_case/test_result.h"
 #include "definitions/kernel_submit_multi_queue.h"
-#include "gtest/gtest.h"
-#include "level_zero/zer_api.h"
-
-#include <level_zero/ze_api.h>
+#include "kernel_submit_common.hpp"
 
 using data_type = int;
 
 struct L0Context {
-    ze_driver_handle_t driver;
-    ze_context_handle_t context;
-    ze_device_handle_t device;
+    L0CommonContext commonCtx;
     ze_command_list_handle_t cmdListImmediate_1;
     ze_command_list_handle_t cmdListImmediate_2;
 };
 
-TestResult init_level_zero(L0Context &ctx) {
-    ASSERT_ZE_RESULT_SUCCESS(zeInit(ZE_INIT_FLAG_GPU_ONLY));
-
-    // driver + device
-    uint32_t driverCount = 0;
-    ASSERT_ZE_RESULT_SUCCESS(zeDriverGet(&driverCount, nullptr));
-    std::vector<ze_driver_handle_t> drivers(driverCount);
-    ASSERT_ZE_RESULT_SUCCESS(zeDriverGet(&driverCount, drivers.data()));
-    ze_driver_handle_t driver = drivers[0];
-
-    uint32_t deviceCount = 0;
-    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGet(driver, &deviceCount, nullptr));
-    std::vector<ze_device_handle_t> devices(deviceCount);
-    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGet(driver, &deviceCount, devices.data()));
-    ze_device_handle_t device = devices[0];
-
-    // context
-    ze_context_handle_t context = zeDriverGetDefaultContext(driver);
-
-    ze_command_list_handle_t cmdListImmediate_1;
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(context, device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdListImmediate_1));
-    ze_command_list_handle_t cmdListImmediate_2;
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(context, device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdListImmediate_2));
-    ctx = {driver, context, device, cmdListImmediate_1, cmdListImmediate_2};
+static TestResult init_level_zero(L0Context &ctx) {
+    ASSERT_TEST_RESULT_SUCCESS(init_level_zero_common(ctx.commonCtx));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(ctx.commonCtx.context, ctx.commonCtx.device, &zeDefaultGPUImmediateCommandQueueDesc, &ctx.cmdListImmediate_1));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(ctx.commonCtx.context, ctx.commonCtx.device, &zeDefaultGPUImmediateCommandQueueDesc, &ctx.cmdListImmediate_2));
     return TestResult::Success;
 }
 
-inline data_type *l0_malloc_device(ze_context_handle_t context,
-                                   ze_device_handle_t device,
-                                   size_t length) {
-    data_type *ptr = nullptr;
-    if (zeMemAllocDevice(context, &zeDefaultGPUDeviceMemAllocDesc, length * sizeof(data_type), alignof(data_type), device, (void **)&ptr) != ZE_RESULT_SUCCESS) {
-        return nullptr;
-    }
-    return ptr;
-}
-
-inline TestResult launch_kernel_l0(ze_command_list_handle_t cmdListImmediate,
+static TestResult launch_kernel_l0(ze_command_list_handle_t cmdListImmediate,
                                    ze_kernel_handle_t kernel,
                                    ze_group_count_t dispatch,
                                    const uint32_t wgs,
@@ -93,36 +51,21 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
         return TestResult::Nooped;
     }
 
-    L0Context l0;
+    L0Context l0{};
     ASSERT_TEST_RESULT_SUCCESS(init_level_zero(l0));
     const size_t length = static_cast<size_t>(arguments.workgroupCount * arguments.workgroupSize);
 
-    const auto kernelBinary = FileHelper::loadBinaryFile("torch_benchmark_elementwise_sum_2.spv");
-    if (kernelBinary.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
-
-    // create kernel
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.inputSize = kernelBinary.size();
-    moduleDesc.pInputModule = kernelBinary.data();
-    ze_module_handle_t module{};
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(l0.context, l0.device, &moduleDesc, &module, nullptr));
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;
-    kernelDesc.pKernelName = "elementwise_sum_2";
     ze_kernel_handle_t kernel{};
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
+    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0.commonCtx, "torch_benchmark_elementwise_sum_2", kernel));
 
     data_type *d_a[2] = {};
     data_type *d_b[2] = {};
     data_type *d_c[2] = {};
     // allocate device memory
     for (int i = 0; i < 2; i++) {
-        d_a[i] = l0_malloc_device(l0.context, l0.device, length);
-        d_b[i] = l0_malloc_device(l0.context, l0.device, length);
-        d_c[i] = l0_malloc_device(l0.context, l0.device, length);
+        d_a[i] = l0_malloc_device<data_type>(l0.commonCtx, length);
+        d_b[i] = l0_malloc_device<data_type>(l0.commonCtx, length);
+        d_c[i] = l0_malloc_device<data_type>(l0.commonCtx, length);
 
         if (!d_a[i] || !d_b[i] || !d_c[i]) {
             return TestResult::Error;
@@ -143,13 +86,13 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
 
     L0CounterBasedEventCreate2 counterBasedEventCreate2 = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(
-        l0.driver,
+        l0.commonCtx.driver,
         "zexCounterBasedEventCreate2",
         reinterpret_cast<void **>(&counterBasedEventCreate2)));
     if (!counterBasedEventCreate2) {
         throw std::runtime_error("Driver does not support Counter-Based Event");
     }
-    ASSERT_ZE_RESULT_SUCCESS(counterBasedEventCreate2(l0.context, l0.device, &desc, &q2_last_event));
+    ASSERT_ZE_RESULT_SUCCESS(counterBasedEventCreate2(l0.commonCtx.context, l0.commonCtx.device, &desc, &q2_last_event));
 
     for (size_t i = 0; i < arguments.iterations; i++) {
         // submit several kernels into cmdlist_1
@@ -176,11 +119,11 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
     // clean
     for (int i = 0; i < 2; i++) {
         if (d_a[i])
-            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0.context, d_a[i]));
+            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0.commonCtx.context, d_a[i]));
         if (d_b[i])
-            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0.context, d_b[i]));
+            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0.commonCtx.context, d_b[i]));
         if (d_c[i])
-            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0.context, d_c[i]));
+            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0.commonCtx.context, d_c[i]));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(l0.cmdListImmediate_1));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(l0.cmdListImmediate_2));
