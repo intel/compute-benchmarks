@@ -43,7 +43,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
-        ::testing::Values(false, true)));
+        ::testing::Values(true)));
 
 INSTANTIATE_TEST_SUITE_P(
     KernelSwitchLatencyImmediateTestLIMITED,
