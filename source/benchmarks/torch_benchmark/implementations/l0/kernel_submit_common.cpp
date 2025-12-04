@@ -38,15 +38,17 @@ TestResult create_kernel(L0CommonContext &ctx,
                          const std::string &kernelName,
                          ze_kernel_handle_t &kernel) {
 
-    const auto kernelBinary = FileHelper::loadBinaryFile(kernelName + ".spv");
+    auto kernelBinary = FileHelper::loadBinaryFile(kernelName + ".cl");
     if (kernelBinary.size() == 0) {
         return TestResult::KernelNotFound;
     }
+    kernelBinary.push_back('\0'); // null-terminate for safety
 
     ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.format = ZE_MODULE_FORMAT_OCLC;
     moduleDesc.inputSize = kernelBinary.size();
     moduleDesc.pInputModule = kernelBinary.data();
+
     ze_module_handle_t module{};
     ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(ctx.context, ctx.device, &moduleDesc, &module, nullptr));
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};

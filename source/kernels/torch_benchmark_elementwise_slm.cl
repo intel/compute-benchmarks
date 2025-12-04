@@ -7,7 +7,7 @@
 
 __kernel void torch_benchmark_elementwise_slm(__global float *out_data, int slm_num, __local float* slm) {
     // Allocate local memory for the work-group
-    // size in bytes declared atg kernel launch by last "hidden" argument
+    // size in bytes declared at kernel launch by last "hidden" argument
 	
     int local_id = get_local_id(0);
     int local_size = get_local_size(0);
