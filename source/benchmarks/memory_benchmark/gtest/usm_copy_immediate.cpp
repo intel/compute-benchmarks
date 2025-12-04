@@ -43,7 +43,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::ValuesIn(UsmMemoryPlacementArgument::stableTargets),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
-        ::testing::Values(512 * megaByte),
+        ::testing::Values(128 * megaByte),
         ::testing::Values(BufferContents::Zeros),
         ::testing::Values(false, true),
         ::testing::Values(true),
@@ -55,7 +55,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(UsmMemoryPlacement::Device),
         ::testing::Values(UsmMemoryPlacement::NonUsm4KBAligned),
-        ::testing::Values(512 * megaByte),
+        ::testing::Values(128 * megaByte),
         ::testing::Values(BufferContents::Zeros),
         ::testing::Values(false),
         ::testing::Values(true),

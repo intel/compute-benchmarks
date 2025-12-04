@@ -42,7 +42,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
         ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
-        ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 128 * megaByte, 512 * megaByte, 1 * gigaByte),
+        ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 128 * megaByte, 512 * megaByte),
         ::testing::Values(false, true),
         ::testing::Values(BufferContents::Zeros, BufferContents::Random),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::deviceAndHost),
@@ -57,7 +57,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
         ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
-        ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 128 * megaByte, 512 * megaByte, 1 * gigaByte),
+        ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 256 * megaByte),
         ::testing::Values(false, true),
         ::testing::Values(BufferContents::Zeros, BufferContents::Random),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::nonUsmTargets),

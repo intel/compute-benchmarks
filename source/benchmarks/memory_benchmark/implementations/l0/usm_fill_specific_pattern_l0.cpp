@@ -44,7 +44,7 @@ static TestResult run(const UsmFillSpecificPatternArguments &arguments, Statisti
         return TestResult::DeviceNotCapable;
     }
     if (!validateMemoryFillPatternSize(pattern.size(), levelzero.commandQueueMaxFillSize)) {
-        return TestResult::InvalidArgs;
+        return TestResult::DeviceNotCapable;
     }
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);

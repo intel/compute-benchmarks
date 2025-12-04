@@ -38,7 +38,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(UsmMemoryPlacement::Device),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::nonUsmTargets),
-        ::testing::Values(512 * megaByte),
+        ::testing::Values(64 * megaByte),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false)));
@@ -49,7 +49,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::ValuesIn(UsmMemoryPlacementArgument::nonUsmTargets),
         ::testing::Values(UsmMemoryPlacement::Device),
-        ::testing::Values(512 * megaByte),
+        ::testing::Values(64 * megaByte),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(false)));
@@ -60,7 +60,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(UsmMemoryPlacement::Device),
         ::testing::ValuesIn(UsmMemoryPlacementArgument::nonUsmTargets),
-        ::testing::Values(512 * megaByte),
+        ::testing::Values(64 * megaByte),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(true)));
@@ -71,7 +71,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::ValuesIn(UsmMemoryPlacementArgument::nonUsmTargets),
         ::testing::Values(UsmMemoryPlacement::Device),
-        ::testing::Values(512 * megaByte),
+        ::testing::Values(64 * megaByte),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
         ::testing::Values(true)));
@@ -82,7 +82,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(UsmMemoryPlacement::Device),
         ::testing::Values(UsmMemoryPlacement::NonUsm4KBAligned),
-        ::testing::Values(512 * megaByte),
+        ::testing::Values(64 * megaByte),
         ::testing::Values(true),
         ::testing::Values(false, true),
         ::testing::Values(false)));
