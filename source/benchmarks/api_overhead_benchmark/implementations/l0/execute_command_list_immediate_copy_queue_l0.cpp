@@ -30,8 +30,9 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.isCopyOnly).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create();
     ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(
-        (requiresImport(arguments.sourcePlacement) ||
-         requiresImport(arguments.destinationPlacement)));
+                                                                               (requiresImport(arguments.sourcePlacement) ||
+                                                                                requiresImport(arguments.destinationPlacement)))
+                                                  .setCounterBasedCreateFunctions(arguments.useIoq);
 
     LevelZero levelzero(queueProperties, contextProperties, extensionProperties);
     if (levelzero.commandQueue == nullptr) {
@@ -39,17 +40,25 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
     }
 
     // Create event
-    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = 1;
-    ze_event_pool_handle_t eventPool;
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
-    ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
-    eventDesc.index = 0;
-    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
-    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
-    ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
+    if (arguments.useIoq) {
+        zex_counter_based_event_exp_flags_t counterBasedDescFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+        const ze_event_scope_flags_t signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+        const ze_event_scope_flags_t waitScope = 0;
+        const zex_counter_based_event_desc_t counterBasedEventDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, .pNext = nullptr, .flags = counterBasedDescFlags, .signalScope = signalScope, .waitScope = waitScope};
+        ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &event));
+    } else {
+        ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+        eventPoolDesc.count = 1;
+        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
+        ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
+        eventDesc.index = 0;
+        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+        eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+        ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
+    }
 
     // Create buffers
     void *srcBuffer{}, *dstBuffer{};
@@ -78,7 +87,9 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
     // Warmup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, arguments.size, event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
+    if (!arguments.useIoq) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
+    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -96,13 +107,16 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
             timer.measureEnd();
             statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         }
-
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
+        if (!arguments.useIoq) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
+        }
     }
 
     // Release
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
+    if (!arguments.useIoq) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
+    }
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.sourcePlacement, levelzero, srcBuffer));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.destinationPlacement, levelzero, dstBuffer));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
