@@ -63,11 +63,11 @@ TestResult SinKernelGraphL0::runKernels(ze_command_list_handle_t cmdList) {
 TestResult SinKernelGraphL0::init() {
     levelzero = std::make_shared<LevelZero>();
 
-    TestResult kernelA_res = L0::KernelHelper::loadKernel(*levelzero, "graph_api_benchmark_kernel_assign.spv", "kernel_assign", &kernelAssign, &moduleAssign);
+    TestResult kernelA_res = L0::KernelHelper::loadKernel(*levelzero, "graph_api_benchmark_kernel_assign.cl", "kernel_assign", &kernelAssign, &moduleAssign);
     if (kernelA_res != TestResult::Success) {
         return kernelA_res;
     }
-    TestResult kernelB_res = L0::KernelHelper::loadKernel(*levelzero, "graph_api_benchmark_kernel_sin.spv", "kernel_sin", &kernelSin, &moduleSin);
+    TestResult kernelB_res = L0::KernelHelper::loadKernel(*levelzero, "graph_api_benchmark_kernel_sin.cl", "kernel_sin", &kernelSin, &moduleSin);
     if (kernelB_res != TestResult::Success) {
         return kernelB_res;
     }

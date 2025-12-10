@@ -110,8 +110,8 @@ TestResult initEnv(TestEnv &env, const MutateGraphArguments &arguments) {
 
     env.levelzero = std::make_shared<LevelZero>();
 
-    L0::KernelHelper::loadKernel(*env.levelzero, "graph_api_benchmark_kernel_sum.spv", "kernel_sum", &env.kernelSum, &env.moduleSum);
-    L0::KernelHelper::loadKernel(*env.levelzero, "graph_api_benchmark_kernel_multiply.spv", "kernel_mul", &env.kernelMul, &env.moduleMul);
+    L0::KernelHelper::loadKernel(*env.levelzero, "graph_api_benchmark_kernel_sum.cl", "kernel_sum", &env.kernelSum, &env.moduleSum);
+    L0::KernelHelper::loadKernel(*env.levelzero, "graph_api_benchmark_kernel_multiply.cl", "kernel_mul", &env.kernelMul, &env.moduleMul);
 
     uint32_t grpCnt[3] = {1, 1, 1};
 

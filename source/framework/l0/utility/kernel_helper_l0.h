@@ -12,6 +12,6 @@
 
 #include <level_zero/ze_api.h>
 namespace L0::KernelHelper {
-TestResult loadKernel(LevelZero &levelzero, std::string spirv_file_name, std::string kernel_name, ze_kernel_handle_t *kernel_out,
-                      ze_module_handle_t *module_out);
+TestResult loadKernel(LevelZero &levelzero, const std::string &filePath, const std::string &kernelName, ze_kernel_handle_t *kernel,
+                      ze_module_handle_t *module);
 }
