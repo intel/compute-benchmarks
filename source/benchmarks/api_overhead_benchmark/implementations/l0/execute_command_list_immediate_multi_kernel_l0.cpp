@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,8 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
     }
 
     // Setup
-    LevelZero levelzero;
+    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(arguments.useIoq);
+    LevelZero levelzero(extensionProperties);
     Timer timer;
 
     // Create kernel
@@ -63,11 +64,21 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
     ze_event_pool_handle_t eventPool{};
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, ZE_EVENT_SCOPE_FLAG_DEVICE, ZE_EVENT_SCOPE_FLAG_HOST};
     std::vector<ze_event_handle_t> events(eventsCount);
-    ZE_RESULT_SUCCESS_OR_ERROR(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
-    for (uint32_t eventIndex = 0u; eventIndex < eventsCount; eventIndex++) {
-        eventDesc.index = eventIndex;
-        auto event = &events[eventIndex];
-        ZE_RESULT_SUCCESS_OR_ERROR(zeEventCreate(eventPool, &eventDesc, event));
+    if (arguments.useIoq) {
+        zex_counter_based_event_exp_flags_t counterBasedDescFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+        const ze_event_scope_flags_t signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+        const ze_event_scope_flags_t waitScope = 0;
+        const zex_counter_based_event_desc_t counterBasedEventDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, .pNext = nullptr, .flags = counterBasedDescFlags, .signalScope = signalScope, .waitScope = waitScope};
+        for (auto &event : events) {
+            ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &event));
+        }
+    } else {
+        ZE_RESULT_SUCCESS_OR_ERROR(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
+        for (uint32_t eventIndex = 0u; eventIndex < eventsCount; eventIndex++) {
+            eventDesc.index = eventIndex;
+            auto event = &events[eventIndex];
+            ZE_RESULT_SUCCESS_OR_ERROR(zeEventCreate(eventPool, &eventDesc, event));
+        }
     }
 
     // Create output buffer
@@ -99,8 +110,10 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[1], &groupCount0, events[1], 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(events[0], std::numeric_limits<uint64_t>::max()));
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(events[1], std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[0]));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[1]));
+    if (!arguments.useIoq) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[0]));
+        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[1]));
+    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -131,7 +144,9 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         for (auto eventUsed = 0u; eventUsed < eventId; eventUsed++) {
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(events[eventUsed], std::numeric_limits<uint64_t>::max()));
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[eventUsed]));
+            if (!arguments.useIoq) {
+                ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[eventUsed]));
+            }
         }
     }
 
@@ -139,7 +154,9 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
     for (auto &event : events) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     }
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
+    if (!arguments.useIoq) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     for (auto &kernel : kernels) {
         ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
