@@ -58,8 +58,7 @@ function (add_benchmark_for_api BASE_TARGET_NAME APPEND_API_TO_TARGET_NAME REGIS
     endif()
 
     # Define target
-    get_benchmark_info("${CMAKE_CURRENT_SOURCE_DIR}" "${BRANCH_TYPE}" "${BASE_TARGET_NAME}" BENCHMARK_ROOT BENCHMARK_NAME BENCHMARK_SUBDIR)
-    set(BENCHMARK_SOURCE_PATH "${BENCHMARK_ROOT}/${BENCHMARK_NAME}")
+    derive_benchmark_source_path("${CMAKE_CURRENT_SOURCE_DIR}" BENCHMARK_SOURCE_PATH)
 
     add_executable(${TARGET_NAME} CMakeLists.txt)
     foreach(API ${APIS})
@@ -99,21 +98,23 @@ function (add_benchmark_for_api BASE_TARGET_NAME APPEND_API_TO_TARGET_NAME REGIS
             set(API_DIR "sycl")
         endif()
 
-        set(API_SUBPATH "${BENCHMARK_SUBDIR}${API_DIR}")
+        foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
+            set(API_SUBPATH "${BRANCH_DIR}${API_DIR}")
 
-        set(COMMON_DIR "${BENCHMARKS_SOURCE_ROOT}/common/${API_SUBPATH}")
-        set(IMPL_DIR "${BENCHMARK_SOURCE_PATH}/implementations/${API_SUBPATH}")
-        set(UTIL_DIR "${BENCHMARK_SOURCE_PATH}/utility/${API_SUBPATH}")
+            set(COMMON_DIR "${BENCHMARKS_SOURCE_ROOT}/common/${API_SUBPATH}")
+            set(IMPL_DIR "${BENCHMARK_SOURCE_PATH}/implementations/${API_SUBPATH}")
+            set(UTIL_DIR "${BENCHMARK_SOURCE_PATH}/utility/${API_SUBPATH}")
 
-        get_filename_component(COMMON_DIR "${COMMON_DIR}" ABSOLUTE)
-        get_filename_component(IMPL_DIR "${IMPL_DIR}" ABSOLUTE)
-        get_filename_component(UTIL_DIR "${UTIL_DIR}" ABSOLUTE)
-        
-        foreach(DIR ${COMMON_DIR} ${IMPL_DIR} ${UTIL_DIR})
-            if(EXISTS "${DIR}")
-                message(STATUS "Adding sources from ${DIR} to ${TARGET_NAME}")
-                add_sources_to_benchmark(${TARGET_NAME} ${DIR})
-            endif()
+            get_filename_component(COMMON_DIR "${COMMON_DIR}" ABSOLUTE)
+            get_filename_component(IMPL_DIR "${IMPL_DIR}" ABSOLUTE)
+            get_filename_component(UTIL_DIR "${UTIL_DIR}" ABSOLUTE)
+            
+            foreach(DIR ${COMMON_DIR} ${IMPL_DIR} ${UTIL_DIR})
+                if(EXISTS "${DIR}")
+                    message(STATUS "Adding sources from ${DIR} to ${TARGET_NAME}")
+                    add_sources_to_benchmark(${TARGET_NAME} ${DIR})
+                endif()
+            endforeach()
         endforeach()
     endforeach()
 
@@ -147,20 +148,19 @@ function(add_benchmark_dependency_on_workload BENCHMARK_BASE_NAME WORKLOAD API)
     endforeach()
 endfunction()
 
-function(get_benchmark_info CURRENT_DIR BRANCH_TYPE BENCHMARK_NAME OUT_ROOT OUT_NAME OUT_SUBDIR)
-    get_filename_component(ROOT "${CURRENT_DIR}" DIRECTORY)
-    get_filename_component(BENCHMARK_DIR "${CURRENT_DIR}" NAME)
+function(derive_benchmark_source_path CURRENT_DIR OUT_BENCHMARK_SOURCE_PATH)
+    get_filename_component(BENCHMARK_ROOT "${CURRENT_DIR}" DIRECTORY)
+    get_filename_component(CURRENT_DIR_NAME "${CURRENT_DIR}" NAME)
 
-    set(NAME "${BENCHMARK_DIR}")
-    set(SUBDIR "")
+    set(RESOLVED_BASE_TARGET "${BASE_TARGET_NAME}")
 
-    if(BENCHMARK_DIR STREQUAL "${BRANCH_TYPE}" AND NOT "${BRANCH_TYPE}" STREQUAL "")
-        get_filename_component(ROOT "${ROOT}" DIRECTORY)
-        set(NAME "${BENCHMARK_NAME}")
-        set(SUBDIR "${BENCHMARK_DIR}/")
+    if (DEFINED BRANCH_TYPE AND NOT "${BRANCH_TYPE}" STREQUAL "")
+        string(REGEX REPLACE "_${BRANCH_TYPE}$" "" RESOLVED_BASE_TARGET "${RESOLVED_BASE_TARGET}")
+
+        if ("${CURRENT_DIR_NAME}" STREQUAL "${BRANCH_TYPE}")
+            get_filename_component(BENCHMARK_ROOT "${BENCHMARK_ROOT}" DIRECTORY)
+        endif()
     endif()
 
-    set(${OUT_ROOT} "${ROOT}" PARENT_SCOPE)
-    set(${OUT_NAME} "${NAME}" PARENT_SCOPE)
-    set(${OUT_SUBDIR} "${SUBDIR}" PARENT_SCOPE)
+    set(${OUT_BENCHMARK_SOURCE_PATH} "${BENCHMARK_ROOT}/${RESOLVED_BASE_TARGET}" PARENT_SCOPE)
 endfunction()
