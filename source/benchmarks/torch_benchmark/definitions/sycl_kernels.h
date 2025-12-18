@@ -14,7 +14,7 @@
 #define EVENTLESS_SUBMIT 0
 #endif
 
-void submit_kernel_empty(unsigned int wgc, unsigned int wgs, sycl::queue &q) {
+inline void submit_kernel_empty(unsigned int wgc, unsigned int wgs, sycl::queue &q) {
 #if EVENTLESS_SUBMIT
     sycl::ext::oneapi::experimental::nd_launch(q, sycl::nd_range<1>{wgc * wgs, wgs}, [=](sycl::nd_item<1> item) {
         ; // empty kernel
