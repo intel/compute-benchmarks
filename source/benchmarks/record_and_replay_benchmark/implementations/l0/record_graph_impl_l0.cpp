@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/error.h"
 #include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/file_helper.h"
@@ -58,18 +59,18 @@ struct GraphApi {
 
 GraphApi loadGraphApi(ze_driver_handle_t driver) {
     GraphApi ret;
-    zeDriverGetExtensionFunctionAddress(driver, "zeGraphCreateExp", reinterpret_cast<void **>(&ret.graphCreate));
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListBeginGraphCaptureExp", reinterpret_cast<void **>(&ret.commandListBeginGraphCapture));
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListBeginCaptureIntoGraphExp", reinterpret_cast<void **>(&ret.commandListBeginCaptureIntoGraph));
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListEndGraphCaptureExp", reinterpret_cast<void **>(&ret.commandListEndGraphCapture));
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListInstantiateGraphExp", reinterpret_cast<void **>(&ret.commandListInstantiateGraph));
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListAppendGraphExp", reinterpret_cast<void **>(&ret.commandListAppendGraph));
-    zeDriverGetExtensionFunctionAddress(driver, "zeGraphDestroyExp", reinterpret_cast<void **>(&ret.graphDestroy));
-    zeDriverGetExtensionFunctionAddress(driver, "zeExecutableGraphDestroyExp", reinterpret_cast<void **>(&ret.executableGraphDestroy));
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(driver, "zeGraphCreateExp", reinterpret_cast<void **>(&ret.graphCreate)));
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(driver, "zeCommandListBeginGraphCaptureExp", reinterpret_cast<void **>(&ret.commandListBeginGraphCapture)));
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(driver, "zeCommandListBeginCaptureIntoGraphExp", reinterpret_cast<void **>(&ret.commandListBeginCaptureIntoGraph)));
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(driver, "zeCommandListEndGraphCaptureExp", reinterpret_cast<void **>(&ret.commandListEndGraphCapture)));
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(driver, "zeCommandListInstantiateGraphExp", reinterpret_cast<void **>(&ret.commandListInstantiateGraph)));
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(driver, "zeCommandListAppendGraphExp", reinterpret_cast<void **>(&ret.commandListAppendGraph)));
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(driver, "zeGraphDestroyExp", reinterpret_cast<void **>(&ret.graphDestroy)));
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(driver, "zeExecutableGraphDestroyExp", reinterpret_cast<void **>(&ret.executableGraphDestroy)));
 
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListIsGraphCaptureEnabledExp", reinterpret_cast<void **>(&ret.commandListIsGraphCaptureEnabled));
-    zeDriverGetExtensionFunctionAddress(driver, "zeGraphIsEmptyExp", reinterpret_cast<void **>(&ret.graphIsEmpty));
-    zeDriverGetExtensionFunctionAddress(driver, "zeGraphDumpContentsExp", reinterpret_cast<void **>(&ret.graphDumpContents));
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(driver, "zeCommandListIsGraphCaptureEnabledExp", reinterpret_cast<void **>(&ret.commandListIsGraphCaptureEnabled)));
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(driver, "zeGraphIsEmptyExp", reinterpret_cast<void **>(&ret.graphIsEmpty)));
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(driver, "zeGraphDumpContentsExp", reinterpret_cast<void **>(&ret.graphDumpContents)));
 
     return ret;
 }
@@ -140,9 +141,9 @@ struct RecordedGraph<false> : RecordGraphImplBase<RecordedGraph<false>> {
     RecordedGraph &operator=(RecordedGraph &&) = delete;
     ~RecordedGraph() override {
         for (auto execGraph : instantiatedGraphs) {
-            graphApi.executableGraphDestroy(execGraph);
+            EXPECT_ZE_RESULT_SUCCESS(graphApi.executableGraphDestroy(execGraph));
         }
-        graphApi.graphDestroy(graph);
+        EXPECT_ZE_RESULT_SUCCESS(graphApi.graphDestroy(graph));
     }
 
     void beginRecordingImpl() {
@@ -188,7 +189,7 @@ struct RecordedGraph<true> : RecordGraphImplBase<RecordedGraph<true>> {
     RecordedGraph &operator=(RecordedGraph &&) = delete;
     ~RecordedGraph() override {
         for (auto cmdlist : resources) {
-            zeCommandListDestroy(cmdlist);
+            EXPECT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdlist));
         }
     }
 
@@ -198,12 +199,12 @@ struct RecordedGraph<true> : RecordGraphImplBase<RecordedGraph<true>> {
         ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC, nullptr};
         cmdListDesc.commandQueueGroupOrdinal = cmdListInfo.desc.ordinal;
         cmdListDesc.flags |= (0 != (cmdListInfo.desc.flags & ZE_COMMAND_QUEUE_FLAG_IN_ORDER)) ? static_cast<ze_command_list_flags_t>(ZE_COMMAND_LIST_FLAG_IN_ORDER) : 0U;
-        zeCommandListCreate(ctx, cmdListInfo.hDevice, &cmdListDesc, &newRegularCmdList);
+        EXPECT_ZE_RESULT_SUCCESS(zeCommandListCreate(ctx, cmdListInfo.hDevice, &cmdListDesc, &newRegularCmdList));
         cmdListStack.push_back(newRegularCmdList);
     }
 
     void endRecordingImpl() {
-        zeCommandListClose(*cmdListStack.begin());
+        EXPECT_ZE_RESULT_SUCCESS(zeCommandListClose(*cmdListStack.begin()));
     }
 
     void forkImpl(ze_command_list_handle_t forkTo) {
@@ -212,13 +213,13 @@ struct RecordedGraph<true> : RecordGraphImplBase<RecordedGraph<true>> {
         ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC, nullptr};
         cmdListDesc.commandQueueGroupOrdinal = cmdListInfo.desc.ordinal;
         cmdListDesc.flags |= (0 != (cmdListInfo.desc.flags & ZE_COMMAND_QUEUE_FLAG_IN_ORDER)) ? static_cast<ze_command_list_flags_t>(ZE_COMMAND_LIST_FLAG_IN_ORDER) : 0U;
-        zeCommandListCreate(ctx, cmdListInfo.hDevice, &cmdListDesc, &newRegularCmdList);
+        EXPECT_ZE_RESULT_SUCCESS(zeCommandListCreate(ctx, cmdListInfo.hDevice, &cmdListDesc, &newRegularCmdList));
         cmdListStack.push_back(newRegularCmdList);
         resources.push_back(newRegularCmdList);
     }
 
     void joinImpl() {
-        zeCommandListClose(*cmdListStack.rbegin());
+        EXPECT_ZE_RESULT_SUCCESS(zeCommandListClose(*cmdListStack.rbegin()));
         cmdListStack.pop_back();
     }
 
@@ -247,7 +248,7 @@ struct RecordGraphConfig final {
         ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr};
         eventPoolDesc.count = static_cast<uint32_t>(arguments.nLvls * 2);
         eventPoolDesc.count = eventPoolDesc.count ? eventPoolDesc.count : 1; // at least one
-        zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &l0env.eventPool);
+        EXPECT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &l0env.eventPool));
         ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr};
         eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
         eventDesc.wait = ZE_EVENT_SCOPE_FLAG_DEVICE;
@@ -259,19 +260,19 @@ struct RecordGraphConfig final {
 
         this->copySize = 4096U;
         ze_device_mem_alloc_desc_t devMemDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr};
-        zeMemAllocDevice(levelzero.context, &devMemDesc, this->copySize, 16, levelzero.device, &this->copyFrom);
-        zeMemAllocDevice(levelzero.context, &devMemDesc, this->copySize, 16, levelzero.device, &this->copyTo);
+        EXPECT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &devMemDesc, this->copySize, 16, levelzero.device, &this->copyFrom));
+        EXPECT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &devMemDesc, this->copySize, 16, levelzero.device, &this->copyTo));
 
-        zeCommandListCreateImmediate(levelzero.context, levelzero.device, &levelzero.commandQueueDesc, &this->rootCmdlist);
+        EXPECT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &levelzero.commandQueueDesc, &this->rootCmdlist));
         l0env.cmdListInfos[this->rootCmdlist] = {levelzero.device, levelzero.commandQueueDesc};
         this->forkLevelInfo.resize(arguments.nLvls);
         for (int i = 0; i < arguments.nLvls; ++i) {
             eventDesc.index = i * 2;
-            zeEventCreate(this->l0env.eventPool, &eventDesc, &this->forkLevelInfo[i].forkEvent);
+            EXPECT_ZE_RESULT_SUCCESS(zeEventCreate(this->l0env.eventPool, &eventDesc, &this->forkLevelInfo[i].forkEvent));
             eventDesc.index = i * 2 + 1;
-            zeEventCreate(this->l0env.eventPool, &eventDesc, &this->forkLevelInfo[i].joinEvent);
+            EXPECT_ZE_RESULT_SUCCESS(zeEventCreate(this->l0env.eventPool, &eventDesc, &this->forkLevelInfo[i].joinEvent));
 
-            zeCommandListCreateImmediate(levelzero.context, levelzero.device, &levelzero.commandQueueDesc, &this->forkLevelInfo[i].target);
+            EXPECT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &levelzero.commandQueueDesc, &this->forkLevelInfo[i].target));
             l0env.cmdListInfos[this->forkLevelInfo[i].target] = {levelzero.device, levelzero.commandQueueDesc};
         }
 
@@ -285,10 +286,10 @@ struct RecordGraphConfig final {
         moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
         moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
         moduleDesc.inputSize = spirvModule.size();
-        zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &l0env.module, nullptr);
+        EXPECT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &l0env.module, nullptr));
         ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
         kernelDesc.pKernelName = "kernel_assign";
-        zeKernelCreate(l0env.module, &kernelDesc, &this->kernel);
+        EXPECT_ZE_RESULT_SUCCESS(zeKernelCreate(l0env.module, &kernelDesc, &this->kernel));
 
         this->kernelGroupCount = {8, 8, 1};
         this->status = RecordGraphConfigStatus::Success;
@@ -296,18 +297,18 @@ struct RecordGraphConfig final {
 
     ~RecordGraphConfig() {
         for (auto &level : this->forkLevelInfo) {
-            zeEventDestroy(level.forkEvent);
-            zeEventDestroy(level.joinEvent);
-            zeCommandListDestroy(level.target);
+            EXPECT_ZE_RESULT_SUCCESS(zeEventDestroy(level.forkEvent));
+            EXPECT_ZE_RESULT_SUCCESS(zeEventDestroy(level.joinEvent));
+            EXPECT_ZE_RESULT_SUCCESS(zeCommandListDestroy(level.target));
         }
 
-        zeCommandListDestroy(this->rootCmdlist);
+        EXPECT_ZE_RESULT_SUCCESS(zeCommandListDestroy(this->rootCmdlist));
 
-        zeMemFree(l0env.envBase.context, this->copyFrom);
-        zeMemFree(l0env.envBase.context, this->copyTo);
-        zeEventPoolDestroy(this->l0env.eventPool);
-        zeKernelDestroy(this->kernel);
-        zeModuleDestroy(l0env.module);
+        EXPECT_ZE_RESULT_SUCCESS(zeMemFree(l0env.envBase.context, this->copyFrom));
+        EXPECT_ZE_RESULT_SUCCESS(zeMemFree(l0env.envBase.context, this->copyTo));
+        EXPECT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(this->l0env.eventPool));
+        EXPECT_ZE_RESULT_SUCCESS(zeKernelDestroy(this->kernel));
+        EXPECT_ZE_RESULT_SUCCESS(zeModuleDestroy(l0env.module));
     }
 
     RecordGraphConfig(const RecordGraphConfig &) = delete;
@@ -362,10 +363,10 @@ void recordGraphLevel(int level, const LevelZero &levelzero, const GraphApi &gra
     int numForks = 0;
     for (int i = 0; i < cfg.numCommandSetsPerLevel; ++i) {
         for (int k = 0; k < cfg.numKernelsInSet; ++k, ++cmdId, ++forkSpan) {
-            zeKernelSetArgumentValue(cfg.kernel, 0, sizeof(void *), (0 != (k & 1)) ? &cfg.copyTo : &cfg.copyFrom);
-            zeKernelSetArgumentValue(cfg.kernel, 1, sizeof(void *), (0 != (k & 1)) ? &cfg.copyFrom : &cfg.copyTo);
+            EXPECT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(cfg.kernel, 0, sizeof(void *), (0 != (k & 1)) ? &cfg.copyTo : &cfg.copyFrom));
+            EXPECT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(cfg.kernel, 1, sizeof(void *), (0 != (k & 1)) ? &cfg.copyFrom : &cfg.copyTo));
             if ((forkSpan == forkToCommandRatio) || (numForksToCreate - numForks >= totalCommands - cmdId)) {
-                zeCommandListAppendLaunchKernel(graph.getAppendTarget(), cfg.kernel, &cfg.kernelGroupCount, forkEvent, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr);
+                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(graph.getAppendTarget(), cfg.kernel, &cfg.kernelGroupCount, forkEvent, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
                 waitEvent = cfg.forkLevelInfo[level + 1].joinEvent;
 
                 graph.fork(cfg.forkLevelInfo[level + 1].target);
@@ -374,13 +375,13 @@ void recordGraphLevel(int level, const LevelZero &levelzero, const GraphApi &gra
                 forkSpan = 0;
                 graph.join();
             } else {
-                zeCommandListAppendLaunchKernel(graph.getAppendTarget(), cfg.kernel, &cfg.kernelGroupCount, nullptr, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr);
+                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(graph.getAppendTarget(), cfg.kernel, &cfg.kernelGroupCount, nullptr, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
                 waitEvent = nullptr;
             }
         }
         for (int c = 0; c < cfg.numCopiesInSet; ++c, ++cmdId, ++forkSpan) {
             if ((forkSpan == forkToCommandRatio) || (numForksToCreate - numForks >= totalCommands - cmdId)) {
-                zeCommandListAppendMemoryCopy(graph.getAppendTarget(), cfg.copyTo, cfg.copyFrom, cfg.copySize, forkEvent, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr);
+                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(graph.getAppendTarget(), cfg.copyTo, cfg.copyFrom, cfg.copySize, forkEvent, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
                 waitEvent = cfg.forkLevelInfo[level + 1].joinEvent;
 
                 graph.fork(cfg.forkLevelInfo[level + 1].target);
@@ -389,14 +390,14 @@ void recordGraphLevel(int level, const LevelZero &levelzero, const GraphApi &gra
                 forkSpan = 0;
                 graph.join();
             } else {
-                zeCommandListAppendMemoryCopy(graph.getAppendTarget(), cfg.copyTo, cfg.copyFrom, cfg.copySize, nullptr, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr);
+                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(graph.getAppendTarget(), cfg.copyTo, cfg.copyFrom, cfg.copySize, nullptr, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
                 waitEvent = nullptr;
             }
         }
     }
     if ((level > 0) || waitEvent) { // trailing join
-        zeCommandListAppendMemoryCopy(graph.getAppendTarget(), cfg.copyTo, cfg.copyFrom, cfg.copySize,
-                                      (level > 0) ? cfg.forkLevelInfo[level].joinEvent : nullptr, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr);
+        EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(graph.getAppendTarget(), cfg.copyTo, cfg.copyFrom, cfg.copySize,
+                                                               (level > 0) ? cfg.forkLevelInfo[level].joinEvent : nullptr, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
     }
 }
 
