@@ -35,10 +35,12 @@ TestResult init_level_zero_common(L0CommonContext &ctx) {
 }
 
 TestResult create_kernel(L0CommonContext &ctx,
+                         const std::string &kernelFileName,
                          const std::string &kernelName,
-                         ze_kernel_handle_t &kernel) {
+                         ze_kernel_handle_t &kernel,
+                         ze_module_handle_t &module) {
 
-    auto kernelBinary = FileHelper::loadBinaryFile(kernelName + ".cl");
+    auto kernelBinary = FileHelper::loadBinaryFile(kernelFileName);
     if (kernelBinary.size() == 0) {
         return TestResult::KernelNotFound;
     }
@@ -49,7 +51,6 @@ TestResult create_kernel(L0CommonContext &ctx,
     moduleDesc.inputSize = kernelBinary.size();
     moduleDesc.pInputModule = kernelBinary.data();
 
-    ze_module_handle_t module{};
     ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(ctx.context, ctx.device, &moduleDesc, &module, nullptr));
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;

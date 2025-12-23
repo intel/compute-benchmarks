@@ -66,7 +66,8 @@ static TestResult run(const KernelSubmitSlmSizeArguments &arguments, Statistics 
     ASSERT_TEST_RESULT_SUCCESS(init_level_zero(l0));
 
     ze_kernel_handle_t kernel{};
-    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0.commonCtx, "torch_benchmark_elementwise_slm", kernel));
+    ze_module_handle_t module{};
+    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0.commonCtx, "torch_benchmark_elementwise_slm.cl", "torch_benchmark_elementwise_slm", kernel, module));
 
     int slm_num = static_cast<int>(arguments.slmNum);
     ASSERT_TEST_RESULT_SUCCESS(compute_slm_num(slm_num, l0));
@@ -103,6 +104,8 @@ static TestResult run(const KernelSubmitSlmSizeArguments &arguments, Statistics 
 
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0.commonCtx.context, out_buf));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(l0.cmdListImmediate));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
+    ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
 
     if (host_result[1] > 13.1 || host_result[1] < 12.9) {
         std::cerr << "Wrong checker value: " << host_result[1] << ", expected 13.0, result value:" << host_result[0] << std::endl;

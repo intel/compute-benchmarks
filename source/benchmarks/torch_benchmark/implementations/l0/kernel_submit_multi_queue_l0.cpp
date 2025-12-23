@@ -56,7 +56,8 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
     const size_t length = static_cast<size_t>(arguments.workgroupCount * arguments.workgroupSize);
 
     ze_kernel_handle_t kernel{};
-    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0.commonCtx, "torch_benchmark_elementwise_sum_2", kernel));
+    ze_module_handle_t module{};
+    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0.commonCtx, "torch_benchmark_elementwise_sum_2.cl", "torch_benchmark_elementwise_sum_2", kernel, module));
 
     data_type *d_a[2] = {};
     data_type *d_b[2] = {};
@@ -127,6 +128,8 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(l0.cmdListImmediate_1));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(l0.cmdListImmediate_2));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
+    ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
 
     return TestResult::Success;
 };

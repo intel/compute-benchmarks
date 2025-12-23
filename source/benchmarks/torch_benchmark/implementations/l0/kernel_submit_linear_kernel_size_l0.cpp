@@ -61,7 +61,9 @@ static TestResult run(const KernelSubmitLinearKernelSizeArguments &args, Statist
 
     // create kernel
     ze_kernel_handle_t kernel{};
-    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_linear_kernel_size_" + std::to_string(args.kernelSize), kernel));
+    ze_module_handle_t module{};
+    const auto kernelName = "torch_benchmark_linear_kernel_size_" + std::to_string(args.kernelSize);
+    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, kernelName + ".cl", kernelName, kernel, module));
     // warmup
     for (int i = 0; i < 2; i++) {
         ASSERT_TEST_RESULT_SUCCESS(run_kernel(d_out, l0_ctx, kernel));
@@ -95,6 +97,7 @@ static TestResult run(const KernelSubmitLinearKernelSizeArguments &args, Statist
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0.context, d_out));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(l0_ctx.cmdListImmediate));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
+    ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
 
     return TestResult::Success;
 }

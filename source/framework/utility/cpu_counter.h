@@ -131,5 +131,5 @@ class CpuCounter {
 
   private:
     bool markTimers = false;
-    uint64_t events;
+    uint64_t events = 0;
 };

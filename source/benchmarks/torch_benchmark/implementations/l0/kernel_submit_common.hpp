@@ -28,8 +28,10 @@ struct L0CommonContext {
 TestResult init_level_zero_common(L0CommonContext &ctx);
 
 TestResult create_kernel(L0CommonContext &ctx,
+                         const std::string &kernelFileName,
                          const std::string &kernelName,
-                         ze_kernel_handle_t &kernel);
+                         ze_kernel_handle_t &kernel,
+                         ze_module_handle_t &module);
 
 template <typename data_type>
 data_type *l0_malloc_device(L0CommonContext &ctx,
