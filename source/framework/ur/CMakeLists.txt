@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -53,6 +53,7 @@ set(API_NAME ur)
 set(TARGET_NAME compute_benchmarks_framework_${API_NAME})
 add_library(${TARGET_NAME} STATIC ur.cpp ur.h error.h)
 target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/third_party/level-zero-sdk/include)
 target_link_libraries(${TARGET_NAME} PUBLIC compute_benchmarks_framework ur_loader ur_headers)
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER framework)
 setup_vs_folders(${TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR})
