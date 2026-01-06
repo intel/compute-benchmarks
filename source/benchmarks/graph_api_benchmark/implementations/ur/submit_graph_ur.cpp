@@ -22,7 +22,7 @@ static constexpr size_t global_offset = 0;
 
 static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, Statistics &statistics) {
     ComboProfilerWithStats prof(Configuration::get().profilerType);
-    if (!arguments.emulateGraphs || arguments.useHostTasks || arguments.useExplicit) {
+    if ((!arguments.emulateGraphs && !arguments.inOrderQueue) || arguments.useHostTasks || arguments.useExplicit) {
         return TestResult::ApiNotCapable;
     } else if (isNoopRun()) {
         prof.pushNoop(statistics);
@@ -31,13 +31,25 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
     UrState ur;
 
-    // check if the device supports command buffers
-    ur_bool_t command_buffer_support = false;
-    EXPECT_UR_RESULT_SUCCESS(urDeviceGetInfo(
-        ur.device, UR_DEVICE_INFO_COMMAND_BUFFER_SUPPORT_EXP,
-        sizeof(command_buffer_support), &command_buffer_support, nullptr));
-    if (!command_buffer_support) {
-        return TestResult::DeviceNotCapable;
+    // Check device capabilities based on mode
+    if (arguments.emulateGraphs) {
+        // Command buffer mode - check command buffer support
+        ur_bool_t command_buffer_support = false;
+        EXPECT_UR_RESULT_SUCCESS(urDeviceGetInfo(
+            ur.device, UR_DEVICE_INFO_COMMAND_BUFFER_SUPPORT_EXP,
+            sizeof(command_buffer_support), &command_buffer_support, nullptr));
+        if (!command_buffer_support) {
+            return TestResult::DeviceNotCapable;
+        }
+    } else {
+        // Graph record & replay mode - check graph support
+        ur_bool_t graph_support = false;
+        EXPECT_UR_RESULT_SUCCESS(urDeviceGetInfo(
+            ur.device, UR_DEVICE_INFO_GRAPH_RECORD_AND_REPLAY_SUPPORT_EXP,
+            sizeof(graph_support), &graph_support, nullptr));
+        if (!graph_support) {
+            return TestResult::DeviceNotCapable;
+        }
     }
 
     // Create kernel
@@ -77,38 +89,68 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
     EXPECT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device,
                                            &queueProperties, &queue));
 
+    // Handles for both modes (only one set will be used)
     ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
+    ur_exp_graph_handle_t graph = nullptr;
+    ur_exp_executable_graph_handle_t execGraph = nullptr;
 
-    // Finalize the graph
-    ur_exp_command_buffer_desc_t cmdBufferDesc = {
-        UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
-        nullptr,     // pNext
-        false,       // isUpdatable
-        inOrder,     // isInOrder
-        useProfiling // enableProfiling
-    };
+    if (arguments.emulateGraphs) {
+        // Command buffer mode
+        ur_exp_command_buffer_desc_t cmdBufferDesc = {
+            UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
+            nullptr,     // pNext
+            false,       // isUpdatable
+            inOrder,     // isInOrder
+            useProfiling // enableProfiling
+        };
 
-    EXPECT_UR_RESULT_SUCCESS(urCommandBufferCreateExp(
-        ur.context, ur.device, &cmdBufferDesc, &cmdBuffer));
-    for (auto i = 0u; i < arguments.numKernels; i++) {
-        EXPECT_UR_RESULT_SUCCESS(urCommandBufferAppendKernelLaunchExp(
-            cmdBuffer, kernel, n_dimensions, &global_offset, global_size,
-            nullptr, 0, nullptr, 0, nullptr, 0, nullptr,
-            nullptr, nullptr, nullptr));
+        EXPECT_UR_RESULT_SUCCESS(urCommandBufferCreateExp(
+            ur.context, ur.device, &cmdBufferDesc, &cmdBuffer));
+        for (auto i = 0u; i < arguments.numKernels; i++) {
+            EXPECT_UR_RESULT_SUCCESS(urCommandBufferAppendKernelLaunchExp(
+                cmdBuffer, kernel, n_dimensions, &global_offset, global_size,
+                nullptr, 0, nullptr, 0, nullptr, 0, nullptr,
+                nullptr, nullptr, nullptr));
+        }
+
+        EXPECT_UR_RESULT_SUCCESS(urCommandBufferFinalizeExp(cmdBuffer));
+    } else {
+        // Graph record & replay mode
+        EXPECT_UR_RESULT_SUCCESS(urGraphCreateExp(ur.context, &graph));
+        EXPECT_UR_RESULT_SUCCESS(urQueueBeginCaptureIntoGraphExp(queue, graph));
+
+        for (auto i = 0u; i < arguments.numKernels; i++) {
+            EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
+                kernel, 0, sizeof(int), nullptr,
+                reinterpret_cast<void *>(&kernelOperationsCount)));
+            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
+                queue, kernel, n_dimensions, &global_offset, global_size,
+                nullptr, nullptr, 0, nullptr, nullptr));
+        }
+
+        EXPECT_UR_RESULT_SUCCESS(urQueueEndGraphCaptureExp(queue, &graph));
+        EXPECT_UR_RESULT_SUCCESS(urGraphInstantiateGraphExp(graph, &execGraph));
     }
-
-    EXPECT_UR_RESULT_SUCCESS(urCommandBufferFinalizeExp(
-        cmdBuffer));
 
     // Warmup
     if (!arguments.useEvents) {
-        EXPECT_UR_RESULT_SUCCESS(
-            urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, nullptr));
+        if (arguments.emulateGraphs) {
+            EXPECT_UR_RESULT_SUCCESS(
+                urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, nullptr));
+        } else {
+            EXPECT_UR_RESULT_SUCCESS(
+                urEnqueueGraphExp(queue, execGraph, 0, nullptr, nullptr));
+        }
         EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
     } else {
         ur_event_handle_t event;
-        EXPECT_UR_RESULT_SUCCESS(
-            urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, &event));
+        if (arguments.emulateGraphs) {
+            EXPECT_UR_RESULT_SUCCESS(
+                urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, &event));
+        } else {
+            EXPECT_UR_RESULT_SUCCESS(
+                urEnqueueGraphExp(queue, execGraph, 0, nullptr, &event));
+        }
         EXPECT_UR_RESULT_SUCCESS(urEventWait(1, &event));
         EXPECT_UR_RESULT_SUCCESS(urEventRelease(event));
     }
@@ -118,8 +160,13 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         prof.measureStart();
 
         if (!arguments.useEvents) {
-            EXPECT_UR_RESULT_SUCCESS(
-                urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, nullptr));
+            if (arguments.emulateGraphs) {
+                EXPECT_UR_RESULT_SUCCESS(
+                    urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, nullptr));
+            } else {
+                EXPECT_UR_RESULT_SUCCESS(
+                    urEnqueueGraphExp(queue, execGraph, 0, nullptr, nullptr));
+            }
 
             if (!arguments.measureCompletionTime) {
                 prof.measureEnd();
@@ -128,8 +175,13 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
             EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
         } else {
             ur_event_handle_t event;
-            EXPECT_UR_RESULT_SUCCESS(
-                urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, &event));
+            if (arguments.emulateGraphs) {
+                EXPECT_UR_RESULT_SUCCESS(
+                    urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, &event));
+            } else {
+                EXPECT_UR_RESULT_SUCCESS(
+                    urEnqueueGraphExp(queue, execGraph, 0, nullptr, &event));
+            }
 
             if (!arguments.measureCompletionTime) {
                 prof.measureEnd();
@@ -145,7 +197,12 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         prof.pushStats(statistics);
     }
 
-    EXPECT_UR_RESULT_SUCCESS(urCommandBufferReleaseExp(cmdBuffer));
+    if (arguments.emulateGraphs) {
+        EXPECT_UR_RESULT_SUCCESS(urCommandBufferReleaseExp(cmdBuffer));
+    } else {
+        EXPECT_UR_RESULT_SUCCESS(urGraphExecutableGraphDestroyExp(execGraph));
+        EXPECT_UR_RESULT_SUCCESS(urGraphDestroyExp(graph));
+    }
     EXPECT_UR_RESULT_SUCCESS(urQueueRelease(queue));
     EXPECT_UR_RESULT_SUCCESS(urKernelRelease(kernel));
     EXPECT_UR_RESULT_SUCCESS(urProgramRelease(program));
