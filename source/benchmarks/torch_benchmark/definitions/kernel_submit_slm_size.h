@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,13 +11,11 @@
 
 struct KernelSubmitSlmSizeArguments : TestCaseArgumentContainer {
 
-    IntegerArgument batchSize;
+    IntegerArgument kernelBatchSize;
     IntegerArgument slmNum;
-    IntegerArgument warmupIterations;
 
-    KernelSubmitSlmSizeArguments() : batchSize(*this, "batchSize", "Sychronization interval."),
-                                     slmNum(*this, "slmNum", "Size of used shared local memory."),
-                                     warmupIterations(*this, "warmupIterations", "Number of warmup iterations.") {}
+    KernelSubmitSlmSizeArguments() : kernelBatchSize(*this, "kernelBatchSize", "Sychronization interval."),
+                                     slmNum(*this, "slmNum", "Size of used shared local memory.") {}
 };
 
 struct KernelSubmitSlmSize : TestCase<KernelSubmitSlmSizeArguments> {

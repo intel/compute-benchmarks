@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,12 +11,12 @@
 
 struct KernelSubmitMultiQueueArguments : TestCaseArgumentContainer {
 
-    IntegerArgument workgroupCount;
-    IntegerArgument workgroupSize;
+    IntegerArgument kernelWGCount;
+    IntegerArgument kernelWGSize;
     IntegerArgument kernelsPerQueue;
 
-    KernelSubmitMultiQueueArguments() : workgroupCount(*this, "workgroupCount", "Number of workgroups."),
-                                        workgroupSize(*this, "workgroupSize", "Size of workgroup."),
+    KernelSubmitMultiQueueArguments() : kernelWGCount(*this, "kernelWGCount", "Number of workgroups."),
+                                        kernelWGSize(*this, "kernelWGSize", "Size of each workgroup."),
                                         kernelsPerQueue(*this, "kernelsPerQueue", "Number of kernels per queue.") {}
 };
 

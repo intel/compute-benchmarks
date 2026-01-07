@@ -31,7 +31,7 @@ static TestResult launch_kernel_l0(ze_command_list_handle_t cmdListImmediate,
     return TestResult::Success;
 }
 
-static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statistics &statistics) {
+static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &statistics) {
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
@@ -41,7 +41,7 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
     }
 
     L0Context l0Ctx{};
-    const size_t length = static_cast<size_t>(arguments.workgroupCount * arguments.workgroupSize);
+    const size_t length = static_cast<size_t>(args.kernelWGCount * args.kernelWGSize);
 
     ze_kernel_handle_t kernel{};
     ze_module_handle_t module{};
@@ -57,7 +57,7 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
         ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(l0Ctx.l0, length, d_c[i]));
     }
 
-    ze_group_count_t dispatch{static_cast<uint32_t>(arguments.workgroupCount), 1, 1};
+    ze_group_count_t dispatch{static_cast<uint32_t>(args.kernelWGCount), 1, 1};
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_2, UINT64_MAX));
@@ -79,20 +79,20 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
     }
     ASSERT_ZE_RESULT_SUCCESS(counterBasedEventCreate2(l0Ctx.l0.context, l0Ctx.l0.device, &desc, &q2_last_event));
 
-    for (size_t i = 0; i < arguments.iterations; i++) {
+    for (size_t i = 0; i < args.iterations; i++) {
         // submit several kernels into cmdlist_1
-        for (int j = 0; j < arguments.kernelsPerQueue; j++) {
+        for (int j = 0; j < args.kernelsPerQueue; j++) {
 
-            ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[0], d_b[0], d_c[0], nullptr, nullptr));
+            ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(args.kernelWGSize), d_a[0], d_b[0], d_c[0], nullptr, nullptr));
         }
         // submit several kernels into cmdlist_2
-        for (int j = 0; j < arguments.kernelsPerQueue - 1; j++) {
-            ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[1], d_b[1], d_c[1], nullptr, nullptr));
+        for (int j = 0; j < args.kernelsPerQueue - 1; j++) {
+            ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(args.kernelWGSize), d_a[1], d_b[1], d_c[1], nullptr, nullptr));
         }
-        ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[1], d_b[1], d_c[1], q2_last_event, nullptr));
+        ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(args.kernelWGSize), d_a[1], d_b[1], d_c[1], q2_last_event, nullptr));
         // mark the last kernel in cmdlist_2
         profiler.measureStart();
-        ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[0], d_b[0], d_c[0], nullptr, q2_last_event));
+        ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(args.kernelWGSize), d_a[0], d_b[0], d_c[0], nullptr, q2_last_event));
         profiler.measureEnd();
         profiler.pushStats(statistics);
     }

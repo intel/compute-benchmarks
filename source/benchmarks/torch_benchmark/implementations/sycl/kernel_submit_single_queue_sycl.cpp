@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,9 +66,9 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
     constexpr bool useOoq = false;
     Sycl sycl{sycl::device{sycl::gpu_selector_v}, useOoq};
 
-    const size_t bufferSize = args.KernelWGCount * args.KernelWGSize;
+    const size_t bufferSize = args.kernelWGCount * args.kernelWGSize;
 
-    // Allocate and initialize buffers based on args.KernelDataType type
+    // Allocate and initialize buffers based on args.kernelDataType type
     T *deviceBuffer = nullptr;
     T *hostBuffer = nullptr;
     std::vector<T *> deviceBufferVec;
@@ -76,32 +76,32 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
     std::vector<int *> intDeviceBufferVec;
     std::vector<double *> pool_double;
     std::vector<int *> pool_int;
-    // Currently limit args.KernelParamsNum up to 10
-    if (args.KernelParamsNum < 1u) {
-        std::cerr << "KernelParamsNum must be at least 1" << std::endl;
+    // Currently limit args.kernelParamsNum up to 10
+    if (args.kernelParamsNum < 1u) {
+        std::cerr << "kernelParamsNum must be at least 1" << std::endl;
         return TestResult::InvalidArgs;
-    } else if (args.KernelParamsNum > 10u) {
-        std::cerr << "KernelParamsNum must be at most 10" << std::endl;
+    } else if (args.kernelParamsNum > 10u) {
+        std::cerr << "kernelParamsNum must be at most 10" << std::endl;
         return TestResult::InvalidArgs;
     }
-    unsigned num_main_buffers = args.KernelParamsNum;
+    unsigned num_main_buffers = args.kernelParamsNum;
 
     unsigned num_float_buffers = 0;
     unsigned num_int_buffers = 0;
-    if (args.KernelDataType == DataType::Mixed) {
+    if (args.kernelDataType == DataType::Mixed) {
         // The kernel used in this scenario requires these fixed sizes
         num_main_buffers = 3;
         num_float_buffers = 4;
         num_int_buffers = 3;
     }
 
-    if (args.KernelName != KernelName::Empty) {
+    if (args.kernelName != KernelName::Empty) {
         allocateBufferDevice<T>(bufferSize, pool_double, pool_int, sycl.queue, deviceBuffer);
         deviceBufferVec.resize(num_main_buffers);
         for (unsigned i = 0; i < num_main_buffers; i++) {
             allocateBufferDevice<T>(bufferSize, pool_double, pool_int, sycl.queue, deviceBufferVec[i]);
         }
-        if (args.KernelDataType == DataType::Mixed) {
+        if (args.kernelDataType == DataType::Mixed) {
             floatDeviceBufferVec.resize(num_float_buffers);
             intDeviceBufferVec.resize(num_int_buffers);
             for (unsigned i = 0; i < num_float_buffers; i++) {
@@ -111,25 +111,25 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
                 allocateBufferDevice<int>(bufferSize, pool_double, pool_int, sycl.queue, intDeviceBufferVec[i]);
             }
         }
-        if (args.KernelSubmitPattern == KernelSubmitPattern::H2d_before_batch ||
-            args.KernelSubmitPattern == KernelSubmitPattern::D2h_after_batch) {
+        if (args.kernelSubmitPattern == KernelSubmitPattern::H2d_before_batch ||
+            args.kernelSubmitPattern == KernelSubmitPattern::D2h_after_batch) {
             allocateBufferHost<T>(bufferSize, pool_double, pool_int, sycl.queue, hostBuffer);
         }
     }
 
     // Warmup, avoid jit time and some variance included in the time measurement
     for (int i = 0; i < 100; ++i) {
-        if (args.KernelName == KernelName::Empty) {
-            submit_kernel_empty(args.KernelWGCount, args.KernelWGSize, sycl.queue);
-        } else if (args.KernelDataType == DataType::Mixed) {
+        if (args.kernelName == KernelName::Empty) {
+            submit_kernel_empty(args.kernelWGCount, args.kernelWGSize, sycl.queue);
+        } else if (args.kernelDataType == DataType::Mixed) {
             if constexpr (std::is_same<T, double>::value) {
-                submit_kernel_add_mixed_type<T, float, int>(args.KernelWGCount, args.KernelWGSize, sycl.queue,
+                submit_kernel_add_mixed_type<T, float, int>(args.kernelWGCount, args.kernelWGSize, sycl.queue,
                                                             deviceBuffer, deviceBufferVec[0], deviceBufferVec[1], deviceBufferVec[2],
                                                             floatDeviceBufferVec[0], floatDeviceBufferVec[1], floatDeviceBufferVec[2], floatDeviceBufferVec[3],
                                                             intDeviceBufferVec[0], intDeviceBufferVec[1], intDeviceBufferVec[2]);
             }
         } else {
-            submit_kernel_add<T>(args.KernelWGCount, args.KernelWGSize, sycl.queue,
+            submit_kernel_add<T>(args.kernelWGCount, args.kernelWGSize, sycl.queue,
                                  deviceBuffer, deviceBufferVec.data(), num_main_buffers);
         }
     }
@@ -138,40 +138,40 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
     // Totally submit iterations of a specific kernel, can be grouped in several batches,
     // each batch submits batch_size of kernels, then followed by a queue.wait.
     for (size_t i = 0; i < args.iterations; i++) {
-        if (args.KernelSubmitPattern == KernelSubmitPattern::H2d_before_batch && args.KernelName != KernelName::Empty) {
+        if (args.kernelSubmitPattern == KernelSubmitPattern::H2d_before_batch && args.kernelName != KernelName::Empty) {
             // Host to device copy before each batch
             sycl.queue.memcpy(deviceBuffer, hostBuffer, bufferSize * sizeof(T));
         }
         // The measured kernel submission
         profiler.measureStart();
-        if (args.KernelName == KernelName::Empty) {
-            submit_kernel_empty(args.KernelWGCount, args.KernelWGSize, sycl.queue);
-        } else if (args.KernelDataType == DataType::Mixed) {
+        if (args.kernelName == KernelName::Empty) {
+            submit_kernel_empty(args.kernelWGCount, args.kernelWGSize, sycl.queue);
+        } else if (args.kernelDataType == DataType::Mixed) {
             if constexpr (std::is_same<T, double>::value) {
-                submit_kernel_add_mixed_type<double, float, int>(args.KernelWGCount, args.KernelWGSize, sycl.queue,
+                submit_kernel_add_mixed_type<double, float, int>(args.kernelWGCount, args.kernelWGSize, sycl.queue,
                                                                  deviceBuffer, deviceBufferVec[0], deviceBufferVec[1], deviceBufferVec[2],
                                                                  floatDeviceBufferVec[0], floatDeviceBufferVec[1], floatDeviceBufferVec[2], floatDeviceBufferVec[3],
                                                                  intDeviceBufferVec[0], intDeviceBufferVec[1], intDeviceBufferVec[2]);
             }
         } else {
-            submit_kernel_add<T>(args.KernelWGCount, args.KernelWGSize, sycl.queue,
+            submit_kernel_add<T>(args.kernelWGCount, args.kernelWGSize, sycl.queue,
                                  deviceBuffer, deviceBufferVec.data(), num_main_buffers);
         }
         profiler.measureEnd();
         profiler.pushStats(statistics);
 
-        if (args.KernelSubmitPattern == KernelSubmitPattern::D2h_after_batch && args.KernelName != KernelName::Empty) {
+        if (args.kernelSubmitPattern == KernelSubmitPattern::D2h_after_batch && args.kernelName != KernelName::Empty) {
             // Device to host copy after each batch
             sycl.queue.memcpy(hostBuffer, deviceBuffer, bufferSize * sizeof(T));
         }
 
-        if (args.KernelBatchSize > 0 && (i + 1) % args.KernelBatchSize == 0) {
+        if (args.kernelBatchSize > 0 && (i + 1) % args.kernelBatchSize == 0) {
             sycl.queue.wait();
         }
     }
     sycl.queue.wait();
 
-    if (args.KernelName == KernelName::Empty) {
+    if (args.kernelName == KernelName::Empty) {
         // No device/host allocations to free
         return TestResult::Success;
     }
@@ -209,7 +209,7 @@ static TestResult run(const KernelSubmitSingleQueueArguments &args, Statistics &
         return TestResult::Nooped;
     }
 
-    switch (args.KernelDataType) {
+    switch (args.kernelDataType) {
     case DataType::Int32:
         ASSERT_TEST_RESULT_SUCCESS(runBenchmark<int>(args, profiler, statistics));
         break;

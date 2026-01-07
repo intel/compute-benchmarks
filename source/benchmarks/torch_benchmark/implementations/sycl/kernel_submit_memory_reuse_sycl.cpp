@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ static TestResult run(const KernelSubmitMemoryReuseArguments &args, Statistics &
         return TestResult::Nooped;
     }
 
-    switch (args.dataType) {
+    switch (args.kernelDataType) {
     case DataType::Int32:
         ASSERT_TEST_RESULT_SUCCESS(runBenchmark<int>(args, profiler, statistics));
         break;

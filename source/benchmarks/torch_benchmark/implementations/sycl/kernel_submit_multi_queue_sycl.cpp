@@ -17,7 +17,7 @@
 
 using data_type = int;
 
-static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statistics &statistics) {
+static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &statistics) {
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
@@ -40,7 +40,7 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
     data_type *d_c[NUM_OF_QUEUES];
 
     for (int i = 0; i < NUM_OF_QUEUES; i++) {
-        const size_t data_size = arguments.workgroupCount * arguments.workgroupSize;
+        const size_t data_size = args.kernelWGCount * args.kernelWGSize;
         d_a[i] = sycl::malloc_device<data_type>(data_size, q[i]);
         d_b[i] = sycl::malloc_device<data_type>(data_size, q[i]);
         d_c[i] = sycl::malloc_device<data_type>(data_size, q[i]);
@@ -51,23 +51,23 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
     }
 
     // Totally submit numIterations of a specific kernel
-    for (size_t i = 0; i < arguments.iterations; i++) {
+    for (size_t i = 0; i < args.iterations; i++) {
         // Submit several kernels into queue1
-        for (int j = 0; j < arguments.kernelsPerQueue; j++) {
-            submit_kernel_add<data_type>(arguments.workgroupCount, arguments.workgroupSize, q[0], d_a[0], d_b[0], d_c[0]);
+        for (int j = 0; j < args.kernelsPerQueue; j++) {
+            submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[0], d_a[0], d_b[0], d_c[0]);
         }
 
         // Submit several kernels into queue2
-        for (int j = 0; j < arguments.kernelsPerQueue - 1; j++) {
-            submit_kernel_add<data_type>(arguments.workgroupCount, arguments.workgroupSize, q[1], d_a[1], d_b[1], d_c[1]);
+        for (int j = 0; j < args.kernelsPerQueue - 1; j++) {
+            submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[1], d_a[1], d_b[1], d_c[1]);
         }
         // q2_last_event is the last event of queue2
-        sycl::event q2_last_event = submit_with_event_kernel_add<data_type>(arguments.workgroupCount, arguments.workgroupSize, q[1], d_a[1], d_b[1], d_c[1]);
+        sycl::event q2_last_event = submit_with_event_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[1], d_a[1], d_b[1], d_c[1]);
 
         // Start to measure submit time for a specific kernel
         profiler.measureStart();
         // Submit a new kernel into queue1, but the new kernel can only be executed after q2_last_event ends
-        submit_kernel_add<data_type>(arguments.workgroupCount, arguments.workgroupSize, q[0], q2_last_event, d_a[0], d_b[0], d_c[0]);
+        submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[0], q2_last_event, d_a[0], d_b[0], d_c[0]);
         profiler.measureEnd();
 
         profiler.pushStats(statistics);

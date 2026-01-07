@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,22 +13,22 @@
 #include "framework/test_case/test_case.h"
 
 struct KernelSubmitSingleQueueArguments : TestCaseArgumentContainer {
-    DataTypeArgument KernelDataType;
-    KernelNameArgument KernelName;
-    Uint32Argument KernelParamsNum;
-    NonNegativeIntegerArgument KernelBatchSize;
-    KernelSubmitPatternArgument KernelSubmitPattern;
-    Uint32Argument KernelWGCount;
-    Uint32Argument KernelWGSize;
+    DataTypeArgument kernelDataType;
+    KernelNameArgument kernelName;
+    Uint32Argument kernelParamsNum;
+    NonNegativeIntegerArgument kernelBatchSize;
+    KernelSubmitPatternArgument kernelSubmitPattern;
+    Uint32Argument kernelWGCount;
+    Uint32Argument kernelWGSize;
 
     KernelSubmitSingleQueueArguments()
-        : KernelDataType(*this, "KernelDataType", "Data type for kernel operations"),
-          KernelName(*this, "KernelName", "Name of the kernel to execute"),
-          KernelParamsNum(*this, "KernelParamsNum", "Number of kernel parameters for add operation"),
-          KernelBatchSize(*this, "KernelBatchSize", "Size of each batch of kernels before syncing. If 0, no batching is performed"),
-          KernelSubmitPattern(*this, "KernelSubmitPattern", "Pattern for submitting kernels"),
-          KernelWGCount(*this, "KernelWGCount", "Number of workgroups"),
-          KernelWGSize(*this, "KernelWGSize", "Size of each workgroup") {}
+        : kernelDataType(*this, "kernelDataType", "Data type for kernel operations"),
+          kernelName(*this, "kernelName", "Name of the kernel to execute"),
+          kernelParamsNum(*this, "kernelParamsNum", "Number of kernel parameters for add operation"),
+          kernelBatchSize(*this, "kernelBatchSize", "Size of each batch of kernels before syncing. If 0, no batching is performed"),
+          kernelSubmitPattern(*this, "kernelSubmitPattern", "Pattern for submitting kernels"),
+          kernelWGCount(*this, "kernelWGCount", "Number of workgroups"),
+          kernelWGSize(*this, "kernelWGSize", "Size of each workgroup") {}
 };
 
 struct KernelSubmitSingleQueue : TestCase<KernelSubmitSingleQueueArguments> {

@@ -170,28 +170,28 @@ static TestResult verify_result(ze_command_list_handle_t cmdList,
 template <typename T>
 static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, ComboProfilerWithStats &profiler, Statistics &statistics) {
     std::set<std::string> kernel_names;
-    if (args.KernelName == KernelName::Empty) {
+    if (args.kernelName == KernelName::Empty) {
         kernel_names.insert("empty");
-    } else if (args.KernelDataType == DataType::Mixed) {
+    } else if (args.kernelDataType == DataType::Mixed) {
         kernel_names.insert("add_mixed");
-    } else if (args.KernelName == KernelName::Add) {
+    } else if (args.kernelName == KernelName::Add) {
         kernel_names.insert("add");
     }
 
     // Get arguments
     size_t numIterations = args.iterations;
-    size_t batch_size = args.KernelBatchSize;
-    uint32_t wgc = args.KernelWGCount;
-    uint32_t wgs = args.KernelWGSize;
-    uint32_t num_params = args.KernelParamsNum;
-    bool h2d = (args.KernelSubmitPattern == KernelSubmitPattern::H2d_before_batch);
-    bool d2h = (args.KernelSubmitPattern == KernelSubmitPattern::D2h_after_batch);
+    size_t batch_size = args.kernelBatchSize;
+    uint32_t wgc = args.kernelWGCount;
+    uint32_t wgs = args.kernelWGSize;
+    uint32_t num_params = args.kernelParamsNum;
+    bool h2d = (args.kernelSubmitPattern == KernelSubmitPattern::H2d_before_batch);
+    bool d2h = (args.kernelSubmitPattern == KernelSubmitPattern::D2h_after_batch);
 
     if (num_params < 1u) {
-        std::cerr << "KernelParamsNum must be at least 1" << std::endl;
+        std::cerr << "kernelParamsNum must be at least 1" << std::endl;
         return TestResult::InvalidArgs;
     } else if (num_params > 10u) {
-        std::cerr << "KernelParamsNum must be at most 10" << std::endl;
+        std::cerr << "kernelParamsNum must be at most 10" << std::endl;
         return TestResult::InvalidArgs;
     }
 
@@ -223,7 +223,7 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
     float **d_c = nullptr;
     int **d_d = nullptr;
 
-    if (args.KernelDataType == DataType::Mixed) {
+    if (args.kernelDataType == DataType::Mixed) {
         // The elementwise_sum_mixed kernel used in this scenario requires these fixed sizes
         // b/db suffixes are for pointers to double, c/dc for float, d/dd for int
         arraysize_of_b = 3;
@@ -231,29 +231,29 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
         arraysize_of_d = 3;
     }
 
-    if (args.KernelName != KernelName::Empty) {
+    if (args.kernelName != KernelName::Empty) {
         double *p2_block_db = nullptr;
         int *p3_block_db = nullptr;
 
         ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<T>(l0, length, d_a));
         ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<T>(l0, length * arraysize_of_b, device_array_db));
 
-        ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<T>(l0.context, args.KernelDataType,
+        ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<T>(l0.context, args.kernelDataType,
                                                                   p2_block_db, p3_block_db,
                                                                   arraysize_of_b, length, &d_b));
 
-        if (args.KernelDataType == DataType::Mixed) {
+        if (args.kernelDataType == DataType::Mixed) {
             double *p2_block_dc = nullptr;
             int *p3_block_dc = nullptr;
             ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<float>(l0, length * arraysize_of_c, device_array_dc));
-            ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<float>(l0.context, args.KernelDataType,
+            ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<float>(l0.context, args.kernelDataType,
                                                                           p2_block_dc, p3_block_dc,
                                                                           arraysize_of_c, length, &d_c));
 
             double *p2_block_dd = nullptr;
             int *p3_block_dd = nullptr;
             ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<int>(l0, length * arraysize_of_d, device_array_dd));
-            ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<int>(l0.context, args.KernelDataType,
+            ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<int>(l0.context, args.kernelDataType,
                                                                         p2_block_dd, p3_block_dd,
                                                                         arraysize_of_d, length, &d_d));
         }
@@ -273,10 +273,10 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
             ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_mixed.cl", "elementwise_sum_mixed", kernel, module));
         } else if (name == "add") {
             std::string suffix;
-            if (args.KernelDataType == DataType::CopyableObject) {
+            if (args.kernelDataType == DataType::CopyableObject) {
                 suffix = "copyable_obj";
             } else {
-                suffix = DataTypeHelper::toOpenclC(args.KernelDataType);
+                suffix = DataTypeHelper::toOpenclC(args.kernelDataType);
             }
             switch (num_params) {
             case 1: {
@@ -292,7 +292,7 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
                 break;
             }
             default:
-                std::cerr << "KernelParamsNum=" << args.KernelParamsNum << " is not the value used in test cases. 1, 5, 10 are supported." << std::endl;
+                std::cerr << "kernelParamsNum=" << args.kernelParamsNum << " is not the value used in test cases. 1, 5, 10 are supported." << std::endl;
                 return TestResult::Error;
             }
         }
@@ -308,15 +308,15 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
 
     // warmup
     for (const auto &[name, kernel] : kernels) {
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, args.KernelWGSize, 1, 1));
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, args.kernelWGSize, 1, 1));
 
-        if (args.KernelDataType == DataType::Mixed) {
+        if (args.kernelDataType == DataType::Mixed) {
             ASSERT_TEST_RESULT_SUCCESS(set_kernel_args(name, d_a,
                                                        arraysize_of_b, device_array_db,
                                                        length, kernel_arguments, arg_storage,
                                                        arraysize_of_c, device_array_dc,
                                                        arraysize_of_d, device_array_dd));
-        } else if (args.KernelName != KernelName::Empty) {
+        } else if (args.kernelName != KernelName::Empty) {
             ASSERT_TEST_RESULT_SUCCESS(set_kernel_args(name, d_a, num_params, device_array_db, length, kernel_arguments, arg_storage));
         }
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdListImmediate, kernel, dispatch, group_sizes, kernel_arguments.data(), nullptr, nullptr, 0, nullptr));
@@ -325,25 +325,25 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
 
     // benchmarking
     for (size_t i = 0; i < numIterations; ++i) {
-        if (h2d && args.KernelName != KernelName::Empty) {
+        if (h2d && args.kernelName != KernelName::Empty) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdListImmediate, d_a, h_a, length * sizeof(T), nullptr, 0, nullptr));
         }
         for (const auto &[name, kernel] : kernels) {
             profiler.measureStart();
-            if (args.KernelDataType == DataType::Mixed) {
+            if (args.kernelDataType == DataType::Mixed) {
                 ASSERT_TEST_RESULT_SUCCESS(set_kernel_args(name, d_a,
                                                            arraysize_of_b, device_array_db,
                                                            length, kernel_arguments, arg_storage,
                                                            arraysize_of_c, device_array_dc,
                                                            arraysize_of_d, device_array_dd));
-            } else if (args.KernelName != KernelName::Empty) {
+            } else if (args.kernelName != KernelName::Empty) {
                 ASSERT_TEST_RESULT_SUCCESS(set_kernel_args(name, d_a, num_params, device_array_db, length, kernel_arguments, arg_storage));
             }
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdListImmediate, kernel, dispatch, group_sizes, kernel_arguments.data(), nullptr, nullptr, 0, nullptr));
             profiler.measureEnd();
             profiler.pushStats(statistics);
         }
-        if (d2h && args.KernelName != KernelName::Empty) {
+        if (d2h && args.kernelName != KernelName::Empty) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdListImmediate, h_a, d_a, length * sizeof(T), nullptr, 0, nullptr));
         }
         if (batch_size > 0 && ((i + 1) % batch_size == 0)) {
@@ -358,7 +358,7 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
             zeKernelDestroy(kernel);
         }
     }
-    if (args.KernelName != KernelName::Empty) {
+    if (args.kernelName != KernelName::Empty) {
         if (h2d || d2h) {
             zeMemFree(l0.context, h_a);
         }
@@ -368,7 +368,7 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
         zeMemFree(l0.context, d_b);
         zeMemFree(l0.context, device_array_db);
         zeMemFree(l0.context, d_a);
-        if (args.KernelDataType == DataType::Mixed) {
+        if (args.kernelDataType == DataType::Mixed) {
             for (uint32_t i = 0; i < arraysize_of_c; ++i) {
                 zeMemFree(l0.context, d_c[i]);
             }
@@ -394,7 +394,7 @@ static TestResult run(const KernelSubmitSingleQueueArguments &args, Statistics &
         return TestResult::Nooped;
     }
 
-    switch (args.KernelDataType) {
+    switch (args.kernelDataType) {
     case DataType::Int32:
         ASSERT_TEST_RESULT_SUCCESS(runBenchmark<int>(args, profiler, statistics));
         break;

@@ -42,7 +42,7 @@ static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, Com
     // Create kernel
     ze_kernel_handle_t kernel{};
     ze_module_handle_t module{};
-    ASSERT_TEST_RESULT_SUCCESS(create_kernel(ctx.l0, "torch_benchmark_write_kernel.cl", "torch_benchmark_write_" + DataTypeHelper::toOpenclC(args.dataType), kernel, module));
+    ASSERT_TEST_RESULT_SUCCESS(create_kernel(ctx.l0, "torch_benchmark_write_kernel.cl", "torch_benchmark_write_" + DataTypeHelper::toOpenclC(args.kernelDataType), kernel, module));
 
     // Warmup
     ze_group_count_t dispatch{1u, 1u, 1u};
@@ -83,7 +83,7 @@ static TestResult run(const KernelSubmitMemoryReuseArguments &args, Statistics &
         return TestResult::Nooped;
     }
 
-    switch (args.dataType) {
+    switch (args.kernelDataType) {
     case DataType::Int32:
         ASSERT_TEST_RESULT_SUCCESS(runBenchmark<int>(args, profiler, statistics));
         break;

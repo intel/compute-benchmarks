@@ -13,6 +13,7 @@
 #include <sycl/sycl.hpp>
 
 using data_type = float;
+const int WARMUP_ITERATIONS = 3;
 
 namespace syclex = sycl::ext::oneapi::experimental;
 
@@ -39,7 +40,7 @@ static void submit_kernel_slm(sycl::queue &q, data_type *out, const std::size_t 
                       });
 }
 
-static TestResult run(const KernelSubmitSlmSizeArguments &arguments, Statistics &statistics) {
+static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &statistics) {
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
@@ -53,7 +54,7 @@ static TestResult run(const KernelSubmitSlmSizeArguments &arguments, Statistics 
 
     const size_t max_slm_size = dev.get_info<sycl::info::device::local_mem_size>();
 
-    int slm_num = arguments.slmNum;
+    int slm_num = args.slmNum;
     if (slm_num == -1) {
         slm_num = max_slm_size / sizeof(data_type);
     }
@@ -69,20 +70,20 @@ static TestResult run(const KernelSubmitSlmSizeArguments &arguments, Statistics 
     }
 
     // Warmup
-    for (int i = 0; i < arguments.warmupIterations; i++) {
+    for (int i = 0; i < WARMUP_ITERATIONS; i++) {
         submit_kernel_slm(q, d_out, slm_num);
     }
     q.wait();
 
-    for (size_t i = 0; i < arguments.iterations; ++i) {
+    for (size_t i = 0; i < args.iterations; ++i) {
 
         profiler.measureStart();
         submit_kernel_slm(q, d_out, slm_num);
         profiler.measureEnd();
         profiler.pushStats(statistics);
 
-        // expect a wait here after a batch of submissions
-        if (i > 0 && (i % arguments.batchSize) == 0) {
+        // expect a wait here after a batch of submissions, if batch > 0
+        if (args.kernelBatchSize > 0 && ((i + 1) % args.kernelBatchSize) == 0) {
             q.wait();
         }
     }

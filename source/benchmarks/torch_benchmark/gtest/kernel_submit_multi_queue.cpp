@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,8 +21,8 @@ class KernelSubmitMultiQueueTest : public ::testing::TestWithParam<std::tuple<Ap
 TEST_P(KernelSubmitMultiQueueTest, Test) {
     KernelSubmitMultiQueueArguments args{};
     args.api = std::get<0>(GetParam());
-    args.workgroupCount = std::get<1>(GetParam());
-    args.workgroupSize = std::get<2>(GetParam());
+    args.kernelWGCount = std::get<1>(GetParam());
+    args.kernelWGSize = std::get<2>(GetParam());
     args.kernelsPerQueue = std::get<3>(GetParam());
     KernelSubmitMultiQueue test;
     test.run(args);

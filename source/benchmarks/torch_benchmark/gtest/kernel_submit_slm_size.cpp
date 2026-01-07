@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,15 +15,14 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelSubmitSlmSize> registerTestCase{};
 
-class KernelSubmitSlmSizeTest : public ::testing::TestWithParam<std::tuple<Api, int, int, int>> {
+class KernelSubmitSlmSizeTest : public ::testing::TestWithParam<std::tuple<Api, int, int>> {
 };
 
 TEST_P(KernelSubmitSlmSizeTest, Test) {
     KernelSubmitSlmSizeArguments args{};
     args.api = std::get<0>(GetParam());
-    args.batchSize = std::get<1>(GetParam());
+    args.kernelBatchSize = std::get<1>(GetParam());
     args.slmNum = std::get<2>(GetParam());
-    args.warmupIterations = std::get<3>(GetParam());
     KernelSubmitSlmSize test;
     test.run(args);
 }
@@ -34,5 +33,4 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(Api::L0, Api::SYCL, Api::SYCLPREVIEW),
         ::testing::Values(512),
-        ::testing::Values(-1),
-        ::testing::Values(2)));
+        ::testing::Values(1024)));

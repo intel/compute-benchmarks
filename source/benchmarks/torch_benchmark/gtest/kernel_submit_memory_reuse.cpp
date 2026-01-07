@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ TEST_P(KernelSubmitMemoryReuseTest, Test) {
     KernelSubmitMemoryReuseArguments args{};
     args.api = std::get<0>(GetParam());
     args.kernelBatchSize = std::get<1>(GetParam());
-    args.dataType = std::get<2>(GetParam());
+    args.kernelDataType = std::get<2>(GetParam());
     KernelSubmitMemoryReuse test;
     test.run(args);
 }

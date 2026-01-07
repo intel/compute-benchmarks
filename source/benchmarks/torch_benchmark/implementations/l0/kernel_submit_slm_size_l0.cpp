@@ -11,6 +11,7 @@
 #include "kernel_submit_common.hpp"
 
 using data_type = float;
+const int WARMUP_ITERATIONS = 3;
 
 using L0DriverGetDefaultContext = decltype(&zeDriverGetDefaultContext);
 using L0AppendLaunchKernelWithArguments = decltype(&zeCommandListAppendLaunchKernelWithArguments);
@@ -44,7 +45,7 @@ static TestResult run_kernel(data_type *out_buf, int slm_num, L0Context &l0, ze_
     return TestResult::Success;
 }
 
-static TestResult run(const KernelSubmitSlmSizeArguments &arguments, Statistics &statistics) {
+static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &statistics) {
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
@@ -59,26 +60,26 @@ static TestResult run(const KernelSubmitSlmSizeArguments &arguments, Statistics 
     ze_module_handle_t module{};
     ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0Ctx.l0, "torch_benchmark_elementwise_slm.cl", "torch_benchmark_elementwise_slm", kernel, module));
 
-    int slm_num = static_cast<int>(arguments.slmNum);
+    int slm_num = static_cast<int>(args.slmNum);
     ASSERT_TEST_RESULT_SUCCESS(compute_slm_num(slm_num, l0Ctx));
 
     data_type *out_buf = nullptr;
     ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(l0Ctx.l0, 2, out_buf));
 
     // warmup
-    for (int i = 0; i < arguments.warmupIterations; i++) {
+    for (int i = 0; i < WARMUP_ITERATIONS; i++) {
         ASSERT_TEST_RESULT_SUCCESS(run_kernel(out_buf, slm_num, l0Ctx, kernel));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
 
-    for (size_t i = 0; i < arguments.iterations; ++i) {
+    for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
         ASSERT_TEST_RESULT_SUCCESS(run_kernel(out_buf, slm_num, l0Ctx, kernel));
         profiler.measureEnd();
         profiler.pushStats(statistics);
 
-        // expect a wait here after a batch of submissions
-        if (i > 0 && i % arguments.batchSize == 0) {
+        // expect a wait here after a batch of submissions, if batch > 0
+        if (args.kernelBatchSize > 0 && ((i + 1) % args.kernelBatchSize) == 0) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
         }
     }

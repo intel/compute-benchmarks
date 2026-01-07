@@ -11,6 +11,7 @@
 #include "kernel_submit_common.hpp"
 
 using data_type = double;
+const int WARMUP_ITERATIONS = 3;
 
 static TestResult run_kernel(data_type *d_out, L0Context &l0_ctx, ze_kernel_handle_t kernel) {
     ze_group_count_t dispatch{static_cast<uint32_t>(1), 1, 1};
@@ -58,7 +59,7 @@ static TestResult run(const KernelSubmitLinearKernelSizeArguments &args, Statist
     const auto kernelName = "torch_benchmark_linear_kernel_size_" + std::to_string(args.kernelSize);
     ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0_ctx.l0, kernelName + ".cl", kernelName, kernel, module));
     // warmup
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < WARMUP_ITERATIONS; i++) {
         ASSERT_TEST_RESULT_SUCCESS(run_kernel(d_out, l0_ctx, kernel));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0_ctx.cmdListImmediate_1, UINT64_MAX));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,10 +13,10 @@
 struct KernelSubmitMemoryReuseArguments : TestCaseArgumentContainer {
 
     Uint32Argument kernelBatchSize;
-    DataTypeArgument dataType;
+    DataTypeArgument kernelDataType;
 
     KernelSubmitMemoryReuseArguments() : kernelBatchSize(*this, "kernelBatchSize", "Size of a batch of kernels after which synchronization occurs. 0 means one synchronization after all kernels are submitted."),
-                                         dataType(*this, "dataType", "Data type passed to kernel.") {}
+                                         kernelDataType(*this, "kernelDataType", "Data type passed to kernel.") {}
 };
 
 struct KernelSubmitMemoryReuse : TestCase<KernelSubmitMemoryReuseArguments> {
