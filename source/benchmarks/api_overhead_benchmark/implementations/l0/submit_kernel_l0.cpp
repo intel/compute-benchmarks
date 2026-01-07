@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,18 +7,18 @@
 
 #include "framework/l0/levelzero.h"
 #include "framework/test_case/register_test_case.h"
+#include "framework/utility/combo_profiler.h"
 #include "framework/utility/file_helper.h"
-#include "framework/utility/timer.h"
 
 #include "definitions/submit_kernel.h"
 
 #include <gtest/gtest.h>
 
 static TestResult run(const SubmitKernelArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        profiler.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
@@ -27,7 +27,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         arguments.inOrderQueue);
     LevelZero levelzero(extensionProperties);
 
-    Timer timer;
     const ze_group_count_t groupCount{1, 1, 1};
 
     // Create kernel
@@ -108,7 +107,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        timer.measureStart();
+        profiler.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
             // Note: this test calls zeKernelSetArgumentValue and zeKernelSetGroupSize each time to be closer to the SYCL behavior!
             ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
@@ -128,16 +127,15 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         }
 
         if (!arguments.measureCompletionTime) {
-            timer.measureEnd();
-            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+            profiler.measureEnd();
         }
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
 
         if (arguments.measureCompletionTime) {
-            timer.measureEnd();
-            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+            profiler.measureEnd();
         }
+        profiler.pushStats(statistics);
 
         if (arguments.useEvents) {
             for (auto event : events) {
