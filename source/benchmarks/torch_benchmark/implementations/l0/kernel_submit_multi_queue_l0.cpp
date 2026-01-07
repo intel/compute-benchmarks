@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,19 +9,6 @@
 #include "kernel_submit_common.hpp"
 
 using data_type = int;
-
-struct L0Context {
-    L0CommonContext commonCtx;
-    ze_command_list_handle_t cmdListImmediate_1;
-    ze_command_list_handle_t cmdListImmediate_2;
-};
-
-static TestResult init_level_zero(L0Context &ctx) {
-    ASSERT_TEST_RESULT_SUCCESS(init_level_zero_common(ctx.commonCtx));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(ctx.commonCtx.context, ctx.commonCtx.device, &zeDefaultGPUImmediateCommandQueueDesc, &ctx.cmdListImmediate_1));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(ctx.commonCtx.context, ctx.commonCtx.device, &zeDefaultGPUImmediateCommandQueueDesc, &ctx.cmdListImmediate_2));
-    return TestResult::Success;
-}
 
 static TestResult launch_kernel_l0(ze_command_list_handle_t cmdListImmediate,
                                    ze_kernel_handle_t kernel,
@@ -51,32 +38,27 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
         return TestResult::Nooped;
     }
 
-    L0Context l0{};
-    ASSERT_TEST_RESULT_SUCCESS(init_level_zero(l0));
+    L0Context l0Ctx{};
     const size_t length = static_cast<size_t>(arguments.workgroupCount * arguments.workgroupSize);
 
     ze_kernel_handle_t kernel{};
     ze_module_handle_t module{};
-    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0.commonCtx, "torch_benchmark_elementwise_sum_2.cl", "torch_benchmark_elementwise_sum_2", kernel, module));
+    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0Ctx.l0, "torch_benchmark_elementwise_sum_2.cl", "torch_benchmark_elementwise_sum_2", kernel, module));
 
     data_type *d_a[2] = {};
     data_type *d_b[2] = {};
     data_type *d_c[2] = {};
     // allocate device memory
     for (int i = 0; i < 2; i++) {
-        d_a[i] = l0_malloc_device<data_type>(l0.commonCtx, length);
-        d_b[i] = l0_malloc_device<data_type>(l0.commonCtx, length);
-        d_c[i] = l0_malloc_device<data_type>(l0.commonCtx, length);
-
-        if (!d_a[i] || !d_b[i] || !d_c[i]) {
-            return TestResult::Error;
-        }
+        ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(l0Ctx.l0, length, d_a[i]));
+        ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(l0Ctx.l0, length, d_b[i]));
+        ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(l0Ctx.l0, length, d_c[i]));
     }
 
     ze_group_count_t dispatch{static_cast<uint32_t>(arguments.workgroupCount), 1, 1};
 
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0.cmdListImmediate_1, UINT64_MAX));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0.cmdListImmediate_2, UINT64_MAX));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_2, UINT64_MAX));
 
     // create counter-based event to sync cmdlist_1 and cmdlist_2
     ze_event_handle_t q2_last_event = nullptr;
@@ -87,47 +69,45 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
 
     L0CounterBasedEventCreate2 counterBasedEventCreate2 = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(
-        l0.commonCtx.driver,
+        l0Ctx.l0.driver,
         "zexCounterBasedEventCreate2",
         reinterpret_cast<void **>(&counterBasedEventCreate2)));
     if (!counterBasedEventCreate2) {
         throw std::runtime_error("Driver does not support Counter-Based Event");
     }
-    ASSERT_ZE_RESULT_SUCCESS(counterBasedEventCreate2(l0.commonCtx.context, l0.commonCtx.device, &desc, &q2_last_event));
+    ASSERT_ZE_RESULT_SUCCESS(counterBasedEventCreate2(l0Ctx.l0.context, l0Ctx.l0.device, &desc, &q2_last_event));
 
     for (size_t i = 0; i < arguments.iterations; i++) {
         // submit several kernels into cmdlist_1
         for (int j = 0; j < arguments.kernelsPerQueue; j++) {
 
-            ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[0], d_b[0], d_c[0], nullptr, nullptr));
+            ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[0], d_b[0], d_c[0], nullptr, nullptr));
         }
         // submit several kernels into cmdlist_2
         for (int j = 0; j < arguments.kernelsPerQueue - 1; j++) {
-            ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[1], d_b[1], d_c[1], nullptr, nullptr));
+            ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[1], d_b[1], d_c[1], nullptr, nullptr));
         }
-        ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[1], d_b[1], d_c[1], q2_last_event, nullptr));
+        ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[1], d_b[1], d_c[1], q2_last_event, nullptr));
         // mark the last kernel in cmdlist_2
         Timer timer;
         timer.measureStart();
-        ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[0], d_b[0], d_c[0], nullptr, q2_last_event));
+        ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[0], d_b[0], d_c[0], nullptr, q2_last_event));
         timer.measureEnd();
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0.cmdListImmediate_1, UINT64_MAX));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0.cmdListImmediate_2, UINT64_MAX));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_2, UINT64_MAX));
 
     // clean
     for (int i = 0; i < 2; i++) {
         if (d_a[i])
-            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0.commonCtx.context, d_a[i]));
+            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0Ctx.l0.context, d_a[i]));
         if (d_b[i])
-            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0.commonCtx.context, d_b[i]));
+            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0Ctx.l0.context, d_b[i]));
         if (d_c[i])
-            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0.commonCtx.context, d_c[i]));
+            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0Ctx.l0.context, d_c[i]));
     }
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(l0.cmdListImmediate_1));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(l0.cmdListImmediate_2));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
 

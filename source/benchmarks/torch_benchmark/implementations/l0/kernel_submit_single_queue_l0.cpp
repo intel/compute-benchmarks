@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "framework/utility/file_helper.h"
 
 #include "definitions/kernel_submit_single_queue.h"
+#include "kernel_submit_common.hpp"
 
 #include <gtest/gtest.h>
 #include <level_zero/zer_api.h>
@@ -18,15 +19,6 @@
 
 constexpr uint32_t alloc_size_double = 2;
 constexpr uint32_t alloc_size_int = 3;
-
-template <typename T>
-TestResult l0_malloc_device(ze_context_handle_t context,
-                            ze_device_handle_t device,
-                            size_t length,
-                            T **ptr) {
-    ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(context, &zeDefaultGPUDeviceMemAllocDesc, length * sizeof(T), alignof(T), device, (void **)ptr));
-    return TestResult::Success;
-}
 
 template <typename T>
 TestResult l0_malloc_host(ze_context_handle_t context,
@@ -61,27 +53,6 @@ TestResult create_and_copy_host_arrays(ze_context_handle_t context,
         if (data_type == DataType::CopyableObject)
             init_copyable_object_host(reinterpret_cast<CopyableObject *>((*host_array)[i]), length, p2_block, p3_block, i);
     }
-    return TestResult::Success;
-}
-
-static TestResult create_kernel(LevelZero &l0, const std::string &binary_filename, const std::string &kernel_name, ze_kernel_handle_t &kernel) {
-    auto kernelBinary = FileHelper::loadBinaryFile(binary_filename);
-    if (kernelBinary.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
-    kernelBinary.push_back('\0'); // null-terminate for safety
-
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_OCLC;
-    moduleDesc.inputSize = kernelBinary.size();
-    moduleDesc.pInputModule = kernelBinary.data();
-    ze_module_handle_t module{};
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(l0.context, l0.device, &moduleDesc, &module, nullptr));
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;
-    kernelDesc.pKernelName = kernel_name.c_str();
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
-
     return TestResult::Success;
 }
 
@@ -129,28 +100,27 @@ TestResult set_kernel_args(const std::string &kernel_name,
     return TestResult::Success;
 }
 
-static TestResult verify_result(ze_context_handle_t context,
-                                ze_device_handle_t device,
-                                ze_command_list_handle_t cmdList,
+static TestResult verify_result(ze_command_list_handle_t cmdList,
                                 LevelZero &l0) {
     // prepare parameters for verify kernel
     constexpr uint32_t num_verify = 2;
     uint32_t length = 1;
     ze_kernel_handle_t kernel_verify{};
+    ze_module_handle_t module_verify{};
     ze_group_count_t dispatch{1u, 1u, 1u};
     ze_group_size_t group_sizes{1u, 1u, 1u};
     // use add op to verify
     // elementwise_kernel_2
     std::string kernel_name = "torch_benchmark_elementwise_sum_2";
-    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, kernel_name + ".cl", kernel_name, kernel_verify));
+    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, kernel_name + ".cl", kernel_name, kernel_verify, module_verify));
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel_verify, 1, 1, 1));
     int *result_d = nullptr;
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<int>(context, device, length, &result_d));
+    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<int>(l0, length, result_d));
     int *device_array = nullptr;
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<int>(context, device, length * num_verify, &device_array));
+    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<int>(l0, length * num_verify, device_array));
     int **host_array = nullptr;
-    ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<int>(context, DataType::Int32,
+    ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<int>(l0.context, DataType::Int32,
                                                                 nullptr, nullptr,
                                                                 num_verify, length, &host_array));
     for (uint32_t i = 0; i < num_verify; i++) {
@@ -175,7 +145,7 @@ static TestResult verify_result(ze_context_handle_t context,
 
     // do D2H after iterations to verify the result
     int *result_h = nullptr;
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_host<int>(context, length, &result_h));
+    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_host<int>(l0.context, length, &result_h));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, result_h, result_d, length * sizeof(int), nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, UINT64_MAX));
 
@@ -186,12 +156,12 @@ static TestResult verify_result(ze_context_handle_t context,
 
     // cleanup
     for (uint32_t i = 0; i < num_verify; i++) {
-        zeMemFree(context, host_array[i]);
+        zeMemFree(l0.context, host_array[i]);
     }
-    zeMemFree(context, host_array);
-    zeMemFree(context, result_h);
-    zeMemFree(context, result_d);
-    zeMemFree(context, device_array);
+    zeMemFree(l0.context, host_array);
+    zeMemFree(l0.context, result_h);
+    zeMemFree(l0.context, result_d);
+    zeMemFree(l0.context, device_array);
     zeKernelDestroy(kernel_verify);
 
     return TestResult::Success;
@@ -265,8 +235,8 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
         double *p2_block_db = nullptr;
         int *p3_block_db = nullptr;
 
-        ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<T>(l0.context, l0.device, length, &d_a));
-        ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<T>(l0.context, l0.device, length * arraysize_of_b, &device_array_db));
+        ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<T>(l0, length, d_a));
+        ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<T>(l0, length * arraysize_of_b, device_array_db));
 
         ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<T>(l0.context, args.KernelDataType,
                                                                   p2_block_db, p3_block_db,
@@ -275,14 +245,14 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
         if (args.KernelDataType == DataType::Mixed) {
             double *p2_block_dc = nullptr;
             int *p3_block_dc = nullptr;
-            ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<float>(l0.context, l0.device, length * arraysize_of_c, &device_array_dc));
+            ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<float>(l0, length * arraysize_of_c, device_array_dc));
             ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<float>(l0.context, args.KernelDataType,
                                                                           p2_block_dc, p3_block_dc,
                                                                           arraysize_of_c, length, &d_c));
 
             double *p2_block_dd = nullptr;
             int *p3_block_dd = nullptr;
-            ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<int>(l0.context, l0.device, length * arraysize_of_d, &device_array_dd));
+            ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<int>(l0, length * arraysize_of_d, device_array_dd));
             ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<int>(l0.context, args.KernelDataType,
                                                                         p2_block_dd, p3_block_dd,
                                                                         arraysize_of_d, length, &d_d));
@@ -296,10 +266,11 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
     // Load kernels
     for (const auto &name : kernel_names) {
         ze_kernel_handle_t kernel{};
+        ze_module_handle_t module{};
         if (name == "empty") {
-            ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_0.cl", "elementwise_sum_0", kernel));
+            ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_0.cl", "elementwise_sum_0", kernel, module));
         } else if (name == "add_mixed") {
-            ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_mixed.cl", "elementwise_sum_mixed", kernel));
+            ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_mixed.cl", "elementwise_sum_mixed", kernel, module));
         } else if (name == "add") {
             std::string suffix;
             if (args.KernelDataType == DataType::CopyableObject) {
@@ -309,15 +280,15 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
             }
             switch (num_params) {
             case 1: {
-                ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_1.cl", "elementwise_sum_1_" + suffix, kernel));
+                ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_1.cl", "elementwise_sum_1_" + suffix, kernel, module));
                 break;
             }
             case 5: {
-                ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_5.cl", "elementwise_sum_5_" + suffix, kernel));
+                ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_5.cl", "elementwise_sum_5_" + suffix, kernel, module));
                 break;
             }
             case 10: {
-                ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_10.cl", "elementwise_sum_10_" + suffix, kernel));
+                ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_10.cl", "elementwise_sum_10_" + suffix, kernel, module));
                 break;
             }
             default:
@@ -333,7 +304,7 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
     std::vector<void *> kernel_arguments;
     std::vector<void *> arg_storage;
     // simple kernel validation
-    ASSERT_TEST_RESULT_SUCCESS(verify_result(l0.context, l0.device, cmdListImmediate, l0));
+    ASSERT_TEST_RESULT_SUCCESS(verify_result(cmdListImmediate, l0));
 
     // warmup
     for (const auto &[name, kernel] : kernels) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,26 +19,26 @@
 
 #include <level_zero/ze_api.h>
 
-struct L0CommonContext {
-    ze_driver_handle_t driver;
-    ze_context_handle_t context;
-    ze_device_handle_t device;
+class L0Context {
+  public:
+    LevelZero l0;
+    ze_command_list_handle_t cmdListImmediate_1;
+    ze_command_list_handle_t cmdListImmediate_2;
+
+    L0Context();
+    ~L0Context();
 };
 
-TestResult init_level_zero_common(L0CommonContext &ctx);
-
-TestResult create_kernel(L0CommonContext &ctx,
+TestResult create_kernel(LevelZero &l0,
                          const std::string &kernelFileName,
                          const std::string &kernelName,
                          ze_kernel_handle_t &kernel,
                          ze_module_handle_t &module);
 
 template <typename data_type>
-data_type *l0_malloc_device(L0CommonContext &ctx,
-                            size_t length) {
-    data_type *ptr = nullptr;
-    if (zeMemAllocDevice(ctx.context, &zeDefaultGPUDeviceMemAllocDesc, length * sizeof(data_type), alignof(data_type), ctx.device, (void **)&ptr) != ZE_RESULT_SUCCESS) {
-        return nullptr;
+TestResult l0_malloc_device(LevelZero &l0, size_t length, data_type *&ptr) {
+    if (zeMemAllocDevice(l0.context, &zeDefaultGPUDeviceMemAllocDesc, length * sizeof(data_type), alignof(data_type), l0.device, (void **)&ptr) != ZE_RESULT_SUCCESS) {
+        return TestResult::Error;
     }
-    return ptr;
+    return TestResult::Success;
 }
