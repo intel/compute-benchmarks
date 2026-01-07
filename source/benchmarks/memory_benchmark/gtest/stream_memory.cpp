@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<StreamMemory> registerTestCase{};
 
-class StreamMemoryTest : public ::testing::TestWithParam<std::tuple<Api, StreamMemoryType, size_t, bool, BufferContents, UsmMemoryPlacement, size_t, size_t, size_t, bool>> {
+class StreamMemoryTest : public ::testing::TestWithParam<std::tuple<Api, StreamMemoryType, size_t, bool, BufferContents, UsmRuntimeMemoryPlacement, size_t, size_t, size_t>> {
 };
 
 TEST_P(StreamMemoryTest, Test) {
@@ -29,7 +29,6 @@ TEST_P(StreamMemoryTest, Test) {
     args.partialMultiplier = std::get<6>(GetParam());
     args.vectorSize = std::get<7>(GetParam());
     args.lws = std::get<8>(GetParam());
-    args.prefetch = std::get<9>(GetParam());
 
     StreamMemory test;
     test.run(args);
@@ -45,38 +44,21 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 128 * megaByte, 512 * megaByte),
         ::testing::Values(false, true),
         ::testing::Values(BufferContents::Zeros, BufferContents::Random),
-        ::testing::ValuesIn(UsmMemoryPlacementArgument::deviceAndHost),
+        ::testing::ValuesIn(UsmRuntimeMemoryPlacementArgument::deviceAndHost),
         ::testing::Values(1u),
         ::testing::Values(1),
-        ::testing::Values(1024),
-        ::testing::Values(false)));
-
-INSTANTIATE_TEST_SUITE_P(
-    StreamMemoryTestNonUsm,
-    StreamMemoryTest,
-    ::testing::Combine(
-        ::CommonGtestArgs::allApis(),
-        ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
-        ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 256 * megaByte),
-        ::testing::Values(false, true),
-        ::testing::Values(BufferContents::Zeros, BufferContents::Random),
-        ::testing::ValuesIn(UsmMemoryPlacementArgument::nonUsmTargets),
-        ::testing::Values(1u),
-        ::testing::Values(1),
-        ::testing::Values(1024),
-        ::testing::Values(false, true)));
+        ::testing::Values(1024)));
 
 INSTANTIATE_TEST_SUITE_P(
     StreamMemoryTestLIMITED,
     StreamMemoryTest,
     ::testing::Combine(
-        ::testing::Values(Api::L0, Api::OpenCL),
+        ::testing::Values(Api::OpenCL),
         ::testing::Values(StreamMemoryType::Triad),
         ::testing::Values(512 * megaByte),
         ::testing::Values(true),
         ::testing::Values(BufferContents::Random),
-        ::testing::Values(UsmMemoryPlacement::Device),
+        ::testing::Values(UsmRuntimeMemoryPlacement::Device),
         ::testing::Values(1u),
         ::testing::Values(4),
-        ::testing::Values(1024, 256),
-        ::testing::Values(false)));
+        ::testing::Values(1024, 256)));

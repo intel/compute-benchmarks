@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,11 +10,11 @@
 #include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
-#include "definitions/usm_shared_migrate_cpu.h"
+#include "definitions/usm_shared_migrate_gpu.h"
 
 #include <gtest/gtest.h>
 
-static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics &statistics) {
+static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
 
     if (isNoopRun()) {
@@ -31,7 +31,7 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
     void *buffer{};
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocShared(levelzero.context, &deviceAllocationDesc, &hostAllocationDesc, arguments.bufferSize, 0, levelzero.device, &buffer));
     int32_t *bufferInt = static_cast<int32_t *>(buffer);
-    const size_t elementsCount = arguments.bufferSize / sizeof(uint32_t);
+    const size_t elementsCount = arguments.bufferSize / sizeof(int32_t);
 
     // Create kernel
     const auto kernelBinary = FileHelper::loadBinaryFile("memory_benchmark_fill_with_ones.spv");
@@ -52,7 +52,7 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
 
     // Configure dispath parameters
     const uint32_t wgs = 256;
-    const uint32_t wgc = static_cast<uint32_t>(elementsCount / wgs);
+    const uint32_t wgc = static_cast<uint32_t>(elementsCount) / wgs;
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, wgs, 1, 1));
     const ze_group_count_t dispatchTraits{wgc, 1, 1};
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
@@ -62,6 +62,9 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
+    if (arguments.prefetchMemory) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryPrefetch(cmdList, bufferInt, arguments.bufferSize));
+    }
     if (arguments.preferredLocation == UsmMemAdvisePreferredLocation::System) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemAdvise(cmdList, levelzero.device, buffer, arguments.bufferSize, ZE_MEMORY_ADVICE_SET_SYSTEM_MEMORY_PREFERRED_LOCATION));
     }
@@ -72,25 +75,21 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
     // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
     for (auto elementIndex = 0u; elementIndex < elementsCount; elementIndex++) {
         bufferInt[elementIndex] = 0;
     }
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
+        for (auto elementIndex = 0u; elementIndex < elementsCount; elementIndex++) {
+            bufferInt[elementIndex] = 0;
+        }
 
         timer.measureStart();
-        if (arguments.accessAllBytes) {
-            for (auto elementIndex = 0u; elementIndex < elementsCount; elementIndex++) {
-                bufferInt[elementIndex] = 0;
-            }
-        } else {
-            bufferInt[0] = 0;
-        }
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
 
         statistics.pushValue(timer.get(), arguments.bufferSize, typeSelector.getUnit(), typeSelector.getType());
@@ -103,4 +102,4 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<UsmSharedMigrateCpu> registerTestCase(run, Api::L0);
+static RegisterTestCaseImplementation<UsmSharedMigrateGpu> registerTestCase(run, Api::L0);

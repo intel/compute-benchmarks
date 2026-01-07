@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     size_t bufferSizes[3] = {bufferSize, bufferSize, bufferSize};
 
     auto bufferFlags = CL_MEM_READ_WRITE;
-    if (arguments.memoryPlacement == UsmMemoryPlacement::Host) {
+    if (arguments.memoryPlacement == UsmRuntimeMemoryPlacement::Host) {
         bufferFlags |= CL_MEM_FORCE_HOST_MEMORY_INTEL;
     }
 

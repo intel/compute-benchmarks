@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,13 +13,13 @@
 #include "framework/utility/memory_constants.h"
 #include "framework/utility/timer.h"
 
-#include "definitions/stream_memory.h"
+#include "definitions/non_usm_stream_memory.h"
 
 #include <gtest/gtest.h>
 
 using namespace MemoryConstants;
 
-static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {
+static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (arguments.partialMultiplier > 1u) {
@@ -243,4 +243,4 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<StreamMemory> registerTestCase(run, Api::L0);
+static RegisterTestCaseImplementation<NonUsmStreamMemory> registerTestCase(run, Api::L0);

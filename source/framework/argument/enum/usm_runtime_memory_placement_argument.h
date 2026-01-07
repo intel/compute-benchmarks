@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,5 +21,6 @@ struct UsmRuntimeMemoryPlacementArgument : EnumArgument<UsmRuntimeMemoryPlacemen
     const static inline std::string enumName = "memory placement";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[3] = {EnumType::Device, EnumType::Host, EnumType::Shared};
+    const static inline EnumType deviceAndHost[2] = {EnumType::Device, EnumType::Host};
     const static inline std::string enumValuesNames[3] = {"Device", "Host", "Shared"};
 };

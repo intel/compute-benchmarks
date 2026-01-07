@@ -10,20 +10,21 @@
 #include "framework/argument/compression_argument.h"
 #include "framework/argument/enum/buffer_contents_argument.h"
 #include "framework/argument/enum/stream_memory_type_argument.h"
-#include "framework/argument/enum/usm_runtime_memory_placement_argument.h"
+#include "framework/argument/enum/usm_memory_placement_argument.h"
 #include "framework/test_case/test_case.h"
 
-struct StreamMemoryArguments : TestCaseArgumentContainer {
+struct NonUsmStreamMemoryArguments : TestCaseArgumentContainer {
     StreamMemoryTypeArgument type;
     ByteSizeArgument size;
     BooleanArgument useEvents;
     BufferContentsArgument contents;
-    UsmRuntimeMemoryPlacementArgument memoryPlacement;
+    UsmMemoryPlacementArgument memoryPlacement;
     PositiveIntegerArgument partialMultiplier;
     PositiveIntegerArgument vectorSize;
     PositiveIntegerArgument lws;
+    BooleanArgument prefetch;
 
-    StreamMemoryArguments()
+    NonUsmStreamMemoryArguments()
         : type(*this, "type", "Memory streaming type"),
           size(*this, "size", "Size of the memory to stream. Must be divisible by datatype size."),
           useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
@@ -31,14 +32,15 @@ struct StreamMemoryArguments : TestCaseArgumentContainer {
           memoryPlacement(*this, "memoryPlacement", "Memory type used for stream"),
           partialMultiplier(*this, "multiplier", "multiplies id used for accessing the resources to simulate partials"),
           vectorSize(*this, "vectorSize", "size of uint vector type 1/2/4/8/16"),
-          lws(*this, "lws", "local work size") {}
+          lws(*this, "lws", "local work size"),
+          prefetch(*this, "prefetch", "prefetch shared system buffer before each copy") {}
 };
 
-struct StreamMemory : TestCase<StreamMemoryArguments> {
-    using TestCase<StreamMemoryArguments>::TestCase;
+struct NonUsmStreamMemory : TestCase<NonUsmStreamMemoryArguments> {
+    using TestCase<NonUsmStreamMemoryArguments>::TestCase;
 
     std::string getTestCaseName() const override {
-        return "StreamMemory";
+        return "NonUsmStreamMemory";
     }
 
     std::string getHelp() const override {
