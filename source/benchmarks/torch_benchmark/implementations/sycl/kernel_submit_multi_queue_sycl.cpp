@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/timer.h"
+#include "framework/utility/combo_profiler.h"
 
 #include "definitions/kernel_submit_multi_queue.h"
 #include "definitions/sycl_kernels.h"
@@ -18,10 +18,10 @@
 using data_type = int;
 
 static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        profiler.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
@@ -65,13 +65,12 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
         sycl::event q2_last_event = submit_with_event_kernel_add<data_type>(arguments.workgroupCount, arguments.workgroupSize, q[1], d_a[1], d_b[1], d_c[1]);
 
         // Start to measure submit time for a specific kernel
-        Timer timer;
-        timer.measureStart();
+        profiler.measureStart();
         // Submit a new kernel into queue1, but the new kernel can only be executed after q2_last_event ends
         submit_kernel_add<data_type>(arguments.workgroupCount, arguments.workgroupSize, q[0], q2_last_event, d_a[0], d_b[0], d_c[0]);
-        timer.measureEnd();
+        profiler.measureEnd();
 
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        profiler.pushStats(statistics);
     }
 
     for (int i = 0; i < NUM_OF_QUEUES; i++) {

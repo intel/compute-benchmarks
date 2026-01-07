@@ -5,6 +5,8 @@
  *
  */
 
+#include "framework/utility/combo_profiler.h"
+
 #include "definitions/kernel_submit_slm_size.h"
 #include "kernel_submit_common.hpp"
 
@@ -43,11 +45,11 @@ static TestResult run_kernel(data_type *out_buf, int slm_num, L0Context &l0, ze_
 }
 
 static TestResult run(const KernelSubmitSlmSizeArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
         std::cerr << "Noop run for Torch L0 benchmark" << std::endl;
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        profiler.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
@@ -70,11 +72,10 @@ static TestResult run(const KernelSubmitSlmSizeArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
 
     for (size_t i = 0; i < arguments.iterations; ++i) {
-        Timer timer;
-        timer.measureStart();
+        profiler.measureStart();
         ASSERT_TEST_RESULT_SUCCESS(run_kernel(out_buf, slm_num, l0Ctx, kernel));
-        timer.measureEnd();
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        profiler.measureEnd();
+        profiler.pushStats(statistics);
 
         // expect a wait here after a batch of submissions
         if (i > 0 && i % arguments.batchSize == 0) {

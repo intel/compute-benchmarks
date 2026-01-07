@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/timer.h"
+#include "framework/utility/combo_profiler.h"
 
 #include "definitions/kernel_submit_slm_size.h"
 
@@ -40,10 +40,10 @@ static void submit_kernel_slm(sycl::queue &q, data_type *out, const std::size_t 
 }
 
 static TestResult run(const KernelSubmitSlmSizeArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        profiler.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
@@ -76,11 +76,10 @@ static TestResult run(const KernelSubmitSlmSizeArguments &arguments, Statistics 
 
     for (size_t i = 0; i < arguments.iterations; ++i) {
 
-        Timer timer;
-        timer.measureStart();
+        profiler.measureStart();
         submit_kernel_slm(q, d_out, slm_num);
-        timer.measureEnd();
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        profiler.measureEnd();
+        profiler.pushStats(statistics);
 
         // expect a wait here after a batch of submissions
         if (i > 0 && (i % arguments.batchSize) == 0) {

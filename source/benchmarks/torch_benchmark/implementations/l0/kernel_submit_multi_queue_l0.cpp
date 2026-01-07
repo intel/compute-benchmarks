@@ -5,6 +5,8 @@
  *
  */
 
+#include "framework/utility/combo_profiler.h"
+
 #include "definitions/kernel_submit_multi_queue.h"
 #include "kernel_submit_common.hpp"
 
@@ -30,11 +32,11 @@ static TestResult launch_kernel_l0(ze_command_list_handle_t cmdListImmediate,
 }
 
 static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
         std::cerr << "Noop run for Torch L0 benchmark" << std::endl;
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        profiler.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
@@ -89,11 +91,10 @@ static TestResult run(const KernelSubmitMultiQueueArguments &arguments, Statisti
         }
         ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[1], d_b[1], d_c[1], q2_last_event, nullptr));
         // mark the last kernel in cmdlist_2
-        Timer timer;
-        timer.measureStart();
+        profiler.measureStart();
         ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(arguments.workgroupSize), d_a[0], d_b[0], d_c[0], nullptr, q2_last_event));
-        timer.measureEnd();
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        profiler.measureEnd();
+        profiler.pushStats(statistics);
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
