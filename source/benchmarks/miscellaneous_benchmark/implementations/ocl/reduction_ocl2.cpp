@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,17 +100,12 @@ TestResult run(const ReductionArguments2 &arguments, Statistics &statistics) {
     ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, true, lastIndexOffset, 4u, &actualSum, 0u, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
     if (actualSum != expectedSum) {
-        printf("\n data verification failure");
         ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
         ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
         ASSERT_CL_SUCCESS(clReleaseProgram(program));
         return TestResult::VerificationFail;
     }
-
-    ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
     ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-    statistics.pushValue(std::chrono::nanoseconds{timeNs}, typeSelector.getUnit(), MeasurementType::Gpu, "time");
-    statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, "bw");
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -120,12 +115,9 @@ TestResult run(const ReductionArguments2 &arguments, Statistics &statistics) {
         ASSERT_CL_SUCCESS(clWaitForEvents(1, &profilingEvent));
         ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
         ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-        if (i + 1 < arguments.iterations) {
-            statistics.pushValue(std::chrono::nanoseconds{timeNs}, typeSelector.getUnit(), MeasurementType::Gpu, "time");
-            statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, "bw");
-        }
+        statistics.pushValue(std::chrono::nanoseconds{timeNs}, typeSelector.getUnit(), MeasurementType::Gpu, "time");
+        statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes, MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu, "bw");
     }
-
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));

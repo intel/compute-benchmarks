@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,19 +121,13 @@ TestResult run(const ReductionArguments4 &arguments, Statistics &statistics) {
 
     ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, partialSums, true, 0u, 4u, &actualSum, 0u, nullptr, nullptr));
     if (actualSum != expectedSum) {
-        printf("\n data verification failure");
         ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
         ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
         ASSERT_CL_SUCCESS(clReleaseProgram(program));
         return TestResult::VerificationFail;
     }
-
-    ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
     ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-    ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent2, timeNs2));
     ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent2));
-    statistics.pushValue(std::chrono::nanoseconds{timeNs}, typeSelector.getUnit(), typeSelector.getType(), "time");
-    statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes, MeasurementUnit::GigabytesPerSecond, typeSelector.getType(), "bw");
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -145,10 +139,8 @@ TestResult run(const ReductionArguments4 &arguments, Statistics &statistics) {
         ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent2, timeNs2));
         ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
         ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent2));
-        if (i + 1 < arguments.iterations) {
-            statistics.pushValue(std::chrono::nanoseconds{timeNs}, typeSelector.getUnit(), typeSelector.getType(), "time");
-            statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes, MeasurementUnit::GigabytesPerSecond, typeSelector.getType(), "bw");
-        }
+        statistics.pushValue(std::chrono::nanoseconds{timeNs}, typeSelector.getUnit(), typeSelector.getType(), "time");
+        statistics.pushValue(std::chrono::nanoseconds{timeNs}, sizeInBytes, MeasurementUnit::GigabytesPerSecond, typeSelector.getType(), "bw");
     }
 
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
