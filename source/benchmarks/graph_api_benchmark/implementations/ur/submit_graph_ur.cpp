@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/ur/error.h"
 #include "framework/ur/ur.h"
+#include "framework/utility/combo_profiler.h"
 #include "framework/utility/file_helper.h"
-#include "framework/utility/timer.h"
 
 #include "definitions/submit_graph.h"
 
@@ -21,11 +21,11 @@ static constexpr size_t global_size[] = {1, 1, 1};
 static constexpr size_t global_offset = 0;
 
 static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats prof(Configuration::get().profilerType);
     if (!arguments.emulateGraphs || arguments.useHostTasks || arguments.useExplicit) {
         return TestResult::ApiNotCapable;
     } else if (isNoopRun()) {
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        prof.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
@@ -39,8 +39,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
     if (!command_buffer_support) {
         return TestResult::DeviceNotCapable;
     }
-
-    Timer timer;
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_eat_time.spv");
@@ -117,14 +115,14 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        timer.measureStart();
+        prof.measureStart();
 
         if (!arguments.useEvents) {
             EXPECT_UR_RESULT_SUCCESS(
                 urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, nullptr));
 
             if (!arguments.measureCompletionTime) {
-                timer.measureEnd();
+                prof.measureEnd();
             }
 
             EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
@@ -134,7 +132,7 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
                 urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, &event));
 
             if (!arguments.measureCompletionTime) {
-                timer.measureEnd();
+                prof.measureEnd();
             }
 
             EXPECT_UR_RESULT_SUCCESS(urEventWait(1, &event));
@@ -142,9 +140,9 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         }
 
         if (arguments.measureCompletionTime) {
-            timer.measureEnd();
+            prof.measureEnd();
         }
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        prof.pushStats(statistics);
     }
 
     EXPECT_UR_RESULT_SUCCESS(urCommandBufferReleaseExp(cmdBuffer));

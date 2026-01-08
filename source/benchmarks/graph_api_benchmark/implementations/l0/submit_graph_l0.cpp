@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,19 +7,19 @@
 
 #include "framework/l0/levelzero.h"
 #include "framework/test_case/register_test_case.h"
+#include "framework/utility/combo_profiler.h"
 #include "framework/utility/file_helper.h"
-#include "framework/utility/timer.h"
 
 #include "definitions/submit_graph.h"
 
 #include <iostream>
 
 static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    ComboProfilerWithStats prof(Configuration::get().profilerType);
     if (arguments.useHostTasks || arguments.useExplicit) {
         return TestResult::ApiNotCapable;
     } else if (isNoopRun()) {
-        statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
+        prof.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
@@ -29,7 +29,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
                                                   .setGraphFunctions(!arguments.emulateGraphs);
     LevelZero levelzero(extensionProperties);
 
-    Timer timer;
     const ze_group_count_t groupCount{1, 1, 1};
 
     // Only used when emulateGraphs is 0
@@ -164,7 +163,7 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        timer.measureStart();
+        prof.measureStart();
 
         if (!arguments.emulateGraphs) {
             ASSERT_ZE_RESULT_SUCCESS(levelzero.graphExtension.commandListAppendGraph(
@@ -175,7 +174,7 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         }
 
         if (!arguments.measureCompletionTime) {
-            timer.measureEnd();
+            prof.measureEnd();
         }
 
         if (arguments.useEvents) {
@@ -190,9 +189,9 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         }
 
         if (arguments.measureCompletionTime) {
-            timer.measureEnd();
+            prof.measureEnd();
         }
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        prof.pushStats(statistics);
     }
 
     // Cleanup
