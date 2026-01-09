@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ class MultiKernelExecutionTest : public ::testing::TestWithParam<std::tuple<Api,
 
 TEST_P(MultiKernelExecutionTest, Test) {
     MultiKernelExecutionArguments args;
-    args.api = Api::L0;
+    args.api = std::get<0>(GetParam());
     args.kernelCount = std::get<1>(GetParam());
     args.workgroupSize = std::get<2>(GetParam());
     args.workgroupCount = std::get<3>(GetParam());
@@ -36,7 +36,7 @@ INSTANTIATE_TEST_SUITE_P(
     MultiKernelExecutionTest,
     MultiKernelExecutionTest,
     ::testing::Combine(
-        ::testing::Values(Api::L0),
+        ::CommonGtestArgs::allApis(),
         ::testing::Values(100u),
         ::testing::Values(32u),
         ::testing::Values(32u),
