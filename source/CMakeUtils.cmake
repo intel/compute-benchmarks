@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2025 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -58,4 +58,12 @@ endfunction()
 function(add_sources_to_benchmark TARGET_NAME DIR)
     file(GLOB SOURCES ${DIR}/*.cpp ${DIR}/*.h)
     target_sources(${TARGET_NAME} PRIVATE ${SOURCES})
+endfunction()
+
+function(set_target_location TARGET_NAME)
+    set(TARGET_LOCATION "")
+    if (COMMAND get_target_location)
+        get_target_location(${TARGET_NAME} TARGET_LOCATION)    
+    endif()
+    set_property(GLOBAL PROPERTY ${TARGET_NAME}_LOCATION "${TARGET_LOCATION}")
 endfunction()

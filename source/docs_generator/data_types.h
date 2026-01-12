@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ struct TestCase {
 using TestCases = std::map<std::string, TestCase, LexicographicalLess>;
 
 struct Benchmark {
-    std::string location = {};
+    std::vector<std::string> locations = {};
     std::string baseName = {};
     std::vector<const BenchmarkInstance *> instances = {};
     std::string description = {};

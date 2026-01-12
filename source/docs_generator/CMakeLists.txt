@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -39,3 +39,4 @@ add_custom_command(
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E env "LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}" "$<TARGET_FILE:${TARGET_NAME}>" --path=${CMAKE_SOURCE_DIR} --fileName=TESTS.md
 )
+add_subdirectories()

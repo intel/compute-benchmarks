@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2025 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -66,7 +66,7 @@ function (add_benchmark_for_api BASE_TARGET_NAME APPEND_API_TO_TARGET_NAME REGIS
     endforeach()
     target_include_directories(${TARGET_NAME} PRIVATE ${BENCHMARK_SOURCE_PATH})
     set_target_properties(${TARGET_NAME} PROPERTIES FOLDER ${TARGET_FOLDER_NAME})
-    set_property(GLOBAL PROPERTY ${TARGET_NAME}_LOCATION "")
+    set_target_location(${TARGET_NAME})
     if (BUILD_FOR_PUBLISHING)
         set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${BASE_TARGET_NAME})
     endif()

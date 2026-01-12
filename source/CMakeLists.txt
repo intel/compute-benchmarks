@@ -1,9 +1,10 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
+include(${BRANCH_TYPE}/CMakeUtilsAdditional.cmake OPTIONAL)
 include(CMakeUtils.cmake)
 
 set(SOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR})

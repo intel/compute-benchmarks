@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,8 @@
 #include "framework/utility/process.h"
 
 #include "data_types.h"
-#include "helpers.h"
+#include "helpers/helpers.h"
+#include "helpers_additional.h"
 
 #if __has_include(<filesystem>)
 #include <filesystem>
@@ -46,7 +47,9 @@ int main(int argc, char **argv) {
         Benchmark &benchmark = benchmarks[benchmarkInstance.baseName];
         locations.insert(benchmarkInstance.location);
         assignAndValidate(benchmark.baseName, benchmarkInstance.baseName, "setting base name from benchmark instance");
-        assignAndValidate(benchmark.location, benchmarkInstance.location, "setting location from benchmark instance");
+        if (std::find(benchmark.locations.begin(), benchmark.locations.end(), benchmarkInstance.location) == benchmark.locations.end()) {
+            benchmark.locations.push_back(benchmarkInstance.location);
+        }
         benchmark.instances.push_back(&benchmarkInstance);
     }
 
@@ -125,15 +128,33 @@ int main(int argc, char **argv) {
         for (const auto &entry : benchmarks) {
             const Benchmark &benchmark = entry.second;
 
-            if (benchmark.location != location) {
+            if (std::find(benchmark.locations.begin(), benchmark.locations.end(), location) == benchmark.locations.end()) {
                 continue;
+            }
+
+            std::vector<Api> apiColumns = getApisForBenchmark(benchmark, location);
+            std::vector<std::string> apiNames = {};
+            for (Api api : apiColumns) {
+                std::string apiName = std::to_string(api);
+                std::transform(apiName.begin(), apiName.end(), apiName.begin(), ::toupper);
+                apiNames.push_back(apiName);
             }
             std::cerr << "  " << benchmark.baseName << std::endl;
 
             outputFile << "# " << benchmark.baseName << '\n';
             outputFile << benchmark.description << '\n';
-            outputFile << "| Test name | Description | Params | L0 | OCL |\n";
-            outputFile << "|-----------|-------------|--------|----|-----|\n";
+            outputFile << "| Test name | Description | Params |";
+            for (const auto &apiName : apiNames) {
+                outputFile << ' ' << apiName << " |";
+            }
+            outputFile << '\n';
+
+            outputFile << "|-----------|-------------|--------|";
+            for (const auto &apiName : apiNames) {
+                const size_t dashCount = apiName.size() + 2;
+                outputFile << std::string(dashCount, '-') << '|';
+            }
+            outputFile << '\n';
             for (const auto &entry : benchmark.testCases) {
                 const TestCase &testCase = entry.second;
 
@@ -146,8 +167,9 @@ int main(int argc, char **argv) {
                 }
 
                 outputFile << "</ul>|";
-                outputFile << (testCase.apis.find(Api::L0) != testCase.apis.end() ? ":heavy_check_mark:" : ":x:") << '|';
-                outputFile << (testCase.apis.find(Api::OpenCL) != testCase.apis.end() ? ":heavy_check_mark:" : ":x:") << '|';
+                for (Api api : apiColumns) {
+                    outputFile << (testCase.apis.find(api) != testCase.apis.end() ? ":heavy_check_mark:" : ":x:") << '|';
+                }
                 outputFile << '\n';
             }
             outputFile << "\n\n\n";
