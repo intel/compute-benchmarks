@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ static TestResult run(const EnqueueBarrierWithEmptyWaitlistArguments &arguments,
     cl_kernel kernel = clCreateKernel(program, kernelName, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     const cl_int operationsCount = 1;
-    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(size_t), &operationsCount));
+    ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(cl_int), &operationsCount));
 
     // Warmup
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -166,6 +166,7 @@ void TestCaseStatistics::pushValue(Value value, const std::string &description, 
 
     // We expect a precise amount of measurements requested by the user.
     FATAL_ERROR_IF(samples.vector.size() == maxSamplesCount, "Too many values pushed by the test");
+    samples.vector.reserve(maxSamplesCount);
 
     // Set unit and type for the samples
     if (samples.unit != unit) {
