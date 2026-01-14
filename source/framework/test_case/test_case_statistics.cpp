@@ -188,7 +188,6 @@ struct ColumnInfo {
     int width;
     const char *label;
 
-    static constexpr size_t getColumnCount() { return 7; }
     static std::array<ColumnInfo, 8> getColumns() {
         return {{
             {BenchmarkInfo::get().getTestCaseNameColumnWidth(), "TestCase"},
@@ -205,7 +204,7 @@ struct ColumnInfo {
 
 void TestCaseStatistics::printStatisticsHeader(Configuration::PrintType printType) {
     const auto columns = ColumnInfo::getColumns();
-    const auto columnCount = ColumnInfo::getColumnCount();
+    const auto columnCount = columns.size();
     switch (printType) {
     case Configuration::PrintType::DefaultWithVerbose:
     case Configuration::PrintType::Default:
@@ -339,7 +338,7 @@ void TestCaseStatistics::printStatisticsVerbose() const {
 
 void TestCaseStatistics::printStatisticsString(const std::string &testCaseName, const std::string &message, char lineEnding) const {
     const auto columns = ColumnInfo::getColumns();
-    const auto columnCount = ColumnInfo::getColumnCount();
+    const auto columnCount = columns.size();
     switch (printType) {
     case Configuration::PrintType::DefaultWithVerbose:
     case Configuration::PrintType::Default:
