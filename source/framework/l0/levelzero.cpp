@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -126,9 +126,11 @@ QueueFamiliesHelper::QueueDesc LevelZero::createQueue(const QueueProperties &que
         FATAL_ERROR_IF(queueProperties.requireCreationSuccess, "Device does not support such queue");
         return {};
     }
+    auto desc = queueDesc->desc;
+    desc.priority = queueProperties.priority;
 
     // Create
-    queueDesc->queue = createQueue(deviceForQueue, queueDesc->desc);
+    queueDesc->queue = createQueue(deviceForQueue, desc);
     return *queueDesc;
 }
 
