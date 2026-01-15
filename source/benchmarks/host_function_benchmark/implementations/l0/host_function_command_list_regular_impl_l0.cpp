@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,11 +24,14 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
     }
 
     // Setup
-    LevelZero levelzero;
+    bool useKernels = arguments.useKernels;
+    ExtensionProperties extensionProperties = ExtensionProperties::create();
+    extensionProperties.setCounterBasedCreateFunctions(useKernels);
+    extensionProperties.setHostFunctionFunctions(true);
+    LevelZero levelzero(extensionProperties);
+
     Timer timer;
-    HostFunctionApi hostFunctionApi = loadHostFunctionApi(levelzero.driver);
     HostFunctions hostFunctions = getHostFunctions(arguments.useEmptyHostFunction);
-    const bool useKernels = arguments.useKernels;
     auto &nCalls = arguments.amountOfCalls;
 
     // Create kernel
@@ -56,23 +59,28 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
     counterBasedEventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
     counterBasedEventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
 
-    std::vector<ze_event_handle_t> eventKernel1(nCalls);
-    std::vector<ze_event_handle_t> eventKernel2(nCalls);
+    std::vector<ze_event_handle_t> eventKernel1;
+    std::vector<ze_event_handle_t> eventKernel2;
 
-    for (auto i = 0u; i < nCalls; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(
-            levelzero.counterBasedEventCreate2(levelzero.context,
-                                               levelzero.device,
-                                               &counterBasedEventDesc,
-                                               &eventKernel1[i]));
+    if (useKernels) {
+        eventKernel1.resize(nCalls);
+        eventKernel2.resize(nCalls);
 
-        ASSERT_ZE_RESULT_SUCCESS(
-            levelzero.counterBasedEventCreate2(levelzero.context,
-                                               levelzero.device,
-                                               &counterBasedEventDesc,
-                                               &eventKernel2[i]));
+        for (auto &event : eventKernel1) {
+            ASSERT_ZE_RESULT_SUCCESS(
+                levelzero.counterBasedEventCreate2(levelzero.context,
+                                                   levelzero.device,
+                                                   &counterBasedEventDesc,
+                                                   &event));
+        }
+        for (auto &event : eventKernel2) {
+            ASSERT_ZE_RESULT_SUCCESS(
+                levelzero.counterBasedEventCreate2(levelzero.context,
+                                                   levelzero.device,
+                                                   &counterBasedEventDesc,
+                                                   &event));
+        }
     }
-
     // Create command list with HostFunction
     const ze_group_count_t dispatchTraits{1u, 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
@@ -86,13 +94,13 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, eventKernel1[callId], 0, nullptr));
         }
 
-        ASSERT_ZE_RESULT_SUCCESS(hostFunctionApi.commandListAppendHostFunction(cmdList,
-                                                                               hostFunctions.function,
-                                                                               hostFunctions.userData,
-                                                                               nullptr,
-                                                                               nullptr,
-                                                                               0,
-                                                                               nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(levelzero.commandListAppendHostFunction(cmdList,
+                                                                         hostFunctions.function,
+                                                                         hostFunctions.userData,
+                                                                         nullptr,
+                                                                         nullptr,
+                                                                         0,
+                                                                         nullptr));
         if (useKernels) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, eventKernel2[callId], 1, &eventKernel1[callId]));
         }
@@ -141,9 +149,11 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
     }
 
     // Cleanup
-    for (auto i = 0u; i < nCalls; ++i) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(eventKernel1[i]));
-        ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(eventKernel2[i]));
+    for (auto &event : eventKernel1) {
+        zeEventDestroy(event);
+    }
+    for (auto &event : eventKernel2) {
+        zeEventDestroy(event);
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));

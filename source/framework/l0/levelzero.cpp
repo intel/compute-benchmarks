@@ -211,6 +211,14 @@ void LevelZero::initializeExtension(const ExtensionProperties &extensionProperti
                                                 reinterpret_cast<void **>(&this->graphExtension.executableGraphDestroy)));
         FATAL_ERROR_IF(this->graphExtension.executableGraphDestroy == nullptr, "zeExecutableGraphDestroyExp retrieved nullptr");
     }
+
+    if (extensionProperties.getHostFunctionFunctions) {
+        EXPECT_ZE_RESULT_SUCCESS(
+            zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zeCommandListAppendHostFunction",
+                                                reinterpret_cast<void **>(&this->commandListAppendHostFunction)));
+        FATAL_ERROR_IF(this->commandListAppendHostFunction == nullptr, "zeCommandListAppendHostFunction retrieved nullptr");
+    }
 }
 
 ze_mutable_command_list_exp_properties_t LevelZero::getDeviceMclProperties(ze_device_handle_t deviceHandle) const {

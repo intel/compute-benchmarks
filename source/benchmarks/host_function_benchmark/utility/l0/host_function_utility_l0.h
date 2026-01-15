@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,24 +9,6 @@
 
 #include <cstdint>
 #include <level_zero/ze_api.h>
-
-using zeCommandListAppendHostFunctionPF = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList,
-                                                                    void *pHostFunction,
-                                                                    void *pUserData,
-                                                                    void *pNext,
-                                                                    ze_event_handle_t hSignalEvent,
-                                                                    uint32_t numWaitEvents,
-                                                                    ze_event_handle_t *phWaitEvents);
-
-struct HostFunctionApi {
-    zeCommandListAppendHostFunctionPF commandListAppendHostFunction = nullptr;
-};
-
-inline HostFunctionApi loadHostFunctionApi(ze_driver_handle_t driver) {
-    HostFunctionApi ret;
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListAppendHostFunction", reinterpret_cast<void **>(&ret.commandListAppendHostFunction));
-    return ret;
-}
 
 inline void emptyFunction([[maybe_unused]] void *pUserData) {
 }

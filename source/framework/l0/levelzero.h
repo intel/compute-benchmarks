@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,7 @@ struct LevelZero {
     ImportHostPointerExtension importHostPointer{};
     GraphExtension graphExtension{};
     L0CounterBasedEventCreate2 counterBasedEventCreate2 = nullptr;
+    L0CommandListAppendHostFunction commandListAppendHostFunction = nullptr;
 
     // Constructors, destructor
     LevelZero() : LevelZero(QueueProperties::create()) {}

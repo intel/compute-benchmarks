@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,11 +25,19 @@ using L0CommandListInstantiateGraph = decltype(&zeCommandListInstantiateGraphExp
 using L0CommandListAppendGraph = decltype(&zeCommandListAppendGraphExp);
 using L0GraphDestroy = decltype(&zeGraphDestroyExp);
 using L0ExecutableGraphDestroy = decltype(&zeExecutableGraphDestroyExp);
+using L0CommandListAppendHostFunction = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList,
+                                                                  void *pHostFunction,
+                                                                  void *pUserData,
+                                                                  void *pNext,
+                                                                  ze_event_handle_t hSignalEvent,
+                                                                  uint32_t numWaitEvents,
+                                                                  ze_event_handle_t *phWaitEvents);
 
 struct ExtensionProperties {
     bool getImportHostPointerFunctions = false;
     bool getCounterBasedCreateFunctions = false;
     bool getGraphFunctions = false;
+    bool getHostFunctionFunctions = false;
 
     static ExtensionProperties create() {
         return ExtensionProperties();
@@ -47,6 +55,11 @@ struct ExtensionProperties {
 
     ExtensionProperties &setGraphFunctions(bool value) {
         getGraphFunctions = value;
+        return *this;
+    }
+
+    ExtensionProperties &setHostFunctionFunctions(bool value) {
+        getHostFunctionFunctions = value;
         return *this;
     }
 };
