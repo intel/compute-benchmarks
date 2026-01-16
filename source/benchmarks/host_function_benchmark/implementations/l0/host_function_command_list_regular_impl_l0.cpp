@@ -150,10 +150,10 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
 
     // Cleanup
     for (auto &event : eventKernel1) {
-        zeEventDestroy(event);
+        ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     }
     for (auto &event : eventKernel2) {
-        zeEventDestroy(event);
+        ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
