@@ -18,6 +18,7 @@
 
 #include <level_zero/ze_api.h>
 
+// to później nie będzie potrzebne i zamiast tego będzie Kernel
 class L0Context {
   public:
     LevelZero l0;
@@ -26,6 +27,34 @@ class L0Context {
 
     L0Context();
     ~L0Context();
+};
+
+class Kernel {
+    ze_kernel_handle_t kernel{};
+    ze_module_handle_t module{};
+
+public:
+    Kernel(LevelZero &l0, const std::string &kernelFileName, const std::string &kernelName);
+    ~Kernel();
+
+    ze_kernel_handle_t get() const;
+
+    static TestResult create_kernel(LevelZero &l0,
+                                    const std::string &kernelFileName,
+                                    const std::string &kernelName,
+                                    ze_kernel_handle_t &kernel,
+                                    ze_module_handle_t &module);
+
+};
+
+class BatchingLoop {
+    ze_command_list_handle_t cmdList;
+    size_t batchSize;
+public:
+    BatchingLoop(ze_command_list_handle_t list, size_t batch);
+    ~BatchingLoop();
+    
+    void checkBatch(size_t i);
 };
 
 TestResult create_kernel(LevelZero &l0,
