@@ -268,7 +268,7 @@ void TestCaseStatistics::printStatisticsDefault(const std::string &testCaseName)
     for (const auto &samplesEntry : this->samplesMap) {
         const std::string &samplesName = samplesEntry.first;
         const Samples &samples = samplesEntry.second;
-        const MetricsStrings metricsStrings{samplesName, samples, this->reachedInfinity};
+        const MetricsStrings metricsStrings{samplesName, samples, this->reachedInfinity, Configuration::get().warmupIterations};
 
         int column = 0;
         std::cout << std::setw(columns[column++].width) << (isFirst ? testCaseName : "");
@@ -306,7 +306,7 @@ void TestCaseStatistics::printStatisticsCsv(const std::string &testCaseName) con
     for (const auto &samplesEntry : this->samplesMap) {
         const std::string &samplesName = samplesEntry.first;
         const Samples &samples = samplesEntry.second;
-        const MetricsStrings metricsStrings{samplesName, samples, this->reachedInfinity};
+        const MetricsStrings metricsStrings{samplesName, samples, this->reachedInfinity, Configuration::get().warmupIterations};
 
         std::cout << testCaseName << ",";
         std::cout << metricsStrings.mean << ",";
@@ -365,27 +365,27 @@ void TestCaseStatistics::printStatisticsString(const std::string &testCaseName, 
     }
 }
 
-TestCaseStatistics::Metrics::Metrics(const SamplesVector &samples)
-    : min(calculateMin(samples)),
-      max(calculateMax(samples)),
-      mean(calculateMean(samples)),
-      median(calculateMedian(samples)),
-      standardDeviation(calculateStandardDeviation(samples, mean)) {}
+TestCaseStatistics::Metrics::Metrics(const SamplesVector &samples, size_t iterationsToSkip)
+    : min(calculateMin(samples, iterationsToSkip)),
+      max(calculateMax(samples, iterationsToSkip)),
+      mean(calculateMean(samples, iterationsToSkip)),
+      median(calculateMedian(samples, iterationsToSkip)),
+      standardDeviation(calculateStandardDeviation(samples, mean, iterationsToSkip)) {}
 
-TestCaseStatistics::Value TestCaseStatistics::Metrics::calculateMin(const SamplesVector &samples) {
-    return *std::min_element(samples.begin(), samples.end());
+TestCaseStatistics::Value TestCaseStatistics::Metrics::calculateMin(const SamplesVector &samples, size_t iterationsToSkip) {
+    return *std::min_element(samples.begin() + iterationsToSkip, samples.end());
 }
 
-TestCaseStatistics::Value TestCaseStatistics::Metrics::calculateMax(const SamplesVector &samples) {
-    return *std::max_element(samples.begin(), samples.end());
+TestCaseStatistics::Value TestCaseStatistics::Metrics::calculateMax(const SamplesVector &samples, size_t iterationsToSkip) {
+    return *std::max_element(samples.begin() + iterationsToSkip, samples.end());
 }
 
-TestCaseStatistics::Value TestCaseStatistics::Metrics::calculateMean(const SamplesVector &samples) {
-    return std::accumulate(samples.begin(), samples.end(), Value{0}) / samples.size();
+TestCaseStatistics::Value TestCaseStatistics::Metrics::calculateMean(const SamplesVector &samples, size_t iterationsToSkip) {
+    return std::accumulate(samples.begin() + iterationsToSkip, samples.end(), Value{0}) / (samples.size() - iterationsToSkip);
 }
 
-TestCaseStatistics::Value TestCaseStatistics::Metrics::calculateMedian(const SamplesVector &samples) {
-    SamplesVector sortedSamples = samples;
+TestCaseStatistics::Value TestCaseStatistics::Metrics::calculateMedian(const SamplesVector &samples, size_t iterationsToSkip) {
+    SamplesVector sortedSamples(samples.begin() + iterationsToSkip, samples.end());
     std::sort(sortedSamples.begin(), sortedSamples.end());
     const auto samplesCount = sortedSamples.size();
     if (samplesCount % 2 == 0) {
@@ -398,22 +398,22 @@ TestCaseStatistics::Value TestCaseStatistics::Metrics::calculateMedian(const Sam
     }
 }
 
-TestCaseStatistics::Value TestCaseStatistics::Metrics::calculateStandardDeviation(const SamplesVector &samples, Value mean) {
+TestCaseStatistics::Value TestCaseStatistics::Metrics::calculateStandardDeviation(const SamplesVector &samples, Value mean, size_t iterationsToSkip) {
     const auto samplesCount = samples.size();
     Value diffSum = 0;
-    for (auto i = 0u; i < samplesCount; i++) {
+    for (auto i = iterationsToSkip; i < samplesCount; i++) {
         const auto difference = samples[i] - mean;
         diffSum += difference * difference;
     }
     double stdDev = static_cast<double>(diffSum);
-    stdDev /= samplesCount;
+    stdDev /= (samplesCount - iterationsToSkip);
     stdDev = std::sqrt(static_cast<double>(stdDev));
     stdDev /= mean;
     return stdDev;
 }
 
-TestCaseStatistics::MetricsStrings::MetricsStrings(const std::string &name, const Samples &samples, bool reachedInfinity)
-    : metrics(samples.vector),
+TestCaseStatistics::MetricsStrings::MetricsStrings(const std::string &name, const Samples &samples, bool reachedInfinity, size_t iterationsToSkip)
+    : metrics(samples.vector, iterationsToSkip),
       min(generateMin(metrics.min)),
       max(generateMax(metrics.max)),
       mean(generateMean(metrics.mean, reachedInfinity)),

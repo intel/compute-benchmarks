@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,6 +67,7 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument verbose;
     BooleanFlagArgument interactivePrints;
     PositiveIntegerArgument iterations;
+    NonNegativeIntegerArgument warmupIterations;
     IntegerArgument sleepFor;
     ApiArgument selectedApi;
     BooleanFlagArgument noIntelExtensions;

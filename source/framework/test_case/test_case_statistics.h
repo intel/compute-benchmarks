@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ class TestCaseStatistics : public Statistics {
 };
 
 struct TestCaseStatistics::Metrics {
-    explicit Metrics(const SamplesVector &samples);
+    explicit Metrics(const SamplesVector &samples, size_t iterationsToSkip);
     Value min;
     Value max;
     Value mean;
@@ -70,15 +70,15 @@ struct TestCaseStatistics::Metrics {
     Value standardDeviation;
 
   private:
-    static Value calculateMin(const SamplesVector &samples);
-    static Value calculateMax(const SamplesVector &samples);
-    static Value calculateMean(const SamplesVector &samples);
-    static Value calculateMedian(const SamplesVector &samples);
-    static Value calculateStandardDeviation(const SamplesVector &samples, Value mean);
+    static Value calculateMin(const SamplesVector &samples, size_t iterationsToSkip);
+    static Value calculateMax(const SamplesVector &samples, size_t iterationsToSkip);
+    static Value calculateMean(const SamplesVector &samples, size_t iterationsToSkip);
+    static Value calculateMedian(const SamplesVector &samples, size_t iterationsToSkip);
+    static Value calculateStandardDeviation(const SamplesVector &samples, Value mean, size_t iterationsToSkip);
 };
 
 struct TestCaseStatistics::MetricsStrings {
-    MetricsStrings(const std::string &name, const Samples &samples, bool reachedInfinity);
+    MetricsStrings(const std::string &name, const Samples &samples, bool reachedInfinity, size_t iterationsToSkip);
     Metrics metrics;
     std::string min;
     std::string max;

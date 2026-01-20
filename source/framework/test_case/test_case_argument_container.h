@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@ struct TestCaseArgumentContainer : ArgumentContainer {
 
     Api api = Api::Unknown;
     size_t iterations = 0;
+    size_t warmupIterations = 0;
     bool noIntelExtensions = false;
     bool isSingleTestMode = false;
 };

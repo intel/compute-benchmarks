@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,6 +90,8 @@ class TestCase : public TestCaseBase {
     void run(ArgumentContainerT &arguments) const {
         arguments.iterations = Configuration::get().iterations;
         arguments.noIntelExtensions = Configuration::get().noIntelExtensions;
+        arguments.warmupIterations = Configuration::get().warmupIterations;
+        arguments.iterations += arguments.warmupIterations;
 
         // Create statistics object
         const auto testCaseNameWithConfig = getTestCaseNameWithConfig(arguments, Configuration::get().dumpCommandLines);
