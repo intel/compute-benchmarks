@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,16 +92,7 @@ static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &sta
         ASSERT_CL_SUCCESS(retVal);
     }
 
-    // warmup
-    size_t gws = 64u;
     size_t lws = 64u;
-    // Warmup, kernel
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(lowPriorityQueue, lowPriorityKernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(lowPriorityQueue));
-    ASSERT_CL_SUCCESS(retVal);
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(highPriorityQueue, highPriorityKernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(highPriorityQueue));
-    ASSERT_CL_SUCCESS(retVal);
     sleep(std::chrono::milliseconds(arguments.sleepTime));
 
     // benchmark

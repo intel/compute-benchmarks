@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,11 +48,7 @@ static TestResult run(const KernelSwitchLatencyFillArguments &arguments, Statist
 
     auto buffer = clCreateBuffer(opencl.context, 0, arguments.fillSize * sizeof(uint32_t), nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
-    // Warmup, kernel
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-    ASSERT_CL_SUCCESS(retVal);
 
     cl_ulong start{}, end{};
     std::vector<cl_event> profilingEvents;

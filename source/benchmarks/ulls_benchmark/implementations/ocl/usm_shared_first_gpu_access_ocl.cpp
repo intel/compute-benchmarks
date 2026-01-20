@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,6 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
     cl_kernel kernel = clCreateKernel(program, "write", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Warmup
     const cl_mem_properties_intel properties[] = {
         CL_MEM_ALLOC_FLAGS_INTEL,
         UsmHelperOcl::getInitialPlacementFlag(arguments.initialPlacement),
@@ -51,16 +50,10 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
     };
     const size_t gws = 1;
     const size_t lws = 1;
-    auto buffer = clSharedMemAllocINTEL(opencl.context, opencl.device, properties, arguments.bufferSize, 0u, &retVal);
-    ASSERT_CL_SUCCESS(retVal);
-    ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, 0, buffer));
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-    ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, buffer));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        buffer = clSharedMemAllocINTEL(opencl.context, opencl.device, properties, arguments.bufferSize, 0u, &retVal);
+        void *buffer = clSharedMemAllocINTEL(opencl.context, opencl.device, properties, arguments.bufferSize, 0u, &retVal);
         ASSERT_CL_SUCCESS(retVal);
         ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, 0, buffer));
 

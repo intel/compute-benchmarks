@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,15 +47,6 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
     ASSERT_CL_SUCCESS(clBuildProgram(program, 1, &opencl.device, nullptr, nullptr, nullptr));
     cl_kernel kernel = clCreateKernel(program, "fill_with_ones", &retVal);
     ASSERT_CL_SUCCESS(retVal);
-
-    // Warmup
-    for (size_t i = 0; i < arguments.queueCount; i++) {
-        ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffers[i]), &buffers[i]));
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(queues[i], kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
-    }
-    for (size_t i = 0; i < arguments.queueCount; i++) {
-        ASSERT_CL_SUCCESS(clFinish(queues[i]));
-    }
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {

@@ -50,20 +50,6 @@ static TestResult run(const EnqueueBarrierWithEmptyWaitlistArguments &arguments,
     const cl_int operationsCount = 1;
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(cl_int), &operationsCount));
 
-    // Warmup
-    {
-        cl_event event{};
-        for (auto j = 0u; j < enqueueCount - 1; ++j) {
-            ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
-            ASSERT_CL_SUCCESS(clEnqueueBarrierWithWaitList(opencl.commandQueue, 0, nullptr, nullptr));
-        }
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
-        ASSERT_CL_SUCCESS(clEnqueueBarrierWithWaitList(opencl.commandQueue, 0, nullptr, &event));
-
-        ASSERT_CL_SUCCESS(clWaitForEvents(1, &event));
-        ASSERT_CL_SUCCESS(clReleaseEvent(event));
-    }
-
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,11 +51,7 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     ASSERT_CL_SUCCESS(retVal);
     const int kernelOperationsCount = std::max(0, static_cast<int>(arguments.kernelExecutionTime * 1.75));
 
-    // Warmup, kernel
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(int), &kernelOperationsCount));
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-    ASSERT_CL_SUCCESS(retVal);
 
     cl_ulong start{}, end{};
     std::vector<cl_event> profilingEvents;

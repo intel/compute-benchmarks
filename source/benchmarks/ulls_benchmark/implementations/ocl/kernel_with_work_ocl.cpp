@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,11 +46,7 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     cl_kernel kernel = clCreateKernel(program, "write_one", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Warmup, kernel
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-    ASSERT_CL_SUCCESS(retVal);
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

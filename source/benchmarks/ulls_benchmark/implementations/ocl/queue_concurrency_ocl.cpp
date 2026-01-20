@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,18 +50,10 @@ static TestResult run(const QueueConcurrencyArguments &arguments, Statistics &st
     cl_uint fastTime = 1u;
     ASSERT_CL_SUCCESS(clSetKernelArg(fastKernel, 0, sizeof(fastTime), &fastTime));
 
-    // warmup
     size_t lws = 32u;
     size_t gws = lws * arguments.workgroupCount;
     std::vector<cl_event> events;
     events.resize(arguments.kernelCount * 2);
-
-    // Warmup, kernel
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, slowKernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[0]));
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, fastKernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[1]));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-    ASSERT_CL_SUCCESS(clReleaseEvent(events[0u]));
-    ASSERT_CL_SUCCESS(clReleaseEvent(events[1u]));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

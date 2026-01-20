@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,20 +32,15 @@ static TestResult run(const UsmSharedFirstCpuAccessArguments &arguments, Statist
     }
     cl_int retVal{};
 
-    // Warmup
     const cl_mem_properties_intel properties[] = {
         CL_MEM_ALLOC_FLAGS_INTEL,
         UsmHelperOcl::getInitialPlacementFlag(arguments.initialPlacement),
         0,
     };
-    auto buffer = clSharedMemAllocINTEL(opencl.context, opencl.device, properties, arguments.bufferSize, 0u, &retVal);
-    ASSERT_CL_SUCCESS(retVal);
-    static_cast<uint8_t *>(buffer)[0] = 0;
-    ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, buffer));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        buffer = clSharedMemAllocINTEL(opencl.context, opencl.device, properties, arguments.bufferSize, 0u, &retVal);
+        void *buffer = clSharedMemAllocINTEL(opencl.context, opencl.device, properties, arguments.bufferSize, 0u, &retVal);
         ASSERT_CL_SUCCESS(retVal);
 
         timer.measureStart();
