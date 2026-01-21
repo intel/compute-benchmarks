@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,12 +45,6 @@ static TestResult run(const CreateBufferArguments &arguments, Statistics &statis
     }
     if (arguments.readOnly) {
         memFlags |= CL_MEM_READ_ONLY;
-    }
-    // Warmup
-    {
-        cl_mem buffer = clCreateBuffer(opencl.context, memFlags, arguments.bufferSize, hostPtr, &retVal);
-        ASSERT_CL_SUCCESS(retVal);
-        ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
     }
 
     // Benchmark

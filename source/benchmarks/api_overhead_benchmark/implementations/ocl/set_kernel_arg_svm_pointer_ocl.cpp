@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,11 +55,6 @@ static TestResult run(const SetKernelArgSvmPointerArguments &arguments, Statisti
         UsmHelperOcl::Alloc alloc{};
         ASSERT_CL_SUCCESS(UsmHelperOcl::allocate(opencl, UsmMemoryPlacement::Shared, arguments.allocationSize, alloc));
         allocations.push_back(alloc);
-    }
-
-    // Warmup
-    for (auto i = 0u; i < arguments.allocationsCount; i++) {
-        ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernels[i], 0, static_cast<cl_int *>(allocations[i].ptr)));
     }
 
     // Reallocate if argument is set

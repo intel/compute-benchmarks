@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,19 +59,8 @@ static TestResult run(const MemOpenIpcHandleArguments &arguments, Statistics &st
         return TestResult::Success;
     };
 
-    // Warmup
-    std::vector<ze_ipc_mem_handle_t> ipcHandles;
-    ipcHandles.reserve(arguments.AllocationsCount);
+    std::vector<ze_ipc_mem_handle_t> ipcHandles(arguments.AllocationsCount);
     std::vector<void *> ipcPointers(arguments.AllocationsCount);
-    for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
-        std::fill_n(ipcHandles[i].data, ZE_MAX_IPC_HANDLE_SIZE, static_cast<char>(0));
-        ASSERT_ZE_RESULT_SUCCESS(zeMemGetIpcHandle(levelzero.context, allocations[i], &ipcHandles[i]));
-        ASSERT_ZE_RESULT_SUCCESS(zeMemOpenIpcHandle(levelzero.context, levelzero.device, ipcHandles[i], 0, &ipcPointers[i]));
-        EXPECT_NE(ipcPointers[i], nullptr);
-    }
-    for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeMemPutIpcHandle(levelzero.context, ipcHandles[i]));
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

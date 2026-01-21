@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,9 +115,6 @@ static TestResult run(const TmpBufferMixedSizeArguments &arguments, Statistics &
     // Buffer size in bytes must be multiple of sizeof(int)
     if (arguments.sizeSmall % sizeof(int) != 0)
         return TestResult::InvalidArgs;
-
-    // Warmup
-    ASSERT_TEST_RESULT_SUCCESS(scenario(ur, kernel, queueDataA, queueDataB, arguments));
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {

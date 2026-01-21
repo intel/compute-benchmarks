@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,11 +65,6 @@ static TestResult run(const SetKernelArgSvmPointerArguments &arguments, Statisti
     std::vector<void *> allocations(arguments.allocationsCount);
     for (auto i = 0u; i < arguments.allocationsCount; ++i) {
         ASSERT_ZE_RESULT_SUCCESS(L0::UsmHelper::allocate(UsmMemoryPlacement::Shared, levelzero, arguments.allocationSize, &allocations[i]));
-    }
-
-    // Warmup
-    for (auto i = 0u; i < arguments.allocationsCount; ++i) {
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[i], 0, sizeof(void *), &allocations[i]));
     }
 
     // Reallocate if argument is set

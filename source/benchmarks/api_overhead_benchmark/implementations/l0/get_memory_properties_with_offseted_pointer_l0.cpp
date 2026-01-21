@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,14 +38,8 @@ static TestResult run(const GetMemoryPropertiesWithOffsetedPointerArguments &arg
         allocations.push_back(ptr);
     }
 
-    // Warmup
-    ze_memory_allocation_properties_t properties{};
-    for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
-        auto ptr = static_cast<uint8_t *>(allocations[i]) + offset;
-        ASSERT_ZE_RESULT_SUCCESS(zeMemGetAllocProperties(levelzero.context, ptr, &properties, nullptr));
-    }
-
     // Benchmark
+    ze_memory_allocation_properties_t properties{};
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         timer.measureStart();

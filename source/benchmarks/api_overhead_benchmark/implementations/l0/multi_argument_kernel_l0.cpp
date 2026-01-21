@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,6 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
         reversedKernelArguments[arguments.argumentCount - index - 1] = kernelArguments[index];
     }
 
-    // Create command list and warmup
     const ze_group_count_t dispatchTraits{static_cast<uint32_t>(arguments.groupCount), 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
 
@@ -77,23 +76,7 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
 
     bool reverseOrder = false;
 
-    if (arguments.useL0NewArgApi) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, dispatchTraits, groupSizes, kernelArguments.data(), nullptr, nullptr, 0u, nullptr));
-    } else {
-        for (auto argumentId = 0u; argumentId < arguments.argumentCount; ++argumentId) {
-            ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, argumentId, sizeof(void *), &allocations[argumentId]));
-        }
-        for (auto j = 0u; j < arguments.count; ++j) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
-        }
-    }
-
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
-
-    if (arguments.exec) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; ++i) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,12 +27,7 @@ static TestResult run(const UsmBatchMemoryAllocationArguments &arguments, Statis
     UrState ur;
     Timer timer;
 
-    // Warmup
     std::vector<void *> ptrs(arguments.allocationCount);
-    for (auto i = 0u; i < arguments.allocationCount; i++)
-        ASSERT_UR_RESULT_SUCCESS(UR::UsmHelper::allocate(arguments.usmMemoryPlacement, ur.context, ur.device, arguments.size, &ptrs[i]));
-    for (auto i = 0u; i < arguments.allocationCount; i++)
-        ASSERT_UR_RESULT_SUCCESS(urUSMFree(ur.context, ptrs[i]));
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {

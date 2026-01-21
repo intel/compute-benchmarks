@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,30 +58,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     EXPECT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device,
                                            &queueProperties, &queue));
 
-    std::vector<ur_event_handle_t> events(arguments.numKernels);
-
-    // warmup
-    for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
-        EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
-            kernel, 0, sizeof(int), nullptr,
-            reinterpret_cast<void *>(&kernelExecutionTime)));
-
-        ur_event_handle_t *signalEvent = nullptr;
-        if (arguments.useEvents) {
-            signalEvent = &events[iteration];
-        }
-
-        EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
-            queue, kernel, n_dimensions, nullptr, &local_size[0],
-            &global_size[0], nullptr, 0, nullptr, signalEvent));
-    }
-
-    EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
-
-    for (auto &event : events) {
-        if (event)
-            urEventRelease(event);
-    }
+    std::vector<ur_event_handle_t> events(arguments.numKernels, nullptr);
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -115,6 +92,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         for (auto &event : events) {
             if (event)
                 urEventRelease(event);
+            event = nullptr;
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,18 +26,8 @@ static TestResult run(const DriverGetArguments &arguments, Statistics &statistic
     LevelZero levelzero(queueProperties);
     Timer timer;
 
-    // Warmup
-    uint32_t driverCount = 0;
-    if (arguments.getDriverCount) {
-        ASSERT_ZE_RESULT_SUCCESS(zeDriverGet(&driverCount, nullptr));
-    } else {
-        ASSERT_ZE_RESULT_SUCCESS(zeDriverGet(&driverCount, nullptr));
-        std::vector<ze_driver_handle_t> drivers(driverCount);
-        ASSERT_ZE_RESULT_SUCCESS(zeDriverGet(&driverCount, drivers.data()));
-    }
-    driverCount = 0;
-
     // Benchmark
+    uint32_t driverCount = 0;
     for (auto j = 0u; j < arguments.iterations; j++) {
         if (arguments.getDriverCount) {
             timer.measureStart();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,15 +64,9 @@ static TestResult run(const VirtualMemGetAccessAttribArguments &arguments, Stati
     LevelZero levelzero;
     Timer timer;
 
-    // Warmup
-    auto status = doVirtualMemGetAccessAttrib(levelzero, arguments, timer);
-    if (status != TestResult::Success) {
-        return status;
-    }
-
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        status = doVirtualMemGetAccessAttrib(levelzero, arguments, timer);
+        auto status = doVirtualMemGetAccessAttrib(levelzero, arguments, timer);
         if (status != TestResult::Success) {
             return status;
         }

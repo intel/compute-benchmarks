@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,17 +30,10 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
     // Create kernel
     const auto empty = [=]([[maybe_unused]] auto i) {};
 
-    // Warmup
-    auto event = sycl.queue.parallel_for(range, empty);
-    if (arguments.useEventForHostSync) {
-        event.wait();
-    } else {
-        sycl.queue.wait();
-    }
-
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         prof.measureStart();
+        sycl::event event{};
         for (auto iteration = 0u; iteration < arguments.amountOfCalls; iteration++) {
             if (arguments.useEventForHostSync) {
                 event = sycl.queue.parallel_for(range, event, empty);

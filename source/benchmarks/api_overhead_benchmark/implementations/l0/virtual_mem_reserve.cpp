@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,15 +62,9 @@ static TestResult run(const VirtualMemReserveArguments &arguments, Statistics &s
     LevelZero levelzero;
     Timer timer;
 
-    // Warmup
-    auto status = doVirtualMemReserve(levelzero, arguments, timer);
-    if (status != TestResult::Success) {
-        return status;
-    }
-
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        status = doVirtualMemReserve(levelzero, arguments, timer);
+        auto status = doVirtualMemReserve(levelzero, arguments, timer);
         if (status != TestResult::Success) {
             return status;
         }

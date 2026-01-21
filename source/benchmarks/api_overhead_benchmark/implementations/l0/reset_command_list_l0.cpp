@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,13 +44,6 @@ static TestResult run(const ResetCommandListArguments &arguments, Statistics &st
     commandListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t commandList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &commandListDesc, &commandList));
-
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(commandList, destination, source, arguments.size, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(commandList));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &commandList, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListReset(commandList));
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {

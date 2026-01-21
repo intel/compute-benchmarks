@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,10 +29,7 @@ static TestResult run(const VirtualMemQueryPageSizeArguments &arguments, Statist
     LevelZero levelzero;
     Timer timer;
 
-    // Warmup
     size_t pageSize = 0;
-    ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemQueryPageSize(levelzero.context, levelzero.device,
-                                                       (MemoryConstants::gigaByte * 1) - 1u, &pageSize));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

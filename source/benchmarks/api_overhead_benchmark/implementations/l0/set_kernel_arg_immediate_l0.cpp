@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,35 +73,12 @@ static TestResult run(const KernelSetArgumentValueImmediateArguments &arguments,
     kernelDesc.pKernelName = "arg_size";
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
 
-    // Warmup
     st_input_8 kernelArgument8{};
     st_input_64 kernelArgument64{};
     st_input_256 kernelArgument256{};
     st_input_512 kernelArgument512{};
     st_input_1024 kernelArgument1024{};
     st_input_2048 kernelArgument2048{};
-    switch (arguments.argumentSize) {
-    case 8:
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(st_input_8), &kernelArgument8));
-        break;
-    case 64:
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(st_input_64), &kernelArgument64));
-        break;
-    case 256:
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(st_input_256), &kernelArgument256));
-        break;
-    case 512:
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(st_input_512), &kernelArgument512));
-        break;
-    case 1024:
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(st_input_1024), &kernelArgument1024));
-        break;
-    case 2048:
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(st_input_2048), &kernelArgument2048));
-        break;
-    default:
-        return TestResult::InvalidArgs;
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

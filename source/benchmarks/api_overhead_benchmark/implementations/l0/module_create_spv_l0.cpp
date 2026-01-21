@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,10 +36,6 @@ static TestResult run(const ModuleCreateSpvArguments &arguments, Statistics &sta
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
     moduleDesc.inputSize = spirvModule.size();
-
-    // warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

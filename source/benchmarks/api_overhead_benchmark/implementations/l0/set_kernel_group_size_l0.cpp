@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,6 @@ static TestResult run(const SetKernelGroupSizeArguments &arguments, Statistics &
     kernelDesc.pKernelName = "write_sum_local";
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
 
-    // Warmup
     uint32_t groupSizeX{};
     uint32_t groupSizeY{};
     uint32_t groupSizeZ{};
@@ -57,9 +56,6 @@ static TestResult run(const SetKernelGroupSizeArguments &arguments, Statistics &
         groupSizeY = 4u;
         groupSizeZ = 4u;
     }
-
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

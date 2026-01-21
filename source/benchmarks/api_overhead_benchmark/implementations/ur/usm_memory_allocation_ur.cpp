@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,10 +27,7 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
     UrState ur;
     Timer timer;
 
-    // Warmup
     void *ptr{};
-    ASSERT_UR_RESULT_SUCCESS(UR::UsmHelper::allocate(arguments.usmMemoryPlacement, ur.context, ur.device, arguments.size, &ptr));
-    ASSERT_UR_RESULT_SUCCESS(urUSMFree(ur.context, ptr));
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {

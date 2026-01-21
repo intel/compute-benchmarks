@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,9 +28,6 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
     // Create buffers
     auto srcBuffer = UsmHelper::allocate(arguments.sourcePlacement, sycl, arguments.size);
     auto dstBuffer = UsmHelper::allocate(arguments.destinationPlacement, sycl, arguments.size);
-
-    // Warmup
-    sycl.queue.memcpy(dstBuffer, srcBuffer, arguments.size).wait();
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
