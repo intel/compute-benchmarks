@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,12 +50,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
                 value -= 1;
         }
     };
-
-    // Warmup
-    for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
-        queue.parallel_for(range, eat_time);
-    }
-    queue.wait();
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

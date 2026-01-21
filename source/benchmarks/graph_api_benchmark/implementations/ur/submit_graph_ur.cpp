@@ -132,29 +132,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         EXPECT_UR_RESULT_SUCCESS(urGraphInstantiateGraphExp(graph, &execGraph));
     }
 
-    // Warmup
-    if (!arguments.useEvents) {
-        if (arguments.emulateGraphs) {
-            EXPECT_UR_RESULT_SUCCESS(
-                urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, nullptr));
-        } else {
-            EXPECT_UR_RESULT_SUCCESS(
-                urEnqueueGraphExp(queue, execGraph, 0, nullptr, nullptr));
-        }
-        EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
-    } else {
-        ur_event_handle_t event;
-        if (arguments.emulateGraphs) {
-            EXPECT_UR_RESULT_SUCCESS(
-                urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, &event));
-        } else {
-            EXPECT_UR_RESULT_SUCCESS(
-                urEnqueueGraphExp(queue, execGraph, 0, nullptr, &event));
-        }
-        EXPECT_UR_RESULT_SUCCESS(urEventWait(1, &event));
-        EXPECT_UR_RESULT_SUCCESS(urEventRelease(event));
-    }
-
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         prof.measureStart();

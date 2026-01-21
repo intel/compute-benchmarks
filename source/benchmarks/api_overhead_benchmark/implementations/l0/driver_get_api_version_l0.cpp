@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,10 +32,6 @@ static TestResult run(const DriverGetApiVersionArguments &arguments, Statistics 
 
     std::vector<ze_driver_handle_t> drivers(driverCount);
     ASSERT_ZE_RESULT_SUCCESS(zeDriverGet(&driverCount, drivers.data()));
-
-    // Warmup
-    ze_api_version_t driverApiVersionWarmUp;
-    ASSERT_ZE_RESULT_SUCCESS(zeDriverGetApiVersion(drivers[0], &driverApiVersionWarmUp));
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {

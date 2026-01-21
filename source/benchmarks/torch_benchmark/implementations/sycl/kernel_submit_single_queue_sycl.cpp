@@ -117,24 +117,6 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
         }
     }
 
-    // Warmup, avoid jit time and some variance included in the time measurement
-    for (int i = 0; i < 100; ++i) {
-        if (args.kernelName == KernelName::Empty) {
-            submit_kernel_empty(args.kernelWGCount, args.kernelWGSize, sycl.queue);
-        } else if (args.kernelDataType == DataType::Mixed) {
-            if constexpr (std::is_same<T, double>::value) {
-                submit_kernel_add_mixed_type<T, float, int>(args.kernelWGCount, args.kernelWGSize, sycl.queue,
-                                                            deviceBuffer, deviceBufferVec[0], deviceBufferVec[1], deviceBufferVec[2],
-                                                            floatDeviceBufferVec[0], floatDeviceBufferVec[1], floatDeviceBufferVec[2], floatDeviceBufferVec[3],
-                                                            intDeviceBufferVec[0], intDeviceBufferVec[1], intDeviceBufferVec[2]);
-            }
-        } else {
-            submit_kernel_add<T>(args.kernelWGCount, args.kernelWGSize, sycl.queue,
-                                 deviceBuffer, deviceBufferVec.data(), num_main_buffers);
-        }
-    }
-    sycl.queue.wait();
-
     // Totally submit iterations of a specific kernel, can be grouped in several batches,
     // each batch submits batch_size of kernels, then followed by a queue.wait.
     for (size_t i = 0; i < args.iterations; i++) {

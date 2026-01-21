@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,19 +59,14 @@ static TestResult run(const AppendLaunchKernelArguments &arguments, Statistics &
         }
     }
 
-    // Create command list and warmup
+    // Create command list descriptor
     const ze_group_count_t dispatchTraits{static_cast<uint32_t>(arguments.workgroupCount), 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
-    ze_command_list_handle_t cmdList;
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
-    for (auto j = 0u; j < arguments.appendCount; ++j) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, events[j], 0, nullptr));
-    }
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; ++i) {
+        ze_command_list_handle_t cmdList;
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
         timer.measureStart();

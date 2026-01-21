@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,15 +51,6 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
     ze_event_pool_handle_t eventPool{};
     std::vector<ze_event_handle_t> events(arguments.eventCount);
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 0, nullptr, &eventPool));
-
-    // warmup
-    for (auto j = 0u; j < arguments.eventCount; ++j) {
-        eventDesc.index = j;
-        ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[j]));
-    }
-    for (auto j = 0u; j < arguments.eventCount; ++j) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(events[j]));
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

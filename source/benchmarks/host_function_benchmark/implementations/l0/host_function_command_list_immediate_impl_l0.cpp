@@ -86,18 +86,7 @@ static TestResult run(const HostFunctionCommandListImmediateArguments &arguments
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdList));
 
-    // Warmup
     const ze_group_count_t groupCount{1, 1, 1};
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(levelzero.commandListAppendHostFunction(cmdList,
-                                                                     hostFunctions.function,
-                                                                     hostFunctions.userData,
-                                                                     nullptr,
-                                                                     nullptr,
-                                                                     0,
-                                                                     nullptr));
-
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
 
     // Benchmark
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,10 +83,6 @@ TestResult run(const SingleQueueWorkloadSharedBufferArguments &arguments, Statis
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeCommandListClose(cmdList));
-
-    // Warmup
-    ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-    ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

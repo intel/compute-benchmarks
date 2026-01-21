@@ -306,23 +306,6 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
     // simple kernel validation
     ASSERT_TEST_RESULT_SUCCESS(verify_result(cmdListImmediate, l0));
 
-    // warmup
-    for (const auto &[name, kernel] : kernels) {
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, args.kernelWGSize, 1, 1));
-
-        if (args.kernelDataType == DataType::Mixed) {
-            ASSERT_TEST_RESULT_SUCCESS(set_kernel_args(name, d_a,
-                                                       arraysize_of_b, device_array_db,
-                                                       length, kernel_arguments, arg_storage,
-                                                       arraysize_of_c, device_array_dc,
-                                                       arraysize_of_d, device_array_dd));
-        } else if (args.kernelName != KernelName::Empty) {
-            ASSERT_TEST_RESULT_SUCCESS(set_kernel_args(name, d_a, num_params, device_array_db, length, kernel_arguments, arg_storage));
-        }
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdListImmediate, kernel, dispatch, group_sizes, kernel_arguments.data(), nullptr, nullptr, 0, nullptr));
-    }
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdListImmediate, UINT64_MAX));
-
     // benchmarking
     for (size_t i = 0; i < numIterations; ++i) {
         if (h2d && args.kernelName != KernelName::Empty) {

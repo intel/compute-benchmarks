@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,6 @@ static TestResult run(const CommandListHostSynchronizeArguments &arguments, Stat
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
-    // Warmup
     auto runBenchmark = [&]() {
         if (arguments.useBarrierBeforeSync) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, event, 0, nullptr));
@@ -57,18 +56,10 @@ static TestResult run(const CommandListHostSynchronizeArguments &arguments, Stat
         return TestResult::Success;
     };
 
-    auto status = runBenchmark();
-    if (status != TestResult::Success) {
-        return status;
-    }
-    if (arguments.useBarrierBeforeSync) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
-    }
-
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
-        status = runBenchmark();
+        auto status = runBenchmark();
         if (status != TestResult::Success) {
             return status;
         }

@@ -131,7 +131,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
     ze_event_handle_t event{};
     ze_event_handle_t signalEvent = nullptr;
 
-    // warmup
     if (arguments.useEvents) {
         if (counterBasedEvents) {
             ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(
@@ -140,25 +139,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
             ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
         }
         signalEvent = event;
-    }
-
-    if (!arguments.emulateGraphs) {
-        ASSERT_ZE_RESULT_SUCCESS(levelzero.graphExtension.commandListAppendGraph(
-            cmdList, execGraph, nullptr, signalEvent, 0, nullptr));
-    } else {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListImmediateAppendCommandListsExp(
-            cmdList, 1, &graphCmdList, signalEvent, 0, nullptr));
-    }
-
-    if (arguments.useEvents) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(
-            signalEvent, std::numeric_limits<uint64_t>::max()));
-        if (!counterBasedEvents) {
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
-        }
-    } else {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(
-            cmdList, std::numeric_limits<uint64_t>::max()));
     }
 
     // Benchmark

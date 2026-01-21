@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,10 +26,7 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
     LevelZero levelzero;
     Timer timer;
 
-    // Warmup
     void *ptr{};
-    ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.usmMemoryPlacement, levelzero, arguments.size, &ptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, ptr));
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {

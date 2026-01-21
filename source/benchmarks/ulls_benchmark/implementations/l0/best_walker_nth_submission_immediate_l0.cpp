@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,15 +94,6 @@ static TestResult run(const BestWalkerNthSubmissionImmediateArguments &arguments
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
     const ze_group_count_t groupCount{1, 1, 1};
-
-    // Warmup
-    for (uint32_t i = 0; i < arguments.kernelCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[i].kernel, &groupCount, kernels[i].event, 0, nullptr));
-    }
-    for (uint32_t i = 0; i < arguments.kernelCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(kernels[i].event, std::numeric_limits<uint64_t>::max()));
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(kernels[i].event));
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

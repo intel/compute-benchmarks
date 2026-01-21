@@ -44,10 +44,7 @@ static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, Com
     ze_module_handle_t module{};
     ASSERT_TEST_RESULT_SUCCESS(create_kernel(ctx.l0, "torch_benchmark_write_kernel.cl", "torch_benchmark_write_" + DataTypeHelper::toOpenclC(args.kernelDataType), kernel, module));
 
-    // Warmup
     ze_group_count_t dispatch{1u, 1u, 1u};
-    ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0<data_type>(ctx.cmdListImmediate_1, kernel, dispatch, d_reuse, 0, d_reuse_end, 0));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(ctx.cmdListImmediate_1, UINT64_MAX));
 
     // Benchmark
     std::mt19937 rng(42);

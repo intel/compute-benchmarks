@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,26 +104,9 @@ static TestResult run(const VirtualMemMapArguments &arguments, Statistics &stati
     std::vector<void *> reservedMemlist{};
     std::vector<ze_physical_mem_handle_t> physicalMemoryHandleList{};
 
-    // Warmup
-    const uint32_t warmupIterationCount = 5;
-    auto status = prepareVirtualMemoryMaps(levelzero, reserveSize, reservedMemlist, physicalMemoryHandleList, warmupIterationCount);
-    if (status != TestResult::Success) {
-        return status;
-    }
-    for (auto i = 0u; i < warmupIterationCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemMap(levelzero.context, reservedMemlist[i], reserveSize,
-                                                 physicalMemoryHandleList[i], alignedOffset,
-                                                 accessType));
-    }
-
-    status = cleanupVirtualMemoryMaps(levelzero, reservedMemlist, physicalMemoryHandleList, reserveSize);
-    if (status != TestResult::Success) {
-        return status;
-    }
-
     // Benchmark
     Timer timer;
-    status = prepareVirtualMemoryMaps(levelzero, reserveSize, reservedMemlist, physicalMemoryHandleList, static_cast<uint32_t>(arguments.iterations));
+    auto status = prepareVirtualMemoryMaps(levelzero, reserveSize, reservedMemlist, physicalMemoryHandleList, static_cast<uint32_t>(arguments.iterations));
     if (status != TestResult::Success) {
         return status;
     }

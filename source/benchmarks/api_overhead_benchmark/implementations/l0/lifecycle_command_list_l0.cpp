@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,17 +29,8 @@ static TestResult run(const LifecycleCommandListArguments &arguments, Statistics
     }
     Timer timer;
 
-    // Warmup
     ze_command_list_desc_t commandListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC, nullptr, levelzero.commandQueueDesc.ordinal};
     ze_command_list_handle_t commandList;
-    for (auto i = 0u; i < arguments.cmdListCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &commandListDesc, &commandList));
-        EXPECT_NE(nullptr, commandList);
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(commandList));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &commandList, nullptr));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, UINT64_MAX));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(commandList));
-    }
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {

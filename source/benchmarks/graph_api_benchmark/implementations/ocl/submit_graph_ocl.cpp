@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,17 +135,6 @@ static TestResult run(const SubmitGraphArguments &arguments, Statistics &statist
     }
 
     ASSERT_CL_SUCCESS(clFinalizeCommandBufferKHR(cmdBuf));
-
-    // Warmup
-    if (!arguments.useEvents) {
-        ASSERT_CL_SUCCESS(clEnqueueCommandBufferKHR(1, &opencl.commandQueue, cmdBuf, 0, nullptr, nullptr));
-        ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-    } else {
-        cl_event event;
-        ASSERT_CL_SUCCESS(clEnqueueCommandBufferKHR(1, &opencl.commandQueue, cmdBuf, 0, nullptr, &event));
-        ASSERT_CL_SUCCESS(clWaitForEvents(1, &event));
-        ASSERT_CL_SUCCESS(clReleaseEvent(event));
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

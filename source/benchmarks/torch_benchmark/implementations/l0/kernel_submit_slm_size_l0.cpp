@@ -11,7 +11,6 @@
 #include "kernel_submit_common.hpp"
 
 using data_type = float;
-const int WARMUP_ITERATIONS = 3;
 
 using L0DriverGetDefaultContext = decltype(&zeDriverGetDefaultContext);
 using L0AppendLaunchKernelWithArguments = decltype(&zeCommandListAppendLaunchKernelWithArguments);
@@ -66,10 +65,6 @@ static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &stat
     data_type *out_buf = nullptr;
     ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(l0Ctx.l0, 2, out_buf));
 
-    // warmup
-    for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-        ASSERT_TEST_RESULT_SUCCESS(run_kernel(out_buf, slm_num, l0Ctx, kernel));
-    }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
 
     for (size_t i = 0; i < args.iterations; ++i) {

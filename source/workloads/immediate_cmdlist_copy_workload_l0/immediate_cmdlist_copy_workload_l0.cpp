@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,14 +76,6 @@ TestResult run(const ImmediateCmdListCopyWorkloadArguments &arguments, Statistic
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeEventCreate(eventPool, &eventDesc, &event));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(UsmHelper::allocate(UsmMemoryPlacement::Host, levelzero, arguments.copySize, &hostSrcMemory));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.copySize, &deviceDstMemory));
-
-    // Warmup
-    for (auto i = 0u; i < 5; i++) {
-        ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeCommandListAppendMemoryCopy(cmdList, deviceDstMemory, hostSrcMemory, arguments.copySize,
-                                                                        event, 0, nullptr));
-        zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max());
-        zeEventHostReset(event);
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

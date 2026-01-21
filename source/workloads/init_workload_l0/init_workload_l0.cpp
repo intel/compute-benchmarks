@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,10 +40,6 @@ TestResult run(const InitArguments &arguments, Statistics &statistics, WorkloadS
     }
 
     Timer timer{};
-    // Warmup
-    timer.measureStart();
-    timer.measureEnd();
-
     for (auto i = 0u; i < arguments.iterations; i++) {
         synchronization.synchronize(io);
 

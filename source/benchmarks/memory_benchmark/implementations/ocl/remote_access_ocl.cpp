@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,11 +106,8 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
     size_t maxWorkgroupSize = {};
     clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(maxWorkgroupSize), &maxWorkgroupSize, nullptr);
 
-    // Warm up
     const size_t globalWorkSize = arguments.size / elementSize;
     const size_t localWorkSize = maxWorkgroupSize;
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     for (auto i = 0u; i < arguments.iterations; i++) {
         cl_event profilingEvent{};

@@ -80,31 +80,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
-    // Warmup
-    for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
-        // Note: this test calls zeKernelSetArgumentValue and zeKernelSetGroupSize each time to be closer to the SYCL behavior!
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
-        // This isn't exactly what SYCL does, but it is a reasonable approximation.
-        ze_event_handle_t signalEvent = nullptr;
-        if (arguments.useEvents) {
-            if (counterBasedEvents) {
-                ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &events[iteration]));
-            } else {
-                eventDesc.index = iteration;
-                ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[iteration]));
-            }
-            signalEvent = events[iteration];
-        }
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, signalEvent, 0, nullptr));
-    }
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
-    if (arguments.useEvents) {
-        for (auto event : events) {
-            ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
-        }
-    }
-
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         profiler.measureStart();

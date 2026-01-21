@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,20 +44,8 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime);
 
-    // Warmup
     cl_event event{};
     cl_event *eventPtr = arguments.useEvents ? &event : nullptr;
-
-    for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
-        // Note: this test calls clSetKernelArg each time to be closer to the SYCL behavior!
-        ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(int), &kernelOperationsCount));
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, eventPtr));
-        // Note: this test calls clReleaseEvent immediately after enqueuing the kernel to be closer to the SYCL behavior!
-        if (arguments.useEvents) {
-            ASSERT_CL_SUCCESS(clReleaseEvent(event));
-        }
-    }
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
