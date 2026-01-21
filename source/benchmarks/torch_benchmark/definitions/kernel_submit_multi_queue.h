@@ -11,17 +11,20 @@
 
 struct KernelSubmitMultiQueueArguments : TestCaseArgumentContainer {
 
-    IntegerArgument kernelWGCount;
-    IntegerArgument kernelWGSize;
-    IntegerArgument kernelsPerQueue;
+    PositiveIntegerArgument kernelWGCount;
+    PositiveIntegerArgument kernelWGSize;
+    PositiveIntegerArgument kernelsPerQueue;
+    BooleanArgument useProfiling;
+    BooleanArgument measureCompletion;
 
     KernelSubmitMultiQueueArguments() : kernelWGCount(*this, "kernelWGCount", "Number of workgroups."),
                                         kernelWGSize(*this, "kernelWGSize", "Size of each workgroup."),
-                                        kernelsPerQueue(*this, "kernelsPerQueue", "Number of kernels per queue.") {}
+                                        kernelsPerQueue(*this, "kernelsPerQueue", "Number of kernels per queue."),
+                                        useProfiling(*this, "useProfiling", "Create the queue with the enable_profiling property"),
+                                        measureCompletion(*this, "measureCompletion", "Measures total time taken to complete all submissions and waits at the end of iteration. By default only kernel submission time is measured.") {}
 };
 
 struct KernelSubmitMultiQueue : TestCase<KernelSubmitMultiQueueArguments> {
-    using TestCase<KernelSubmitMultiQueueArguments>::TestCase;
 
     std::string getTestCaseName() const override {
         return "KernelSubmitMultiQueue";

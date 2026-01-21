@@ -17,6 +17,9 @@
 
 using data_type = int;
 
+static auto enableProfiling = sycl::property::queue::enable_profiling();
+static auto inOrder = sycl::property::queue::in_order();
+
 static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &statistics) {
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
@@ -32,7 +35,7 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
 
     sycl::queue q[NUM_OF_QUEUES];
     for (int i = 0; i < NUM_OF_QUEUES; i++) {
-        q[i] = sycl::queue(dev, sycl::property::queue::in_order());
+        q[i] = sycl::queue(dev, args.useProfiling ? sycl::property_list{inOrder, enableProfiling} : sycl::property_list{inOrder});
     }
 
     data_type *d_a[NUM_OF_QUEUES];
@@ -52,32 +55,43 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
 
     // Totally submit numIterations of a specific kernel
     for (size_t i = 0; i < args.iterations; i++) {
+
+        if (args.measureCompletion)
+            profiler.measureStart();
+
         // Submit several kernels into queue1
-        for (int j = 0; j < args.kernelsPerQueue; j++) {
+        for (size_t j = 0; j < args.kernelsPerQueue; j++) {
             submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[0], d_a[0], d_b[0], d_c[0]);
         }
 
         // Submit several kernels into queue2
-        for (int j = 0; j < args.kernelsPerQueue - 1; j++) {
+        for (size_t j = 1; j < args.kernelsPerQueue; j++) {
             submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[1], d_a[1], d_b[1], d_c[1]);
         }
         // q2_last_event is the last event of queue2
         sycl::event q2_last_event = submit_with_event_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[1], d_a[1], d_b[1], d_c[1]);
 
         // Start to measure submit time for a specific kernel
-        profiler.measureStart();
+        if (!args.measureCompletion)
+            profiler.measureStart();
         // Submit a new kernel into queue1, but the new kernel can only be executed after q2_last_event ends
         submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[0], q2_last_event, d_a[0], d_b[0], d_c[0]);
-        profiler.measureEnd();
+        if (!args.measureCompletion) {
+            profiler.measureEnd();
+            profiler.pushStats(statistics);
+        }
 
-        profiler.pushStats(statistics);
+        for (auto &oneque : q) {
+            oneque.wait();
+        }
+
+        if (args.measureCompletion) {
+            profiler.measureEnd();
+            profiler.pushStats(statistics);
+        }
     }
 
-    for (int i = 0; i < NUM_OF_QUEUES; i++) {
-        q[i].wait();
-    }
-
-    for (int i = 0; i < NUM_OF_QUEUES; i++) {
+    for (size_t i = 0; i < NUM_OF_QUEUES; i++) {
         if (d_a[i] != NULL)
             sycl::free(d_a[i], q[i]);
         if (d_b[i] != NULL)

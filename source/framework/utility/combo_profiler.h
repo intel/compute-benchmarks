@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,18 +74,22 @@ class ComboProfilerWithStats : public ComboProfiler {
     void pushStats(Statistics &statistics) {
         switch (profiler_type) {
         case ProfilerType::Timer:
-            statistics.pushValue(
-                timer.get(),
-                measurement.getUnit(),
-                measurement.getType(),
-                "time");
+            if (timer.measurementIsReady()) {
+                statistics.pushValue(
+                    timer.get(),
+                    measurement.getUnit(),
+                    measurement.getType(),
+                    "time");
+            }
             break;
         case ProfilerType::CpuCounter:
-            statistics.pushCpuCounter(
-                cpuCounter.get(),
-                measurement.getUnit(),
-                measurement.getType(),
-                "hw instructions");
+            if (cpuCounter.measurementIsReady()) {
+                statistics.pushCpuCounter(
+                    cpuCounter.get(),
+                    measurement.getUnit(),
+                    measurement.getType(),
+                    "hw instructions");
+            }
             break;
         default:
             FATAL_ERROR("Undefined ProfilerType provided");

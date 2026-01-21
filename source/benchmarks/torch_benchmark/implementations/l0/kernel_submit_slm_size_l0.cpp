@@ -69,16 +69,23 @@ static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &stat
 
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
-        ASSERT_TEST_RESULT_SUCCESS(run_kernel(out_buf, slm_num, l0Ctx, kernel));
-        profiler.measureEnd();
-        profiler.pushStats(statistics);
 
-        // expect a wait here after a batch of submissions, if batch > 0
-        if (args.kernelBatchSize > 0 && ((i + 1) % args.kernelBatchSize) == 0) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
+        for (size_t j = 0; j < static_cast<size_t>(args.kernelBatchSize); ++j) {
+            ASSERT_TEST_RESULT_SUCCESS(run_kernel(out_buf, slm_num, l0Ctx, kernel));
+        }
+
+        if (!args.measureCompletion) {
+            profiler.measureEnd();
+            profiler.pushStats(statistics);
+        }
+
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
+
+        if (args.measureCompletion) {
+            profiler.measureEnd();
+            profiler.pushStats(statistics);
         }
     }
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
 
     // clean up
     data_type host_result[2];

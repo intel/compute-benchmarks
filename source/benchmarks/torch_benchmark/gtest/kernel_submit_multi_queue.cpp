@@ -15,7 +15,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelSubmitMultiQueue> registerTestCase{};
 
-class KernelSubmitMultiQueueTest : public ::testing::TestWithParam<std::tuple<Api, int, int, int>> {
+class KernelSubmitMultiQueueTest : public ::testing::TestWithParam<std::tuple<Api, int, int, int, bool, bool>> {
 };
 
 TEST_P(KernelSubmitMultiQueueTest, Test) {
@@ -24,8 +24,9 @@ TEST_P(KernelSubmitMultiQueueTest, Test) {
     args.kernelWGCount = std::get<1>(GetParam());
     args.kernelWGSize = std::get<2>(GetParam());
     args.kernelsPerQueue = std::get<3>(GetParam());
-    KernelSubmitMultiQueue test;
-    test.run(args);
+    args.useProfiling = std::get<4>(GetParam());
+    args.measureCompletion = std::get<5>(GetParam());
+    KernelSubmitMultiQueue().run(args);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -33,6 +34,8 @@ INSTANTIATE_TEST_SUITE_P(
     KernelSubmitMultiQueueTest,
     ::testing::Combine(
         ::testing::Values(Api::L0, Api::SYCL, Api::SYCLPREVIEW),
-        ::testing::Values(512),
-        ::testing::Values(256),
-        ::testing::Values(10)));
+        ::testing::Values(512),           // kernelWGCount
+        ::testing::Values(256),           // kernelWGSize
+        ::testing::Values(10),            // kernelsPerQueue
+        ::testing::Values(false),         // useProfiling
+        ::testing::Values(false, true))); // measureCompletion

@@ -10,12 +10,24 @@
 
 #include "definitions/kernel_submit_slm_size.h"
 
+#include <cmath>
 #include <sycl/sycl.hpp>
 
 using data_type = float;
 const int WARMUP_ITERATIONS = 3;
 
 namespace syclex = sycl::ext::oneapi::experimental;
+
+template <typename data_type> // in case somebody changes data_type to integer type later
+static bool data_type_equal(data_type a, data_type b) {
+    return a == b;
+}
+
+template <>
+bool data_type_equal<float>(float a, float b) {
+    const float epsilon = 1e-3f;
+    return std::fabs(a - b) <= epsilon * std::max(std::fabs(a), std::fabs(b));
+}
 
 static void submit_kernel_slm(sycl::queue &q, data_type *out, const std::size_t slm_num) {
 
@@ -34,11 +46,16 @@ static void submit_kernel_slm(sycl::queue &q, data_type *out, const std::size_t 
                           }
                           item.barrier(sycl::access::fence_space::local_space);
                           if (local_id == 0) {
-                              out[0] = slm[slm_num - 1];
                               out[1] = 13.0f;
+                          }
+                          if ((slm_num - 1 - local_id) % local_size == 0) {
+                              out[0] = slm[slm_num - 1];
                           }
                       });
 }
+
+static auto enableProfiling = sycl::property::queue::enable_profiling();
+static auto inOrder = sycl::property::queue::in_order();
 
 static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &statistics) {
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
@@ -50,7 +67,7 @@ static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &stat
 
     // sycl::device dev = sycl::device([](const sycl::device&){return 0;}); // use it to run on CPU
     sycl::device dev = sycl::device(sycl::gpu_selector_v);
-    sycl::queue q(dev, sycl::property::queue::in_order());
+    sycl::queue q(dev, args.useProfiling ? sycl::property_list{inOrder, enableProfiling} : sycl::property_list{inOrder});
 
     const size_t max_slm_size = dev.get_info<sycl::info::device::local_mem_size>();
 
@@ -61,7 +78,7 @@ static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &stat
 
     const size_t slm_size = slm_num * sizeof(data_type);
     if (slm_size > max_slm_size) {
-        return TestResult::Error;
+        return TestResult::InvalidArgs;
     }
 
     data_type *d_out = sycl::malloc_device<data_type>(2, q);
@@ -78,17 +95,34 @@ static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &stat
     for (size_t i = 0; i < args.iterations; ++i) {
 
         profiler.measureStart();
-        submit_kernel_slm(q, d_out, slm_num);
-        profiler.measureEnd();
-        profiler.pushStats(statistics);
 
-        // expect a wait here after a batch of submissions, if batch > 0
-        if (args.kernelBatchSize > 0 && ((i + 1) % args.kernelBatchSize) == 0) {
-            q.wait();
+        for (size_t j = 0; j < static_cast<size_t>(args.kernelBatchSize); ++j) {
+            submit_kernel_slm(q, d_out, slm_num);
+        }
+
+        if (!args.measureCompletion) {
+            profiler.measureEnd();
+            profiler.pushStats(statistics);
+        }
+
+        q.wait();
+
+        if (args.measureCompletion) {
+            profiler.measureEnd();
+            profiler.pushStats(statistics);
         }
     }
 
-    q.wait();
+    // verification
+    data_type out[2] = {0.0f, 0.0f};
+
+    q.memcpy(out, d_out, 2 * sizeof(data_type)).wait();
+    const data_type expected = 0.1f * (slm_num - 1);
+    if (!data_type_equal(out[0], expected) || !data_type_equal(out[1], 13.0f)) {
+        std::cerr << "Verification failed: expected: " << expected << " and 13.0, but got " << out[0] << ", " << out[1] << std::endl;
+        sycl::free(d_out, q);
+        return TestResult::VerificationFail;
+    }
 
     // clean up
     sycl::free(d_out, q);

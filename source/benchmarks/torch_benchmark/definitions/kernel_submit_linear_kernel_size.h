@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,6 @@ struct KernelSubmitLinearKernelSizeArguments : TestCaseArgumentContainer {
 };
 
 struct KernelSubmitLinearKernelSize : TestCase<KernelSubmitLinearKernelSizeArguments> {
-    using TestCase<KernelSubmitLinearKernelSizeArguments>::TestCase;
 
     std::string getTestCaseName() const override {
         return "KernelSubmitLinearKernelSize";

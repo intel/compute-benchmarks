@@ -68,6 +68,8 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
     desc.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC;
     desc.pNext = nullptr;
     desc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    if (args.useProfiling)
+        desc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
 
     L0CounterBasedEventCreate2 counterBasedEventCreate2 = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeDriverGetExtensionFunctionAddress(
@@ -80,25 +82,37 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
     ASSERT_ZE_RESULT_SUCCESS(counterBasedEventCreate2(l0Ctx.l0.context, l0Ctx.l0.device, &desc, &q2_last_event));
 
     for (size_t i = 0; i < args.iterations; i++) {
+
+        if (args.measureCompletion)
+            profiler.measureStart();
+
         // submit several kernels into cmdlist_1
-        for (int j = 0; j < args.kernelsPerQueue; j++) {
+        for (size_t j = 0; j < args.kernelsPerQueue; j++) {
 
             ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(args.kernelWGSize), d_a[0], d_b[0], d_c[0], nullptr, nullptr));
         }
         // submit several kernels into cmdlist_2
-        for (int j = 0; j < args.kernelsPerQueue - 1; j++) {
+        for (size_t j = 1; j < args.kernelsPerQueue; j++) {
             ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(args.kernelWGSize), d_a[1], d_b[1], d_c[1], nullptr, nullptr));
         }
         ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_2, kernel, dispatch, static_cast<uint32_t>(args.kernelWGSize), d_a[1], d_b[1], d_c[1], q2_last_event, nullptr));
         // mark the last kernel in cmdlist_2
-        profiler.measureStart();
+        if (!args.measureCompletion)
+            profiler.measureStart();
         ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0(l0Ctx.cmdListImmediate_1, kernel, dispatch, static_cast<uint32_t>(args.kernelWGSize), d_a[0], d_b[0], d_c[0], nullptr, q2_last_event));
-        profiler.measureEnd();
-        profiler.pushStats(statistics);
-    }
+        if (!args.measureCompletion) {
+            profiler.measureEnd();
+            profiler.pushStats(statistics);
+        }
 
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_2, UINT64_MAX));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_2, UINT64_MAX));
+
+        if (args.measureCompletion) {
+            profiler.measureEnd();
+            profiler.pushStats(statistics);
+        }
+    }
 
     // clean
     for (int i = 0; i < 2; i++) {

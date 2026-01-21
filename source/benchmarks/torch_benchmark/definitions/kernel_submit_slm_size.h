@@ -11,15 +11,18 @@
 
 struct KernelSubmitSlmSizeArguments : TestCaseArgumentContainer {
 
-    IntegerArgument kernelBatchSize;
+    PositiveIntegerArgument kernelBatchSize;
     IntegerArgument slmNum;
+    BooleanArgument useProfiling;
+    BooleanArgument measureCompletion;
 
     KernelSubmitSlmSizeArguments() : kernelBatchSize(*this, "kernelBatchSize", "Sychronization interval."),
-                                     slmNum(*this, "slmNum", "Size of used shared local memory.") {}
+                                     slmNum(*this, "slmNum", "Size of used shared local memory."),
+                                     useProfiling(*this, "useProfiling", "Create the queue with the enable_profiling property"),
+                                     measureCompletion(*this, "measureCompletion", "Measures total time of one batch submission (multiple submits) together with wait after the batch. Default is to measure one submit call only.") {}
 };
 
 struct KernelSubmitSlmSize : TestCase<KernelSubmitSlmSizeArguments> {
-    using TestCase<KernelSubmitSlmSizeArguments>::TestCase;
 
     std::string getTestCaseName() const override {
         return "KernelSubmitSlmSize";

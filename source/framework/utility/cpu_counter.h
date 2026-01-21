@@ -107,6 +107,10 @@ class CpuCounter {
         if (this->markTimers) {
             printf("\n CPU counter START \n");
         }
+        if (state == State::STARTED) {
+            FATAL_ERROR("CpuCounter measureStart called twice without measureEnd in the middle\n");
+        }
+        state = State::STARTED;
         // make sure that any pending instructions are done and all memory transactions committed.
         _mm_mfence();
         _mm_lfence();
@@ -120,6 +124,12 @@ class CpuCounter {
         _mm_lfence();
 
         events = Perf().end();
+        if (state == State::STARTED) {
+            state = State::READY;
+        } else {
+            FATAL_ERROR("CpuCounter measureEnd called without measureStart\n");
+        }
+
         if (this->markTimers) {
             printf("\n CPU counter END \n");
         }
@@ -129,7 +139,14 @@ class CpuCounter {
         return events;
     }
 
+    bool measurementIsReady() const { return state == State::READY; }
+
   private:
     bool markTimers = false;
     uint64_t events = 0;
+
+    enum class State { IDLE,
+                       STARTED,
+                       READY };
+    State state = State::IDLE;
 };
