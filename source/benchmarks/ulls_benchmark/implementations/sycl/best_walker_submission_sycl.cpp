@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,9 +32,6 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     const auto writeOne = [buffer]() {
         *buffer = 1u;
     };
-
-    // Warmup
-    sycl.queue.single_task(writeOne).wait();
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

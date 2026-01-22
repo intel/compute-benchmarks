@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,19 +71,10 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
         levelzero.counterBasedEventCreate2(context, levelzero.device, &defaultCounterBasedEventDesc, &eventOnKernel);
     }
 
-    // Warmup
-    auto ret = zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, wgc, wgs, kernelArgs, nullptr, eventOnKernel, 0, nullptr);
-    ASSERT_ZE_RESULT_SUCCESS(ret);
-    if (arguments.signalOnBarrier) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(barrierCmdList, event, dependencyOnKernel, &eventOnKernel));
-    }
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
-
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
         timer.measureStart();
 
-        ret = zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, wgc, wgs, kernelArgs, nullptr, eventOnKernel, 0, nullptr);
-        ASSERT_ZE_RESULT_SUCCESS(ret);
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, wgc, wgs, kernelArgs, nullptr, eventOnKernel, 0, nullptr));
         if (arguments.signalOnBarrier) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(barrierCmdList, event, dependencyOnKernel, &eventOnKernel));
         }

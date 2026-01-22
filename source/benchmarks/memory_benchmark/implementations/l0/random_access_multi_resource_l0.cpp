@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,11 +123,6 @@ static TestResult run(const RandomAccessMultiResourceArguments &arguments, Stati
     ze_event_handle_t event{};
     ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &event));
 
-    // Warmup
-    for (auto i = 0u; i < 5; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
-    }
     const size_t bytesTransferred = workItemCnt * (srcBufferAccessElementSize * 2 + offsetAccessBytesPerThread);
 
     // Benchmark

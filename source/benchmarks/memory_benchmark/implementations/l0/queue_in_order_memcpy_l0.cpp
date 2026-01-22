@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,16 +66,6 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
         levelzero.commandQueueDesc.pNext = &copyOffload;
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &levelzero.commandQueueDesc, &cmdList));
-    // Warmup
-    ze_event_handle_t signalEvent = events[0];
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, arguments.size, signalEvent, 0, nullptr));
-    ze_event_handle_t waitEvent = signalEvent;
-    for (auto j = 1u; j < arguments.count; ++j) {
-        signalEvent = events[j];
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, arguments.size, signalEvent, 1, &waitEvent));
-        waitEvent = signalEvent;
-    }
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(waitEvent, std::numeric_limits<uint64_t>::max()));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -83,9 +73,9 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
         }
         timer.measureStart();
-        signalEvent = events[0];
+        ze_event_handle_t signalEvent = events[0];
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, arguments.size, signalEvent, 0, nullptr));
-        waitEvent = signalEvent;
+        ze_event_handle_t waitEvent = signalEvent;
         for (auto j = 1u; j < arguments.count; ++j) {
             signalEvent = events[j];
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, arguments.size, signalEvent, 1, &waitEvent));

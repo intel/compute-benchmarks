@@ -26,7 +26,6 @@ static TestResult run(const DestroyCommandListImmediateArguments &arguments, Sta
     LevelZero levelzero(queueProperties);
     Timer timer;
 
-    // Warmup
     std::vector<ze_command_list_handle_t> commandLists(arguments.cmdListCount);
     ze_command_queue_desc_t commandQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     if (arguments.useIoq) {

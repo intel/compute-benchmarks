@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -172,16 +172,6 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Warmup
-    for (auto i = 0u; i < 5; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-        if (arguments.useEvents) {
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
-        } else {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
-        }
-    }
     const size_t randomAccessBytesPerThread = accessMode == AccessMode::ReadWrite ? srcBufferAccessElementSize * 2 : srcBufferAccessElementSize;
     const size_t bytesTransferred = workItemCnt * (randomAccessBytesPerThread + offsetAccessBytesPerThread);
 

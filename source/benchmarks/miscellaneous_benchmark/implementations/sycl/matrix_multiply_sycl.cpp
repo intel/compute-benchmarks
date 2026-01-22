@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,9 +61,6 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
                     resultsDev[item.get_id()] = dataXDev[item.get_id()] + dataYDev[item.get_id()];
                 });
         };
-
-        // Warm-up
-        sycl.queue.submit(commandList).wait();
 
         for (auto i = 0u; i < arguments.iterations; i++) {
             auto profileEvent = sycl.queue.submit(commandList);

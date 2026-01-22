@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,6 @@ static TestResult run(const OneAtomicArguments &arguments, Statistics &statistic
 
     // Setup
     LevelZero levelzero;
-    const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     Timer timer{};
 
     // Check support
@@ -96,23 +95,19 @@ static TestResult run(const OneAtomicArguments &arguments, Statistics &statistic
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 2, sizeof(iterations), &iterations));
     const ze_group_count_t groupCount{static_cast<uint32_t>(gws / lws), 1u, 1u};
 
-    // Warmup
+    // Benchmark
+    const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     ze_command_list_handle_t cmdList{};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, arguments.useEvents ? perfEvent : nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
-    if (arguments.useEvents) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(perfEvent));
-    }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
+
         auto totalAtomicOperations = data.loopIterations * data.operatorApplicationsPerIteration;
         if (arguments.useEvents) {
             ze_kernel_timestamp_result_t kernelTimestamp{};

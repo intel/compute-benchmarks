@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,11 +89,6 @@ static TestResult run(const EventCtxtSwitchLatencyArguments &arguments, Statisti
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdListFirst));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdListSecond));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdListReset));
-
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(cmdQueueFirst, 1, &cmdListFirst, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(cmdQueueSecond, 1, &cmdListSecond, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(cmdQueueFirst, std::numeric_limits<uint64_t>::max()));
 
     // reset all events before next round
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(cmdQueueFirst, 1, &cmdListReset, nullptr));
