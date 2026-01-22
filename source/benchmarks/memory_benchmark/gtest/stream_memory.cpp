@@ -53,7 +53,7 @@ INSTANTIATE_TEST_SUITE_P(
     StreamMemoryTestLIMITED,
     StreamMemoryTest,
     ::testing::Combine(
-        ::testing::Values(Api::OpenCL),
+        ::testing::Values(Api::L0, Api::OpenCL),
         ::testing::Values(StreamMemoryType::Triad),
         ::testing::Values(512 * megaByte),
         ::testing::Values(true),
