@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2025 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,11 +8,29 @@ set(SYCL_FOUND FALSE)
 
 if(NOT SYCL_COMPILER_ROOT)
     set(SYCL_COMPILER_ROOT $ENV{CMPLR_ROOT})
+
+    if(NOT SYCL_COMPILER_ROOT)
+        get_filename_component(SYCL_ROOT "${CMAKE_SOURCE_DIR}/../oneapi" ABSOLUTE)
+        if(IS_DIRECTORY "${SYCL_ROOT}")
+            set(SYCL_COMPILER_ROOT "${SYCL_ROOT}")
+            set(SYCL_LIB_PATH "${SYCL_COMPILER_ROOT}/lib")
+            set(SYCL_BIN_PATH "${SYCL_COMPILER_ROOT}/bin")
+
+            message(STATUS "FindSYCL: Using SYCL_COMPILER_ROOT from ${SYCL_COMPILER_ROOT}")
+            message(STATUS "FindSYCL: SYCL_LIB_PATH = ${SYCL_LIB_PATH}")
+            message(STATUS "FindSYCL: SYCL_BIN_PATH = ${SYCL_BIN_PATH}")
+
+            list(APPEND CMAKE_PROGRAM_PATH "${SYCL_BIN_PATH}")
+            set(ENV{LD_LIBRARY_PATH} "${SYCL_LIB_PATH}:$ENV{LD_LIBRARY_PATH}")
+        endif()
+    else()
+        set(SYCL_COMPILER_ROOT ${SYCL_COMPILER_ROOT}/linux)
+    endif()
+
     if(NOT SYCL_COMPILER_ROOT)
         message(WARNING "FindSYCL: Intel oneAPI environment not set. Ensure that Intel oneAPI is installed and use the setvars script.")
         return()
     endif()
-    set(SYCL_COMPILER_ROOT ${SYCL_COMPILER_ROOT}/linux)
 endif()
 
 if(NOT SYCL_COMPILER)

@@ -12,6 +12,10 @@
 
 set -e
 
+if [[ -n "@SYCL_BIN_PATH@" ]] && [[ -d "@SYCL_BIN_PATH@" ]]; then
+    export PATH="@SYCL_BIN_PATH@:$PATH"
+fi
+
 if [[ "@SYCL_COMPILER@" == "acpp" || " $@ " =~ .*\ -fsycl\ .* ]]; then
     @SYCL_COMPILER@ "${@:2}"
 else
