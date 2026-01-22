@@ -97,17 +97,6 @@ static TestResult run(const KernelSwitchPriorityArguments &arguments, Statistics
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(mainCmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(secondCmdList));
 
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(mainCmdQueue, 1, &mainCmdList, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(secondCmdQueue, 1, &secondCmdList, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(mainCmdQueue, std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(secondCmdQueue, std::numeric_limits<uint64_t>::max()));
-    if (!arguments.useIoq) {
-        for (auto j = 0u; j < arguments.kernelCount; j++) {
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
-        }
-    }
-
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
         // Benchmark
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(mainCmdQueue, 1, &mainCmdList, nullptr));

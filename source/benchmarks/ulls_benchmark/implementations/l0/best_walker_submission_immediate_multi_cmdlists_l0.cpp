@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,15 +78,6 @@ static TestResult run(const BestWalkerSubmissionImmediateMultiCmdlistsArguments 
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, Engine::Ccs0);
     for (auto i = 0u; i < arguments.cmdlistCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdLists[i]));
-    }
-
-    // Warmup
-    for (auto i = 0u; i < arguments.cmdlistCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdLists[i], kernels[i], &groupCount, events[i], 0, nullptr));
-    }
-    for (auto i = 0u; i < arguments.cmdlistCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(events[i], std::numeric_limits<uint64_t>::max()));
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[i]));
     }
 
     // Benchmark

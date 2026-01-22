@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,8 +50,6 @@ static TestResult run(const AppendWaitOnEventsImmediateArguments &arguments, Sta
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(event));
         ASSERT_ZE_RESULT_SUCCESS(zeEventQueryStatus(event));
     }
-    // warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWaitOnEvents(commandList, 1, &event));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

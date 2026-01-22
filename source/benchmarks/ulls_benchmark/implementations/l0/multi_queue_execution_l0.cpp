@@ -71,17 +71,6 @@ static TestResult run(const MultiQueueExecutionArguments &arguments, Statistics 
 
     const ze_group_count_t groupCount{static_cast<uint32_t>(gws / lws), 1u, 1u};
 
-    // Warmup
-    for (auto j = 0u; j < arguments.kernelCount; j++) {
-        auto dependentEvent = (!arguments.useIoq || j == 0) ? waitEvent : nullptr;
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(mainCmdList, kernel, &groupCount, nullptr, dependentEvent ? 1 : 0, &dependentEvent));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(secondCmdList, kernel, &groupCount, nullptr, dependentEvent ? 1 : 0, &dependentEvent));
-    }
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(waitEvent));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(mainCmdList, std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(secondCmdList, std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(waitEvent));
-
     Timer timer{};
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
         for (auto j = 0u; j < arguments.kernelCount; j++) {

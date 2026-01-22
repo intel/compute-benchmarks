@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,15 +106,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
         }
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
-
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
-    if (!arguments.counterBasedEvents) {
-        for (auto j = 0u; j < arguments.kernelCount; j++) {
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
-        }
-    }
 
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
         // Benchmark

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,9 +69,6 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
-    // warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
-
     // Create events for profiling
     ze_event_pool_flags_t flags = {0u};
     ze_event_pool_flags_t profilingFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -139,7 +136,6 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(eventHandle, std::numeric_limits<uint64_t>::max()));
             ze_kernel_timestamp_result_t eventTimestamps;
             ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(eventHandle, &eventTimestamps));
-            // first run is a warmup
             if (j > 0) {
                 kernelsTime += std::chrono::nanoseconds((eventTimestamps.global.kernelEnd - eventTimestamps.global.kernelStart) * timerResolution);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,10 +113,6 @@ static TestResult run(const ExecuteRegularCommandListWithImmediateArguments &arg
     const ze_group_count_t dispatchTraits{1u, 1u, 1u};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
-
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListImmediateAppendCommandListsExp(immediateCmdlist, 1, &cmdList, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(immediateCmdlist, std::numeric_limits<uint64_t>::max()));
 
     if (arguments.waitEvent && !arguments.counterBasedEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(events[0]));

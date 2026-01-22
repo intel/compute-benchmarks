@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,11 +34,6 @@ static TestResult run(const UsmSharedFirstCpuAccessArguments &arguments, Statist
         deviceAllocationDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT;
     }
     void *buffer{};
-
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeMemAllocShared(levelzero.context, &deviceAllocationDesc, &hostAllocationDesc, arguments.bufferSize, 0, levelzero.device, &buffer));
-    static_cast<uint8_t *>(buffer)[0] = 0;
-    ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffer));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

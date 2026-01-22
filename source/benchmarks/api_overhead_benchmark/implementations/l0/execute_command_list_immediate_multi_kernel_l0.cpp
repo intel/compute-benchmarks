@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,16 +104,6 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
     }
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
-
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[0], &groupCount0, events[0], 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[1], &groupCount0, events[1], 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(events[0], std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(events[1], std::numeric_limits<uint64_t>::max()));
-    if (!arguments.useIoq) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[0]));
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[1]));
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

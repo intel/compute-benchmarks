@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,19 +105,11 @@ static TestResult run(const MultipleImmediateCmdListsWithDependenciesArguments &
     for (auto i = 0u; i < arguments.cmdlistCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdLists[i]));
     }
-    // Warmup
-    auto result = runSingleIteration(arguments, cmdLists, kernels, events, submissionsPerQueue);
-    if (result != TestResult::Success) {
-        return result;
-    }
-    for (auto i = 0u; i < totalEventCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[i]));
-    }
 
     // Benchmark
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
         timer.measureStart();
-        result = runSingleIteration(arguments, cmdLists, kernels, events, submissionsPerQueue);
+        auto result = runSingleIteration(arguments, cmdLists, kernels, events, submissionsPerQueue);
         if (result != TestResult::Success) {
             return result;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,18 +87,11 @@ static TestResult run(const KernelAndCopyArguments &arguments, Statistics &stati
     cl_kernel kernel = clCreateKernel(program, "fill_with_ones", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Warmup
     const size_t lws = 1;
     const size_t gws = 1;
     if (arguments.runKernel) {
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(bufferForKernel), &bufferForKernel));
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, sizeof(bufferForKernelSize), &bufferForKernelSize));
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(queueForKernel, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
-        ASSERT_CL_SUCCESS(clFinish(queueForKernel));
-    }
-    if (arguments.runCopy) {
-        ASSERT_CL_SUCCESS(clEnqueueCopyBuffer(queueForCopy, bufferForCopy1, bufferForCopy2, 0, 0, bufferForCopySize, 0, nullptr, nullptr));
-        ASSERT_CL_SUCCESS(clFinish(queueForCopy));
     }
 
     // Benchmark

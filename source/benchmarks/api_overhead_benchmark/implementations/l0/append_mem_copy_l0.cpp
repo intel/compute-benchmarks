@@ -50,15 +50,10 @@ static TestResult run(const AppendMemCopyArguments &arguments, Statistics &stati
         }
     }
 
-    // Create command list and warmup
+    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
-    for (auto j = 0u; j < arguments.appendCount; ++j) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, dst, src, arguments.size, events[j], 0, nullptr));
-    }
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; ++i) {

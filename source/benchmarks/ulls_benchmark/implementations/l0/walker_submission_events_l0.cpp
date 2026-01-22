@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,22 +69,11 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, hEvent, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Warmup
+    // Benchmark
     uint64_t hostEnqueueTimestamp = 0;
     uint64_t deviceEnqueueTimestamp = 0;
-    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetGlobalTimestamps(levelzero.device, &hostEnqueueTimestamp, &deviceEnqueueTimestamp));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(hEvent, std::numeric_limits<uint64_t>::max()));
-
     ze_kernel_timestamp_result_t kernelTimestamp;
-    ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(hEvent, &kernelTimestamp));
 
-    uint64_t truncatedDeviceEnqueueTimestamp = BitHelper::isolateLowerNBits(deviceEnqueueTimestamp, sharedTimestampValidBits);
-    uint64_t truncatedKernelStartTimestamp = BitHelper::isolateLowerNBits(kernelTimestamp.global.kernelStart, sharedTimestampValidBits);
-    EXPECT_GT(truncatedKernelStartTimestamp, truncatedDeviceEnqueueTimestamp);
-
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(hEvent));
         ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetGlobalTimestamps(levelzero.device, &hostEnqueueTimestamp, &deviceEnqueueTimestamp));
@@ -93,8 +82,8 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(hEvent, std::numeric_limits<uint64_t>::max()));
 
         ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(hEvent, &kernelTimestamp));
-        truncatedDeviceEnqueueTimestamp = BitHelper::isolateLowerNBits(deviceEnqueueTimestamp, sharedTimestampValidBits);
-        truncatedKernelStartTimestamp = BitHelper::isolateLowerNBits(kernelTimestamp.global.kernelStart, sharedTimestampValidBits);
+        auto truncatedDeviceEnqueueTimestamp = BitHelper::isolateLowerNBits(deviceEnqueueTimestamp, sharedTimestampValidBits);
+        auto truncatedKernelStartTimestamp = BitHelper::isolateLowerNBits(kernelTimestamp.global.kernelStart, sharedTimestampValidBits);
 
         std::chrono::nanoseconds submissionTime = levelzero.getAbsoluteSubmissionTime(truncatedKernelStartTimestamp,
                                                                                       truncatedDeviceEnqueueTimestamp,

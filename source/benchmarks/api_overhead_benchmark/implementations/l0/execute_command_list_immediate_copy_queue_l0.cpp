@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,13 +83,6 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
         commandQueueDesc->desc.pNext = &copyOffload;
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
-
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, arguments.size, event, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
-    if (!arguments.useIoq) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

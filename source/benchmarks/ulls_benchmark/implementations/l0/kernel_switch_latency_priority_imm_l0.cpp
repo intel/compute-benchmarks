@@ -96,9 +96,6 @@ static TestResult run(const KernelSwitchPriorityImmArguments &arguments, Statist
         return TestResult::Success;
     };
 
-    // Warmup
-    launchIteration();
-
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
         // Benchmark
         auto ret = launchIteration();

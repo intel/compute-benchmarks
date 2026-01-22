@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,13 +90,7 @@ TestResult run(const ImmediateCmdListWalkerSubmissionArguments &arguments, Stati
     eventDesc.index = 0;
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeEventCreate(eventPool, &eventDesc, &event));
 
-    // Warmup
     const ze_group_count_t groupCount{1, 1, 1};
-    for (auto i = 0u; i < 5; i++) {
-        ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, event, 0, nullptr));
-        ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
-        ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeEventHostReset(event));
-    }
     volatile uint64_t *volatileBuffer = static_cast<uint64_t *>(hostMemory);
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

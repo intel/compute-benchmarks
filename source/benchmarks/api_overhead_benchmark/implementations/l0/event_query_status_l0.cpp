@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,8 +44,6 @@ static TestResult run(const EventQueryStatusArguments &arguments, Statistics &st
     if (arguments.eventSignaled) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(event));
     }
-    // warmup
-    zeEventQueryStatus(event);
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

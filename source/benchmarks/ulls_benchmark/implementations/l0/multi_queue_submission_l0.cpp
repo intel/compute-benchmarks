@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,14 +95,6 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &pBuffer));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
-    }
-
-    // Warmup
-    for (size_t i = 0; i < arguments.queueCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(queues[i], 1, &cmdLists[i], nullptr));
-    }
-    for (size_t i = 0; i < arguments.queueCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(queues[i], std::numeric_limits<uint64_t>::max()));
     }
 
     // Benchmark

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,22 +26,12 @@ static TestResult run(const CreateCommandListImmediateArguments &arguments, Stat
     LevelZero levelzero(queueProperties);
     Timer timer;
 
-    // Warmup
     std::vector<ze_command_list_handle_t> commandLists(arguments.cmdListCount);
     ze_command_queue_desc_t commandQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     if (arguments.useIoq) {
         commandQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
     }
     ze_command_list_handle_t commandList;
-    for (auto i = 0u; i < arguments.cmdListCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &commandList));
-        EXPECT_NE(nullptr, commandList);
-        commandLists[i] = commandList;
-    }
-    for (auto i = 0u; i < arguments.cmdListCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(commandLists[i]));
-        commandLists[i] = nullptr;
-    }
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
