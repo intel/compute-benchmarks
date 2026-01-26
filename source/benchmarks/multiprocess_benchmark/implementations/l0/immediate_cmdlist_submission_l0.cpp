@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,9 +57,6 @@ static TestResult run(const MultiProcessImmediateCmdlistSubmissionArguments &arg
     }
 
     const auto numberOfSupportedEngines = supportedEngineInfo.size();
-    if (supportedEngineInfo.size() * arguments.processesPerEngine > arguments.numberOfProcesses) {
-        return TestResult::DeviceNotCapable;
-    }
 
     // Prepare processes
     ProcessGroup processes{"immediate_cmdlist_walker_submission_workload_l0", arguments.numberOfProcesses};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,17 +14,16 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<MultiProcessImmediateCmdlistCompletion> registerTestCase{};
 
-class MultiProcessImmediateCmdlistCompletionLatencyTest : public ::testing::TestWithParam<std::tuple<uint32_t, uint32_t, std::string, uint32_t, std::bitset<maxNumberOfEngines>>> {
+class MultiProcessImmediateCmdlistCompletionLatencyTest : public ::testing::TestWithParam<std::tuple<uint32_t, std::string, uint32_t, std::bitset<maxNumberOfEngines>>> {
 };
 
 TEST_P(MultiProcessImmediateCmdlistCompletionLatencyTest, Test) {
     MultiProcessImmediateCmdlistCompletionArguments args{};
     args.api = Api::L0;
     args.numberOfProcesses = std::get<0>(GetParam());
-    args.processesPerEngine = std::get<1>(GetParam());
-    args.engineGroup = std::get<2>(GetParam());
-    args.copySize = std::get<3>(GetParam());
-    args.engineMask = std::get<4>(GetParam());
+    args.engineGroup = std::get<1>(GetParam());
+    args.copySize = std::get<2>(GetParam());
+    args.engineMask = std::get<3>(GetParam());
 
     MultiProcessImmediateCmdlistCompletion test;
     test.run(args);
@@ -35,9 +34,9 @@ INSTANTIATE_TEST_SUITE_P(
     MultiProcessImmediateCmdlistCompletionLatencyTest,
     MultiProcessImmediateCmdlistCompletionLatencyTest,
     testing::Values(
-        std::make_tuple(1, 1, "Compute", 1 * megaByte, "1"),
-        std::make_tuple(2, 2, "Compute", 1 * megaByte, "1"),
-        std::make_tuple(8, 1, "Copy-Only", 1 * megaByte, "11111111"),
-        std::make_tuple(16, 2, "Copy-Only", 1 * megaByte, "11111111"),
-        std::make_tuple(12, 1, "Copy-Only", 1 * megaByte, "11111111"),
-        std::make_tuple(7, 1, "Copy-Only", 1 * megaByte, "11111110")));
+        std::make_tuple(1, "Compute", 1 * megaByte, "1"),
+        std::make_tuple(2, "Compute", 1 * megaByte, "1"),
+        std::make_tuple(8, "Copy-Only", 1 * megaByte, "11111111"),
+        std::make_tuple(16, "Copy-Only", 1 * megaByte, "11111111"),
+        std::make_tuple(12, "Copy-Only", 1 * megaByte, "11111111"),
+        std::make_tuple(7, "Copy-Only", 1 * megaByte, "11111110")));

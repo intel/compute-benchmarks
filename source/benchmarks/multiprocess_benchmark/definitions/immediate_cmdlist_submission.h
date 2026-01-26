@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,11 +12,9 @@
 
 struct MultiProcessImmediateCmdlistSubmissionArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument numberOfProcesses;
-    PositiveIntegerArgument processesPerEngine;
 
     MultiProcessImmediateCmdlistSubmissionArguments()
-        : numberOfProcesses(*this, "numberOfProcesses", "total numer of processes"),
-          processesPerEngine(*this, "processesPerEngine", "number of processes submitting commands to each engine") {}
+        : numberOfProcesses(*this, "numberOfProcesses", "total numer of processes") {}
 };
 
 struct MultiProcessImmediateCmdlistSubmission : TestCase<MultiProcessImmediateCmdlistSubmissionArguments> {
@@ -28,8 +26,7 @@ struct MultiProcessImmediateCmdlistSubmission : TestCase<MultiProcessImmediateCm
 
     std::string getHelp() const override {
         return "measures submission latency of walker command issued from multiple processes to Immediate Command Lists."
-               "'processesPerEngine' count of processes, submit commands to each engine."
-               "If 'numberOfProcesses' is greater than 'processesPerEngine' x engine count, then the excess processes are "
+               "If 'numberOfProcesses' is greater than engine count, then the excess processes are "
                "assigned to engines one each, in a round-robin method."
                "if engineCount == 1, then all processes are assigned to the engine.";
     }
