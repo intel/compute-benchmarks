@@ -37,7 +37,7 @@ static TestResult run(const OneAtomicExplicitArguments &arguments, Statistics &s
     // Prepare data
     const size_t lws = arguments.workgroupSize;
     const size_t gws = arguments.workgroupSize * arguments.workgroupCount;
-    const size_t totalThreadsCount = gws * (arguments.iterations + 1);
+    const size_t totalThreadsCount = gws * arguments.iterations;
     const auto data = KernelHelper::getDataForKernel(arguments.dataType, arguments.atomicOperation, totalThreadsCount);
 
     // Buffer sizes

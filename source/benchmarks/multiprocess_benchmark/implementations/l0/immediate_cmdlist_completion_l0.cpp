@@ -90,6 +90,7 @@ static TestResult run(const MultiProcessImmediateCmdlistCompletionArguments &arg
         processes[i].setName("p:" + std::to_string(i) + "|o:" + std::to_string(ordinal) + "|i:" + std::to_string(engineIndex));
         processes[i].addArgument("ordinal", std::to_string(ordinal));
         processes[i].addArgument("engineIndex", std::to_string(engineIndex));
+        processes[i].addArgument("withCopyOffload", "1");
     }
     processes.addArgumentAll("copySize", std::to_string(arguments.copySize));
     // Run processes
