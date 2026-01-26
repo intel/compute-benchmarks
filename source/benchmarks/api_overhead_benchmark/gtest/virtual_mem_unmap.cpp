@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,4 +29,4 @@ using namespace MemoryConstants;
 INSTANTIATE_TEST_SUITE_P(
     VirtualMemUnMapTest,
     VirtualMemUnMapTest,
-    ::testing::Values(1 * gigaByte, 3 * gigaByte));
+    ::testing::Values(2 * megaByte, 64 * megaByte));

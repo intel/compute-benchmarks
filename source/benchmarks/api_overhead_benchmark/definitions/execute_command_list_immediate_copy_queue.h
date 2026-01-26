@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,14 +27,14 @@ struct ExecuteCommandListImmediateCopyQueueArguments : TestCaseArgumentContainer
           destinationPlacement(*this, "dst", "Placement of the destination buffer"),
           size(*this, "size", "Size of the buffer"),
           useIoq(*this, "ioq", "Use In order queue"),
-          withCopyOffload(*this, "withCopyOffload", "Enable driver copy offload (only valid for L0)") {}
+          withCopyOffload(*this, "CopyOffload", "Enable driver copy offload (only valid for L0)") {}
 };
 
 struct ExecuteCommandListImmediateCopyQueue : TestCase<ExecuteCommandListImmediateCopyQueueArguments> {
     using TestCase<ExecuteCommandListImmediateCopyQueueArguments>::TestCase;
 
     std::string getTestCaseName() const override {
-        return "ExecImmediateCopyQueue";
+        return "ExecImmCopy";
     }
 
     std::string getHelp() const override {

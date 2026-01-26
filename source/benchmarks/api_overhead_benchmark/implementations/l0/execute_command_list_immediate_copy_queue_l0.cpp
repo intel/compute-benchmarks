@@ -19,6 +19,10 @@
 static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
+    if (arguments.isCopyOnly && arguments.withCopyOffload) {
+        return TestResult::InvalidArgs;
+    }
+
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;

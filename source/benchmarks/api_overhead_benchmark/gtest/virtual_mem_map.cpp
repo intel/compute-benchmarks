@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,6 @@ INSTANTIATE_TEST_SUITE_P(
     VirtualMemMapTest,
     VirtualMemMapTest,
     ::testing::Combine(
-        ::testing::Values(1 * gigaByte, 3 * gigaByte),
+        ::testing::Values(2 * megaByte, 64 * megaByte),
         ::testing::Values(false, true),
         ::testing::Values("ReadWrite", "ReadOnly", "None")));

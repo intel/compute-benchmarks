@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,8 +42,7 @@ INSTANTIATE_TEST_SUITE_P(
                           512 * MemoryConstants::kiloByte,
                           4 * MemoryConstants::megaByte,
                           64 * MemoryConstants::megaByte,
-                          512 * MemoryConstants::megaByte,
-                          1 * MemoryConstants::gigaByte),
+                          256 * MemoryConstants::megaByte),
         ::testing::Values(AllocationMeasureMode::Allocate, AllocationMeasureMode::Free, AllocationMeasureMode::Both)));
 
 INSTANTIATE_TEST_SUITE_P(
