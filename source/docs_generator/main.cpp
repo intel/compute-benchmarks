@@ -158,6 +158,10 @@ int main(int argc, char **argv) {
             for (const auto &entry : benchmark.testCases) {
                 const TestCase &testCase = entry.second;
 
+                if (location.empty() && !hasAnyApi(testCase, apiColumns)) {
+                    continue;
+                }
+
                 outputFile << testCase.name << '|';
                 outputFile << testCase.help << '|';
                 outputFile << "<ul>";

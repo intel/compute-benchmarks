@@ -36,3 +36,12 @@ std::pair<std::string, std::string> splitToTwoTokens(const std::string &line) {
     }
     return {token0, token1};
 }
+
+bool hasAnyApi(const TestCase &testCase, const std::vector<Api> &apis) {
+    for (Api api : apis) {
+        if (testCase.apis.count(api) > 0) {
+            return true;
+        }
+    }
+    return false;
+}
