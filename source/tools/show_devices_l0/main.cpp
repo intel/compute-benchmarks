@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -277,6 +277,11 @@ int main() {
             std::cout << "No devices found\n";
             continue;
         }
+        ze_driver_properties_t driverProperties = {ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
+
+        EXPECT_ZE_RESULT_SUCCESS(zeDriverGetProperties(driver, &driverProperties));
+        std::cout << "Driver Version: " << (driverProperties.driverVersion & 0xffff) << "\n ";
+
         std::vector<ze_device_handle_t> devices(deviceCount);
         EXPECT_ZE_RESULT_SUCCESS(zeDeviceGet(driver, &deviceCount, devices.data()));
 
