@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,15 @@ struct Sycl {
     template <typename... PropT, typename = typename std::enable_if_t<(sycl::is_property<PropT>::value && ...)>>
     Sycl(const sycl::device &device, PropT... properties) : device{device} {
         if (Configuration::get().useOOQ) {
+            queue = sycl::queue(device, sycl::property_list{properties...});
+        } else {
+            queue = sycl::queue(device, sycl::property_list{sycl::property::queue::in_order(), properties...});
+        }
+    }
+
+    template <typename... PropT, typename = typename std::enable_if_t<(sycl::is_property<PropT>::value && ...)>>
+    Sycl(bool useOOQ, PropT... properties) : device(sycl::device{sycl::gpu_selector_v}) {
+        if (useOOQ) {
             queue = sycl::queue(device, sycl::property_list{properties...});
         } else {
             queue = sycl::queue(device, sycl::property_list{sycl::property::queue::in_order(), properties...});

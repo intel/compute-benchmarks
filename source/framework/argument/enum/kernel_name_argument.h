@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,6 @@ struct KernelNameArgument : EnumArgument<KernelNameArgument, KernelName> {
 
     const static inline std::string enumName = "kernel name";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
-    const static inline EnumType enumValues[2] = {EnumType::Empty, EnumType::Add};
-    const static inline std::string enumValuesNames[2] = {"Empty", "Add"};
+    const static inline EnumType enumValues[3] = {EnumType::Empty, EnumType::Add, EnumType::AddSequence};
+    const static inline std::string enumValuesNames[3] = {"Empty", "Add", "AddSequence"};
 };

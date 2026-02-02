@@ -11,6 +11,7 @@
 #include "framework/l0/utility/error.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/test_case/test_result.h"
+#include "framework/utility/combo_profiler.h"
 #include "framework/utility/file_helper.h"
 
 #include "gtest/gtest.h"
@@ -25,6 +26,7 @@ class L0Context {
     ze_command_list_handle_t cmdListImmediate_2;
 
     L0Context();
+    L0Context(const ExtensionProperties &extensionProperties, bool useInOrderQueue = true);
     ~L0Context();
 };
 

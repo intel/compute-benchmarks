@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,6 +123,21 @@ void submit_kernel_add_mixed_type(unsigned int wgc, unsigned int wgs, sycl::queu
     q.parallel_for(sycl::nd_range<1>{wgc * wgs, wgs}, [=](sycl::nd_item<1> item) {
         size_t id = item.get_global_id(0);
         sum[id] = (src0[id] + src1[id] + src2[id] + src3[id] + src4[id] + src5[id] + src6[id] + src7[id] + src8[id] + src9[id]);
+    });
+#endif
+}
+
+template <typename data_type>
+void submit_kernel_add_const(unsigned int wgc, unsigned int wgs, sycl::queue &q, data_type *sum, data_type *src, data_type add_element) {
+#if EVENTLESS_SUBMIT
+    sycl::ext::oneapi::experimental::nd_launch(q, sycl::nd_range<1>{wgc * wgs, wgs}, [=](sycl::nd_item<1> item) {
+        size_t id = item.get_global_id(0);
+        sum[id] = src[id] + add_element;
+    });
+#else
+    q.parallel_for(sycl::nd_range<1>{wgc * wgs, wgs}, [=](sycl::nd_item<1> item) {
+        size_t id = item.get_global_id(0);
+        sum[id] = src[id] + add_element;
     });
 #endif
 }

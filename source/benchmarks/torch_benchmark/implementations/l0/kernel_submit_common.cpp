@@ -7,11 +7,18 @@
 
 #include "kernel_submit_common.hpp"
 
-L0Context::L0Context() {
-    if (zeCommandListCreateImmediate(l0.context, l0.device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdListImmediate_1) != ZE_RESULT_SUCCESS) {
+L0Context::L0Context() : L0Context(ExtensionProperties::create()) {}
+
+L0Context::L0Context(const ExtensionProperties &extensionProperties, bool useInOrderQueue) : l0(extensionProperties) {
+    ze_command_queue_desc_t queueDesc = zeDefaultGPUImmediateCommandQueueDesc;
+    if (!useInOrderQueue) {
+        queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT;
+    }
+
+    if (zeCommandListCreateImmediate(l0.context, l0.device, &queueDesc, &cmdListImmediate_1) != ZE_RESULT_SUCCESS) {
         throw std::runtime_error("Failed to create immediate command list 1");
     }
-    if (zeCommandListCreateImmediate(l0.context, l0.device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdListImmediate_2) != ZE_RESULT_SUCCESS) {
+    if (zeCommandListCreateImmediate(l0.context, l0.device, &queueDesc, &cmdListImmediate_2) != ZE_RESULT_SUCCESS) {
         zeCommandListDestroy(cmdListImmediate_1);
         throw std::runtime_error("Failed to create immediate command list 2");
     }
