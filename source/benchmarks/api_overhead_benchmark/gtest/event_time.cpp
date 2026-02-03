@@ -13,7 +13,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<EventTime> registerTestCase{};
 
-class EventTimeTest : public ::testing::TestWithParam<std::tuple<bool, bool, EventScope, EventScope, uint32_t>> {
+class EventTimeTest : public ::testing::TestWithParam<std::tuple<bool, bool, EventScope, EventScope, uint32_t, bool>> {
 };
 
 TEST_P(EventTimeTest, Test) {
@@ -24,6 +24,7 @@ TEST_P(EventTimeTest, Test) {
     args.signalScope = std::get<2>(GetParam());
     args.waitScope = std::get<3>(GetParam());
     args.eventCount = std::get<4>(GetParam());
+    args.counterBasedEvents = std::get<5>(GetParam());
 
     EventTime test;
     test.run(args);
@@ -37,4 +38,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::ValuesIn(EventScopeArgument::enumValues),
         ::testing::ValuesIn(EventScopeArgument::enumValues),
-        ::testing::Values(1000u)));
+        ::testing::Values(1000u),
+        ::testing::Values(false, true)
+    ));
