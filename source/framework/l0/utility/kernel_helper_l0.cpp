@@ -11,7 +11,7 @@
 
 namespace L0::KernelHelper {
 TestResult loadKernel(LevelZero &levelzero, const std::string &filePath, const std::string &kernelName, ze_kernel_handle_t *kernel,
-                      ze_module_handle_t *module) {
+                      ze_module_handle_t *module, const char *pBuildFlags) {
     auto sourceFile = FileHelper::loadTextFile(filePath);
     if (sourceFile.size() == 0) {
         return TestResult::KernelNotFound;
@@ -21,6 +21,7 @@ TestResult loadKernel(LevelZero &levelzero, const std::string &filePath, const s
     moduleDesc.format = ZE_MODULE_FORMAT_OCLC;
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(sourceFile.data());
     moduleDesc.inputSize = sourceFile.size();
+    moduleDesc.pBuildFlags = pBuildFlags;
     auto status = zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, module, nullptr);
 
     if (status != ZE_RESULT_SUCCESS) {

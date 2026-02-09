@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,8 +110,8 @@ TestResult initEnv(TestEnv &env, const MutateGraphArguments &arguments) {
 
     env.levelzero = std::make_shared<LevelZero>();
 
-    L0::KernelHelper::loadKernel(*env.levelzero, "graph_api_benchmark_kernel_sum.cl", "kernel_sum", &env.kernelSum, &env.moduleSum);
-    L0::KernelHelper::loadKernel(*env.levelzero, "graph_api_benchmark_kernel_multiply.cl", "kernel_mul", &env.kernelMul, &env.moduleMul);
+    L0::KernelHelper::loadKernel(*env.levelzero, "graph_api_benchmark_kernel_sum.cl", "kernel_sum", &env.kernelSum, &env.moduleSum, nullptr);
+    L0::KernelHelper::loadKernel(*env.levelzero, "graph_api_benchmark_kernel_multiply.cl", "kernel_mul", &env.kernelMul, &env.moduleMul, nullptr);
 
     uint32_t grpCnt[3] = {1, 1, 1};
 

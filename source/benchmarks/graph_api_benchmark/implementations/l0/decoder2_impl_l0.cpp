@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ TestResult Decoder2GraphL0::init() {
     ExtensionProperties extensionProperties = ExtensionProperties::create()
                                                   .setGraphFunctions(!emulateGraphs);
     levelzero = std::make_shared<LevelZero>(extensionProperties);
-    TestResult kernelDecoder2Res = L0::KernelHelper::loadKernel(*levelzero, "graph_api_benchmark_kernel_increment.cl", "kernel_increment", &kernelDecoder2, &moduleDecoder2);
+    TestResult kernelDecoder2Res = L0::KernelHelper::loadKernel(*levelzero, "graph_api_benchmark_kernel_increment.cl", "kernel_increment", &kernelDecoder2, &moduleDecoder2, nullptr);
     if (kernelDecoder2Res != TestResult::Success)
         return kernelDecoder2Res;
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernelDecoder2, 1u, 1u, 1u));

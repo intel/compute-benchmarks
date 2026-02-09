@@ -32,7 +32,7 @@ static TestResult run(const MultiQueueExecutionArguments &arguments, Statistics 
     // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
-    auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_multi_kernel_execution.cl", "empty", &kernel, &module);
+    auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_multi_kernel_execution.cl", "empty", &kernel, &module, nullptr);
     if (kernelLoadRes != TestResult::Success)
         return kernelLoadRes;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,5 +13,5 @@
 #include <level_zero/ze_api.h>
 namespace L0::KernelHelper {
 TestResult loadKernel(LevelZero &levelzero, const std::string &filePath, const std::string &kernelName, ze_kernel_handle_t *kernel,
-                      ze_module_handle_t *module);
+                      ze_module_handle_t *module, const char *pBuildFlags);
 }

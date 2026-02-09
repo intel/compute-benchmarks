@@ -17,6 +17,9 @@
 
 static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    if (arguments.count > 1 && !arguments.measureSetKernelArg && !arguments.useL0NewArgApi) {
+        return TestResult::NoImplementation;
+    }
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
@@ -91,8 +94,10 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
                 ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, dispatchTraits, groupSizes, reverseOrder ? reversedKernelArguments.data() : kernelArguments.data(), nullptr, nullptr, 0u, nullptr));
             }
         } else {
+            bool timerStarted = false;
             for (auto kernelId = 0u; kernelId < arguments.count; ++kernelId) {
-                if (arguments.measureSetKernelArg) {
+                if (arguments.measureSetKernelArg && !timerStarted) {
+                    timerStarted = true;
                     timer.measureStart();
                 }
 
@@ -100,7 +105,8 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
                     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, argumentId, sizeof(void *), &allocations[reverseOrder ? arguments.argumentCount - 1 - argumentId : argumentId]));
                 }
 
-                if (!arguments.measureSetKernelArg) {
+                if (!arguments.measureSetKernelArg && !timerStarted) {
+                    timerStarted = true;
                     timer.measureStart();
                 }
                 ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));

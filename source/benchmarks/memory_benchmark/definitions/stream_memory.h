@@ -28,7 +28,7 @@ struct StreamMemoryArguments : TestCaseArgumentContainer {
           size(*this, "size", "Size of the memory to stream. Must be divisible by datatype size."),
           useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
           contents(*this, "contents", "Buffer contents zeros/random"),
-          memoryPlacement(*this, "memoryPlacement", "Memory type used for stream"),
+          memoryPlacement(*this, "memory", "Memory type used for stream"),
           partialMultiplier(*this, "multiplier", "multiplies id used for accessing the resources to simulate partials"),
           vectorSize(*this, "vectorSize", "size of uint vector type 1/2/4/8/16"),
           lws(*this, "lws", "local work size") {}

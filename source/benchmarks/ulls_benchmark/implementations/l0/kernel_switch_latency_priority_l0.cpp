@@ -34,7 +34,7 @@ static TestResult run(const KernelSwitchPriorityArguments &arguments, Statistics
     // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
-    auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_eat_time.cl", "eat_time", &kernel, &module);
+    auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_eat_time.cl", "eat_time", &kernel, &module, nullptr);
     if (kernelLoadRes != TestResult::Success)
         return kernelLoadRes;
 

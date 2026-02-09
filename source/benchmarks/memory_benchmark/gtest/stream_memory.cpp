@@ -41,13 +41,13 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
         ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
-        ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 128 * megaByte, 512 * megaByte),
+        ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 256 * megaByte),
         ::testing::Values(false, true),
         ::testing::Values(BufferContents::Zeros, BufferContents::Random),
         ::testing::ValuesIn(UsmRuntimeMemoryPlacementArgument::deviceAndHost),
         ::testing::Values(1u),
-        ::testing::Values(1),
-        ::testing::Values(1024)));
+        ::testing::Values(1, 4),
+        ::testing::Values(1024, 256)));
 
 INSTANTIATE_TEST_SUITE_P(
     StreamMemoryTestLIMITED,
