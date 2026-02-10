@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct AllocationMeasureModeArgument : EnumArgument<AllocationMeasureModeArgumen
         return *this;
     }
 
-    const static inline std::string enumName = "Measure type of allocation";
+    static constexpr const char *enumName = "Measure type of allocation";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[3] = {EnumType::Allocate, EnumType::Free, EnumType::Both};
-    const static inline std::string enumValuesNames[3] = {"Allocate", "Free", "Both"};
+    static constexpr const char *enumValuesNames[3] = {"Allocate", "Free", "Both"};
 };

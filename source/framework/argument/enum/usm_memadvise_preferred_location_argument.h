@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct UsmMemAdvisePreferredLocationArgument : EnumArgument<UsmMemAdvisePreferre
         return *this;
     }
 
-    const static inline std::string enumName = "USM memadise preferred location";
+    static constexpr const char *enumName = "USM memadise preferred location";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[3] = {EnumType::System, EnumType::Device, EnumType::None};
-    const static inline std::string enumValuesNames[3] = {"System", "Device", "None"};
+    static constexpr const char *enumValuesNames[3] = {"System", "Device", "None"};
 };

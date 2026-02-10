@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,11 +18,11 @@ struct StreamMemoryTypeArgument : EnumArgument<StreamMemoryTypeArgument, StreamM
         return *this;
     }
 
-    const static inline std::string enumName = "stream memory type";
+    static constexpr const char *enumName = "stream memory type";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[] = {EnumType::Read, EnumType::Write, EnumType::Scale, EnumType::Triad};
     const static inline EnumType onlyReadAndWrite[] = {EnumType::Read, EnumType::Write};
     const static inline EnumType onlyReadAndTriad[] = {EnumType::Read, EnumType::Triad};
     const static inline EnumType onlyReadAndWriteAndTriad[] = {EnumType::Read, EnumType::Write, EnumType::Triad};
-    const static inline std::string enumValuesNames[] = {"Read", "Write", "Scale", "Triad"};
+    static constexpr const char *enumValuesNames[] = {"Read", "Write", "Scale", "Triad"};
 };

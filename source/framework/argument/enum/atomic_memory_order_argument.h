@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,16 +18,16 @@ struct AtomicMemoryOrderArgument : EnumArgument<AtomicMemoryOrderArgument, Atomi
         return *this;
     }
 
-    const static inline std::string enumName = "atomic memory order";
+    static constexpr const char *enumName = "atomic memory order";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[5] = {AtomicMemoryOrder::Relaxed,
                                                   AtomicMemoryOrder::Acquire,
                                                   AtomicMemoryOrder::Release,
                                                   AtomicMemoryOrder::AcquireRelease,
                                                   AtomicMemoryOrder::SequentialConsitent};
-    const static inline std::string enumValuesNames[5] = {"relaxed",
-                                                          "acquire",
-                                                          "release",
-                                                          "acq_rel",
-                                                          "seq_cst"};
+    static constexpr const char *enumValuesNames[5] = {"relaxed",
+                                                       "acquire",
+                                                       "release",
+                                                       "acq_rel",
+                                                       "seq_cst"};
 };

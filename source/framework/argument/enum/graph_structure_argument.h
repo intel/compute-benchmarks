@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct GraphStructureArgument : EnumArgument<GraphStructureArgument, GraphStruct
         return *this;
     }
 
-    const static inline std::string enumName = "graph structure";
+    static constexpr const char *enumName = "graph structure";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[3] = {EnumType::Gromacs, EnumType::LLama, EnumType::Amr};
-    const static inline std::string enumValuesNames[3] = {"Gromacs", "LLama", "Amr"};
+    static constexpr const char *enumValuesNames[3] = {"Gromacs", "LLama", "Amr"};
 };

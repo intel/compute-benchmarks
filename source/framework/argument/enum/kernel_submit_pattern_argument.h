@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct KernelSubmitPatternArgument : EnumArgument<KernelSubmitPatternArgument, K
         return *this;
     }
 
-    const static inline std::string enumName = "kernel submit pattern";
+    static constexpr const char *enumName = "kernel submit pattern";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[3] = {EnumType::Single, EnumType::D2h_after_batch, EnumType::H2d_before_batch};
-    const static inline std::string enumValuesNames[3] = {"Single", "D2h_after_batch", "H2d_before_batch"};
+    static constexpr const char *enumValuesNames[3] = {"Single", "D2h_after_batch", "H2d_before_batch"};
 };

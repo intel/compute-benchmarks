@@ -18,9 +18,9 @@ struct UsmRuntimeMemoryPlacementArgument : EnumArgument<UsmRuntimeMemoryPlacemen
         return *this;
     }
 
-    const static inline std::string enumName = "memory placement";
+    static constexpr const char *enumName = "memory placement";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[3] = {EnumType::Device, EnumType::Host, EnumType::Shared};
     const static inline EnumType deviceAndHost[2] = {EnumType::Device, EnumType::Host};
-    const static inline std::string enumValuesNames[3] = {"Device", "Host", "Shared"};
+    static constexpr const char *enumValuesNames[3] = {"Device", "Host", "Shared"};
 };

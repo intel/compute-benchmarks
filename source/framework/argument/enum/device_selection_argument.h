@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct DeviceSelectionArgument : EnumArgument<DeviceSelectionArgument, DeviceSel
         return *this;
     }
 
-    const static inline std::string enumName = "device selection";
+    static constexpr const char *enumName = "device selection";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[5] = {EnumType::Root, EnumType::Tile0, EnumType::Tile1, EnumType::Tile2, EnumType::Tile3};
-    const static inline std::string enumValuesNames[5] = {"Root", "Tile0", "Tile1", "Tile2", "Tile3"};
+    static constexpr const char *enumValuesNames[5] = {"Root", "Tile0", "Tile1", "Tile2", "Tile3"};
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ struct AtomicMathOperationArgument : EnumArgument<AtomicMathOperationArgument, M
         return *this;
     }
 
-    const static inline std::string enumName = "atomic math operation";
+    static constexpr const char *enumName = "atomic math operation";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[11] = {EnumType::Add, EnumType::Sub,
                                                    EnumType::Xchg, EnumType::CmpXchg,
@@ -26,10 +26,10 @@ struct AtomicMathOperationArgument : EnumArgument<AtomicMathOperationArgument, M
                                                    EnumType::Min, EnumType::Max,
                                                    EnumType::And, EnumType::Or,
                                                    EnumType::Xor};
-    const static inline std::string enumValuesNames[11] = {"Add", "Sub",
-                                                           "Xchg", "CmpXchg",
-                                                           "Inc", "Dec",
-                                                           "Min", "Max",
-                                                           "And", "Or",
-                                                           "Xor"};
+    static constexpr const char *enumValuesNames[11] = {"Add", "Sub",
+                                                        "Xchg", "CmpXchg",
+                                                        "Inc", "Dec",
+                                                        "Min", "Max",
+                                                        "And", "Or",
+                                                        "Xor"};
 };

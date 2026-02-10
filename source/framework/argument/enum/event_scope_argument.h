@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct EventScopeArgument : EnumArgument<EventScopeArgument, EventScope> {
         return *this;
     }
 
-    const static inline std::string enumName = "event scope selection";
+    static constexpr const char *enumName = "event scope selection";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[4] = {EnumType::scopeSubDevice, EnumType::scopeDevice, EnumType::scopeHost, EnumType::none};
-    const static inline std::string enumValuesNames[4] = {"subdevice", "device", "host", "none"};
+    static constexpr const char *enumValuesNames[4] = {"subdevice", "device", "host", "none"};
 };

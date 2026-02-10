@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct UsmInitialPlacementArgument : EnumArgument<UsmInitialPlacementArgument, U
         return *this;
     }
 
-    const static inline std::string enumName = "USM initial placement";
+    static constexpr const char *enumName = "USM initial placement";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[3] = {EnumType::Any, EnumType::Host, EnumType::Device};
-    const static inline std::string enumValuesNames[3] = {"Any", "Host", "Device"};
+    static constexpr const char *enumValuesNames[3] = {"Any", "Host", "Device"};
 };

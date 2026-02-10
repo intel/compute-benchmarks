@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct WorkItemIdUsageArgument : EnumArgument<WorkItemIdUsageArgument, WorkItemI
         return *this;
     }
 
-    const static inline std::string enumName = "work item id usage";
+    static constexpr const char *enumName = "work item id usage";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[4] = {EnumType::None, EnumType::Global, EnumType::Local, EnumType::AtomicPerWorkgroup};
-    const static inline std::string enumValuesNames[4] = {"None", "Global", "Local", "AtomicPerWkg"};
+    static constexpr const char *enumValuesNames[4] = {"None", "Global", "Local", "AtomicPerWkg"};
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct MapFlagsArgument : EnumArgument<MapFlagsArgument, MapFlags> {
         return *this;
     }
 
-    const static inline std::string enumName = "map flag";
+    static constexpr const char *enumName = "map flag";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[3] = {EnumType::Read, EnumType::Write, EnumType::WriteInvalidate};
-    const static inline std::string enumValuesNames[3] = {"Read", "Write", "WriteInvalidate"};
+    static constexpr const char *enumValuesNames[3] = {"Read", "Write", "WriteInvalidate"};
 };

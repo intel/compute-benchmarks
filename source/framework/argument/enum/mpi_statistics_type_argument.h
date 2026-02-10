@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct MpiStatisticsTypeArgument : EnumArgument<MpiStatisticsTypeArgument, MpiSt
         return *this;
     }
 
-    const static inline std::string enumName = "MPI statistics type";
+    static constexpr const char *enumName = "MPI statistics type";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[3] = {EnumType::Avg, EnumType::Max, EnumType::Min};
-    const static inline std::string enumValuesNames[3] = {"Avg", "Max", "Min"};
+    static constexpr const char *enumValuesNames[3] = {"Avg", "Max", "Min"};
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct TmpMemoryStrategyArgument : EnumArgument<TmpMemoryStrategyArgument, TmpMe
         return *this;
     }
 
-    const static inline std::string enumName = "temporary memory allocation strategy";
+    static constexpr const char *enumName = "temporary memory allocation strategy";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[3] = {EnumType::Async, EnumType::Static, EnumType::Sync};
-    const static inline std::string enumValuesNames[3] = {"async", "static", "sync"};
+    static constexpr const char *enumValuesNames[3] = {"async", "static", "sync"};
 };

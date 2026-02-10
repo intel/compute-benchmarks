@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct ProfilerTypeArgument : EnumArgument<ProfilerTypeArgument, ProfilerType> {
         return *this;
     }
 
-    const static inline std::string enumName = "profiler selection";
+    static constexpr const char *enumName = "profiler selection";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[2] = {EnumType::Timer, EnumType::CpuCounter};
-    const static inline std::string enumValuesNames[2] = {"timer", "cpucounter"};
+    static constexpr const char *enumValuesNames[2] = {"timer", "cpucounter"};
 };

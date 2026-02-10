@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct GraphOperationTypeArgument : EnumArgument<GraphOperationTypeArgument, Gra
         return *this;
     }
 
-    const static inline std::string enumName = "";
+    static constexpr const char *enumName = "";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[4] = {EnumType::Init, EnumType::Mutate, EnumType::Execute, EnumType::Create};
-    const static inline std::string enumValuesNames[4] = {"Initialize", "Mutate", "Execute", "Create"};
+    static constexpr const char *enumValuesNames[4] = {"Initialize", "Mutate", "Execute", "Create"};
 };

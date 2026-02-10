@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ struct AtomicScopeArgument : EnumArgument<AtomicScopeArgument, AtomicScope> {
         return *this;
     }
 
-    const static inline std::string enumName = "atomic scope";
+    static constexpr const char *enumName = "atomic scope";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[2] = {EnumType::Workgroup, EnumType::Device};
-    const static inline std::string enumValuesNames[2] = {"Workgroup", "Device"};
+    static constexpr const char *enumValuesNames[2] = {"Workgroup", "Device"};
 };

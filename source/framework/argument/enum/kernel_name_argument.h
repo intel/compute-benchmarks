@@ -18,8 +18,8 @@ struct KernelNameArgument : EnumArgument<KernelNameArgument, KernelName> {
         return *this;
     }
 
-    const static inline std::string enumName = "kernel name";
+    static constexpr const char *enumName = "kernel name";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[3] = {EnumType::Empty, EnumType::Add, EnumType::AddSequence};
-    const static inline std::string enumValuesNames[3] = {"Empty", "Add", "AddSequence"};
+    static constexpr const char *enumValuesNames[3] = {"Empty", "Add", "AddSequence"};
 };

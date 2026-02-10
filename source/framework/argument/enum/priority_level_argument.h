@@ -18,8 +18,8 @@ struct PriorityLevelArgument : EnumArgument<PriorityLevelArgument, PriorityLevel
         return *this;
     }
 
-    const static inline std::string enumName = "Queue priority level";
+    static constexpr const char *enumName = "Queue priority level";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[3] = {EnumType::Low, EnumType::Normal, EnumType::High};
-    const static inline std::string enumValuesNames[3] = {"Low", "Normal", "High"};
+    static constexpr const char *enumValuesNames[3] = {"Low", "Normal", "High"};
 };

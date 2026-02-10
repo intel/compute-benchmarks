@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,10 @@
 
 struct DeviceSelectionArgumentBaseTraits {
     using EnumType = DeviceSelection;
-    const static inline std::string enumName = "usm device selection";
+    static constexpr const char *enumName = "usm device selection";
     const static inline EnumType zeroEnumValue = EnumType::Unknown;
     const static inline EnumType enumValues[6] = {EnumType::Host, EnumType::Root, EnumType::Tile0, EnumType::Tile1, EnumType::Tile2, EnumType::Tile3};
-    const static inline std::string enumValuesNames[6] = {"Host", "Root", "Tile0", "Tile1", "Tile2", "Tile3"};
+    static constexpr const char *enumValuesNames[6] = {"Host", "Root", "Tile0", "Tile1", "Tile2", "Tile3"};
 };
 
 template <bool allowHost, bool allowDevice, bool allowShared>
