@@ -22,6 +22,11 @@ L0Context::L0Context(const ExtensionProperties &extensionProperties, bool useInO
         zeCommandListDestroy(cmdListImmediate_1);
         throw std::runtime_error("Failed to create immediate command list 2");
     }
+    if (zeCommandListCreateImmediate(l0.context, l0.device, &queueDesc, &cmdListImmediate_3) != ZE_RESULT_SUCCESS) {
+        zeCommandListDestroy(cmdListImmediate_1);
+        zeCommandListDestroy(cmdListImmediate_2);
+        throw std::runtime_error("Failed to create immediate command list 3");
+    }
 }
 
 L0Context::~L0Context() {
@@ -30,6 +35,9 @@ L0Context::~L0Context() {
     }
     if (cmdListImmediate_2) {
         zeCommandListDestroy(cmdListImmediate_2);
+    }
+    if (cmdListImmediate_3) {
+        zeCommandListDestroy(cmdListImmediate_3);
     }
 }
 
@@ -55,5 +63,13 @@ TestResult create_kernel(LevelZero &l0,
     kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;
     kernelDesc.pKernelName = kernelName.c_str();
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
+    return TestResult::Success;
+}
+
+TestResult create_counter_based_event(LevelZero &ctx, ze_event_handle_t &event, bool enableProfiling) {
+    zex_counter_based_event_desc_t desc = defaultCounterBasedEventDesc;
+    desc.flags |= enableProfiling ? ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP : 0;
+
+    ASSERT_ZE_RESULT_SUCCESS(ctx.counterBasedEventCreate2(ctx.context, ctx.device, &desc, &event));
     return TestResult::Success;
 }

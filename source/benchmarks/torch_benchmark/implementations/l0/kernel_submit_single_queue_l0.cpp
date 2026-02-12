@@ -112,7 +112,7 @@ static TestResult verify_result(ze_command_list_handle_t cmdList,
     // use add op to verify
     // elementwise_kernel_2
     std::string kernel_name = "torch_benchmark_elementwise_sum_2";
-    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, kernel_name + ".cl", kernel_name, kernel_verify, module_verify));
+    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, kernel_name + ".cl", kernel_name + "_int", kernel_verify, module_verify));
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel_verify, 1, 1, 1));
     int *result_d = nullptr;

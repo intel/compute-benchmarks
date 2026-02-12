@@ -24,6 +24,7 @@ class L0Context {
     LevelZero l0;
     ze_command_list_handle_t cmdListImmediate_1;
     ze_command_list_handle_t cmdListImmediate_2;
+    ze_command_list_handle_t cmdListImmediate_3;
 
     L0Context();
     L0Context(const ExtensionProperties &extensionProperties, bool useInOrderQueue = true);
@@ -35,6 +36,8 @@ TestResult create_kernel(LevelZero &l0,
                          const std::string &kernelName,
                          ze_kernel_handle_t &kernel,
                          ze_module_handle_t &module);
+
+TestResult create_counter_based_event(LevelZero &ctx, ze_event_handle_t &event, bool enableProfiling = false);
 
 template <typename data_type>
 TestResult l0_malloc_device(LevelZero &l0, size_t length, data_type *&ptr) {

@@ -32,9 +32,9 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
     if (args.kernelName == KernelName::Empty) {
         ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0_ctx.l0, "torch_benchmark_elementwise_sum_0.cl", "elementwise_sum_0", kernel_1, module_1));
     } else if (args.kernelName == KernelName::Add) {
-        ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0_ctx.l0, "torch_benchmark_elementwise_sum_2.cl", "torch_benchmark_elementwise_sum_2", kernel_1, module_1));
+        ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0_ctx.l0, "torch_benchmark_elementwise_sum_2.cl", "torch_benchmark_elementwise_sum_2_float", kernel_1, module_1));
     } else if (args.kernelName == KernelName::AddSequence) {
-        ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0_ctx.l0, "torch_benchmark_elementwise_sum_2.cl", "torch_benchmark_elementwise_sum_2", kernel_1, module_1));
+        ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0_ctx.l0, "torch_benchmark_elementwise_sum_2.cl", "torch_benchmark_elementwise_sum_2_float", kernel_1, module_1));
         ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0_ctx.l0, "torch_benchmark_add_element_constant.cl", "torch_benchmark_add_element_constant", kernel_2, module_2));
     } else {
         return TestResult::InvalidArgs;

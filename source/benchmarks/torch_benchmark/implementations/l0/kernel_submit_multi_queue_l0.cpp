@@ -45,7 +45,7 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
 
     ze_kernel_handle_t kernel{};
     ze_module_handle_t module{};
-    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0Ctx.l0, "torch_benchmark_elementwise_sum_2.cl", "torch_benchmark_elementwise_sum_2", kernel, module));
+    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0Ctx.l0, "torch_benchmark_elementwise_sum_2.cl", "torch_benchmark_elementwise_sum_2_int", kernel, module));
 
     data_type *d_a[2] = {};
     data_type *d_b[2] = {};
