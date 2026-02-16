@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelWithEvent> registerTestCase{};
 
-class KernelWithEventTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, size_t, bool, bool, bool>> {
+class KernelWithEventTest : public ::testing::TestWithParam<std::tuple<size_t, size_t, size_t, bool, bool, bool, bool, bool>> {
 };
 
 TEST_P(KernelWithEventTest, Test) {
@@ -27,6 +27,8 @@ TEST_P(KernelWithEventTest, Test) {
     args.useHostSignalEvent = std::get<3>(GetParam());
     args.useDeviceWaitEvent = std::get<4>(GetParam());
     args.useTimestampEvent = std::get<5>(GetParam());
+    args.useInOrderCommandList = std::get<6>(GetParam());
+    args.useCounterBasedEvents = std::get<7>(GetParam());
 
     KernelWithEvent test;
     test.run(args);
@@ -41,6 +43,8 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
+        ::testing::Values(false, true),
+        ::testing::Values(false, true),
         ::testing::Values(false, true)));
 
 INSTANTIATE_TEST_SUITE_P(
@@ -52,4 +56,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1),
         ::testing::Values(false),
         ::testing::Values(false),
-        ::testing::Values(true)));
+        ::testing::Values(true),
+        ::testing::Values(false),
+        ::testing::Values(false)));

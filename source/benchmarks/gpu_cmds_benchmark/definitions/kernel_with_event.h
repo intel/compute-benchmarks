@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,8 @@ struct KernelWithEventArguments : TestCaseArgumentContainer {
     BooleanArgument useHostSignalEvent;
     BooleanArgument useDeviceWaitEvent;
     BooleanArgument useTimestampEvent;
+    BooleanArgument useInOrderCommandList;
+    BooleanArgument useCounterBasedEvents;
 
     KernelWithEventArguments()
         : measuredCommands(*this, "measuredCmds", CommonHelpMessage::measuredCommandsCount()),
@@ -26,7 +28,9 @@ struct KernelWithEventArguments : TestCaseArgumentContainer {
           useHostSignalEvent(*this, "hostSignalEvent", "Use ZE_EVENT_POOL_HOST_VISIBLE for ze_event_pool_desc_t::flags,"
                                                        " and use ZE_EVENT_SCOPE_FLAG_HOST for ze_event_desc_t::signal"),
           useDeviceWaitEvent(*this, "devWaitEvent", "Use ZE_EVENT_SCOPE_FLAG_DEVICE for ze_event_desc_t::wait"),
-          useTimestampEvent(*this, "timestampEvent", "Use ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP for ze_event_pool_desc_t::flags") {}
+          useTimestampEvent(*this, "timestampEvent", "Use ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP for ze_event_pool_desc_t::flags"),
+          useInOrderCommandList(*this, "inOrderCmdList", "Use ZE_COMMAND_LIST_FLAG_IN_ORDER for ze_command_list_desc_t::flags"),
+          useCounterBasedEvents(*this, "useCbe", "Use counter based events") {}
 };
 
 class KernelWithEvent : public TestCase<KernelWithEventArguments> {
