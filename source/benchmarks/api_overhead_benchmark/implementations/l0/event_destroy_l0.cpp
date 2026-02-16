@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2026 Intel Corporation
+ * Copyright (C) 2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,13 @@
 
 #include "framework/l0/levelzero.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
-#include "definitions/event_time.h"
+#include "definitions/event_destroy.h"
 
 #include <gtest/gtest.h>
 
-static TestResult run(const EventTimeArguments &arguments, Statistics &statistics) {
+static TestResult run(const EventDestroyArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
@@ -64,10 +63,9 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
     }
 
     std::vector<ze_event_handle_t> events(arguments.eventCount);
+    ze_event_pool_handle_t eventPool{};
 
-    ze_event_pool_handle_t eventPool{}; // only for non-CBE
     if (!arguments.counterBasedEvents) {
-        // Create event if necessary
         ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, arguments.eventCount};
         auto eventPoolFlags = arguments.hostVisible * ZE_EVENT_POOL_FLAG_HOST_VISIBLE | arguments.useProfiling * ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
         eventPoolDesc.flags = eventPoolFlags;
@@ -77,19 +75,26 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
-        timer.measureStart();
         for (auto j = 0u; j < arguments.eventCount; ++j) {
-            if (!arguments.counterBasedEvents) {
+            if (arguments.counterBasedEvents) {
+                // CBE is marked as completed so there is no need to signal it.
+                ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &eventDescCBE, &events[j]));
+            } else {
                 eventDesc.index = j;
                 ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[j]));
-            } else {
-                ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &eventDescCBE, &events[j]));
+                ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(events[j]));
             }
+
+            // Validate event is already completed
+            ASSERT_ZE_RESULT_SUCCESS(zeEventQueryStatus(events[j]));
         }
-        timer.measureEnd();
+
+        timer.measureStart();
         for (auto j = 0u; j < arguments.eventCount; ++j) {
             ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(events[j]));
         }
+        timer.measureEnd();
+
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
@@ -99,4 +104,4 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
     return TestResult::Success;
 }
 
-static RegisterTestCaseImplementation<EventTime> registerTestCase(run, Api::L0);
+static RegisterTestCaseImplementation<EventDestroy> registerTestCase(run, Api::L0);
