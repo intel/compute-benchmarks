@@ -109,9 +109,14 @@ bool checkResults(TestEnv &env, float *output_h, float *golden_h) {
 TestResult initEnv(TestEnv &env, const MutateGraphArguments &arguments) {
 
     env.levelzero = std::make_shared<LevelZero>();
-
-    L0::KernelHelper::loadKernel(*env.levelzero, "graph_api_benchmark_kernel_sum.cl", "kernel_sum", &env.kernelSum, &env.moduleSum, nullptr);
-    L0::KernelHelper::loadKernel(*env.levelzero, "graph_api_benchmark_kernel_multiply.cl", "kernel_mul", &env.kernelMul, &env.moduleMul, nullptr);
+    auto testResult = L0::KernelHelper::loadKernel(*env.levelzero, "graph_api_benchmark_kernel_sum.cl", "kernel_sum", &env.kernelSum, &env.moduleSum, nullptr);
+    if (testResult != TestResult::Success) {
+        return testResult;
+    }
+    testResult = L0::KernelHelper::loadKernel(*env.levelzero, "graph_api_benchmark_kernel_multiply.cl", "kernel_mul", &env.kernelMul, &env.moduleMul, nullptr);
+    if (testResult != TestResult::Success) {
+        return testResult;
+    }
 
     uint32_t grpCnt[3] = {1, 1, 1};
 
