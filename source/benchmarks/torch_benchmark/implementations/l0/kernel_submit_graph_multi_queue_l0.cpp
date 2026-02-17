@@ -145,8 +145,6 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module_add_arrays));
     ASSERT_ZE_RESULT_SUCCESS(l0_ctx.l0.graphExtension.executableGraphDestroy(executableGraph));
     ASSERT_ZE_RESULT_SUCCESS(l0_ctx.l0.graphExtension.graphDestroy(graph));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event_1));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event_2));
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0_ctx.l0.context, d_a));
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0_ctx.l0.context, d_b));
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0_ctx.l0.context, d_c));
