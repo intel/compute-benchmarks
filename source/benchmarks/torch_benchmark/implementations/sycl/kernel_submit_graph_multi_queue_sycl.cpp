@@ -65,13 +65,13 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
         sycl::event event1 = q[0].ext_oneapi_submit_barrier();
         // TODO: use enqueue_wait_event when it's available
         q[1].ext_oneapi_submit_barrier({event1});
-        submit_kernel_add_const<data_type>(wgc, wgs, q[1], d_c.get(), d_a.get(), add_element);
+        submit_kernel_add_const<data_type>(wgc, wgs, q[1], args.useEvents, d_c.get(), d_a.get(), add_element);
 
         sycl::event event2 = q[1].ext_oneapi_submit_barrier();
-        submit_kernel_add_const<data_type>(wgc, wgs, q[0], d_b.get(), d_a.get(), add_element);
+        submit_kernel_add_const<data_type>(wgc, wgs, q[0], args.useEvents, d_b.get(), d_a.get(), add_element);
 
         q[0].ext_oneapi_submit_barrier({event2});
-        submit_kernel_add<data_type>(wgc, wgs, q[0], d_d.get(), d_b.get(), d_c.get());
+        submit_kernel_add<data_type>(wgc, wgs, q[0], args.useEvents, d_d.get(), d_b.get(), d_c.get());
     };
 
     // capture graph

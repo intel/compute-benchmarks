@@ -54,15 +54,15 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
 
     auto submit_kernels = [&]() {
         if (args.kernelName == KernelName::Empty) {
-            submit_kernel_empty(wgc, wgs, sycl.queue);
+            submit_kernel_empty(wgc, wgs, sycl.queue, args.useEvents);
         } else if (args.kernelName == KernelName::Add) {
-            submit_kernel_add<data_type>(wgc, wgs, sycl.queue, d_a.get(), d_b.get(), d_c.get());
+            submit_kernel_add<data_type>(wgc, wgs, sycl.queue, args.useEvents, d_a.get(), d_b.get(), d_c.get());
         } else if (args.kernelName == KernelName::AddSequence) {
             data_type add_element_1 = 2.0f;
             data_type add_element_2 = 1.0f;
-            submit_kernel_add<data_type>(wgc, wgs, sycl.queue, d_a.get(), d_b.get(), d_c.get());
-            submit_kernel_add_const<data_type>(wgc, wgs, sycl.queue, d_d.get(), d_a.get(), add_element_1);
-            submit_kernel_add_const<data_type>(wgc, wgs, sycl.queue, d_e.get(), d_d.get(), add_element_2);
+            submit_kernel_add<data_type>(wgc, wgs, sycl.queue, args.useEvents, d_a.get(), d_b.get(), d_c.get());
+            submit_kernel_add_const<data_type>(wgc, wgs, sycl.queue, args.useEvents, d_d.get(), d_a.get(), add_element_1);
+            submit_kernel_add_const<data_type>(wgc, wgs, sycl.queue, args.useEvents, d_e.get(), d_d.get(), add_element_2);
         }
     };
 

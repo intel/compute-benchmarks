@@ -61,21 +61,21 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
 
         // Submit several kernels into queue1
         for (size_t j = 0; j < args.kernelsPerQueue; j++) {
-            submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[0], d_a[0], d_b[0], d_c[0]);
+            submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[0], args.useEvents, d_a[0], d_b[0], d_c[0]);
         }
 
         // Submit several kernels into queue2
         for (size_t j = 1; j < args.kernelsPerQueue; j++) {
-            submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[1], d_a[1], d_b[1], d_c[1]);
+            submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[1], args.useEvents, d_a[1], d_b[1], d_c[1]);
         }
         // q2_last_event is the last event of queue2
-        sycl::event q2_last_event = submit_with_event_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[1], d_a[1], d_b[1], d_c[1]);
+        sycl::event q2_last_event = submit_with_event_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[1], args.useEvents, d_a[1], d_b[1], d_c[1]);
 
         // Start to measure submit time for a specific kernel
         if (!args.measureCompletion)
             profiler.measureStart();
         // Submit a new kernel into queue1, but the new kernel can only be executed after q2_last_event ends
-        submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[0], q2_last_event, d_a[0], d_b[0], d_c[0]);
+        submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[0], args.useEvents, q2_last_event, d_a[0], d_b[0], d_c[0]);
         if (!args.measureCompletion) {
             profiler.measureEnd();
             profiler.pushStats(statistics);

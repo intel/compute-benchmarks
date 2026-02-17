@@ -14,9 +14,11 @@ struct KernelSubmitMemoryReuseArguments : TestCaseArgumentContainer {
 
     Uint32Argument kernelBatchSize;
     DataTypeArgument kernelDataType;
+    BooleanArgument useEvents;
 
     KernelSubmitMemoryReuseArguments() : kernelBatchSize(*this, "kernelBatchSize", "Size of a batch of kernels after which synchronization occurs. 0 means one synchronization after all kernels are submitted."),
-                                         kernelDataType(*this, "kernelDataType", "Data type passed to kernel.") {}
+                                         kernelDataType(*this, "kernelDataType", "Data type passed to kernel."),
+                                         useEvents(*this, "UseEvents", "Use events when enqueuing kernels. When false, SYCL will use eventless enqueue functions.") {}
 };
 
 struct KernelSubmitMemoryReuse : TestCase<KernelSubmitMemoryReuseArguments> {

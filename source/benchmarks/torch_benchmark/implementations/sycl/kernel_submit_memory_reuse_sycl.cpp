@@ -30,7 +30,7 @@ static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, Com
     data_type *d_reuse_end = &d_reuse[REUSE_MEMORY_SIZE - 1];
 
     // Warmup
-    submit_kernel_write<data_type>(sycl.queue, d_reuse, 0, d_reuse_end, 0);
+    submit_kernel_write<data_type>(sycl.queue, args.useEvents, d_reuse, 0, d_reuse_end, 0);
     sycl.queue.wait();
 
     // Benchmark
@@ -42,7 +42,7 @@ static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, Com
         const int offset2 = -offset_dist(rng);
 
         profiler.measureStart();
-        submit_kernel_write<data_type>(sycl.queue, d_reuse, offset1, d_reuse_end, offset2);
+        submit_kernel_write<data_type>(sycl.queue, args.useEvents, d_reuse, offset1, d_reuse_end, offset2);
         profiler.measureEnd();
         profiler.pushStats(statistics);
 

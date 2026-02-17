@@ -20,6 +20,7 @@ struct KernelSubmitSingleQueueArguments : TestCaseArgumentContainer {
     KernelSubmitPatternArgument kernelSubmitPattern;
     Uint32Argument kernelWGCount;
     Uint32Argument kernelWGSize;
+    BooleanArgument useEvents;
 
     KernelSubmitSingleQueueArguments()
         : kernelDataType(*this, "kernelDataType", "Data type for kernel operations"),
@@ -28,7 +29,8 @@ struct KernelSubmitSingleQueueArguments : TestCaseArgumentContainer {
           kernelBatchSize(*this, "kernelBatchSize", "Size of each batch of kernels before syncing. If 0, no batching is performed"),
           kernelSubmitPattern(*this, "kernelSubmitPattern", "Pattern for submitting kernels"),
           kernelWGCount(*this, "kernelWGCount", "Number of workgroups"),
-          kernelWGSize(*this, "kernelWGSize", "Size of each workgroup") {}
+          kernelWGSize(*this, "kernelWGSize", "Size of each workgroup"),
+          useEvents(*this, "UseEvents", "Use events when enqueuing kernels.") {}
 };
 
 struct KernelSubmitSingleQueue : TestCase<KernelSubmitSingleQueueArguments> {

@@ -17,7 +17,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelSubmitSingleQueue> registerTestCase{};
 
-class KernelSubmitSingleQueueTest : public ::testing::TestWithParam<std::tuple<Api, DataType, KernelName, uint32_t, size_t, KernelSubmitPattern, uint32_t, uint32_t>> {
+class KernelSubmitSingleQueueTest : public ::testing::TestWithParam<std::tuple<Api, DataType, KernelName, uint32_t, size_t, KernelSubmitPattern, uint32_t, uint32_t, bool>> {
 };
 
 TEST_P(KernelSubmitSingleQueueTest, Test) {
@@ -30,6 +30,7 @@ TEST_P(KernelSubmitSingleQueueTest, Test) {
     args.kernelSubmitPattern = std::get<5>(GetParam());
     args.kernelWGCount = std::get<6>(GetParam());
     args.kernelWGSize = std::get<7>(GetParam());
+    args.useEvents = std::get<8>(GetParam());
     KernelSubmitSingleQueue test;
     test.run(args);
 }
@@ -47,7 +48,8 @@ INSTANTIATE_TEST_SUITE_P(
                           KernelSubmitPattern::D2h_after_batch,
                           KernelSubmitPattern::H2d_before_batch), // kernelSubmitPattern
         ::testing::Values(512u),                                  // kernelWGCount
-        ::testing::Values(256u)));                                // kernelWGSize
+        ::testing::Values(256u),                                  // kernelWGSize
+        ::testing::Values(false)));                               // useEvents
 
 INSTANTIATE_TEST_SUITE_P(
     KernelSubmitSingleQueueTestCopyableObject,
@@ -62,7 +64,8 @@ INSTANTIATE_TEST_SUITE_P(
                           KernelSubmitPattern::D2h_after_batch,
                           KernelSubmitPattern::H2d_before_batch), // kernelSubmitPattern
         ::testing::Values(512u),                                  // kernelWGCount
-        ::testing::Values(256u)));                                // kernelWGSize
+        ::testing::Values(256u),                                  // kernelWGSize
+        ::testing::Values(true)));                                // useEvents
 
 INSTANTIATE_TEST_SUITE_P(
     KernelSubmitSingleQueueTestEmptyKernel,
@@ -75,4 +78,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(10u),                         // kernelBatchSize
         ::testing::Values(KernelSubmitPattern::Single), // kernelSubmitPattern
         ::testing::Values(512u),                        // kernelWGCount
-        ::testing::Values(256u)));                      // kernelWGSize
+        ::testing::Values(256u),                        // kernelWGSize
+        ::testing::Values(false)));                     // useEvents

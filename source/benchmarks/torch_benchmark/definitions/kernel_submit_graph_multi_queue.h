@@ -15,11 +15,13 @@ struct KernelSubmitGraphMultiQueueArguments : TestCaseArgumentContainer {
     Uint32Argument workgroupSize;
     Uint32Argument kernelsPerQueue;
     BooleanArgument useProfiling;
+    BooleanArgument useEvents;
 
     KernelSubmitGraphMultiQueueArguments() : workgroupCount(*this, "workgroupCount", "Number of workgroups."),
                                              workgroupSize(*this, "workgroupSize", "Size of each workgroup."),
                                              kernelsPerQueue(*this, "kernelsPerQueue", "Number of nodes (kernel groups) recorded in a graph"),
-                                             useProfiling(*this, "Profiling", "Create queues with profiling enabled.") {}
+                                             useProfiling(*this, "Profiling", "Create queues with profiling enabled."),
+                                             useEvents(*this, "UseEvents", "Use events when enqueuing kernels.") {}
 };
 
 struct KernelSubmitGraphMultiQueue : TestCase<KernelSubmitGraphMultiQueueArguments> {

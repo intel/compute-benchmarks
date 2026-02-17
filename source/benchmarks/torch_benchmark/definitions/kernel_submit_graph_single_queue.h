@@ -17,13 +17,15 @@ struct KernelSubmitGraphSingleQueueArguments : TestCaseArgumentContainer {
     Uint32Argument kernelGroupsCount;
     PositiveIntegerArgument kernelBatchSize;
     BooleanArgument useProfiling;
+    BooleanArgument useEvents;
 
     KernelSubmitGraphSingleQueueArguments() : kernelName(*this, "kernelName", "Name of the kernel."),
                                               kernelWGCount(*this, "kernelWGCount", "Number of workgroups."),
                                               kernelWGSize(*this, "kernelWGSize", "Size of each workgroup."),
                                               kernelGroupsCount(*this, "kernelGroupsCount", "Number of nodes (kernel groups) recorded in a graph."),
                                               kernelBatchSize(*this, "kernelBatchSize", "Size of a batch of kernels after which synchronization occurs."),
-                                              useProfiling(*this, "useProfiling", "Create the queue with the enable_profiling property (SYCL only).") {}
+                                              useProfiling(*this, "useProfiling", "Create the queue with the enable_profiling property (SYCL only)."),
+                                              useEvents(*this, "UseEvents", "Use events when enqueuing kernels.") {}
 };
 
 struct KernelSubmitGraphSingleQueue : TestCase<KernelSubmitGraphSingleQueueArguments> {

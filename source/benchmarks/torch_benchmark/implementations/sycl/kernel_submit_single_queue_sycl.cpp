@@ -127,16 +127,16 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
         // The measured kernel submission
         profiler.measureStart();
         if (args.kernelName == KernelName::Empty) {
-            submit_kernel_empty(args.kernelWGCount, args.kernelWGSize, sycl.queue);
+            submit_kernel_empty(args.kernelWGCount, args.kernelWGSize, sycl.queue, args.useEvents);
         } else if (args.kernelDataType == DataType::Mixed) {
             if constexpr (std::is_same<T, double>::value) {
-                submit_kernel_add_mixed_type<double, float, int>(args.kernelWGCount, args.kernelWGSize, sycl.queue,
+                submit_kernel_add_mixed_type<double, float, int>(args.kernelWGCount, args.kernelWGSize, sycl.queue, args.useEvents,
                                                                  deviceBuffer, deviceBufferVec[0], deviceBufferVec[1], deviceBufferVec[2],
                                                                  floatDeviceBufferVec[0], floatDeviceBufferVec[1], floatDeviceBufferVec[2], floatDeviceBufferVec[3],
                                                                  intDeviceBufferVec[0], intDeviceBufferVec[1], intDeviceBufferVec[2]);
             }
         } else {
-            submit_kernel_add<T>(args.kernelWGCount, args.kernelWGSize, sycl.queue,
+            submit_kernel_add<T>(args.kernelWGCount, args.kernelWGSize, sycl.queue, args.useEvents,
                                  deviceBuffer, deviceBufferVec.data(), num_main_buffers);
         }
         profiler.measureEnd();

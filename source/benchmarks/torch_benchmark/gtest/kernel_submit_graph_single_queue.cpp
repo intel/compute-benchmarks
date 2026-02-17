@@ -15,7 +15,7 @@
 #include <gtest/gtest.h>
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelSubmitGraphSingleQueue> registerTestCase{};
-class KernelSubmitGraphSingleQueueTest : public ::testing::TestWithParam<std::tuple<Api, KernelName, uint32_t, uint32_t, uint32_t, size_t, bool>> {
+class KernelSubmitGraphSingleQueueTest : public ::testing::TestWithParam<std::tuple<Api, KernelName, uint32_t, uint32_t, uint32_t, size_t, bool, bool>> {
 };
 
 TEST_P(KernelSubmitGraphSingleQueueTest, Test) {
@@ -27,6 +27,7 @@ TEST_P(KernelSubmitGraphSingleQueueTest, Test) {
     args.kernelGroupsCount = std::get<4>(GetParam());
     args.kernelBatchSize = std::get<5>(GetParam());
     args.useProfiling = std::get<6>(GetParam());
+    args.useEvents = std::get<7>(GetParam());
     KernelSubmitGraphSingleQueue test;
     test.run(args);
 }
@@ -41,4 +42,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(256),                                                         // kernelWGSize
         ::testing::Values(1),                                                           // kernelGroupsCount
         ::testing::Values(10),                                                          // kernelBatchSize
-        ::testing::Values(false)));                                                     // useProfiling
+        ::testing::Values(false),                                                       // useProfiling
+        ::testing::Values(false, true)));                                               // useEvents

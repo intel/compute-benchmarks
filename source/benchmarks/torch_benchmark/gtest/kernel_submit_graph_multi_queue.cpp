@@ -15,7 +15,7 @@
 #include <gtest/gtest.h>
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelSubmitGraphMultiQueue> registerTestCase{};
-class KernelSubmitGraphMultiQueueTest : public ::testing::TestWithParam<std::tuple<Api, uint32_t, uint32_t, uint32_t, bool>> {
+class KernelSubmitGraphMultiQueueTest : public ::testing::TestWithParam<std::tuple<Api, uint32_t, uint32_t, uint32_t, bool, bool>> {
 };
 
 TEST_P(KernelSubmitGraphMultiQueueTest, Test) {
@@ -25,6 +25,7 @@ TEST_P(KernelSubmitGraphMultiQueueTest, Test) {
     args.workgroupSize = std::get<2>(GetParam());
     args.kernelsPerQueue = std::get<3>(GetParam());
     args.useProfiling = std::get<4>(GetParam());
+    args.useEvents = std::get<5>(GetParam());
     KernelSubmitGraphMultiQueue test;
     test.run(args);
 }
@@ -34,7 +35,8 @@ INSTANTIATE_TEST_SUITE_P(
     KernelSubmitGraphMultiQueueTest,
     ::testing::Combine(
         ::testing::Values(Api::SYCL, Api::SYCLPREVIEW, Api::L0),
-        ::testing::Values(512),     // workgroupCount
-        ::testing::Values(256),     // workgroupSize
-        ::testing::Values(1),       // kernelsPerQueue
-        ::testing::Values(false))); // useProfiling
+        ::testing::Values(512),           // workgroupCount
+        ::testing::Values(256),           // workgroupSize
+        ::testing::Values(1),             // kernelsPerQueue
+        ::testing::Values(false),         // useProfiling
+        ::testing::Values(false, true))); // useEvents
