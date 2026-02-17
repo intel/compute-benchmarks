@@ -43,8 +43,8 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, timestampBuffer, timestampBufferSize))
     uint64_t *beginTimestamp = static_cast<uint64_t *>(timestampBuffer);
     uint64_t *endTimestamp = beginTimestamp + 1;
-    uint64_t *meassurmentCostStart = endTimestamp + 1;
-    uint64_t *meassurmentCostEnd = meassurmentCostStart + 1;
+    uint64_t *measurementCostStart = endTimestamp + 1;
+    uint64_t *measurementCostEnd = measurementCostStart + 1;
 
     // Create output buffer
     void *outputBuffer = nullptr;
@@ -134,8 +134,8 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
         }
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, endTimestamp, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, meassurmentCostStart, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, meassurmentCostEnd, nullptr, 0, nullptr));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, measurementCostStart, nullptr, 0, nullptr));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, measurementCostEnd, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
     // Benchmark
@@ -144,9 +144,9 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
 
         auto commandTime = std::chrono::nanoseconds(*endTimestamp - *beginTimestamp);
-        auto meassureTime = std::chrono::nanoseconds(*meassurmentCostEnd - *meassurmentCostStart);
-        if (commandTime >= meassureTime) {
-            commandTime -= meassureTime;
+        auto measureTime = std::chrono::nanoseconds(*measurementCostEnd - *measurementCostStart);
+        if (commandTime >= measureTime) {
+            commandTime -= measureTime;
         }
 
         commandTime *= timerResolution;
