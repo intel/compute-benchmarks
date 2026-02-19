@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -140,7 +140,7 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
 
     // Clear L3$ Cache kernel
     const size_t clearGws = clearGpuBuffSize / sizeof(cl_uint);
-    const size_t buffSizeInInts = clearGpuBuffSize / sizeof(cl_uint);
+    const int buffSizeInInts = clearGpuBuffSize / sizeof(cl_uint);
     ASSERT_CL_SUCCESS(clSetKernelArg(clearCacheKernel, 0, sizeof(clearGpuBuff), &clearGpuBuff));
     ASSERT_CL_SUCCESS(clSetKernelArg(clearCacheKernel, 1, sizeof(buffSizeInInts), &buffSizeInInts));
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, clearCacheKernel, 1, nullptr, &clearGws, NULL, 0, nullptr, nullptr));
