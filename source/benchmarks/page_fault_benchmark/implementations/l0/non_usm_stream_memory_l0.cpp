@@ -7,8 +7,10 @@
 
 #include "framework/l0/levelzero.h"
 #include "framework/l0/utility/buffer_contents_helper_l0.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/l0/utility/usm_helper.h"
 #include "framework/test_case/register_test_case.h"
+#include "framework/utility/compiler_options_builder.h"
 #include "framework/utility/file_helper.h"
 #include "framework/utility/memory_constants.h"
 #include "framework/utility/timer.h"
@@ -23,9 +25,6 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (arguments.partialMultiplier > 1u) {
-        return TestResult::NoImplementation;
-    }
-    if (arguments.vectorSize > 1u) {
         return TestResult::NoImplementation;
     }
 
@@ -60,57 +59,42 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     ze_device_module_properties_t moduleProperties{};
     ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetModuleProperties(levelzero.device, &moduleProperties));
 
-    const bool useDoubles = moduleProperties.fp64flags != 0u;
-    const size_t elementSize = useDoubles ? sizeof(double) : sizeof(float);
+    size_t elementSize = arguments.vectorSize * sizeof(uint32_t);
     const int32_t scalarValue = -999;
     bool setScalarArgument = true;
     const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
-
-    // Create module
-    const char *kernelFile = useDoubles ? "memory_benchmark_stream_memory_fp64.spv" : "memory_benchmark_stream_memory.spv";
-    auto spirvModule = FileHelper::loadBinaryFile(kernelFile);
-    if (spirvModule.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
-    ze_module_handle_t module;
-    ze_kernel_handle_t kernel;
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
 
     // Create buffers
     size_t bufferSize = arguments.size;
     void *buffers[3] = {};
     size_t buffersCount = {};
     size_t bufferSizes[3] = {bufferSize, bufferSize, bufferSize};
+    const char *pKernelName;
 
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        kernelDesc.pKernelName = "read";
+        pKernelName = "read";
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
         bufferSizes[buffersCount] = 16u;
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, 16u, &buffers[buffersCount++]));
         break;
     case StreamMemoryType::Write:
         if (BufferContents::Random == arguments.contents) {
-            kernelDesc.pKernelName = "write_random";
+            pKernelName = "write_random";
             setScalarArgument = false; // value to write is embedded in kernel code
         } else {
-            kernelDesc.pKernelName = "write";
+            pKernelName = "write";
         }
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
         break;
     case StreamMemoryType::Scale:
-        kernelDesc.pKernelName = "scale";
+        pKernelName = "scale";
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
         break;
     case StreamMemoryType::Triad:
-        kernelDesc.pKernelName = "triad";
+        pKernelName = "triad";
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
@@ -120,7 +104,18 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     }
 
     // Create kernel
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
+    ze_kernel_handle_t kernel{};
+    ze_module_handle_t module{};
+    CompilerOptionsBuilder compilerOptions;
+    std::string streamType = "uint";
+    if (arguments.vectorSize > 1) {
+        streamType += std::to_string(arguments.vectorSize);
+    }
+    compilerOptions.addDefinitionKeyValue("STREAM_TYPE", streamType.c_str());
+
+    auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "memory_benchmark_stream_memory.cl", pKernelName, &kernel, &module, compilerOptions.str().c_str());
+    if (kernelLoadRes != TestResult::Success)
+        return kernelLoadRes;
 
     // Query maximum group size
     uint32_t groupSizeX = static_cast<uint32_t>(arguments.lws);
