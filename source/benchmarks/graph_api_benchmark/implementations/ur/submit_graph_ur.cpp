@@ -14,7 +14,12 @@
 #include "definitions/submit_graph.h"
 
 #include <iostream>
+
+#if __has_include(<ur/ur_api.h>)
+#include <ur/ur_api.h>
+#else
 #include <ur_api.h>
+#endif
 
 static constexpr size_t n_dimensions = 3;
 static constexpr size_t global_size[] = {1, 1, 1};
