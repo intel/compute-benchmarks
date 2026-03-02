@@ -17,7 +17,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelSubmitSingleQueue> registerTestCase{};
 
-class KernelSubmitSingleQueueTest : public ::testing::TestWithParam<std::tuple<Api, DataType, KernelName, uint32_t, size_t, KernelSubmitPattern, uint32_t, uint32_t, bool>> {
+class KernelSubmitSingleQueueTest : public ::testing::TestWithParam<std::tuple<Api, DataType, KernelName, uint32_t, size_t, KernelSubmitPattern, uint32_t, uint32_t, bool, bool>> {
 };
 
 TEST_P(KernelSubmitSingleQueueTest, Test) {
@@ -30,33 +30,22 @@ TEST_P(KernelSubmitSingleQueueTest, Test) {
     args.kernelSubmitPattern = std::get<5>(GetParam());
     args.kernelWGCount = std::get<6>(GetParam());
     args.kernelWGSize = std::get<7>(GetParam());
-    args.useEvents = std::get<8>(GetParam());
+    args.useProfiling = std::get<8>(GetParam());
+    args.useEvents = std::get<9>(GetParam());
     KernelSubmitSingleQueue test;
     test.run(args);
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    KernelSubmitSingleQueueTestAddKernel,
+    KernelSubmitSingleQueueTestDataTypes,
     KernelSubmitSingleQueueTest,
     ::testing::Combine(
         ::testing::Values(Api::SYCL, Api::SYCLPREVIEW, Api::L0),
-        ::testing::Values(DataType::Int32, DataType::Double, DataType::Float, DataType::Mixed), // kernelDataType
-        ::testing::Values(KernelName::Add),                                                     // kernelName
-        ::testing::Values(1u, 5u, 10u),                                                         // kernelParamsNum
-        ::testing::Values(10u),                                                                 // kernelBatchSize
-        ::testing::Values(KernelSubmitPattern::Single,
-                          KernelSubmitPattern::D2h_after_batch,
-                          KernelSubmitPattern::H2d_before_batch), // kernelSubmitPattern
-        ::testing::Values(512u),                                  // kernelWGCount
-        ::testing::Values(256u),                                  // kernelWGSize
-        ::testing::Values(false)));                               // useEvents
-
-INSTANTIATE_TEST_SUITE_P(
-    KernelSubmitSingleQueueTestCopyableObject,
-    KernelSubmitSingleQueueTest,
-    ::testing::Combine(
-        ::testing::Values(Api::SYCL, Api::SYCLPREVIEW, Api::L0),
-        ::testing::Values(DataType::CopyableObject), // kernelDataType
+        ::testing::Values(DataType::Int32,
+                          DataType::Float,
+                          DataType::Double,
+                          DataType::Mixed,
+                          DataType::CopyableObject), // kernelDataType
         ::testing::Values(KernelName::Add),          // kernelName
         ::testing::Values(1u),                       // kernelParamsNum
         ::testing::Values(10u),                      // kernelBatchSize
@@ -65,6 +54,53 @@ INSTANTIATE_TEST_SUITE_P(
                           KernelSubmitPattern::H2d_before_batch), // kernelSubmitPattern
         ::testing::Values(512u),                                  // kernelWGCount
         ::testing::Values(256u),                                  // kernelWGSize
+        ::testing::Values(false),                                 // useProfiling
+        ::testing::Values(false)));                               // useEvents
+
+INSTANTIATE_TEST_SUITE_P(
+    KernelSubmitSingleQueueTestParamCounts,
+    KernelSubmitSingleQueueTest,
+    ::testing::Combine(
+        ::testing::Values(Api::SYCL, Api::SYCLPREVIEW, Api::L0),
+        ::testing::Values(DataType::Int32),             // kernelDataType
+        ::testing::Values(KernelName::Add),             // kernelName
+        ::testing::Values(5u, 10u),                     // kernelParamsNum
+        ::testing::Values(10u),                         // kernelBatchSize
+        ::testing::Values(KernelSubmitPattern::Single), // kernelSubmitPattern
+        ::testing::Values(512u),                        // kernelWGCount
+        ::testing::Values(256u),                        // kernelWGSize
+        ::testing::Values(false),                       // useProfiling
+        ::testing::Values(false)));                     // useEvents
+
+INSTANTIATE_TEST_SUITE_P(
+    KernelSubmitSingleQueueTestSubmitPatterns,
+    KernelSubmitSingleQueueTest,
+    ::testing::Combine(
+        ::testing::Values(Api::SYCL, Api::SYCLPREVIEW, Api::L0),
+        ::testing::Values(DataType::Int32), // kernelDataType
+        ::testing::Values(KernelName::Add), // kernelName
+        ::testing::Values(1u),              // kernelParamsNum
+        ::testing::Values(10u),             // kernelBatchSize
+        ::testing::Values(KernelSubmitPattern::H2d_before_batch,
+                          KernelSubmitPattern::D2h_after_batch), // kernelSubmitPattern
+        ::testing::Values(512u),                                 // kernelWGCount
+        ::testing::Values(256u),                                 // kernelWGSize
+        ::testing::Values(false),                                // useProfiling
+        ::testing::Values(true)));                               // useEvents
+
+INSTANTIATE_TEST_SUITE_P(
+    KernelSubmitSingleQueueTestCrossValidationMixed,
+    KernelSubmitSingleQueueTest,
+    ::testing::Combine(
+        ::testing::Values(Api::SYCL, Api::SYCLPREVIEW, Api::L0),
+        ::testing::Values(DataType::Mixed),                       // kernelDataType
+        ::testing::Values(KernelName::Add),                       // kernelName
+        ::testing::Values(5u),                                    // kernelParamsNum
+        ::testing::Values(10u),                                   // kernelBatchSize
+        ::testing::Values(KernelSubmitPattern::H2d_before_batch), // kernelSubmitPattern
+        ::testing::Values(512u),                                  // kernelWGCount
+        ::testing::Values(256u),                                  // kernelWGSize
+        ::testing::Values(false),                                 // useProfiling
         ::testing::Values(true)));                                // useEvents
 
 INSTANTIATE_TEST_SUITE_P(
@@ -79,4 +115,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(KernelSubmitPattern::Single), // kernelSubmitPattern
         ::testing::Values(512u),                        // kernelWGCount
         ::testing::Values(256u),                        // kernelWGSize
+        ::testing::Values(false),                       // useProfiling
         ::testing::Values(false)));                     // useEvents

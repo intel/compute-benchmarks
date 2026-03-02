@@ -5,8 +5,8 @@
  *
  */
 
+#include "common.hpp"
 #include "definitions/kernel_submit_graph_single_queue.h"
-#include "kernel_submit_common.hpp"
 
 using data_type = float;
 
@@ -14,85 +14,91 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
-        std::cerr << "Noop run for Torch L0 benchmark" << std::endl;
         profiler.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
+    // setup
     ExtensionProperties extensionProperties = ExtensionProperties::create()
                                                   .setGraphFunctions(true);
-    // Note: Only in-order queues are supported in this benchmark
-    bool useInOrderQueue = true;
-    L0Context l0_ctx{extensionProperties, useInOrderQueue};
-
-    ze_kernel_handle_t kernel_1{};
-    ze_kernel_handle_t kernel_2{};
-    ze_module_handle_t module_1{};
-    ze_module_handle_t module_2{};
-    if (args.kernelName == KernelName::Empty) {
-        ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0_ctx.l0, "torch_benchmark_elementwise_sum_0.cl", "elementwise_sum_0", kernel_1, module_1));
-    } else if (args.kernelName == KernelName::Add) {
-        ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0_ctx.l0, "torch_benchmark_elementwise_sum_2.cl", "torch_benchmark_elementwise_sum_2_float", kernel_1, module_1));
-    } else if (args.kernelName == KernelName::AddSequence) {
-        ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0_ctx.l0, "torch_benchmark_elementwise_sum_2.cl", "torch_benchmark_elementwise_sum_2_float", kernel_1, module_1));
-        ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0_ctx.l0, "torch_benchmark_add_element_constant.cl", "torch_benchmark_add_element_constant", kernel_2, module_2));
-    } else {
-        return TestResult::InvalidArgs;
-    }
+    LevelZero l0{extensionProperties};
+    CommandList cmd_list_1{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
+    CommandList cmd_list_2{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
 
     const uint32_t wgc = args.kernelWGCount;
     const uint32_t wgs = args.kernelWGSize;
     const size_t length = wgc * wgs;
-    data_type *d_a, *d_b, *d_c, *d_d, *d_e;
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(l0_ctx.l0, length, d_a));
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(l0_ctx.l0, length, d_b));
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(l0_ctx.l0, length, d_c));
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(l0_ctx.l0, length, d_d));
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(l0_ctx.l0, length, d_e));
+    DeviceMemory<data_type> d_a{l0, length};
+    DeviceMemory<data_type> d_b{l0, length};
+    DeviceMemory<data_type> d_c{l0, length};
+    DeviceMemory<data_type> d_d{l0, length};
+    DeviceMemory<data_type> d_e{l0, length};
 
-    auto submit_kernels = [&]() {
-        ze_group_count_t dispatch{static_cast<uint32_t>(wgc), 1, 1};
-        ze_group_size_t groupSizes = {static_cast<uint32_t>(wgs), 1, 1};
+    // create kernels
+    std::string kernel_file_name_1 = "";
+    std::string kernel_file_name_2 = "";
+    std::string kernel_name_1 = "";
+    std::string kernel_name_2 = "";
+    if (args.kernelName == KernelName::Empty) {
+        kernel_file_name_1 = "torch_benchmark_elementwise_sum_0.cl";
+        kernel_name_1 = "elementwise_sum_0";
+    } else if (args.kernelName == KernelName::Add) {
+        kernel_file_name_1 = "torch_benchmark_elementwise_sum_2.cl";
+        kernel_name_1 = "elementwise_sum_2_float";
+    } else if (args.kernelName == KernelName::AddSequence) {
+        kernel_file_name_1 = "torch_benchmark_elementwise_sum_2.cl";
+        kernel_name_1 = "elementwise_sum_2_float";
+        kernel_file_name_2 = "torch_benchmark_add_element_constant.cl";
+        kernel_name_2 = "add_element_constant";
+    } else {
+        std::cerr << "Invalid kernel name argument." << std::endl;
+        return TestResult::InvalidArgs;
+    }
+    std::unique_ptr<Kernel> kernel_1{nullptr};
+    std::unique_ptr<Kernel> kernel_2{nullptr};
+    if (!kernel_file_name_1.empty() && !kernel_name_1.empty()) {
+        kernel_1 = std::make_unique<Kernel>(l0, kernel_file_name_1, kernel_name_1);
+    }
+    if (!kernel_file_name_2.empty() && !kernel_name_2.empty()) {
+        kernel_2 = std::make_unique<Kernel>(l0, kernel_file_name_2, kernel_name_2);
+    }
+    ze_group_count_t dispatch{static_cast<uint32_t>(wgc), 1, 1};
+    ze_group_size_t groupSizes = {static_cast<uint32_t>(wgs), 1, 1};
+    data_type add_element_1 = 2.0f;
+    data_type add_element_2 = 1.0f;
+    void *args_1[] = {d_c.getAddress(), d_a.getAddress(), d_b.getAddress()};
+    void *args_2[] = {d_d.getAddress(), d_c.getAddress(), &add_element_1};
+    void *args_3[] = {d_e.getAddress(), d_d.getAddress(), &add_element_2};
 
+    auto submit_kernels = [&]() -> TestResult {
         if (args.kernelName == KernelName::Empty) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(l0_ctx.cmdListImmediate_1, kernel_1, dispatch, groupSizes,
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmd_list_1.get(), kernel_1->get(), dispatch, groupSizes,
                                                                                   nullptr, nullptr, nullptr, 0, nullptr));
         } else if (args.kernelName == KernelName::Add) {
-            void *args_1[] = {&d_a, &d_b, &d_c};
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(l0_ctx.cmdListImmediate_1, kernel_1, dispatch, groupSizes,
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmd_list_1.get(), kernel_1->get(), dispatch, groupSizes,
                                                                                   args_1, nullptr, nullptr, 0, nullptr));
         } else if (args.kernelName == KernelName::AddSequence) {
-            data_type add_element_1 = 2.0f;
-            data_type add_element_2 = 1.0f;
-            void *args_1[] = {&d_a, &d_b, &d_c};
-            void *args_2[] = {&d_c, &add_element_1, &d_d};
-            void *args_3[] = {&d_d, &add_element_2, &d_e};
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(l0_ctx.cmdListImmediate_1, kernel_1, dispatch, groupSizes,
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmd_list_1.get(), kernel_1->get(), dispatch, groupSizes,
                                                                                   args_1, nullptr, nullptr, 0, nullptr));
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(l0_ctx.cmdListImmediate_1, kernel_2, dispatch, groupSizes,
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmd_list_1.get(), kernel_2->get(), dispatch, groupSizes,
                                                                                   args_2, nullptr, nullptr, 0, nullptr));
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(l0_ctx.cmdListImmediate_1, kernel_2, dispatch, groupSizes,
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmd_list_1.get(), kernel_2->get(), dispatch, groupSizes,
                                                                                   args_3, nullptr, nullptr, 0, nullptr));
-        } else {
-            return TestResult::Error;
         }
         return TestResult::Success;
     };
 
     // capture graph
-    ze_graph_handle_t graph{};
-    ASSERT_ZE_RESULT_SUCCESS(l0_ctx.l0.graphExtension.graphCreate(l0_ctx.l0.context, &graph, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(l0_ctx.l0.graphExtension.commandListBeginCaptureIntoGraph(l0_ctx.cmdListImmediate_1, graph, nullptr));
-    for (size_t i = 0; i < args.kernelGroupsCount; ++i) {
+    Graph graph{l0};
+    ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListBeginCaptureIntoGraph(cmd_list_1.get(), graph.get(), nullptr));
+    for (size_t i = 0; i < args.kernelsPerQueue; ++i) {
         ASSERT_TEST_RESULT_SUCCESS(submit_kernels());
     }
-    ASSERT_ZE_RESULT_SUCCESS(l0_ctx.l0.graphExtension.commandListEndGraphCapture(l0_ctx.cmdListImmediate_1, &graph, nullptr));
-
+    ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListEndGraphCapture(cmd_list_1.get(), graph.getAddress(), nullptr));
     // instantiate graph
-    ze_executable_graph_handle_t executableGraph{};
-    ASSERT_ZE_RESULT_SUCCESS(l0_ctx.l0.graphExtension.commandListInstantiateGraph(graph, &executableGraph, nullptr));
+    ASSERT_TEST_RESULT_SUCCESS(graph.instantiate());
 
-    // run captured graph
+    // benchmark: run captured graph
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
 
@@ -100,28 +106,13 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
         // so only measuring exec + sync is meaningful in terms of comparing
         // perf with SYCL
         for (size_t j = 0; j < args.kernelBatchSize; ++j) {
-            ASSERT_ZE_RESULT_SUCCESS(l0_ctx.l0.graphExtension.commandListAppendGraph(l0_ctx.cmdListImmediate_2, executableGraph, nullptr, nullptr, 0, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmd_list_2.get(), graph.getExecutable(), nullptr, nullptr, 0, nullptr));
         }
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0_ctx.cmdListImmediate_2, UINT64_MAX));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list_2.get(), UINT64_MAX));
 
         profiler.measureEnd();
         profiler.pushStats(statistics);
     }
-
-    // clean up
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel_1));
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module_1));
-    if (args.kernelName == KernelName::AddSequence) {
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel_2));
-        ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module_2));
-    }
-    ASSERT_ZE_RESULT_SUCCESS(l0_ctx.l0.graphExtension.executableGraphDestroy(executableGraph));
-    ASSERT_ZE_RESULT_SUCCESS(l0_ctx.l0.graphExtension.graphDestroy(graph));
-    ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0_ctx.l0.context, d_a));
-    ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0_ctx.l0.context, d_b));
-    ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0_ctx.l0.context, d_c));
-    ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0_ctx.l0.context, d_d));
-    ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0_ctx.l0.context, d_e));
 
     return TestResult::Success;
 }

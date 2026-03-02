@@ -5,17 +5,12 @@
  *
  */
 
-#include "framework/test_case/register_test_case.h"
-#include "framework/utility/combo_profiler.h"
-
+#include "common.hpp"
 #include "definitions/kernel_submit_multi_queue.h"
-#include "definitions/sycl_kernels.h"
-
-#include <sycl/sycl.hpp>
-
-#define NUM_OF_QUEUES 2
 
 using data_type = int;
+
+constexpr int NUM_OF_QUEUES = 2;
 
 static auto enableProfiling = sycl::property::queue::enable_profiling();
 static auto inOrder = sycl::property::queue::in_order();
@@ -28,76 +23,67 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
         return TestResult::Nooped;
     }
 
-    // sycl::device dev = sycl::device([](const sycl::device&){return 0;}); // use it to run on CPU
+    // setup
     sycl::device dev = sycl::device(sycl::gpu_selector_v);
+    Sycl sycl[NUM_OF_QUEUES] = {
+        args.useProfiling ? Sycl{dev, inOrder, enableProfiling} : Sycl{dev, inOrder},
+        args.useProfiling ? Sycl{dev, inOrder, enableProfiling} : Sycl{dev, inOrder}};
 
-    assert(NUM_OF_QUEUES == 2);
+    const size_t data_size = args.kernelWGCount * args.kernelWGSize;
 
-    sycl::queue q[NUM_OF_QUEUES];
+    using DevicePtr = decltype(make_device_ptr<data_type>(sycl[0], data_size));
+    std::vector<DevicePtr> d_a;
+    std::vector<DevicePtr> d_b;
+    std::vector<DevicePtr> d_c;
+
     for (int i = 0; i < NUM_OF_QUEUES; i++) {
-        q[i] = sycl::queue(dev, args.useProfiling ? sycl::property_list{inOrder, enableProfiling} : sycl::property_list{inOrder});
+        d_a.push_back(make_device_ptr<data_type>(sycl[i], data_size));
+        d_b.push_back(make_device_ptr<data_type>(sycl[i], data_size));
+        d_c.push_back(make_device_ptr<data_type>(sycl[i], data_size));
     }
 
-    data_type *d_a[NUM_OF_QUEUES];
-    data_type *d_b[NUM_OF_QUEUES];
-    data_type *d_c[NUM_OF_QUEUES];
-
     for (int i = 0; i < NUM_OF_QUEUES; i++) {
-        const size_t data_size = args.kernelWGCount * args.kernelWGSize;
-        d_a[i] = sycl::malloc_device<data_type>(data_size, q[i]);
-        d_b[i] = sycl::malloc_device<data_type>(data_size, q[i]);
-        d_c[i] = sycl::malloc_device<data_type>(data_size, q[i]);
-    }
-
-    for (int i = 0; i < NUM_OF_QUEUES; i++) {
-        q[i].wait();
+        sycl[i].queue.wait();
     }
 
     // Totally submit numIterations of a specific kernel
     for (size_t i = 0; i < args.iterations; i++) {
 
-        if (args.measureCompletion)
+        if (args.measureCompletionTime) {
             profiler.measureStart();
+        }
 
         // Submit several kernels into queue1
         for (size_t j = 0; j < args.kernelsPerQueue; j++) {
-            submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[0], args.useEvents, d_a[0], d_b[0], d_c[0]);
+            submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, sycl[0].queue, args.useEvents, d_a[0].get(), d_b[0].get(), d_c[0].get());
         }
 
         // Submit several kernels into queue2
         for (size_t j = 1; j < args.kernelsPerQueue; j++) {
-            submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[1], args.useEvents, d_a[1], d_b[1], d_c[1]);
+            submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, sycl[1].queue, args.useEvents, d_a[1].get(), d_b[1].get(), d_c[1].get());
         }
         // q2_last_event is the last event of queue2
-        sycl::event q2_last_event = submit_with_event_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[1], args.useEvents, d_a[1], d_b[1], d_c[1]);
+        sycl::event q2_last_event = submit_with_event_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, sycl[1].queue, args.useEvents, d_a[1].get(), d_b[1].get(), d_c[1].get());
 
         // Start to measure submit time for a specific kernel
-        if (!args.measureCompletion)
+        if (!args.measureCompletionTime) {
             profiler.measureStart();
+        }
         // Submit a new kernel into queue1, but the new kernel can only be executed after q2_last_event ends
-        submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, q[0], args.useEvents, q2_last_event, d_a[0], d_b[0], d_c[0]);
-        if (!args.measureCompletion) {
+        submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, sycl[0].queue, args.useEvents, q2_last_event, d_a[0].get(), d_b[0].get(), d_c[0].get());
+        if (!args.measureCompletionTime) {
             profiler.measureEnd();
             profiler.pushStats(statistics);
         }
 
-        for (auto &oneque : q) {
-            oneque.wait();
+        for (int i = 0; i < NUM_OF_QUEUES; i++) {
+            sycl[i].queue.wait();
         }
 
-        if (args.measureCompletion) {
+        if (args.measureCompletionTime) {
             profiler.measureEnd();
             profiler.pushStats(statistics);
         }
-    }
-
-    for (size_t i = 0; i < NUM_OF_QUEUES; i++) {
-        if (d_a[i] != NULL)
-            sycl::free(d_a[i], q[i]);
-        if (d_b[i] != NULL)
-            sycl::free(d_b[i], q[i]);
-        if (d_c[i] != NULL)
-            sycl::free(d_c[i], q[i]);
     }
 
     return TestResult::Success;

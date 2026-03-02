@@ -24,7 +24,7 @@ TEST_P(KernelSubmitGraphSingleQueueTest, Test) {
     args.kernelName = std::get<1>(GetParam());
     args.kernelWGCount = std::get<2>(GetParam());
     args.kernelWGSize = std::get<3>(GetParam());
-    args.kernelGroupsCount = std::get<4>(GetParam());
+    args.kernelsPerQueue = std::get<4>(GetParam());
     args.kernelBatchSize = std::get<5>(GetParam());
     args.useProfiling = std::get<6>(GetParam());
     args.useEvents = std::get<7>(GetParam());
@@ -37,10 +37,12 @@ INSTANTIATE_TEST_SUITE_P(
     KernelSubmitGraphSingleQueueTest,
     ::testing::Combine(
         ::testing::Values(Api::SYCL, Api::SYCLPREVIEW, Api::L0),
-        ::testing::Values(KernelName::Empty, KernelName::Add, KernelName::AddSequence), // kernelName
-        ::testing::Values(512),                                                         // kernelWGCount
-        ::testing::Values(256),                                                         // kernelWGSize
-        ::testing::Values(1),                                                           // kernelGroupsCount
-        ::testing::Values(10),                                                          // kernelBatchSize
-        ::testing::Values(false),                                                       // useProfiling
-        ::testing::Values(false, true)));                                               // useEvents
+        ::testing::Values(KernelName::Empty,
+                          KernelName::Add,
+                          KernelName::AddSequence), // kernelName
+        ::testing::Values(512),                     // kernelWGCount
+        ::testing::Values(256),                     // kernelWGSize
+        ::testing::Values(1),                       // kernelsPerQueue
+        ::testing::Values(10),                      // kernelBatchSize
+        ::testing::Values(false),                   // useProfiling
+        ::testing::Values(false, true)));           // useEvents

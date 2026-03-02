@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelSubmitLinearKernelSize> registerTestCase{};
 
-class KernelSubmitLinearKernelSizeTest : public ::testing::TestWithParam<std::tuple<Api, int, int>> {
+class KernelSubmitLinearKernelSizeTest : public ::testing::TestWithParam<std::tuple<Api, int, int, bool>> {
 };
 
 TEST_P(KernelSubmitLinearKernelSizeTest, Test) {
@@ -23,6 +23,7 @@ TEST_P(KernelSubmitLinearKernelSizeTest, Test) {
     args.api = std::get<0>(GetParam());
     args.kernelBatchSize = std::get<1>(GetParam());
     args.kernelSize = std::get<2>(GetParam());
+    args.useProfiling = std::get<3>(GetParam());
     KernelSubmitLinearKernelSize test;
     test.run(args);
 }
@@ -32,5 +33,6 @@ INSTANTIATE_TEST_SUITE_P(
     KernelSubmitLinearKernelSizeTest,
     ::testing::Combine(
         ::testing::Values(Api::L0, Api::SYCL, Api::SYCLPREVIEW),
-        ::testing::Values(512),
-        ::testing::Values(32, 128, 512, 1024, 5120)));
+        ::testing::Values(512),                      // kernelBatchSize
+        ::testing::Values(32, 128, 512, 1024, 5120), // kernelSize
+        ::testing::Values(false)));                  // useProfiling

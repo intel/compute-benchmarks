@@ -5,20 +5,15 @@
  *
  */
 
-#include "framework/utility/combo_profiler.h"
-
+#include "common.hpp"
 #include "definitions/kernel_submit_slm_size.h"
-#include "kernel_submit_common.hpp"
 
 using data_type = float;
 
-using L0DriverGetDefaultContext = decltype(&zeDriverGetDefaultContext);
-using L0AppendLaunchKernelWithArguments = decltype(&zeCommandListAppendLaunchKernelWithArguments);
-
-static TestResult compute_slm_num(int &slm_num, L0Context &ctx) {
+static TestResult compute_slm_num(int &slm_num, LevelZero &l0) {
     ze_device_compute_properties_t computeProps = {};
     computeProps.stype = ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES;
-    zeDeviceGetComputeProperties(ctx.l0.device, &computeProps);
+    zeDeviceGetComputeProperties(l0.device, &computeProps);
     const uint32_t max_slm_size = computeProps.maxSharedLocalMemory;
 
     if (slm_num < 0) {
@@ -31,70 +26,62 @@ static TestResult compute_slm_num(int &slm_num, L0Context &ctx) {
     return TestResult::Success;
 }
 
-static TestResult run_kernel(data_type *out_buf, int slm_num, L0Context &l0, ze_kernel_handle_t kernel) {
-    ze_group_count_t dispatch{1, 1, 1}; // juju: was 1 instead of 512 for testing
-
-    const int wgs = std::min(slm_num, 1024);
-    int slm_size = slm_num * sizeof(data_type);
-    void *kernelArguments[3] = {&out_buf, &slm_num, &slm_size};
-
-    ze_group_size_t groupSizes = {static_cast<uint32_t>(wgs), 1, 1};
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(l0.cmdListImmediate_1, kernel, dispatch, groupSizes,
-                                                                          kernelArguments, nullptr, nullptr, 0, nullptr));
-    return TestResult::Success;
-}
-
 static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &statistics) {
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
-        std::cerr << "Noop run for Torch L0 benchmark" << std::endl;
         profiler.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
-    L0Context l0Ctx{};
-
-    ze_kernel_handle_t kernel{};
-    ze_module_handle_t module{};
-    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0Ctx.l0, "torch_benchmark_elementwise_slm.cl", "torch_benchmark_elementwise_slm", kernel, module));
+    // setup
+    LevelZero l0{};
+    CommandList cmd_list{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
+    DeviceMemory<data_type> out_buf{l0, 2};
 
     int slm_num = static_cast<int>(args.slmNum);
-    ASSERT_TEST_RESULT_SUCCESS(compute_slm_num(slm_num, l0Ctx));
+    ASSERT_TEST_RESULT_SUCCESS(compute_slm_num(slm_num, l0));
 
-    data_type *out_buf = nullptr;
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(l0Ctx.l0, 2, out_buf));
+    // create kernel
+    const std::string kernelName = "elementwise_slm";
+    Kernel kernel{l0, "torch_benchmark_" + kernelName + ".cl", kernelName};
+    const int wgs = std::min(slm_num, 1024);
+    int slm_size = slm_num * sizeof(data_type);
+    void *kernelArguments[3] = {out_buf.getAddress(), &slm_num, &slm_size};
+    ze_group_size_t groupSizes = {static_cast<uint32_t>(wgs), 1, 1};
+    ze_group_count_t dispatch{1, 1, 1};
 
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
+    auto submit_kernel = [&]() -> TestResult {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmd_list.get(), kernel.get(), dispatch, groupSizes,
+                                                                              kernelArguments, nullptr, nullptr, 0, nullptr));
+        return TestResult::Success;
+    };
 
+    // benchmark
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
 
-        for (size_t j = 0; j < static_cast<size_t>(args.kernelBatchSize); ++j) {
-            ASSERT_TEST_RESULT_SUCCESS(run_kernel(out_buf, slm_num, l0Ctx, kernel));
+        for (size_t j = 0; j < args.kernelBatchSize; ++j) {
+            ASSERT_TEST_RESULT_SUCCESS(submit_kernel());
         }
 
-        if (!args.measureCompletion) {
+        if (!args.measureCompletionTime) {
             profiler.measureEnd();
             profiler.pushStats(statistics);
         }
 
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list.get(), UINT64_MAX));
 
-        if (args.measureCompletion) {
+        if (args.measureCompletionTime) {
             profiler.measureEnd();
             profiler.pushStats(statistics);
         }
     }
 
-    // clean up
+    // verify result
     data_type host_result[2];
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(l0Ctx.cmdListImmediate_1, &host_result, out_buf, 2 * sizeof(data_type), nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(l0Ctx.cmdListImmediate_1, UINT64_MAX));
-
-    ASSERT_ZE_RESULT_SUCCESS(zeMemFree(l0Ctx.l0.context, out_buf));
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmd_list.get(), &host_result, out_buf.getPtr(), 2 * sizeof(data_type), nullptr, 0, nullptr));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list.get(), UINT64_MAX));
 
     if (host_result[1] > 13.1 || host_result[1] < 12.9) {
         std::cerr << "Wrong checker value: " << host_result[1] << ", expected 13.0, result value:" << host_result[0] << std::endl;

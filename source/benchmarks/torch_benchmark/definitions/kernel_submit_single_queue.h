@@ -20,17 +20,19 @@ struct KernelSubmitSingleQueueArguments : TestCaseArgumentContainer {
     KernelSubmitPatternArgument kernelSubmitPattern;
     Uint32Argument kernelWGCount;
     Uint32Argument kernelWGSize;
+    BooleanArgument useProfiling;
     BooleanArgument useEvents;
 
     KernelSubmitSingleQueueArguments()
-        : kernelDataType(*this, "kernelDataType", "Data type for kernel operations"),
-          kernelName(*this, "kernelName", "Name of the kernel to execute"),
-          kernelParamsNum(*this, "kernelParamsNum", "Number of kernel parameters for add operation"),
-          kernelBatchSize(*this, "kernelBatchSize", "Size of each batch of kernels before syncing. If 0, no batching is performed"),
-          kernelSubmitPattern(*this, "kernelSubmitPattern", "Pattern for submitting kernels"),
-          kernelWGCount(*this, "kernelWGCount", "Number of workgroups"),
-          kernelWGSize(*this, "kernelWGSize", "Size of each workgroup"),
-          useEvents(*this, "UseEvents", "Use events when enqueuing kernels.") {}
+        : kernelDataType(*this, "KernelDataType", "Data type for kernel operations"),
+          kernelName(*this, "KernelName", "Name of the kernel to execute"),
+          kernelParamsNum(*this, "KernelParamsNum", "Number of kernel parameters for add operation"),
+          kernelBatchSize(*this, "KernelBatchSize", "Size of each batch of kernels before syncing. If 0, no batching is performed"),
+          kernelSubmitPattern(*this, "KernelSubmitPattern", "Pattern for submitting kernels"),
+          kernelWGCount(*this, "KernelWGCount", "Number of workgroups"),
+          kernelWGSize(*this, "KernelWGSize", "Size of each workgroup"),
+          useProfiling(*this, "Profiling", "Create the queue with the enable_profiling property"),
+          useEvents(*this, "UseEvents", "Use events when enqueuing kernels") {}
 };
 
 struct KernelSubmitSingleQueue : TestCase<KernelSubmitSingleQueueArguments> {
@@ -41,6 +43,6 @@ struct KernelSubmitSingleQueue : TestCase<KernelSubmitSingleQueueArguments> {
     }
 
     std::string getHelp() const override {
-        return "measures time spent on executing simple math kernels";
+        return "Measures time spent on executing simple math kernels.";
     }
 };

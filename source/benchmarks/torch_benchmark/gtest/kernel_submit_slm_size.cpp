@@ -24,7 +24,7 @@ TEST_P(KernelSubmitSlmSizeTest, Test) {
     args.kernelBatchSize = std::get<1>(GetParam());
     args.slmNum = std::get<2>(GetParam());
     args.useProfiling = std::get<3>(GetParam());
-    args.measureCompletion = std::get<4>(GetParam());
+    args.measureCompletionTime = std::get<4>(GetParam());
     KernelSubmitSlmSize().run(args);
 }
 
@@ -36,4 +36,4 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(512),           // kernelBatchSize
         ::testing::Values(1024),          // slmNum
         ::testing::Values(false),         // useProfiling
-        ::testing::Values(false, true))); // measureCompletion
+        ::testing::Values(false, true))); // measureCompletionTime

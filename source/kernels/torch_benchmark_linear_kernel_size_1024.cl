@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 // Kernel prepared for data_type == double
 
-kernel void torch_benchmark_linear_kernel_size_1024(__global double *out_data) {
+kernel void linear_kernel_size_1024(__global double *dest) {
     // prepare data
     double data[ARRAY_SIZE];
 
@@ -1044,5 +1044,5 @@ kernel void torch_benchmark_linear_kernel_size_1024(__global double *out_data) {
     {
         sum += data[i];
     }
-    out_data[0] = sum;
+    dest[0] = sum;
 }

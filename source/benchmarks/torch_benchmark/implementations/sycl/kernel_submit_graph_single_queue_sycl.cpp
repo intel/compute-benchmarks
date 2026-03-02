@@ -5,12 +5,8 @@
  *
  */
 
-#include "framework/sycl/sycl.h"
-#include "framework/test_case/register_test_case.h"
-#include "framework/utility/combo_profiler.h"
-
+#include "common.hpp"
 #include "definitions/kernel_submit_graph_single_queue.h"
-#include "definitions/sycl_kernels.h"
 
 using data_type = float;
 
@@ -24,8 +20,7 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
         return TestResult::Nooped;
     }
 
-    // Setup
-    // Note: Only in-order queues are supported in this benchmark
+    // setup
     bool useOOQ = false;
     Sycl sycl = args.useProfiling
                     ? Sycl{useOOQ, sycl::property::queue::enable_profiling()}
@@ -34,23 +29,11 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
     const uint32_t wgs = args.kernelWGSize;
     const size_t length = wgc * wgs;
 
-    auto make_device_ptr = [&sycl](size_t size) {
-        auto deleter = [queue = sycl.queue](data_type *ptr) {
-            if (ptr)
-                sycl::free(ptr, queue);
-        };
-        using unique_ptr_type = std::unique_ptr<data_type, decltype(deleter)>;
-        return unique_ptr_type(sycl::malloc_device<data_type>(size, sycl.queue), deleter);
-    };
-
-    auto d_a = make_device_ptr(length);
-    auto d_b = make_device_ptr(length);
-    auto d_c = make_device_ptr(length);
-    auto d_d = make_device_ptr(length);
-    auto d_e = make_device_ptr(length);
-    if (!d_a || !d_b || !d_c || !d_d || !d_e) {
-        return TestResult::Error;
-    }
+    auto d_a = make_device_ptr<data_type>(sycl, length);
+    auto d_b = make_device_ptr<data_type>(sycl, length);
+    auto d_c = make_device_ptr<data_type>(sycl, length);
+    auto d_d = make_device_ptr<data_type>(sycl, length);
+    auto d_e = make_device_ptr<data_type>(sycl, length);
 
     auto submit_kernels = [&]() {
         if (args.kernelName == KernelName::Empty) {
@@ -70,7 +53,7 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
     auto graph = syclex::command_graph<syclex::graph_state::modifiable>(sycl.queue.get_context(), sycl.queue.get_device());
 
     graph.begin_recording(sycl.queue);
-    for (size_t i = 0; i < args.kernelGroupsCount; ++i) {
+    for (size_t i = 0; i < args.kernelsPerQueue; ++i) {
         submit_kernels();
     }
     graph.end_recording();

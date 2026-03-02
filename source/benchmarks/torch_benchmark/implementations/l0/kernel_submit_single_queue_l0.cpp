@@ -5,28 +5,14 @@
  *
  */
 
-#include "framework/l0/levelzero.h"
-#include "framework/test_case/register_test_case.h"
-#include "framework/utility/combo_profiler.h"
-#include "framework/utility/file_helper.h"
-
+#include "common.hpp"
 #include "definitions/kernel_submit_single_queue.h"
-#include "kernel_submit_common.hpp"
 
-#include <gtest/gtest.h>
-#include <level_zero/zer_api.h>
+#include <memory>
 #include <unordered_map>
 
 constexpr uint32_t alloc_size_double = 2;
 constexpr uint32_t alloc_size_int = 3;
-
-template <typename T>
-TestResult l0_malloc_host(ze_context_handle_t context,
-                          size_t length,
-                          T **ptr) {
-    ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(context, &zeDefaultGPUHostMemAllocDesc, length * sizeof(T), alignof(T), (void **)ptr));
-    return TestResult::Success;
-}
 
 static void init_copyable_object_host(CopyableObject *host_array, size_t length, double *p2_block, int *p3_block, int offset) {
     for (size_t j = 0; j < length; ++j) {
@@ -39,19 +25,18 @@ static void init_copyable_object_host(CopyableObject *host_array, size_t length,
 }
 
 template <typename T>
-TestResult create_and_copy_host_arrays(ze_context_handle_t context,
+TestResult create_and_copy_host_arrays(LevelZero &l0,
                                        DataType data_type,
                                        double *p2_block,
                                        int *p3_block,
                                        uint32_t num_params,
                                        size_t length,
-                                       T ***host_array) {
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_host<T *>(context, num_params, host_array));
-
+                                       std::vector<HostMemory<T>> &host_array) {
+    host_array.reserve(num_params);
     for (uint32_t i = 0; i < num_params; ++i) {
-        ASSERT_TEST_RESULT_SUCCESS(l0_malloc_host<T>(context, length, &(*host_array)[i]));
+        host_array.emplace_back(l0, length);
         if (data_type == DataType::CopyableObject)
-            init_copyable_object_host(reinterpret_cast<CopyableObject *>((*host_array)[i]), length, p2_block, p3_block, i);
+            init_copyable_object_host(reinterpret_cast<CopyableObject *>(host_array[i].getPtr()), length, p2_block, p3_block, i);
     }
     return TestResult::Success;
 }
@@ -74,6 +59,7 @@ TestResult set_kernel_args(const std::string &kernel_name,
         arg_storage.reserve(total_args);
         kernel_arguments.reserve(total_args);
 
+        arg_storage.push_back(static_cast<void *>(res));
         for (uint32_t i = 0; i < num_params1; i++) {
             DATATYPE1 *ptr = device_array_1 + i * total_elements;
             arg_storage.push_back(static_cast<void *>(ptr));
@@ -90,7 +76,6 @@ TestResult set_kernel_args(const std::string &kernel_name,
                 arg_storage.push_back(static_cast<void *>(ptr));
             }
         }
-        arg_storage.push_back(static_cast<void *>(res));
 
         // Now build kernel_arguments pointing to elements in arg_storage
         for (size_t i = 0; i < arg_storage.size(); i++) {
@@ -102,73 +87,62 @@ TestResult set_kernel_args(const std::string &kernel_name,
 
 static TestResult verify_result(ze_command_list_handle_t cmdList,
                                 LevelZero &l0) {
-    // prepare parameters for verify kernel
+    // setup
     constexpr uint32_t num_verify = 2;
-    uint32_t length = 1;
-    ze_kernel_handle_t kernel_verify{};
-    ze_module_handle_t module_verify{};
-    ze_group_count_t dispatch{1u, 1u, 1u};
-    ze_group_size_t group_sizes{1u, 1u, 1u};
-    // use add op to verify
-    // elementwise_kernel_2
-    std::string kernel_name = "torch_benchmark_elementwise_sum_2";
-    ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, kernel_name + ".cl", kernel_name + "_int", kernel_verify, module_verify));
+    constexpr uint32_t length = 1;
 
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel_verify, 1, 1, 1));
-    int *result_d = nullptr;
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<int>(l0, length, result_d));
-    int *device_array = nullptr;
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<int>(l0, length * num_verify, device_array));
-    int **host_array = nullptr;
-    ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<int>(l0.context, DataType::Int32,
+    DeviceMemory<int> result_d(l0, length);
+    DeviceMemory<int> device_array(l0, length * num_verify);
+    std::vector<HostMemory<int>> host_array;
+    ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<int>(l0, DataType::Int32,
                                                                 nullptr, nullptr,
-                                                                num_verify, length, &host_array));
+                                                                num_verify, length, host_array));
+    // create kernel
+    std::string kernel_file_name = "torch_benchmark_elementwise_sum_2.cl";
+    std::string kernel_name = "elementwise_sum_2_int";
+    Kernel kernel_verify{l0, kernel_file_name, kernel_name};
+    constexpr ze_group_count_t dispatch{1u, 1u, 1u};
+    constexpr ze_group_size_t group_sizes{1u, 1u, 1u};
+
     for (uint32_t i = 0; i < num_verify; i++) {
         for (uint32_t j = 0; j < length; ++j) {
-            host_array[i][j] = static_cast<int>(1);
+            host_array[i].getPtr()[j] = 1;
         }
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(
             cmdList,
-            device_array + i * length,
-            host_array[i],
+            device_array.getPtr() + i * length,
+            host_array[i].getPtr(),
             sizeof(int) * length,
             nullptr, 0, nullptr));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, UINT64_MAX));
+
+    // submit kernel
     std::vector<void *> kernel_arguments;
     std::vector<void *> arg_storage;
-    ASSERT_TEST_RESULT_SUCCESS(set_kernel_args("add", result_d, num_verify, device_array, length, kernel_arguments, arg_storage));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel_verify, dispatch, group_sizes, kernel_arguments.data(),
+    ASSERT_TEST_RESULT_SUCCESS(set_kernel_args("add", result_d.getPtr(), num_verify, device_array.getPtr(), length, kernel_arguments, arg_storage));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel_verify.get(), dispatch, group_sizes, kernel_arguments.data(),
                                                                           nullptr, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, UINT64_MAX));
 
     // do D2H after iterations to verify the result
-    int *result_h = nullptr;
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_host<int>(l0.context, length, &result_h));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, result_h, result_d, length * sizeof(int), nullptr, 0, nullptr));
+    HostMemory<int> result_h(l0, length);
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, result_h.getPtr(), result_d.getPtr(), length * sizeof(int), nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, UINT64_MAX));
 
     // verify result
-    if (result_h[0] != static_cast<int>(num_verify)) {
+    if (*result_h.getPtr() != num_verify) {
+        std::cerr << "Result verification failed: expected " << num_verify << " but got " << *result_h.getPtr() << std::endl;
         return TestResult::Error;
     }
-
-    // cleanup
-    for (uint32_t i = 0; i < num_verify; i++) {
-        zeMemFree(l0.context, host_array[i]);
-    }
-    zeMemFree(l0.context, host_array);
-    zeMemFree(l0.context, result_h);
-    zeMemFree(l0.context, result_d);
-    zeMemFree(l0.context, device_array);
-    zeKernelDestroy(kernel_verify);
 
     return TestResult::Success;
 }
 
 template <typename T>
 static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, ComboProfilerWithStats &profiler, Statistics &statistics) {
+    // setup
     std::set<std::string> kernel_names;
     if (args.kernelName == KernelName::Empty) {
         kernel_names.insert("empty");
@@ -178,50 +152,30 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
         kernel_names.insert("add");
     }
 
-    // Get arguments
-    size_t numIterations = args.iterations;
-    size_t batch_size = args.kernelBatchSize;
     uint32_t wgc = args.kernelWGCount;
     uint32_t wgs = args.kernelWGSize;
+    size_t length = wgc * wgs;
     uint32_t num_params = args.kernelParamsNum;
     bool h2d = (args.kernelSubmitPattern == KernelSubmitPattern::H2d_before_batch);
     bool d2h = (args.kernelSubmitPattern == KernelSubmitPattern::D2h_after_batch);
-
-    if (num_params < 1u) {
-        std::cerr << "kernelParamsNum must be at least 1" << std::endl;
-        return TestResult::InvalidArgs;
-    } else if (num_params > 10u) {
-        std::cerr << "kernelParamsNum must be at most 10" << std::endl;
-        return TestResult::InvalidArgs;
-    }
+    std::unordered_map<std::string, Kernel> kernels;
 
     LevelZero l0;
-    std::unordered_map<std::string, ze_kernel_handle_t> kernels;
-    size_t length = wgc * wgs;
+    CommandList cmd_list(l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc);
 
-    // Create an immediate command list
-    ze_command_queue_desc_t qdesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    qdesc.ordinal = 0;
-    qdesc.index = 0;
-    qdesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    qdesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    qdesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    ze_command_list_handle_t cmdListImmediate;
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(l0.context, l0.device, &qdesc, &cmdListImmediate));
-
-    // Prepare storage
     uint32_t arraysize_of_b = num_params;
-    T *d_a = nullptr;
-    T *h_a = nullptr;
-    T **d_b = nullptr;
-    T *device_array_db = nullptr;
+    std::unique_ptr<HostMemory<T>> h_a;
+    std::vector<HostMemory<T>> h_b;
     // These are used only in Mixed DataType scenarios
     uint32_t arraysize_of_c = 0;
     uint32_t arraysize_of_d = 0;
-    float *device_array_dc = nullptr;
-    int *device_array_dd = nullptr;
-    float **d_c = nullptr;
-    int **d_d = nullptr;
+    std::vector<HostMemory<float>> h_c;
+    std::vector<HostMemory<int>> h_d;
+
+    std::unique_ptr<DeviceMemory<T>> d_a;
+    std::unique_ptr<DeviceMemory<T>> device_array_db;
+    std::unique_ptr<DeviceMemory<float>> device_array_dc;
+    std::unique_ptr<DeviceMemory<int>> device_array_dd;
 
     if (args.kernelDataType == DataType::Mixed) {
         // The elementwise_sum_mixed kernel used in this scenario requires these fixed sizes
@@ -235,42 +189,44 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
         double *p2_block_db = nullptr;
         int *p3_block_db = nullptr;
 
-        ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<T>(l0, length, d_a));
-        ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<T>(l0, length * arraysize_of_b, device_array_db));
+        d_a = std::make_unique<DeviceMemory<T>>(l0, length);
+        device_array_db = std::make_unique<DeviceMemory<T>>(l0, length * arraysize_of_b);
 
-        ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<T>(l0.context, args.kernelDataType,
+        ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<T>(l0, args.kernelDataType,
                                                                   p2_block_db, p3_block_db,
-                                                                  arraysize_of_b, length, &d_b));
+                                                                  arraysize_of_b, length, h_b));
 
         if (args.kernelDataType == DataType::Mixed) {
             double *p2_block_dc = nullptr;
             int *p3_block_dc = nullptr;
-            ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<float>(l0, length * arraysize_of_c, device_array_dc));
-            ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<float>(l0.context, args.kernelDataType,
+            device_array_dc = std::make_unique<DeviceMemory<float>>(l0, length * arraysize_of_c);
+            ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<float>(l0, args.kernelDataType,
                                                                           p2_block_dc, p3_block_dc,
-                                                                          arraysize_of_c, length, &d_c));
+                                                                          arraysize_of_c, length, h_c));
 
             double *p2_block_dd = nullptr;
             int *p3_block_dd = nullptr;
-            ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<int>(l0, length * arraysize_of_d, device_array_dd));
-            ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<int>(l0.context, args.kernelDataType,
+            device_array_dd = std::make_unique<DeviceMemory<int>>(l0, length * arraysize_of_d);
+            ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<int>(l0, args.kernelDataType,
                                                                         p2_block_dd, p3_block_dd,
-                                                                        arraysize_of_d, length, &d_d));
+                                                                        arraysize_of_d, length, h_d));
         }
 
         if (h2d || d2h) {
-            ASSERT_TEST_RESULT_SUCCESS(l0_malloc_host<T>(l0.context, length, &h_a));
+            h_a = std::make_unique<HostMemory<T>>(l0, length);
         }
     }
 
-    // Load kernels
+    // create kernel
     for (const auto &name : kernel_names) {
-        ze_kernel_handle_t kernel{};
-        ze_module_handle_t module{};
+        std::string kernelFileName;
+        std::string kernelName;
         if (name == "empty") {
-            ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_0.cl", "elementwise_sum_0", kernel, module));
+            kernelName = "elementwise_sum_0";
+            kernelFileName = "torch_benchmark_" + kernelName + ".cl";
         } else if (name == "add_mixed") {
-            ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_mixed.cl", "elementwise_sum_mixed", kernel, module));
+            kernelName = "elementwise_sum_mixed";
+            kernelFileName = "torch_benchmark_" + kernelName + ".cl";
         } else if (name == "add") {
             std::string suffix;
             if (args.kernelDataType == DataType::CopyableObject) {
@@ -280,91 +236,62 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
             }
             switch (num_params) {
             case 1: {
-                ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_1.cl", "elementwise_sum_1_" + suffix, kernel, module));
+                kernelName = "elementwise_sum_1_" + suffix;
+                kernelFileName = "torch_benchmark_elementwise_sum_1.cl";
                 break;
             }
             case 5: {
-                ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_5.cl", "elementwise_sum_5_" + suffix, kernel, module));
+                kernelName = "elementwise_sum_5_" + suffix;
+                kernelFileName = "torch_benchmark_elementwise_sum_5.cl";
                 break;
             }
             case 10: {
-                ASSERT_TEST_RESULT_SUCCESS(create_kernel(l0, "torch_benchmark_elementwise_sum_10.cl", "elementwise_sum_10_" + suffix, kernel, module));
+                kernelName = "elementwise_sum_10_" + suffix;
+                kernelFileName = "torch_benchmark_elementwise_sum_10.cl";
                 break;
             }
-            default:
-                std::cerr << "kernelParamsNum=" << args.kernelParamsNum << " is not the value used in test cases. 1, 5, 10 are supported." << std::endl;
-                return TestResult::Error;
             }
         }
-        kernels[name] = kernel;
+        kernels.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(l0, kernelFileName, kernelName));
     }
 
-    ze_group_count_t dispatch{static_cast<uint32_t>(wgc), 1, 1};
-    ze_group_size_t group_sizes{static_cast<uint32_t>(wgs), 1, 1};
+    ze_group_count_t dispatch{wgc, 1u, 1u};
+    ze_group_size_t group_sizes{wgs, 1u, 1u};
     std::vector<void *> kernel_arguments;
     std::vector<void *> arg_storage;
-    // simple kernel validation
-    ASSERT_TEST_RESULT_SUCCESS(verify_result(cmdListImmediate, l0));
 
-    // benchmarking
-    for (size_t i = 0; i < numIterations; ++i) {
+    // simple kernel validation
+    ASSERT_TEST_RESULT_SUCCESS(verify_result(cmd_list.get(), l0));
+
+    // benchmark
+    for (size_t i = 0; i < args.iterations; ++i) {
         if (h2d && args.kernelName != KernelName::Empty) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdListImmediate, d_a, h_a, length * sizeof(T), nullptr, 0, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmd_list.get(), d_a->getPtr(), h_a->getPtr(), length * sizeof(T), nullptr, 0, nullptr));
         }
         for (const auto &[name, kernel] : kernels) {
             profiler.measureStart();
             if (args.kernelDataType == DataType::Mixed) {
-                ASSERT_TEST_RESULT_SUCCESS(set_kernel_args(name, d_a,
-                                                           arraysize_of_b, device_array_db,
+                ASSERT_TEST_RESULT_SUCCESS(set_kernel_args(name, d_a->getPtr(),
+                                                           arraysize_of_b, device_array_db->getPtr(),
                                                            length, kernel_arguments, arg_storage,
-                                                           arraysize_of_c, device_array_dc,
-                                                           arraysize_of_d, device_array_dd));
+                                                           arraysize_of_c, device_array_dc->getPtr(),
+                                                           arraysize_of_d, device_array_dd->getPtr()));
             } else if (args.kernelName != KernelName::Empty) {
-                ASSERT_TEST_RESULT_SUCCESS(set_kernel_args(name, d_a, num_params, device_array_db, length, kernel_arguments, arg_storage));
+                ASSERT_TEST_RESULT_SUCCESS(set_kernel_args(name, d_a->getPtr(), num_params, device_array_db->getPtr(), length, kernel_arguments, arg_storage));
             }
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdListImmediate, kernel, dispatch, group_sizes, kernel_arguments.data(), nullptr, nullptr, 0, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmd_list.get(), kernel.get(), dispatch, group_sizes, kernel_arguments.data(), nullptr, nullptr, 0, nullptr));
             profiler.measureEnd();
             profiler.pushStats(statistics);
         }
         if (d2h && args.kernelName != KernelName::Empty) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdListImmediate, h_a, d_a, length * sizeof(T), nullptr, 0, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmd_list.get(), h_a->getPtr(), d_a->getPtr(), length * sizeof(T), nullptr, 0, nullptr));
         }
-        if (batch_size > 0 && ((i + 1) % batch_size == 0)) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdListImmediate, UINT64_MAX));
+        if (args.kernelBatchSize > 0 && ((i + 1) % args.kernelBatchSize == 0)) {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list.get(), UINT64_MAX));
         }
     }
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdListImmediate, UINT64_MAX));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list.get(), UINT64_MAX));
 
-    // Cleanup
-    for (auto &[name, kernel] : kernels) {
-        if (kernel) {
-            zeKernelDestroy(kernel);
-        }
-    }
-    if (args.kernelName != KernelName::Empty) {
-        if (h2d || d2h) {
-            zeMemFree(l0.context, h_a);
-        }
-        for (uint32_t i = 0; i < arraysize_of_b; ++i) {
-            zeMemFree(l0.context, d_b[i]);
-        }
-        zeMemFree(l0.context, d_b);
-        zeMemFree(l0.context, device_array_db);
-        zeMemFree(l0.context, d_a);
-        if (args.kernelDataType == DataType::Mixed) {
-            for (uint32_t i = 0; i < arraysize_of_c; ++i) {
-                zeMemFree(l0.context, d_c[i]);
-            }
-            zeMemFree(l0.context, d_c);
-            zeMemFree(l0.context, device_array_dc);
-            for (uint32_t i = 0; i < arraysize_of_d; ++i) {
-                zeMemFree(l0.context, d_d[i]);
-            }
-            zeMemFree(l0.context, d_d);
-            zeMemFree(l0.context, device_array_dd);
-        }
-    }
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdListImmediate));
     return TestResult::Success;
 }
 
@@ -372,9 +299,14 @@ static TestResult run(const KernelSubmitSingleQueueArguments &args, Statistics &
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
-        std::cerr << "Noop run for Torch L0 benchmark" << std::endl;
         profiler.pushNoop(statistics);
         return TestResult::Nooped;
+    }
+
+    // validate arguments
+    if (args.kernelParamsNum != 1u && args.kernelParamsNum != 5u && args.kernelParamsNum != 10u) {
+        std::cerr << "KernelParamsNum must be 1, 5, or 10" << std::endl;
+        return TestResult::InvalidArgs;
     }
 
     switch (args.kernelDataType) {

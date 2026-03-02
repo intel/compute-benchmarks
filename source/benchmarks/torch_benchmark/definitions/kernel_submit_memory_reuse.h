@@ -11,13 +11,14 @@
 #include "framework/test_case/test_case.h"
 
 struct KernelSubmitMemoryReuseArguments : TestCaseArgumentContainer {
-
     Uint32Argument kernelBatchSize;
     DataTypeArgument kernelDataType;
+    BooleanArgument useProfiling;
     BooleanArgument useEvents;
 
-    KernelSubmitMemoryReuseArguments() : kernelBatchSize(*this, "kernelBatchSize", "Size of a batch of kernels after which synchronization occurs. 0 means one synchronization after all kernels are submitted."),
-                                         kernelDataType(*this, "kernelDataType", "Data type passed to kernel."),
+    KernelSubmitMemoryReuseArguments() : kernelBatchSize(*this, "KernelBatchSize", "Size of a batch of kernels after which synchronization occurs. 0 means one synchronization after all kernels are submitted."),
+                                         kernelDataType(*this, "KernelDataType", "Data type passed to kernel."),
+                                         useProfiling(*this, "Profiling", "Create the queue with the enable_profiling property"),
                                          useEvents(*this, "UseEvents", "Use events when enqueuing kernels. When false, SYCL will use eventless enqueue functions.") {}
 };
 

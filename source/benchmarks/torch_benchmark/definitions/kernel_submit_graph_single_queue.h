@@ -14,17 +14,17 @@ struct KernelSubmitGraphSingleQueueArguments : TestCaseArgumentContainer {
     KernelNameArgument kernelName;
     Uint32Argument kernelWGCount;
     Uint32Argument kernelWGSize;
-    Uint32Argument kernelGroupsCount;
+    Uint32Argument kernelsPerQueue;
     PositiveIntegerArgument kernelBatchSize;
     BooleanArgument useProfiling;
     BooleanArgument useEvents;
 
-    KernelSubmitGraphSingleQueueArguments() : kernelName(*this, "kernelName", "Name of the kernel."),
-                                              kernelWGCount(*this, "kernelWGCount", "Number of workgroups."),
-                                              kernelWGSize(*this, "kernelWGSize", "Size of each workgroup."),
-                                              kernelGroupsCount(*this, "kernelGroupsCount", "Number of nodes (kernel groups) recorded in a graph."),
-                                              kernelBatchSize(*this, "kernelBatchSize", "Size of a batch of kernels after which synchronization occurs."),
-                                              useProfiling(*this, "useProfiling", "Create the queue with the enable_profiling property (SYCL only)."),
+    KernelSubmitGraphSingleQueueArguments() : kernelName(*this, "KernelName", "Name of the kernel."),
+                                              kernelWGCount(*this, "KernelWGCount", "Number of workgroups."),
+                                              kernelWGSize(*this, "KernelWGSize", "Size of each workgroup."),
+                                              kernelsPerQueue(*this, "KernelsPerQueue", "Number of kernels recorded in a graph."),
+                                              kernelBatchSize(*this, "KernelBatchSize", "Size of a batch of kernels after which synchronization occurs."),
+                                              useProfiling(*this, "Profiling", "Create the queue with the enable_profiling property (SYCL only)."),
                                               useEvents(*this, "UseEvents", "Use events when enqueuing kernels.") {}
 };
 

@@ -25,7 +25,7 @@ TEST_P(KernelSubmitMultiQueueTest, Test) {
     args.kernelWGSize = std::get<2>(GetParam());
     args.kernelsPerQueue = std::get<3>(GetParam());
     args.useProfiling = std::get<4>(GetParam());
-    args.measureCompletion = std::get<5>(GetParam());
+    args.measureCompletionTime = std::get<5>(GetParam());
     args.useEvents = std::get<6>(GetParam());
     KernelSubmitMultiQueue().run(args);
 }
@@ -39,5 +39,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(256),           // kernelWGSize
         ::testing::Values(10),            // kernelsPerQueue
         ::testing::Values(false),         // useProfiling
-        ::testing::Values(false, true),   // measureCompletion
+        ::testing::Values(false, true),   // measureCompletionTime
         ::testing::Values(false, true))); // useEvents

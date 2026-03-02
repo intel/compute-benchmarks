@@ -15,7 +15,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<KernelSubmitMemoryReuse> registerTestCase{};
 
-class KernelSubmitMemoryReuseTest : public ::testing::TestWithParam<std::tuple<Api, uint32_t, DataType, bool>> {
+class KernelSubmitMemoryReuseTest : public ::testing::TestWithParam<std::tuple<Api, uint32_t, DataType, bool, bool>> {
 };
 
 TEST_P(KernelSubmitMemoryReuseTest, Test) {
@@ -23,7 +23,8 @@ TEST_P(KernelSubmitMemoryReuseTest, Test) {
     args.api = std::get<0>(GetParam());
     args.kernelBatchSize = std::get<1>(GetParam());
     args.kernelDataType = std::get<2>(GetParam());
-    args.useEvents = std::get<3>(GetParam());
+    args.useProfiling = std::get<3>(GetParam());
+    args.useEvents = std::get<4>(GetParam());
     KernelSubmitMemoryReuse test;
     test.run(args);
 }
@@ -35,4 +36,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(Api::L0, Api::SYCL, Api::SYCLPREVIEW),
         ::testing::Values(10),                               // kernelBatchSize
         ::testing::Values(DataType::Int32, DataType::Float), // kernelDataType
+        ::testing::Values(false),                            // useProfiling
         ::testing::Values(false, true)));                    // useEvents

@@ -5,12 +5,8 @@
  *
  */
 
-#include "framework/sycl/sycl.h"
-#include "framework/test_case/register_test_case.h"
-#include "framework/utility/combo_profiler.h"
-
+#include "common.hpp"
 #include "definitions/kernel_submit_memory_reuse.h"
-#include "definitions/sycl_kernels.h"
 
 #include <random>
 
@@ -22,16 +18,8 @@ static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, Com
     constexpr bool useOoq = false;
     Sycl sycl{sycl::device{sycl::gpu_selector_v}, useOoq};
 
-    data_type *d_reuse = sycl::malloc_device<data_type>(REUSE_MEMORY_SIZE, sycl.queue);
-    if (!d_reuse) {
-        std::cerr << "Device memory allocation failed" << std::endl;
-        return TestResult::Error;
-    }
-    data_type *d_reuse_end = &d_reuse[REUSE_MEMORY_SIZE - 1];
-
-    // Warmup
-    submit_kernel_write<data_type>(sycl.queue, args.useEvents, d_reuse, 0, d_reuse_end, 0);
-    sycl.queue.wait();
+    auto d_reuse = make_device_ptr<data_type>(sycl, REUSE_MEMORY_SIZE);
+    data_type *d_reuse_end = &d_reuse.get()[REUSE_MEMORY_SIZE - 1];
 
     // Benchmark
     std::mt19937 rng(42);
@@ -42,7 +30,7 @@ static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, Com
         const int offset2 = -offset_dist(rng);
 
         profiler.measureStart();
-        submit_kernel_write<data_type>(sycl.queue, args.useEvents, d_reuse, offset1, d_reuse_end, offset2);
+        submit_kernel_write<data_type>(sycl.queue, args.useEvents, d_reuse.get(), offset1, d_reuse_end, offset2);
         profiler.measureEnd();
         profiler.pushStats(statistics);
 
@@ -51,8 +39,6 @@ static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, Com
         }
     }
     sycl.queue.wait();
-
-    sycl::free(d_reuse, sycl.queue);
 
     return TestResult::Success;
 }

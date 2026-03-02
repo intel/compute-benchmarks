@@ -5,9 +5,9 @@
  *
  */
 
-__kernel void torch_benchmark_add_element_constant(__global const float *src0,
-                                                    const float src1,
-                                                    __global float *dst) {
+__kernel void add_element_constant(__global float *dest,
+                                    __global const float *src0,
+                                    const float src1) {
     int gid = get_global_id(0);
-    dst[gid] = src0[gid] + src1;
+    dest[gid] = src0[gid] + src1;
 }

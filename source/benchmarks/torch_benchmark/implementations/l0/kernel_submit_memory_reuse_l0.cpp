@@ -5,48 +5,38 @@
  *
  */
 
-#include "framework/utility/combo_profiler.h"
-
+#include "common.hpp"
 #include "definitions/kernel_submit_memory_reuse.h"
-#include "kernel_submit_common.hpp"
 
 #include <random>
 
 static constexpr size_t REUSE_MEMORY_SIZE = 1024 * 1024 * 64; // 64MB
 
 template <typename data_type>
-static TestResult launch_kernel_l0(ze_command_list_handle_t cmdListImmediate,
-                                   ze_kernel_handle_t kernel,
-                                   ze_group_count_t dispatch,
-                                   data_type *ptr1,
-                                   int offset_1,
-                                   data_type *ptr2,
-                                   int offset_2) {
-    void *kernelArguments[4] = {&ptr1, &offset_1, &ptr2, &offset_2};
-    ze_group_size_t groupSizes = {1u, 1u, 1u};
-
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdListImmediate, kernel, dispatch, groupSizes,
-                                                                          kernelArguments, nullptr, nullptr, 0, nullptr));
-    return TestResult::Success;
-}
-
-template <typename data_type>
 static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, ComboProfilerWithStats &profiler, Statistics &statistics) {
-    // Setup
-    L0Context ctx{};
+    // setup
+    LevelZero l0{};
+    CommandList cmd_list{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
 
-    data_type *d_reuse = nullptr;
-    ASSERT_TEST_RESULT_SUCCESS(l0_malloc_device<data_type>(ctx.l0, REUSE_MEMORY_SIZE, d_reuse));
-    data_type *d_reuse_end = &d_reuse[REUSE_MEMORY_SIZE - 1];
+    DeviceMemory<data_type> d_reuse{l0, REUSE_MEMORY_SIZE / sizeof(data_type)};
+    auto d_reuse_addr = d_reuse.getAddress();
+    data_type *d_reuse_end = &d_reuse.getPtr()[REUSE_MEMORY_SIZE / sizeof(data_type) - 1];
 
-    // Create kernel
-    ze_kernel_handle_t kernel{};
-    ze_module_handle_t module{};
-    ASSERT_TEST_RESULT_SUCCESS(create_kernel(ctx.l0, "torch_benchmark_write_kernel.cl", "torch_benchmark_write_" + DataTypeHelper::toOpenclC(args.kernelDataType), kernel, module));
+    // create kernel
+    const std::string kernel_name = "write_" + DataTypeHelper::toOpenclC(args.kernelDataType);
+    const auto kernel_file = "torch_benchmark_write.cl";
+    Kernel kernel{l0, kernel_file, kernel_name};
+    const ze_group_count_t dispatch{1u, 1u, 1u};
+    const ze_group_size_t groupSizes{1u, 1u, 1u};
 
-    ze_group_count_t dispatch{1u, 1u, 1u};
+    auto submit_kernel = [&](int offset_1, int offset_2) -> TestResult {
+        void *kernel_args[4] = {d_reuse_addr, static_cast<void *>(&offset_1), &d_reuse_end, static_cast<void *>(&offset_2)};
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmd_list.get(), kernel.get(), dispatch, groupSizes,
+                                                                              kernel_args, nullptr, nullptr, 0, nullptr));
+        return TestResult::Success;
+    };
 
-    // Benchmark
+    // benchmark
     std::mt19937 rng(42);
     std::uniform_int_distribution<> offset_dist{0, 10};
 
@@ -55,19 +45,15 @@ static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, Com
         int offset2 = -offset_dist(rng);
 
         profiler.measureStart();
-        ASSERT_TEST_RESULT_SUCCESS(launch_kernel_l0<data_type>(ctx.cmdListImmediate_1, kernel, dispatch, d_reuse, offset1, d_reuse_end, offset2));
+        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(offset1, offset2));
         profiler.measureEnd();
         profiler.pushStats(statistics);
 
         if (args.kernelBatchSize > 0 && ((i + 1) % args.kernelBatchSize == 0)) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(ctx.cmdListImmediate_1, UINT64_MAX));
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list.get(), UINT64_MAX));
         }
     }
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(ctx.cmdListImmediate_1, UINT64_MAX));
-
-    zeMemFree(ctx.l0.context, d_reuse);
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list.get(), UINT64_MAX));
 
     return TestResult::Success;
 }

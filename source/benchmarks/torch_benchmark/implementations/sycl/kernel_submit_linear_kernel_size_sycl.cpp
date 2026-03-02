@@ -1,18 +1,13 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "framework/sycl/sycl.h"
-#include "framework/test_case/register_test_case.h"
-#include "framework/utility/combo_profiler.h"
-
+#include "common.hpp"
 #include "definitions/kernel_submit_linear_kernel_size.h"
 #include "definitions/linear_kernel_size_kernels.h"
-
-#include <sycl/sycl.hpp>
 
 using data_type = double;
 
@@ -51,30 +46,21 @@ static TestResult run(const KernelSubmitLinearKernelSizeArguments &args, Statist
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 
     if (isNoopRun()) {
-        std::cerr << "Noop run for Torch L0 benchmark" << std::endl;
         profiler.pushNoop(statistics);
         return TestResult::Nooped;
     }
 
     // setup
-    constexpr bool useOoq = false;
-    Sycl sycl{sycl::device{sycl::gpu_selector_v}, useOoq};
+    bool useOoq = false;
+    Sycl sycl = args.useProfiling
+                    ? Sycl{useOoq, sycl::property::queue::enable_profiling()}
+                    : Sycl{useOoq};
+    auto d_out = make_device_ptr<data_type>(sycl, 1);
 
-    data_type *d_out = sycl::malloc_device<data_type>(1, sycl.queue);
-    if (d_out == nullptr) {
-        return TestResult::Error;
-    }
-
-    // warmup
-    for (int i = 0; i < 2; i++) {
-        ASSERT_TEST_RESULT_SUCCESS(submit_kernel_linear_kernel_size(sycl.queue, args.kernelSize, d_out));
-    }
-    sycl.queue.wait();
-
-    // benchmarking
+    // benchmark
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
-        ASSERT_TEST_RESULT_SUCCESS(submit_kernel_linear_kernel_size(sycl.queue, args.kernelSize, d_out));
+        ASSERT_TEST_RESULT_SUCCESS(submit_kernel_linear_kernel_size(sycl.queue, args.kernelSize, d_out.get()));
         profiler.measureEnd();
         profiler.pushStats(statistics);
 
@@ -85,22 +71,13 @@ static TestResult run(const KernelSubmitLinearKernelSizeArguments &args, Statist
     }
     sycl.queue.wait();
 
-    // verify and clean up
-    data_type *host_data = sycl::malloc_host<data_type>(1, sycl.queue);
-    if (!host_data) {
-        sycl::free(d_out, sycl.queue);
+    // verify result
+    auto host_data = make_host_ptr<data_type>(sycl, 1);
+    sycl.queue.memcpy(host_data.get(), d_out.get(), sizeof(data_type)).wait();
+    if (*host_data > (static_cast<data_type>(args.kernelSize) + 0.1) || *host_data < (static_cast<data_type>(args.kernelSize) - 0.1)) {
+        std::cout << "Wrong checker value: " << *host_data << ", expected " << static_cast<data_type>(args.kernelSize) << std::endl;
         return TestResult::Error;
     }
-    sycl.queue.memcpy(host_data, d_out, sizeof(data_type)).wait();
-    if (host_data[0] > (static_cast<data_type>(args.kernelSize) + 0.1) || host_data[0] < (static_cast<data_type>(args.kernelSize) - 0.1)) {
-        std::cout << "Wrong checker value: " << host_data[0] << ", expected " << static_cast<data_type>(args.kernelSize) << std::endl;
-        sycl::free(d_out, sycl.queue);
-        sycl::free(host_data, sycl.queue);
-        return TestResult::Error;
-    }
-
-    sycl::free(d_out, sycl.queue);
-    sycl::free(host_data, sycl.queue);
 
     return TestResult::Success;
 }

@@ -84,7 +84,7 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
     graph.end_recording();
     auto graph_exec = graph.finalize();
 
-    // benchmarking
+    // benchmark
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
 

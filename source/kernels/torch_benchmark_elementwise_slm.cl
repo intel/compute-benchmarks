@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-__kernel void torch_benchmark_elementwise_slm(__global float *out_data, int slm_num, __local float* slm) {
+__kernel void elementwise_slm(__global float *dest, int slm_num, __local float* slm) {
     // Allocate local memory for the work-group
     // size in bytes declared at kernel launch by last "hidden" argument
 	
@@ -21,7 +21,7 @@ __kernel void torch_benchmark_elementwise_slm(__global float *out_data, int slm_
     
     // Write result from the last element in SLM and checker value
     if (local_id == 0) {
-        out_data[0] = slm[slm_num - 1];
-        out_data[1] = 13.0f;
+        dest[0] = slm[slm_num - 1];
+        dest[1] = 13.0f;
     }
 }
