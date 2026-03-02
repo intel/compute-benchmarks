@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,12 @@
 #include "definitions/decoder2_graph_base.h"
 
 #include <memory>
+
+#if __has_include(<ur/ur_api.h>)
+#include <ur/ur_api.h>
+#else
 #include <ur_api.h>
+#endif
 
 class Decoder2GraphUR : public Decoder2GraphBase<Decoder2GraphUR> {
   public:

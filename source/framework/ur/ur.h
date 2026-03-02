@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,11 @@
 
 #include "framework/configuration.h"
 
+#if __has_include(<ur/ur_api.h>)
+#include <ur/ur_api.h>
+#else
 #include <ur_api.h>
+#endif
 
 struct UrState {
     UrState();

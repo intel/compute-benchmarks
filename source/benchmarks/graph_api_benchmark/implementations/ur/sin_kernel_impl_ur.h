@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,12 @@
 #include "definitions/sin_kernel_graph_base.h"
 
 #include <iostream>
+
+#if __has_include(<ur/ur_api.h>)
+#include <ur/ur_api.h>
+#else
 #include <ur_api.h>
+#endif
 
 class SinKernelGraphUR : public SinKernelGraphBase {
   public:
