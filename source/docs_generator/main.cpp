@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
             for (Api api : apiColumns) {
                 std::string apiName = std::to_string(api);
                 std::transform(apiName.begin(), apiName.end(), apiName.begin(), ::toupper);
-                apiNames.push_back(apiName);
+                apiNames.push_back(std::move(apiName));
             }
             std::cerr << "  " << benchmark.baseName << std::endl;
 
