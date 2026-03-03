@@ -72,6 +72,8 @@ struct LevelZero {
               const ExtensionProperties &extensionProperties);
     LevelZero(const ExtensionProperties &extensionProperties) : LevelZero(QueueProperties::create(),
                                                                           ContextProperties::create(), extensionProperties) {}
+    LevelZero(const LevelZero &) = delete;
+    LevelZero &operator=(const LevelZero &) = delete;
     ~LevelZero() noexcept(false);
 
     // Returns how many subDevices has been created. Will return 0, if no subDevices were specified in ContextProperties or

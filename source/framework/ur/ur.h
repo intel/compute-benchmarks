@@ -17,6 +17,8 @@
 
 struct UrState {
     UrState();
+    UrState(const UrState &) = delete;
+    UrState &operator=(const UrState &) = delete;
     ~UrState();
 
     ur_adapter_handle_t adapter;
