@@ -60,8 +60,8 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
     CommandList cmd_list_2{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
     CommandList cmd_list_3{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
 
-    const uint32_t wgc = args.workgroupCount;
-    const uint32_t wgs = args.workgroupSize;
+    const uint32_t wgc = args.kernelWGCount;
+    const uint32_t wgs = args.kernelWGSize;
     const size_t length = wgc * wgs;
     DeviceMemory<data_type> d_a{l0, length};
     DeviceMemory<data_type> d_b{l0, length};

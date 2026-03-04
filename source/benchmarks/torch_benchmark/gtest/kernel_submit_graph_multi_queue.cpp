@@ -21,8 +21,8 @@ class KernelSubmitGraphMultiQueueTest : public ::testing::TestWithParam<std::tup
 TEST_P(KernelSubmitGraphMultiQueueTest, Test) {
     KernelSubmitGraphMultiQueueArguments args{};
     args.api = std::get<0>(GetParam());
-    args.workgroupCount = std::get<1>(GetParam());
-    args.workgroupSize = std::get<2>(GetParam());
+    args.kernelWGCount = std::get<1>(GetParam());
+    args.kernelWGSize = std::get<2>(GetParam());
     args.kernelsPerQueue = std::get<3>(GetParam());
     args.useProfiling = std::get<4>(GetParam());
     args.useEvents = std::get<5>(GetParam());
@@ -35,8 +35,8 @@ INSTANTIATE_TEST_SUITE_P(
     KernelSubmitGraphMultiQueueTest,
     ::testing::Combine(
         ::testing::Values(Api::SYCL, Api::SYCLPREVIEW, Api::L0),
-        ::testing::Values(512),           // workgroupCount
-        ::testing::Values(256),           // workgroupSize
+        ::testing::Values(512),           // kernelWGCount
+        ::testing::Values(256),           // kernelWGSize
         ::testing::Values(1),             // kernelsPerQueue
         ::testing::Values(false),         // useProfiling
         ::testing::Values(false, true))); // useEvents

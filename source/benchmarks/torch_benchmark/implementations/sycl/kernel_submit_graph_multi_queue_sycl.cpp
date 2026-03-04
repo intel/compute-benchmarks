@@ -5,12 +5,8 @@
  *
  */
 
-#include "framework/sycl/sycl.h"
-#include "framework/test_case/register_test_case.h"
-#include "framework/utility/combo_profiler.h"
-
+#include "common.hpp"
 #include "definitions/kernel_submit_graph_multi_queue.h"
-#include "definitions/sycl_kernels.h"
 
 using data_type = float;
 
@@ -31,53 +27,44 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
 
     // setup
     sycl::device dev = sycl::device(sycl::gpu_selector_v);
-    sycl::queue q[NUM_OF_QUEUES];
+    Sycl sycl[NUM_OF_QUEUES];
     for (int i = 0; i < NUM_OF_QUEUES; i++) {
-        q[i] = sycl::queue(dev, args.useProfiling ? sycl::property_list{inOrder, enableProfiling} : sycl::property_list{inOrder});
+        if (args.useProfiling) {
+            sycl[i] = Sycl(dev, inOrder, enableProfiling);
+        } else {
+            sycl[i] = Sycl(dev, inOrder);
+        }
     }
 
-    const uint32_t wgc = args.workgroupCount;
-    const uint32_t wgs = args.workgroupSize;
+    const uint32_t wgc = args.kernelWGCount;
+    const uint32_t wgs = args.kernelWGSize;
     const size_t length = wgc * wgs;
 
-    auto make_device_ptr = [&q](size_t size) {
-        auto deleter = [queue = q[0]](data_type *ptr) {
-            if (ptr)
-                sycl::free(ptr, queue);
-        };
-        using unique_ptr_type = std::unique_ptr<data_type, decltype(deleter)>;
-        auto ptr = sycl::malloc_device<data_type>(size, q[0]);
-        if (!ptr) {
-            throw std::bad_alloc();
-        }
-        return unique_ptr_type{ptr, deleter};
-    };
-
-    auto d_a = make_device_ptr(length);
-    auto d_b = make_device_ptr(length);
-    auto d_c = make_device_ptr(length);
-    auto d_d = make_device_ptr(length);
+    auto d_a = make_device_ptr<data_type>(sycl[0], length);
+    auto d_b = make_device_ptr<data_type>(sycl[0], length);
+    auto d_c = make_device_ptr<data_type>(sycl[0], length);
+    auto d_d = make_device_ptr<data_type>(sycl[0], length);
 
     // submit kernels
     auto submit_kernels = [&]() {
         data_type add_element = 1.0f;
         // TODO: use enqueue_signal_event when it's available
-        sycl::event event1 = q[0].ext_oneapi_submit_barrier();
+        sycl::event event1 = sycl[0].queue.ext_oneapi_submit_barrier();
         // TODO: use enqueue_wait_event when it's available
-        q[1].ext_oneapi_submit_barrier({event1});
-        submit_kernel_add_const<data_type>(wgc, wgs, q[1], args.useEvents, d_c.get(), d_a.get(), add_element);
+        sycl[1].queue.ext_oneapi_submit_barrier({event1});
+        submit_kernel_add_const<data_type>(wgc, wgs, sycl[1].queue, args.useEvents, d_c.get(), d_a.get(), add_element);
 
-        sycl::event event2 = q[1].ext_oneapi_submit_barrier();
-        submit_kernel_add_const<data_type>(wgc, wgs, q[0], args.useEvents, d_b.get(), d_a.get(), add_element);
+        sycl::event event2 = sycl[1].queue.ext_oneapi_submit_barrier();
+        submit_kernel_add_const<data_type>(wgc, wgs, sycl[0].queue, args.useEvents, d_b.get(), d_a.get(), add_element);
 
-        q[0].ext_oneapi_submit_barrier({event2});
-        submit_kernel_add<data_type>(wgc, wgs, q[0], args.useEvents, d_d.get(), d_b.get(), d_c.get());
+        sycl[0].queue.ext_oneapi_submit_barrier({event2});
+        submit_kernel_add<data_type>(wgc, wgs, sycl[0].queue, args.useEvents, d_d.get(), d_b.get(), d_c.get());
     };
 
     // capture graph
-    auto graph = syclex::command_graph<syclex::graph_state::modifiable>(q[0].get_context(), q[0].get_device());
+    auto graph = syclex::command_graph<syclex::graph_state::modifiable>(sycl[0].queue.get_context(), sycl[0].queue.get_device());
 
-    graph.begin_recording(q[0]);
+    graph.begin_recording(sycl[0].queue);
     for (size_t i = 0; i < args.kernelsPerQueue; ++i) {
         submit_kernels();
     }
@@ -91,8 +78,8 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
         // Currently there is an implicit sync inside execute_graph call
         // so only measuring exec + sync is meaningful in terms of comparing
         // perf with L0
-        q[0].ext_oneapi_graph(graph_exec);
-        q[0].wait();
+        sycl[0].queue.ext_oneapi_graph(graph_exec);
+        sycl[0].queue.wait();
 
         profiler.measureEnd();
         profiler.pushStats(statistics);
