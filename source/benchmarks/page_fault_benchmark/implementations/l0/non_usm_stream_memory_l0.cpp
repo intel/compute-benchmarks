@@ -25,7 +25,12 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (arguments.partialMultiplier > 1u) {
-        return TestResult::NoImplementation;
+        if (arguments.type == StreamMemoryType::Scale || arguments.type == StreamMemoryType::Triad) {
+            return TestResult::NoImplementation;
+        }
+        if (arguments.type == StreamMemoryType::Write && arguments.contents != BufferContents::Zeros) {
+            return TestResult::NoImplementation;
+        }
     }
 
     if (isNoopRun()) {
@@ -74,7 +79,7 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
 
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        pKernelName = "read";
+        pKernelName = "readWithMultiplier";
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
         bufferSizes[buffersCount] = 16u;
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, 16u, &buffers[buffersCount++]));
@@ -84,7 +89,7 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
             pKernelName = "write_random";
             setScalarArgument = false; // value to write is embedded in kernel code
         } else {
-            pKernelName = "write";
+            pKernelName = "writeWithMultiplier";
         }
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
         break;
@@ -165,6 +170,11 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), sizeof(scalarValue), &scalarValue));
     }
 
+    int multiplier = static_cast<int>(arguments.partialMultiplier);
+    if ((arguments.type == StreamMemoryType::Write && arguments.contents != BufferContents::Random) || arguments.type == StreamMemoryType::Read) {
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(setScalarArgument ? buffersCount + 1 : buffersCount), 4u, &multiplier));
+    }
+
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, 0));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
@@ -207,6 +217,10 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
             break;
         default:
             break;
+        }
+
+        if (arguments.partialMultiplier > 1u) {
+            transferSize = transferSize / arguments.partialMultiplier;
         }
 
         if (arguments.useEvents) {
