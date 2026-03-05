@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,7 @@ static TestResult run(const UsmConcurrentCopyArguments &arguments, Statistics &s
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &h2dQueueDesc->desc, &h2dCommandList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &d2hQueueDesc->desc, &d2hCommandList));
 
-    Timer timer;
+    Timer timer, h2dTimer, d2hTimer;
 
     // Create buffers
     void *host1{}, *device1{}, *host2{}, *device2{};
@@ -97,16 +97,33 @@ static TestResult run(const UsmConcurrentCopyArguments &arguments, Statistics &s
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
+        auto h2dDone = false;
+        auto d2hDone = false;
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(h2dCommandList, device1, host1, arguments.size, h2dEvent, 1, &waitEvent));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(d2hCommandList, host2, device2, arguments.size, d2hEvent, 1, &waitEvent));
         timer.measureStart();
+        h2dTimer.measureStart();
+        d2hTimer.measureStart();
+
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(waitEvent));
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(h2dEvent, std::numeric_limits<uint64_t>::max()));
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(d2hEvent, std::numeric_limits<uint64_t>::max()));
+        while (!h2dDone || !d2hDone) {
+            if (!h2dDone && zeEventHostSynchronize(h2dEvent, 0u) == ZE_RESULT_SUCCESS) {
+                h2dTimer.measureEnd();
+                h2dDone = true;
+            }
+            if (!d2hDone && zeEventHostSynchronize(d2hEvent, 0u) == ZE_RESULT_SUCCESS) {
+                d2hTimer.measureEnd();
+                d2hDone = true;
+            }
+        }
+
         timer.measureEnd();
 
-        statistics.pushValue(timer.get(), arguments.size * 2, typeSelector.getUnit(), typeSelector.getType());
+        statistics.pushValue(timer.get(), arguments.size * 2, typeSelector.getUnit(), typeSelector.getType(), "Total ");
+        statistics.pushValue(h2dTimer.get(), arguments.size, typeSelector.getUnit(), typeSelector.getType(), "H2D ");
+        statistics.pushValue(d2hTimer.get(), arguments.size, typeSelector.getUnit(), typeSelector.getType(), "D2H ");
+
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(h2dEvent));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(d2hEvent));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(waitEvent));
