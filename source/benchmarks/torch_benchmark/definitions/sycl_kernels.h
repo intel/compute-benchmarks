@@ -73,6 +73,22 @@ sycl::event submit_with_event_kernel_add(unsigned int wgc, unsigned int wgs, syc
 }
 
 template <typename data_type>
+sycl::event submit_with_event_kernel_add_const(unsigned int wgc, unsigned int wgs, sycl::queue &q, data_type *sum, data_type *src, data_type add_element) {
+    return q.parallel_for(sycl::nd_range<1>{wgc * wgs, wgs}, [=](sycl::nd_item<1> item) {
+        size_t id = item.get_global_id(0);
+        sum[id] = src[id] + add_element;
+    });
+}
+
+template <typename data_type>
+sycl::event submit_with_event_kernel_add_const(unsigned int wgc, unsigned int wgs, sycl::queue &q, sycl::event &depEvent, data_type *sum, data_type *src, data_type add_element) {
+    return q.parallel_for(sycl::nd_range<1>{wgc * wgs, wgs}, depEvent, [=](sycl::nd_item<1> item) {
+        size_t id = item.get_global_id(0);
+        sum[id] = src[id] + add_element;
+    });
+}
+
+template <typename data_type>
 void submit_kernel_add(unsigned int wgc, unsigned int wgs, sycl::queue &q, bool useEvents, data_type *sum, data_type **src, unsigned int add_num_params) {
     switch (add_num_params) {
     case 1:

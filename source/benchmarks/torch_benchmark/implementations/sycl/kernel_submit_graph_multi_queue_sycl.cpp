@@ -48,17 +48,14 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
     // submit kernels
     auto submit_kernels = [&]() {
         data_type add_element = 1.0f;
-        // TODO: use enqueue_signal_event when it's available
-        sycl::event event1 = sycl[0].queue.ext_oneapi_submit_barrier();
-        // TODO: use enqueue_wait_event when it's available
-        sycl[1].queue.ext_oneapi_submit_barrier({event1});
-        submit_kernel_add_const<data_type>(wgc, wgs, sycl[1].queue, args.useEvents, d_c.get(), d_a.get(), add_element);
 
-        sycl::event event2 = sycl[1].queue.ext_oneapi_submit_barrier();
-        submit_kernel_add_const<data_type>(wgc, wgs, sycl[0].queue, args.useEvents, d_b.get(), d_a.get(), add_element);
+        sycl::event event1 = submit_with_event_kernel_add_const<data_type>(
+            wgc, wgs, sycl[0].queue, d_b.get(), d_a.get(), add_element);
 
-        sycl[0].queue.ext_oneapi_submit_barrier({event2});
-        submit_kernel_add<data_type>(wgc, wgs, sycl[0].queue, args.useEvents, d_d.get(), d_b.get(), d_c.get());
+        sycl::event event2 = submit_with_event_kernel_add_const<data_type>(
+            wgc, wgs, sycl[1].queue, event1, d_c.get(), d_b.get(), add_element);
+
+        submit_kernel_add<data_type>(wgc, wgs, sycl[0].queue, args.useEvents, event2, d_d.get(), d_b.get(), d_c.get());
     };
 
     // capture graph
