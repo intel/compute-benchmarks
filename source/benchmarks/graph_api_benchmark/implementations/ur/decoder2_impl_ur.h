@@ -14,8 +14,8 @@
 
 #include <memory>
 
-#if __has_include(<ur/ur_api.h>)
-#include <ur/ur_api.h>
+#if __has_include(<unified-runtime/ur_api.h>)
+#include <unified-runtime/ur_api.h>
 #else
 #include <ur_api.h>
 #endif
