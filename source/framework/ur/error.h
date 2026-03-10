@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,12 @@
 
 #include <sstream>
 #include <string>
+
+#if __has_include(<unified-runtime/ur_print.hpp>)
+#include <unified-runtime/ur_print.hpp>
+#else
 #include <ur_print.hpp>
+#endif
 
 #define ASSERT_UR_RESULT_SUCCESS(retVal)                                                                                      \
     {                                                                                                                         \
