@@ -8,15 +8,20 @@ if (NOT BUILD_UR)
     return()
 endif()
 
+# Define target
+set(API_NAME ur)
+set(TARGET_NAME compute_benchmarks_framework_${API_NAME})
+add_library(${TARGET_NAME} STATIC ur.cpp ur.h error.h)
+
 find_package(unified-runtime)
 
 if(${unified-runtime_FOUND} AND NOT BENCHMARK_UR_OVERRIDE_FETCH_CONTENT_REPO AND NOT BENCHMARK_UR_OVERRIDE_FETCH_CONTENT_TAG)
 
     message(STATUS "Unified Runtime installation found")
 
-    add_library(ur_loader ALIAS unified-runtime::ur_loader)
-    add_library(ur_headers ALIAS unified-runtime::ur_headers)
-
+    # Set specific include dirs / libs
+    target_include_directories(${TARGET_NAME} PUBLIC ${UR_INCLUDE_DIRS})
+    target_link_libraries(${TARGET_NAME} PUBLIC ${UR_LIBRARIES})
 else()
 
     include(FetchContent)
@@ -46,15 +51,15 @@ else()
     FetchContent_GetProperties(unified-runtime)
     FetchContent_MakeAvailable(unified-runtime)
 
+    # Make use of predefined cmake targets
+    target_link_libraries(${TARGET_NAME} PUBLIC ur_loader ur_headers)
+
 endif()
 
-# Define target
-set(API_NAME ur)
-set(TARGET_NAME compute_benchmarks_framework_${API_NAME})
-add_library(${TARGET_NAME} STATIC ur.cpp ur.h error.h)
+# Set common variables, links, properties...
 target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/third_party/level-zero-sdk/include)
-target_link_libraries(${TARGET_NAME} PUBLIC compute_benchmarks_framework ur_loader ur_headers)
+target_link_libraries(${TARGET_NAME} PUBLIC compute_benchmarks_framework)
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER framework)
 setup_vs_folders(${TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR})
 setup_warning_options(${TARGET_NAME})
