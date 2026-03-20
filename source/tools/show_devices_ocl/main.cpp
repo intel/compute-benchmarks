@@ -24,7 +24,7 @@
 #define CL_VERSION_MINOR(version) (((version) >> 12) & 0x3ff)
 #endif
 #ifndef CL_VERSION_PATCH
-#define CL_VERSION_PATCH(version) ((version)&0xfff)
+#define CL_VERSION_PATCH(version) ((version) & 0xfff)
 #endif
 
 #if !defined(CL_VERSION_2_1) && !defined(CL_VERSION_3_0)

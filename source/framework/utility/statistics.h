@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ class Statistics {
 
 class MeasurementFields {
   public:
-    MeasurementFields(){};
+    MeasurementFields() {};
     MeasurementFields(MeasurementUnit unit, MeasurementType type) : unit{unit}, type{type} {};
 
     void setUnit(MeasurementUnit u) {
