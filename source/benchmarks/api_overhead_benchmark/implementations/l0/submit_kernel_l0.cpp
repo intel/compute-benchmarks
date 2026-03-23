@@ -23,8 +23,7 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     }
 
     // Setup
-    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(
-        arguments.inOrderQueue);
+    ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
 
     const ze_group_count_t groupCount{1, 1, 1};
@@ -45,13 +44,12 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     kernelDesc.pKernelName = "eat_time";
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
 
-    zex_counter_based_event_exp_flags_t cbFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+    ze_event_counter_based_flags_t cbFlags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
     if (arguments.useProfiling) {
-        cbFlags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+        cbFlags |= ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
     }
 
     const bool counterBasedEvents = arguments.inOrderQueue;
-    const zex_counter_based_event_desc_t counterBasedEventDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, .pNext = nullptr, .flags = cbFlags, .signalScope = ZE_EVENT_SCOPE_FLAG_DEVICE, .waitScope = ZE_EVENT_SCOPE_FLAG_HOST};
 
     // Create event pool
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
@@ -91,7 +89,8 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
             ze_event_handle_t signalEvent = nullptr;
             if (arguments.useEvents) {
                 if (counterBasedEvents) {
-                    ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &events[iteration]));
+                    ze_event_counter_based_desc_t cbDesc{.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, .pNext = nullptr, .flags = cbFlags, .signal = ZE_EVENT_SCOPE_FLAG_DEVICE, .wait = ZE_EVENT_SCOPE_FLAG_HOST};
+                    ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &cbDesc, &events[iteration]));
                 } else {
                     eventDesc.index = iteration;
                     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[iteration]));

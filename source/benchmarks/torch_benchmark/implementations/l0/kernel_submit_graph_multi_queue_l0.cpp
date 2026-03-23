@@ -53,8 +53,7 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
 
     // setup
     ExtensionProperties extensionProperties = ExtensionProperties::create()
-                                                  .setGraphFunctions(true)
-                                                  .setCounterBasedCreateFunctions(true);
+                                                  .setGraphFunctions(true);
     LevelZero l0{extensionProperties};
     CommandList cmd_list_1{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
     CommandList cmd_list_2{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};

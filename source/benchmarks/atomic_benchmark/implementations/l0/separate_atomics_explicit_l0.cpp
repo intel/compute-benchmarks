@@ -27,7 +27,7 @@ static TestResult run(const SeparateAtomicsExplicitArguments &arguments, Statist
     }
 
     // Setup
-    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(true);
+    ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
     Timer timer{};
 
@@ -50,9 +50,9 @@ static TestResult run(const SeparateAtomicsExplicitArguments &arguments, Statist
 
     // Prepare timestamp event
     ze_event_handle_t perfEvent{};
-    auto eventDesc = defaultCounterBasedEventDesc;
-    eventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
-    ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &eventDesc, &perfEvent));
+    auto eventDesc = defaultIntelCounterBasedEventDesc;
+    eventDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
+    ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &eventDesc, &perfEvent));
 
     // Create kernel
     const char *programName = "atomic_benchmark_kernel.cl";

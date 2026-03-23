@@ -33,7 +33,7 @@ static TestResult run(const RandomAccessMultiResourceArguments &arguments, Stati
         return TestResult::Nooped;
     }
 
-    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(true);
+    ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
 
     ze_device_compute_properties_t computeProperties{ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES};
@@ -118,10 +118,9 @@ static TestResult run(const RandomAccessMultiResourceArguments &arguments, Stati
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdList));
 
     // Create event for gpu time measurement
-    zex_counter_based_event_desc_t counterBasedEventDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedEventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
     ze_event_handle_t event{};
-    ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &event));
+    ze_event_counter_based_desc_t cbDesc{.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, .pNext = nullptr, .flags = ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP, .signal = 0, .wait = 0};
+    ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &cbDesc, &event));
 
     const size_t bytesTransferred = workItemCnt * (srcBufferAccessElementSize * 2 + offsetAccessBytesPerThread);
 

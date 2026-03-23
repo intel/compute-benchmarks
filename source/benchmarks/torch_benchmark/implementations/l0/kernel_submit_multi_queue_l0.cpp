@@ -21,7 +21,7 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
     }
 
     // setup
-    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(true);
+    ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero l0{extensionProperties};
     CommandList cmd_list_1{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
     CommandList cmd_list_2{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};

@@ -68,10 +68,12 @@ TestResult Graph::instantiate() {
 }
 
 CounterBasedEvent::CounterBasedEvent(LevelZero &l0, bool enableProfiling) {
-    zex_counter_based_event_desc_t desc = defaultCounterBasedEventDesc;
-    desc.flags |= enableProfiling ? ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP : 0;
+    auto desc = defaultIntelCounterBasedEventDesc;
+    if (enableProfiling) {
+        desc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
+    }
 
-    if (l0.counterBasedEventCreate2(l0.context, l0.device, &desc, &event) != ZE_RESULT_SUCCESS) {
+    if (zeEventCounterBasedCreate(l0.context, l0.device, &desc, &event) != ZE_RESULT_SUCCESS) {
         throw std::runtime_error("Failed to create counter-based event");
     }
 }

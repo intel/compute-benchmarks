@@ -59,8 +59,10 @@ struct LevelZero {
     size_t commandQueueMaxFillSize{};
     ImportHostPointerExtension importHostPointer{};
     GraphExtension graphExtension{};
-    L0CounterBasedEventCreate2 counterBasedEventCreate2 = nullptr;
+    ze_api_version_t apiVersion{};
     L0CommandListAppendHostFunction commandListAppendHostFunction = nullptr;
+
+    bool isCounterBasedEventsSupported() const { return apiVersion >= ZE_API_VERSION_1_15; }
 
     // Constructors, destructor
     LevelZero() : LevelZero(QueueProperties::create()) {}

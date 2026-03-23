@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,16 @@
 extern "C" {
 #endif
 
+#if defined(_WIN32)
+#if !defined(ZE_CALLBACK)
+#define ZE_CALLBACK __stdcall
+#endif
+#else
+#if !defined(ZE_CALLBACK)
+#define ZE_CALLBACK
+#endif
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Handle of command list object
 typedef ze_command_list_handle_t zex_command_list_handle_t;
@@ -26,6 +36,12 @@ typedef ze_command_list_handle_t zex_command_list_handle_t;
 typedef ze_event_handle_t zex_event_handle_t;
 
 #define ZEX_BIT(_i) (1 << _i)
+
+#if defined(__cplusplus)
+#define EXTENDED_ENUM(ENUM_T, VALUE) static_cast<ENUM_T>(VALUE) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+#else
+#define EXTENDED_ENUM(ENUM_T, VALUE) ((ENUM_T)VALUE)
+#endif
 
 typedef uint32_t zex_mem_action_scope_flags_t;
 typedef enum _zex_mem_action_scope_flag_t {
@@ -178,6 +194,9 @@ typedef enum _zex_counter_based_event_exp_flag_t {
     ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP = ZE_BIT(4),        ///< Event contains kernel timestamps
     ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP = ZE_BIT(5), ///< Event contains kernel timestamps synchronized to host time domain.
                                                                       ///< Cannot be combined with::ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP
+    ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL = ZE_BIT(6),                ///< Events with this flag, when used in graph record and replay or
+                                                                      ///< in a cloned command list, can also be used for external synchronization,
+                                                                      ///< for example, as a wait event outside of a graph or for a host synchronization.
     ZEX_COUNTER_BASED_EVENT_FLAG_FORCE_UINT32 = 0x7fffffff
 
 } zex_counter_based_event_exp_flag_t;
@@ -199,15 +218,25 @@ typedef struct _zex_counter_based_event_desc_t {
                                                ///< additional cache hierarchies are invalidated.
 } zex_counter_based_event_desc_t;
 
-const zex_counter_based_event_desc_t defaultCounterBasedEventDesc = {
-    .stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
-    .pNext = nullptr,
-    .flags = static_cast<zex_counter_based_event_exp_flags_t>(
-        ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE |
+static const zex_counter_based_event_desc_t defaultZexIntelCounterBasedEventDesc = {
+    ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, // stype
+    nullptr,                                // pNext
+    ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE |
         ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE |
-        ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE),
-    .signalScope = static_cast<ze_event_scope_flags_t>(ZE_EVENT_SCOPE_FLAG_HOST),
-    .waitScope = static_cast<ze_event_scope_flags_t>(ZE_EVENT_SCOPE_FLAG_DEVICE)};
+        ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE, // flags
+    ZE_EVENT_SCOPE_FLAG_HOST,                      // signalScope
+    ZE_EVENT_SCOPE_FLAG_DEVICE                     // waitScope
+};
+
+static const ze_event_counter_based_desc_t defaultIntelCounterBasedEventDesc = {
+    ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, // stype
+    nullptr,                                    // pNext
+    ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE |
+        ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE |
+        ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE, // flags
+    ZE_EVENT_SCOPE_FLAG_HOST,                     // signalScope
+    ZE_EVENT_SCOPE_FLAG_DEVICE                    // waitScope
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Initial Counter Based Event synchronization parameters. This structure may be
@@ -230,6 +259,12 @@ typedef struct _zex_counter_based_event_external_storage_properties_t {
     uint64_t incrementValue;       ///< [in] value which would by atomically added upon each completion
     uint64_t completionValue;      ///< [in] final completion value, when value under deviceAddress is equal or greater then this value then event is considered as completed
 } zex_counter_based_event_external_storage_properties_t;
+
+typedef enum _zex_verify_memory_compare_type_t {
+    ZEX_VERIFY_MEMORY_COMPARE_EQUAL = 0,                // compare memory for equality
+    ZEX_VERIFY_MEMORY_COMPARE_NOT_EQUAL = 1,            // compare memory for inequality
+    ZEX_VERIFY_MEMORY_COMPARE_FORCE_UINT32 = 0x7fffffff ///< Value marking end of ZEX_VERIFY_MEMORY_COMPARE* ENUMs
+} zex_verify_memory_compare_type_t;
 
 #if defined(__cplusplus)
 } // extern "C"

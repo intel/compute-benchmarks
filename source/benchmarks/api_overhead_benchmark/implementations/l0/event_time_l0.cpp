@@ -24,43 +24,42 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
 
     // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
-    if (arguments.counterBasedEvents) {
-        extensionProperties.setCounterBasedCreateFunctions(true);
-    }
     LevelZero levelzero{extensionProperties};
     Timer timer;
 
     // prepare descriptor for event creation
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
-    zex_counter_based_event_desc_t eventDescCBE{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    ze_event_counter_based_flags_t cbFlags = 0;
+    ze_event_scope_flags_t cbSignalScope = 0;
+    ze_event_scope_flags_t cbWaitScope = 0;
     if (arguments.counterBasedEvents) {
-        if (levelzero.counterBasedEventCreate2 == nullptr) {
+        if (!levelzero.isCounterBasedEventsSupported()) {
             return TestResult::DeviceNotCapable;
         }
 
-        eventDescCBE.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE |
-                             (arguments.hostVisible ? ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE : 0) |
-                             (arguments.useProfiling ? ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP : 0);
+        cbFlags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE |
+                  (arguments.hostVisible ? ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE : 0) |
+                  (arguments.useProfiling ? ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP : 0);
     }
     if (arguments.signalScope == EventScope::scopeSubDevice) {
         eventDesc.signal = ZE_EVENT_SCOPE_FLAG_SUBDEVICE;
-        eventDescCBE.signalScope = ZE_EVENT_SCOPE_FLAG_SUBDEVICE;
+        cbSignalScope = ZE_EVENT_SCOPE_FLAG_SUBDEVICE;
     } else if (arguments.signalScope == EventScope::scopeDevice) {
         eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
-        eventDescCBE.signalScope = ZE_EVENT_SCOPE_FLAG_DEVICE;
+        cbSignalScope = ZE_EVENT_SCOPE_FLAG_DEVICE;
     } else if (arguments.signalScope == EventScope::scopeHost) {
         eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
-        eventDescCBE.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+        cbSignalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     }
     if (arguments.waitScope == EventScope::scopeSubDevice) {
         eventDesc.wait = ZE_EVENT_SCOPE_FLAG_SUBDEVICE;
-        eventDescCBE.waitScope = ZE_EVENT_SCOPE_FLAG_SUBDEVICE;
+        cbWaitScope = ZE_EVENT_SCOPE_FLAG_SUBDEVICE;
     } else if (arguments.waitScope == EventScope::scopeDevice) {
         eventDesc.wait = ZE_EVENT_SCOPE_FLAG_DEVICE;
-        eventDescCBE.waitScope = ZE_EVENT_SCOPE_FLAG_DEVICE;
+        cbWaitScope = ZE_EVENT_SCOPE_FLAG_DEVICE;
     } else if (arguments.waitScope == EventScope::scopeHost) {
         eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-        eventDescCBE.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+        cbWaitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     }
 
     std::vector<ze_event_handle_t> events(arguments.eventCount);
@@ -83,7 +82,8 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
                 eventDesc.index = j;
                 ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[j]));
             } else {
-                ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &eventDescCBE, &events[j]));
+                ze_event_counter_based_desc_t cbDesc{.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, .pNext = nullptr, .flags = cbFlags, .signal = cbSignalScope, .wait = cbWaitScope};
+                ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &cbDesc, &events[j]));
             }
         }
         timer.measureEnd();

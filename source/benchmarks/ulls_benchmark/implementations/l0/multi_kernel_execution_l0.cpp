@@ -13,8 +13,6 @@
 #include "definitions/multi_kernel_execution.h"
 
 #include <gtest/gtest.h>
-#include <level_zero/zex_event.h>
-using L0EventGetDeviceAddress = decltype(&zexEventGetDeviceAddress);
 
 static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
@@ -109,13 +107,6 @@ static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics
         }
     } else {
 
-        L0EventGetDeviceAddress eventGetAddressFunc = nullptr;
-        EXPECT_ZE_RESULT_SUCCESS(
-            zeDriverGetExtensionFunctionAddress(levelzero.driver,
-                                                "zexEventGetDeviceAddress",
-                                                reinterpret_cast<void **>(&eventGetAddressFunc)));
-        FATAL_ERROR_IF(eventGetAddressFunc == nullptr, "zexEventGetDeviceAddress retrieved nullptr");
-
         ze_event_pool_flags_t flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
         const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, flags, static_cast<uint32_t>(arguments.kernelCount)};
         uint32_t numDevices = 1;
@@ -137,7 +128,7 @@ static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics
             ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 1, sizeof(completionValue), &completionValue));
             ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 2, sizeof(delayValue), &delayValue));
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, events[i], 0, nullptr));
-            ASSERT_ZE_RESULT_SUCCESS(eventGetAddressFunc(events[i], &completionValue, &eventAddress));
+            ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedGetDeviceAddress(events[i], &completionValue, &eventAddress));
         }
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));

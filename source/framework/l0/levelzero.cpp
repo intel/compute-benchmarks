@@ -50,6 +50,10 @@ LevelZero::LevelZero(const QueueProperties &queueProperties, const ContextProper
         this->device = getDevice(contextProperties.deviceSelection);
     }
 
+    // Query API version for feature detection
+    EXPECT_ZE_RESULT_SUCCESS(zeDriverGetApiVersion(this->driver, &this->apiVersion));
+    DEVELOPER_WARNING_IF(!isCounterBasedEventsSupported(), "Counter-based events require L0 API version >= 1.15");
+
     initializeExtension(extensionProperties);
     // Create context on the default device
     this->context = createContext(contextProperties);
@@ -158,14 +162,6 @@ void LevelZero::initializeExtension(const ExtensionProperties &extensionProperti
                                                 "zexDriverGetHostPointerBaseAddress",
                                                 reinterpret_cast<void **>(&this->importHostPointer.getHostPointerBaseAddress)));
         FATAL_ERROR_IF(this->importHostPointer.getHostPointerBaseAddress == nullptr, "zexDriverGetHostPointerBaseAddress retrieved nullptr");
-    }
-
-    if (extensionProperties.getCounterBasedCreateFunctions) {
-        EXPECT_ZE_RESULT_SUCCESS(
-            zeDriverGetExtensionFunctionAddress(this->driver,
-                                                "zexCounterBasedEventCreate2",
-                                                reinterpret_cast<void **>(&this->counterBasedEventCreate2)));
-        FATAL_ERROR_IF(this->counterBasedEventCreate2 == nullptr, "zexCounterBasedEventCreate2 retrieved nullptr");
     }
 
     if (extensionProperties.getGraphFunctions) {

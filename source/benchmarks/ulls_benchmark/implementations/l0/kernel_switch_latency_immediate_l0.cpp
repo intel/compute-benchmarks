@@ -30,8 +30,7 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     }
 
     // Setup
-    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(
-        arguments.counterBasedEvents);
+    ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(QueueProperties::create().disable(), ContextProperties::create(), extensionProperties);
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
@@ -80,14 +79,14 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
         flags |= ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     }
 
-    zex_counter_based_event_desc_t counterBasedEventDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    ze_event_counter_based_flags_t cbFlags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
+    ze_event_scope_flags_t cbSignalScope = 0;
     if (arguments.hostVisible) {
-        counterBasedEventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
-        counterBasedEventDesc.signalScope |= ZE_EVENT_SCOPE_FLAG_HOST;
+        cbFlags |= ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
+        cbSignalScope |= ZE_EVENT_SCOPE_FLAG_HOST;
     }
     if (arguments.useProfiling) {
-        counterBasedEventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+        cbFlags |= ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
     }
 
     const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, flags, static_cast<uint32_t>(arguments.kernelCount)};
@@ -102,7 +101,8 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     std::vector<ze_event_handle_t> profilingEvents(arguments.kernelCount);
     for (auto i = 0u; i < arguments.kernelCount; i++) {
         if (arguments.counterBasedEvents) {
-            ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &profilingEvents[i]));
+            ze_event_counter_based_desc_t cbDesc{.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, .pNext = nullptr, .flags = cbFlags, .signal = cbSignalScope, .wait = 0};
+            ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &cbDesc, &profilingEvents[i]));
         } else {
             ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, i, 0, 0};
             if (arguments.hostVisible) {
@@ -120,10 +120,8 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
         ze_event_handle_t eventHandle = nullptr;
 
         if (arguments.counterBasedEvents) {
-            zex_counter_based_event_desc_t profilingDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-            profilingDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
-
-            ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &profilingDesc, &eventHandle));
+            ze_event_counter_based_desc_t profilingCbDesc{.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, .pNext = nullptr, .flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP, .signal = 0, .wait = 0};
+            ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &profilingCbDesc, &eventHandle));
         } else {
             const ze_event_pool_desc_t profilingEventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, profilingFlags, 1u};
             ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &profilingEventPoolDesc, numDevices, &levelzero.device, &profilingEventPool));

@@ -26,7 +26,6 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
     // Setup
     bool useKernels = arguments.useKernels;
     ExtensionProperties extensionProperties = ExtensionProperties::create();
-    extensionProperties.setCounterBasedCreateFunctions(useKernels);
     extensionProperties.setHostFunctionFunctions(true);
     LevelZero levelzero(extensionProperties);
 
@@ -55,9 +54,9 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime * 4);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
 
-    zex_counter_based_event_desc_t counterBasedEventDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedEventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
-    counterBasedEventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+    ze_event_counter_based_flags_t cbFlags = ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+
+    ze_event_counter_based_desc_t cbDesc{.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, .pNext = nullptr, .flags = cbFlags, .signal = 0, .wait = 0};
 
     std::vector<ze_event_handle_t> eventKernel1;
     std::vector<ze_event_handle_t> eventKernel2;
@@ -68,17 +67,17 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
 
         for (auto &event : eventKernel1) {
             ASSERT_ZE_RESULT_SUCCESS(
-                levelzero.counterBasedEventCreate2(levelzero.context,
-                                                   levelzero.device,
-                                                   &counterBasedEventDesc,
-                                                   &event));
+                zeEventCounterBasedCreate(levelzero.context,
+                                          levelzero.device,
+                                          &cbDesc,
+                                          &event));
         }
         for (auto &event : eventKernel2) {
             ASSERT_ZE_RESULT_SUCCESS(
-                levelzero.counterBasedEventCreate2(levelzero.context,
-                                                   levelzero.device,
-                                                   &counterBasedEventDesc,
-                                                   &event));
+                zeEventCounterBasedCreate(levelzero.context,
+                                          levelzero.device,
+                                          &cbDesc,
+                                          &event));
         }
     }
     // Create command list with HostFunction

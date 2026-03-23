@@ -17,7 +17,6 @@ namespace L0 {
 using L0ImportExternalPointer = decltype(&zexDriverImportExternalPointer);
 using L0ReleaseImportedPointer = decltype(&zexDriverReleaseImportedPointer);
 using L0GetHostPointerBaseAddress = decltype(&zexDriverGetHostPointerBaseAddress);
-using L0CounterBasedEventCreate2 = decltype(&zexCounterBasedEventCreate2);
 using L0GraphCreate = decltype(&zeGraphCreateExp);
 using L0CommandListBeginCaptureIntoGraph = decltype(&zeCommandListBeginCaptureIntoGraphExp);
 using L0CommandListEndGraphCapture = decltype(&zeCommandListEndGraphCaptureExp);
@@ -35,7 +34,6 @@ using L0CommandListAppendHostFunction = ze_result_t(ZE_APICALL *)(ze_command_lis
 
 struct ExtensionProperties {
     bool getImportHostPointerFunctions = false;
-    bool getCounterBasedCreateFunctions = false;
     bool getGraphFunctions = false;
     bool getHostFunctionFunctions = false;
 
@@ -45,11 +43,6 @@ struct ExtensionProperties {
 
     ExtensionProperties &setImportHostPointerFunctions(bool value) {
         getImportHostPointerFunctions = value;
-        return *this;
-    }
-
-    ExtensionProperties &setCounterBasedCreateFunctions(bool value) {
-        getCounterBasedCreateFunctions = value;
         return *this;
     }
 

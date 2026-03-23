@@ -34,9 +34,8 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.isCopyOnly).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create();
     ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(
-                                                                               (requiresImport(arguments.sourcePlacement) ||
-                                                                                requiresImport(arguments.destinationPlacement)))
-                                                  .setCounterBasedCreateFunctions(arguments.useIoq);
+        (requiresImport(arguments.sourcePlacement) ||
+         requiresImport(arguments.destinationPlacement)));
 
     LevelZero levelzero(queueProperties, contextProperties, extensionProperties);
     if (levelzero.commandQueue == nullptr) {
@@ -47,11 +46,11 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     if (arguments.useIoq) {
-        zex_counter_based_event_exp_flags_t counterBasedDescFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+        ze_event_counter_based_flags_t counterBasedDescFlags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
         const ze_event_scope_flags_t signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
         const ze_event_scope_flags_t waitScope = 0;
-        const zex_counter_based_event_desc_t counterBasedEventDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, .pNext = nullptr, .flags = counterBasedDescFlags, .signalScope = signalScope, .waitScope = waitScope};
-        ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &event));
+        ze_event_counter_based_desc_t cbDesc{.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, .pNext = nullptr, .flags = counterBasedDescFlags, .signal = signalScope, .wait = waitScope};
+        ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &cbDesc, &event));
     } else {
         ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,13 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGet(uint32_t *pCount,
 }
 
 ZE_MOCK_SUCCESS(zeInitDrivers, uint32_t *, ze_driver_handle_t *, ze_init_driver_type_desc_t *)
-ZE_MOCK_SUCCESS(zeDriverGetApiVersion, ze_driver_handle_t, ze_api_version_t *)
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetApiVersion(ze_driver_handle_t hDriver, ze_api_version_t *version) {
+    (void)hDriver;
+    if (version)
+        *version = ZE_API_VERSION_1_15;
+    return ZE_RESULT_SUCCESS;
+}
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetProperties(ze_driver_handle_t hDriver, ze_driver_properties_t *pDriverProperties) {
     (void)hDriver;
@@ -571,6 +577,20 @@ ze_device_handle_t zerTranslateIdentifierToDeviceHandle(uint32_t identifier) {
 ZE_MOCK_SUCCESS(zeDeviceSynchronize, ze_device_handle_t);
 ZE_MOCK_SUCCESS(zeCommandListAppendLaunchKernelWithArguments, ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t, const ze_group_size_t, void **, const void *const, ze_event_handle_t, uint32_t, ze_event_handle_t *);
 
+// Core counter-based event APIs (v1.15)
+ZE_MOCK_SUCCESS(zeEventCounterBasedCreate, ze_context_handle_t, ze_device_handle_t, const ze_event_counter_based_desc_t *, ze_event_handle_t *)
+ZE_MOCK_SUCCESS(zeEventCounterBasedGetDeviceAddress, ze_event_handle_t, uint64_t *, uint64_t *)
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventCounterBasedGetIpcHandle(ze_event_handle_t hEvent, ze_ipc_event_counter_based_handle_t *phIpc) {
+    (void)hEvent;
+    memset(phIpc->data, '*', sizeof(phIpc->data));
+    return ZE_RESULT_SUCCESS;
+}
+
+ZE_MOCK_SUCCESS(zeEventCounterBasedOpenIpcHandle, ze_context_handle_t, ze_ipc_event_counter_based_handle_t, ze_event_handle_t *)
+ZE_MOCK_SUCCESS(zeEventCounterBasedCloseIpcHandle, ze_event_handle_t)
+ZE_MOCK_SUCCESS(zeDeviceGetAggregatedCopyOffloadIncrementValue, ze_device_handle_t, uint32_t *)
+
 ze_result_t zerGetLastErrorDescription(const char **ppString) {
     static const char *errorString = "mock error string";
     *ppString = errorString;
@@ -581,16 +601,6 @@ ze_result_t zerGetLastErrorDescription(const char **ppString) {
 
 ZE_MOCK_SUCCESS(null_zexIntelAllocateNetworkInterrupt, ze_context_handle_t, uint32_t &)
 ZE_MOCK_SUCCESS(null_zexIntelReleaseNetworkInterrupt, ze_context_handle_t, uint32_t)
-ZE_MOCK_SUCCESS(null_zexCounterBasedEventCreate2, ze_context_handle_t, ze_device_handle_t, const zex_counter_based_event_desc_t *, ze_event_handle_t *)
-
-ZE_APIEXPORT ze_result_t ZE_APICALL null_zexCounterBasedEventGetIpcHandle(ze_event_handle_t hEvent, zex_ipc_counter_based_event_handle_t *phIpc) {
-    (void)hEvent;
-    memset(phIpc->data, '*', sizeof(phIpc->data));
-    return ZE_RESULT_SUCCESS;
-}
-
-ZE_MOCK_SUCCESS(null_zexCounterBasedEventOpenIpcHandle, ze_context_handle_t, zex_ipc_counter_based_event_handle_t, ze_event_handle_t *)
-ZE_MOCK_SUCCESS(null_zexCounterBasedEventCloseIpcHandle, ze_event_handle_t)
 
 // -----------------
 
@@ -623,10 +633,6 @@ zeDriverGetExtensionFunctionAddress(
         {"zeDriverGetDefaultContext", (void *)&zeDriverGetDefaultContext},
         {"zexIntelAllocateNetworkInterrupt", (void *)(&null_zexIntelAllocateNetworkInterrupt)},
         {"zexIntelReleaseNetworkInterrupt", (void *)&null_zexIntelReleaseNetworkInterrupt},
-        {"zexCounterBasedEventCreate2", (void *)&null_zexCounterBasedEventCreate2},
-        {"zexCounterBasedEventGetIpcHandle", (void *)&null_zexCounterBasedEventGetIpcHandle},
-        {"zexCounterBasedEventOpenIpcHandle", (void *)&null_zexCounterBasedEventOpenIpcHandle},
-        {"zexCounterBasedEventCloseIpcHandle", (void *)&null_zexCounterBasedEventCloseIpcHandle},
     };
 
     for (const auto &entry : table) {

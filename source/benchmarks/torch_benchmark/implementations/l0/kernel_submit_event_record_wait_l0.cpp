@@ -17,8 +17,7 @@ static TestResult run(const KernelSubmitEventRecordWaitArguments &args, Statisti
     }
 
     // setup
-    ExtensionProperties extensionProperties = ExtensionProperties::create()
-                                                  .setCounterBasedCreateFunctions(true);
+    ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero l0{extensionProperties};
     CommandList cmdListImmediate_1{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
     CommandList cmdListImmediate_2{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};

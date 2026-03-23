@@ -27,8 +27,7 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     }
 
     // Setup
-    ExtensionProperties extensionProperties = ExtensionProperties::create().setCounterBasedCreateFunctions(
-        arguments.counterBasedEvents);
+    ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
@@ -64,11 +63,11 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     }
 
     // Create events for profiling
-    zex_counter_based_event_desc_t counterBasedEventDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+    ze_event_counter_based_flags_t cbFlags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
+    ze_event_scope_flags_t cbSignalScope = 0;
     if (arguments.hostVisible) {
-        counterBasedEventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
-        counterBasedEventDesc.signalScope |= ZE_EVENT_SCOPE_FLAG_HOST;
+        cbFlags |= ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
+        cbSignalScope |= ZE_EVENT_SCOPE_FLAG_HOST;
     }
 
     ze_event_pool_flags_t flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -87,7 +86,8 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     std::vector<ze_event_handle_t> profilingEvents(arguments.kernelCount);
     for (auto i = 0u; i < arguments.kernelCount; i++) {
         if (arguments.counterBasedEvents) {
-            ASSERT_ZE_RESULT_SUCCESS(levelzero.counterBasedEventCreate2(levelzero.context, levelzero.device, &counterBasedEventDesc, &profilingEvents[i]));
+            ze_event_counter_based_desc_t cbDesc{.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, .pNext = nullptr, .flags = cbFlags, .signal = cbSignalScope, .wait = 0};
+            ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &cbDesc, &profilingEvents[i]));
         } else {
             ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, i, 0, 0};
             ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(hEventPool, &eventDesc, &profilingEvents[i]));
