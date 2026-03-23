@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,10 +56,10 @@ typedef enum _ze_intel_device_module_dp_exp_flag_t {
 ///       `pNext` member of ::ze_device_module_properties_t.
 /// @brief Device module dot product properties
 typedef struct _ze_intel_device_module_dp_exp_properties_t {
-    ze_structure_type_ext_t stype = ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES; ///< [in] type of this structure
-    void *pNext;                                                                        ///< [in,out][optional] must be null or a pointer to an extension-specific
-                                                                                        ///< structure (i.e. contains sType and pNext).
-    ze_intel_device_module_dp_exp_flags_t flags;                                        ///< [out] 0 (none) or a valid combination of ::ze_intel_device_module_dp_flag_t
+    ze_structure_type_ext_t stype;               ///< [in] type of this structure
+    void *pNext;                                 ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                                 ///< structure (i.e. contains sType and pNext).
+    ze_intel_device_module_dp_exp_flags_t flags; ///< [out] 0 (none) or a valid combination of ::ze_intel_device_module_dp_flag_t
 } ze_intel_device_module_dp_exp_properties_t;
 
 #ifndef ZE_INTEL_COMMAND_LIST_MEMORY_SYNC
@@ -237,7 +237,7 @@ typedef enum _ze_intel_device_block_array_exp_properties_version_t {
 ///     - Major.Minor.Patch+Optional per semver guidelines https://semver.org/#spec-item-10
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zeIntelGetDriverVersionString(
     ze_driver_handle_t hDriver, ///< [in] Driver handle whose version is being read.
     char *pDriverVersion,       ///< [in,out] pointer to driver version string.
@@ -325,7 +325,7 @@ typedef struct _zex_memory_free_callback_ext_desc_t {
  *
  * @note The callback will be invoked when the specified memory is freed.
  */
-ZE_APIEXPORT ze_result_t ZE_APICALL zexMemFreeRegisterCallbackExt(ze_context_handle_t hContext, zex_memory_free_callback_ext_desc_t *hFreeCallbackDesc, void *ptr);
+ze_result_t ZE_APICALL zexMemFreeRegisterCallbackExt(ze_context_handle_t hContext, zex_memory_free_callback_ext_desc_t *hFreeCallbackDesc, void *ptr);
 #endif // ZEX_MEMORY_FREE_CALLBACK_EXT_NAME
 
 #ifndef ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_NAME
@@ -342,7 +342,7 @@ typedef enum _ze_intel_kernel_get_binary_exp_version_t {
 
 } ze_intel_kernel_get_binary_exp_version_t;
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zeIntelKernelGetBinaryExp(
     ze_kernel_handle_t hKernel, ///< [in] Kernel handle
     size_t *pSize,              ///< [in, out] pointer to variable with size of GEN ISA binary
@@ -569,6 +569,39 @@ typedef struct _ze_queue_priority_desc_t {
     const void *pNext;             ///< [in][optional] must be null or a pointer to an extension-specific structure
     int priority;                  ///< [in] priority of the queue
 } ze_queue_priority_desc_t;
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZE_INTEL_XE_DEVICE_PROPERTIES_EXP_NAME
+/// @brief Intel Xe device properties driver extension name
+#define ZE_INTEL_XE_DEVICE_PROPERTIES_EXP_NAME "ZE_intel_experimental_xe_device_properties"
+#endif // ZE_INTEL_XE_DEVICE_PROPERTIES_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Intel Xe device compute unit properties extension Version(s)
+typedef enum _ze_intel_xe_device_exp_properties_version_t {
+    ZE_INTEL_XE_DEVICE_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZE_INTEL_XE_DEVICE_EXP_PROPERTIES_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_INTEL_XE_DEVICE_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+
+} ze_intel_xe_device_exp_properties_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Intel Xe device compute unit properties
+///
+/// @details
+///     - This structure should be passed to ::zeDeviceGetProperties, via the `pNext` member of ::ze_device_properties_t
+
+typedef struct _ze_intel_xe_device_exp_properties_t {
+    ze_structure_type_ext_t stype;              ///< [in] type of this structure
+    void *pNext;                                ///< [in][optional] must be null or a pointer to extension-specific structure
+    uint32_t numXeStacks;                       ///< [out] number of Stacks (Tiles)
+    uint32_t numXeRegionsPerStack;              ///< [out] number of Regions per stack
+    uint32_t numXeClustersPerRegion;            ///< [out] number of Clusters (Slices) per Region
+    uint32_t numXeCorePerCluster;               ///< [out] number of XE Cores per Cluster
+    uint32_t numExecutionEnginesPerXeCore;      ///< [out] number of Execution Engines (EUs) per XE Core
+    uint32_t maxNumHwThreadsPerExecutionEngine; ///< [out] maximal number of HW threads per Execution Engine
+    uint32_t maxNumLanesPerHwThread;            ///< [out] maximal number of lanes (virtual SIMD size) per HW thread
+} ze_intel_xe_device_exp_properties_t;
 
 #if defined(__cplusplus)
 } // extern "C"

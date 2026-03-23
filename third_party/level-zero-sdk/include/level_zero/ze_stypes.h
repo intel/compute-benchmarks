@@ -5,6 +5,10 @@
  *
  */
 
+#if defined(__cplusplus)
+#pragma once
+#endif
+
 #ifndef _ZE_STYPES_H
 #define _ZE_STYPES_H
 
@@ -36,6 +40,7 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES static_cast<ze_structure_type_ext_t>(0x0003001B)
 #define ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC static_cast<ze_structure_type_ext_t>(0x0003001C)
 #define ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES static_cast<ze_structure_type_ext_t>(0x0003001D)
+#define ZE_STRUCTURE_TYPE_INTEL_XE_DEVICE_EXP_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00030021)
 #define ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00030027)
 #define ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC static_cast<ze_structure_type_ext_t>(0x00030028)
 #ifndef ZE_RECORD_REPLAY_GRAPH_EXP_NAME
@@ -57,5 +62,8 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE static_cast<zes_structure_type_ext_t>(0x00040001)
 #define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040002)
 #define ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040003)
+#define ZES_INTEL_STRUCTURE_TYPE_FREQUENCY_THROTTLE_DETAILED_REASON_EXP static_cast<zes_structure_type_ext_t>(0x00040004)
+#define ZES_INTEL_STRUCTURE_TYPE_RAS_CONFIG_EXP static_cast<zes_structure_type_ext_t>(0x00040005)
+#define ZES_INTEL_STRUCTURE_TYPE_RAS_STATE_EXP static_cast<zes_structure_type_ext_t>(0x00040006)
 
 #endif
