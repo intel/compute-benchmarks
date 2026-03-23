@@ -61,13 +61,13 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
     ze_command_list_handle_t cmdList;
     ze_event_handle_t event;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(context, levelzero.device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdList));
-    zeEventCounterBasedCreate(context, levelzero.device, &defaultIntelCounterBasedEventDesc, &event);
+    ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(context, levelzero.device, &defaultIntelCounterBasedEventDesc, &event));
     auto eventOnKernel = !arguments.signalOnBarrier ? event : nullptr;
     ze_command_list_handle_t barrierCmdList = cmdList;
     auto dependencyOnKernel = arguments.useSameCmdList ? 0 : 1;
     if (!arguments.useSameCmdList) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(context, levelzero.device, &zeDefaultGPUImmediateCommandQueueDesc, &barrierCmdList));
-        zeEventCounterBasedCreate(context, levelzero.device, &defaultIntelCounterBasedEventDesc, &eventOnKernel);
+        ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(context, levelzero.device, &defaultIntelCounterBasedEventDesc, &eventOnKernel));
     }
 
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
