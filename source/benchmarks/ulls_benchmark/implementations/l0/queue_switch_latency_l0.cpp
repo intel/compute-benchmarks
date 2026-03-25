@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
-#include "framework/utility/timer.h"
 
 #include "definitions/queue_switch_latency.h"
 
 #include <gtest/gtest.h>
+#include <vector>
 
 static TestResult run(const QueueSwitchArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
@@ -25,38 +25,39 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
     // Setup
     LevelZero levelzero;
 
-    const size_t lws = 32u;
-    const size_t gws = lws;
+    const size_t lws = static_cast<size_t>(arguments.workgroupSize);
+    const size_t gws = lws * static_cast<size_t>(arguments.workgroupCount);
 
-    // Create kernel
-    auto spirvModule = FileHelper::loadBinaryFile("ulls_benchmark_eat_time.spv");
-    if (spirvModule.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
+    // Create kernels
     ze_module_handle_t module{};
-    ze_kernel_handle_t kernel{};
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "eat_time";
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(lws), 1u, 1u));
-    int kernelOperationsCount = static_cast<int>(arguments.kernelTime);
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
+    ze_kernel_handle_t kernelA{};
+    ze_kernel_handle_t kernelB{};
+    auto kernelLoadResult = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_eat_time.cl", "eat_time", &kernelA, &module, nullptr);
+    if (kernelLoadResult != TestResult::Success) {
+        return kernelLoadResult;
+    }
 
-    // Create command list and append kernel
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = "eat_time2";
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernelB));
+
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernelA, static_cast<uint32_t>(lws), 1u, 1u));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernelB, static_cast<uint32_t>(lws), 1u, 1u));
+    int kernelOperationsCount = static_cast<int>(arguments.kernelTime);
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernelA, 0, sizeof(int), &kernelOperationsCount));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernelB, 0, sizeof(int), &kernelOperationsCount));
+
+    // Create command lists and append kernels
     const ze_group_count_t groupCount{static_cast<uint32_t>(gws / lws), 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     cmdListDesc.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
 
-    ze_command_list_handle_t cmdList1{};
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList1));
-    ze_command_list_handle_t cmdList2{};
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList2));
+    const size_t queueCount = static_cast<size_t>(arguments.queuesCount);
+    std::vector<ze_command_list_handle_t> commandLists(queueCount);
+    for (size_t queueId = 0; queueId < queueCount; queueId++) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &commandLists[queueId]));
+    }
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
@@ -76,39 +77,39 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &profilingEvents[eventId]));
     }
 
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList1, kernel, &groupCount, profilingEvents[0], 0, nullptr));
-    for (auto switchIdentifier = 0u; switchIdentifier < arguments.switchCount; switchIdentifier++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel((switchIdentifier % 2) == 0 ? cmdList2 : cmdList1, kernel, &groupCount, profilingEvents[switchIdentifier + 1], 1, &profilingEvents[switchIdentifier]));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(commandLists[0], kernelA, &groupCount, profilingEvents[0], 0, nullptr));
+    for (auto switchId = 0u; switchId < arguments.switchCount; switchId++) {
+        const auto queueId = static_cast<size_t>(switchId + 1u) % queueCount;
+        const auto kernelId = switchId + 1u;
+
+        ze_kernel_handle_t selectedKernel = kernelA;
+        if (arguments.differentKernels && (kernelId % 2u)) {
+            selectedKernel = kernelB;
+        }
+
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(commandLists[queueId], selectedKernel, &groupCount, profilingEvents[kernelId], 1, &profilingEvents[switchId]));
     }
 
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList1));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList2));
+    for (auto &commandList : commandLists) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(commandList));
+    }
 
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
 
-    ze_command_queue_handle_t queue1;
-    ze_command_queue_handle_t queue2;
-
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueCreate(levelzero.context, levelzero.device, &commandQueueDesc, &queue1));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueCreate(levelzero.context, levelzero.device, &commandQueueDesc, &queue2));
-
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(queue1, 1, &cmdList1, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(queue2, 1, &cmdList2, nullptr));
-
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(queue1, std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(queue2, std::numeric_limits<uint64_t>::max()));
-
-    for (auto &hEvent : profilingEvents) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(hEvent));
+    std::vector<ze_command_queue_handle_t> queues(queueCount);
+    for (size_t queueId = 0; queueId < queueCount; queueId++) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueCreate(levelzero.context, levelzero.device, &commandQueueDesc, &queues[queueId]));
     }
 
     // Benchmark
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(queue1, 1, &cmdList1, nullptr));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(queue2, 1, &cmdList2, nullptr));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(queue1, std::numeric_limits<uint64_t>::max()));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(queue2, std::numeric_limits<uint64_t>::max()));
+        for (size_t queueId = 0; queueId < queueCount; queueId++) {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(queues[queueId], 1, &commandLists[queueId], nullptr));
+        }
+        for (auto &queue : queues) {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(queue, std::numeric_limits<uint64_t>::max()));
+        }
         auto switchTime = std::chrono::nanoseconds(0u);
         for (auto switchId = 0u; switchId < arguments.switchCount; switchId++) {
             ze_kernel_timestamp_result_t earlierKernelTimestamp;
@@ -130,12 +131,15 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernelA));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernelB));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList1));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList2));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueDestroy(queue1));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueDestroy(queue2));
+    for (auto &commandList : commandLists) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(commandList));
+    }
+    for (auto &queue : queues) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueDestroy(queue));
+    }
 
     return TestResult::Success;
 }

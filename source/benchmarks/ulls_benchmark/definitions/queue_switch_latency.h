@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,18 @@
 struct QueueSwitchArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument kernelTime;
     PositiveIntegerArgument switchCount;
+    PositiveIntegerArgument queuesCount;
+    PositiveIntegerArgument workgroupCount;
+    PositiveIntegerArgument workgroupSize;
+    BooleanArgument differentKernels;
 
     QueueSwitchArguments()
         : kernelTime(*this, "kernelTime", "Time for each kernel execution"),
-          switchCount(*this, "switchCount", "How many switches form each iteration") {}
+          switchCount(*this, "switchCount", "How many switches form each iteration"),
+          queuesCount(*this, "queuesCount", "How many queues to create"),
+          workgroupCount(*this, "workgroupCount", "Count of workgroups"),
+          workgroupSize(*this, "workgroupSize", "Size of the workgroup"),
+          differentKernels(*this, "differentKernels", "Alternate between two different kernels on subsequent queues.") {}
 };
 
 struct QueueSwitch : TestCase<QueueSwitchArguments> {
