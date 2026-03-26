@@ -7,7 +7,6 @@
 
 #pragma once
 #include "framework/argument/basic_argument.h"
-#include "framework/argument/enum/kernel_name_argument.h"
 #include "framework/test_case/test_case.h"
 
 struct KernelSubmitGraphMultiQueueArguments : TestCaseArgumentContainer {

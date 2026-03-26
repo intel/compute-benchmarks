@@ -29,8 +29,8 @@ static TestResult run(const KernelSubmitEventRecordWaitArguments &args, Statisti
 
     const uint32_t wgc = args.kernelWGCount;
     const uint32_t wgs = args.kernelWGSize;
-    ze_group_count_t dispatch{static_cast<uint32_t>(wgc), 1, 1};
-    ze_group_size_t groupSizes{static_cast<uint32_t>(wgs), 1, 1};
+    ze_group_count_t dispatch{wgc, 1, 1};
+    ze_group_size_t groupSizes{wgs, 1, 1};
 
     // benchmark
     for (size_t i = 0; i < args.iterations; ++i) {

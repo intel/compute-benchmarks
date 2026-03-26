@@ -81,8 +81,8 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
     CounterBasedEvent event_2{l0, args.useProfiling};
 
     // submit kernels
-    ze_group_count_t dispatch{static_cast<uint32_t>(wgc), 1, 1};
-    ze_group_size_t groupSizes = {static_cast<uint32_t>(wgs), 1, 1};
+    ze_group_count_t dispatch{wgc, 1, 1};
+    ze_group_size_t groupSizes{wgs, 1, 1};
     data_type add_element = 1.0f;
     void *args_1[] = {d_b.getAddress(), d_a.getAddress(), &add_element};
     void *args_2[] = {d_c.getAddress(), d_b.getAddress(), &add_element};

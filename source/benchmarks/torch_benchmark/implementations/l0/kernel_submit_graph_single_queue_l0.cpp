@@ -62,8 +62,8 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
     if (!kernel_file_name_2.empty() && !kernel_name_2.empty()) {
         kernel_2 = std::make_unique<Kernel>(l0, kernel_file_name_2, kernel_name_2);
     }
-    ze_group_count_t dispatch{static_cast<uint32_t>(wgc), 1, 1};
-    ze_group_size_t groupSizes = {static_cast<uint32_t>(wgs), 1, 1};
+    ze_group_count_t dispatch{wgc, 1, 1};
+    ze_group_size_t groupSizes{wgs, 1, 1};
     data_type add_element_1 = 2.0f;
     data_type add_element_2 = 1.0f;
     void *args_1[] = {d_c.getAddress(), d_a.getAddress(), d_b.getAddress()};
