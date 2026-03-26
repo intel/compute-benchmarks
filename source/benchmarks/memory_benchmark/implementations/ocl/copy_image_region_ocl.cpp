@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,16 +60,8 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
     ASSERT_CL_SUCCESS(retVal);
     const auto imageSizeInBytes = ImageHelperOcl::getImageSizeInBytes(channelOrder, channelFormat, arguments.size);
 
-    // Warmup
     const size_t origin[] = {0, 0, 0};
     const size_t region[] = {arguments.size[0], arguments.size[1], arguments.size[2]};
-
-    ASSERT_CL_SUCCESS(clEnqueueCopyImage(opencl.commandQueue, srcImage, dstImage, origin, origin, region, 0, nullptr, eventForEnqueue));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-
-    if (eventForEnqueue) {
-        ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

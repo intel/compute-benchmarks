@@ -57,13 +57,6 @@ static TestResult run(const UsmSharedMigrateGpuForFillArguments &arguments, Stat
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffer, &pattern, 1, arguments.bufferSize, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Warmup
-    for (auto elementIndex = 0u; elementIndex < elementsCount; elementIndex++) {
-        bufferInt[elementIndex] = 0;
-    }
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
-
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         // Migrate whole resource to CPU

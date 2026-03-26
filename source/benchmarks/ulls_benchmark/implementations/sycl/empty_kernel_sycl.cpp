@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,9 +29,6 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
 
     // Create kernel
     const auto empty = [=]([[maybe_unused]] auto i) {};
-
-    // Warmup
-    sycl.queue.parallel_for(range, empty).wait();
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

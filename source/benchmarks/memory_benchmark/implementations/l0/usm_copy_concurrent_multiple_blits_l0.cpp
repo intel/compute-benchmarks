@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -222,21 +222,6 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
                                     eventPool, eventIndex, levelzero);
     if (result != TestResult::Success) {
         return result;
-    }
-
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(synchronizedStartEvent));
-    result = startCopyOnBlitters(blitterWorkInfos, synchronizedStartEvent);
-    if (result != TestResult::Success) {
-        return result;
-    }
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(synchronizedStartEvent));
-    result = waitForAllBlittersToComplete(blitterWorkInfos);
-    if (result != TestResult::Success) {
-        return result;
-    }
-    for (PerBlitterWorkInfo &workInfo : blitterWorkInfos) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(workInfo.completionEvent));
     }
 
     // Benchmark

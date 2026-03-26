@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,10 +48,6 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
     ASSERT_CL_SUCCESS(retVal);
     void *dst = UsmHelperOcl::allocate(arguments.dstPlacement, opencl, arguments.size, &retVal);
     ASSERT_CL_SUCCESS(retVal);
-
-    // Warmup
-    ASSERT_CL_SUCCESS(clEnqueueMemcpyINTEL(opencl.commandQueue, CL_FALSE, dst, src, arguments.size, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue))
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,10 +49,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
 
     // Create pattern
     const auto pattern = std::make_unique<uint8_t[]>(arguments.patternSize);
-
-    // Warmup
-    ASSERT_CL_SUCCESS(clEnqueueMemFillINTEL(opencl.commandQueue, buffer, pattern.get(), arguments.patternSize, arguments.size, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue))
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

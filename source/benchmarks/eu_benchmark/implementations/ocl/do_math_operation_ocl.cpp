@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -143,12 +143,9 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
     }
 
-    // Warmup
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, data.sizeOfDataType, data.otherArgument));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(data.loopIterations), &data.loopIterations));
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
     for (auto i = 0u; i < arguments.iterations; i++) {
         auto kernelForExecution = kernel;
         if (arguments.mixGrfModes && i % 2 == 0) {

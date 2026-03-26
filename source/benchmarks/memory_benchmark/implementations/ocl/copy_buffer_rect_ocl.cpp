@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,13 +53,6 @@ static TestResult run(const CopyBufferRectArguments &arguments, Statistics &stat
     }
 
     const auto copySize = (arguments.region[0] > 0 ? arguments.region[0] : 1u) * (arguments.region[1] > 0 ? arguments.region[1] : 1u) * (arguments.region[2] > 0 ? arguments.region[2] : 1u);
-
-    // Warmup
-    ASSERT_CL_SUCCESS(clEnqueueCopyBufferRect(opencl.commandQueue, sourceBuffer, destinationBuffer,
-                                              arguments.origin, arguments.origin, arguments.region,
-                                              arguments.rPitch, arguments.sPitch, arguments.rPitch, arguments.sPitch,
-                                              0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

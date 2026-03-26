@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,15 +81,6 @@ static TestResult run(const UsmCopyMultipleBlitsArguments &arguments, Statistics
         queues[i].copySize = size;
     }
     blitSizeAssigner.validate();
-
-    // Warmup
-    for (PerQueueData &queue : queues) {
-        ASSERT_CL_SUCCESS(clEnqueueMemcpyINTEL(queue.queue, CL_FALSE, queue.copyDst, queue.copySrc, queue.copySize, 0, nullptr, nullptr));
-        ASSERT_CL_SUCCESS(clFlush(queue.queue));
-    }
-    for (PerQueueData &queue : queues) {
-        ASSERT_CL_SUCCESS(clFinish(queue.queue));
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

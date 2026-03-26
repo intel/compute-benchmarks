@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,16 +68,10 @@ static TestResult run(const OneLocalAtomicArguments &arguments, Statistics &stat
 
     cl_uint iterations = static_cast<cl_uint>(data.loopIterations);
 
-    // Warmup
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, sizeof(otherArgumentsBuffer), &otherArgumentsBuffer));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(iterations), &iterations));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 3, sizeof(data.initialValue), &data.initialValue));
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-    if (eventForEnqueue) {
-        ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

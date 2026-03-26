@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,9 +37,6 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     // Create buffer
     auto buffer = static_cast<uint32_t *>(omp_target_alloc_host(sizeof(uint32_t), deviceId));
     volatile auto volatileBuffer = buffer;
-
-    // Warmup
-    writeOne(buffer);
 
     // Benchmark
 #pragma omp parallel num_threads(2)

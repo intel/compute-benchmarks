@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,12 +54,9 @@ static TestResult run(const UsmCopyKernelArguments &arguments, Statistics &stati
     cl_kernel kernel = clCreateKernel(program, "copy_buffer", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Warmup
     const size_t gws = arguments.size / sizeof(cl_int);
     ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, 0, src));
     ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, 1, dst));
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

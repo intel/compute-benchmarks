@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,10 +48,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
     if (arguments.patternContents == BufferContents::Random) {
         BufferContentsHelperOcl::fillWithRandomBytes(pattern.get(), arguments.patternSize);
     }
-
-    // Warmup
-    ASSERT_CL_SUCCESS(clEnqueueMemFillINTEL(opencl.commandQueue, dstAlloc.ptr, pattern.get(), arguments.patternSize, arguments.bufferSize, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

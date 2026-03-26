@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,9 +36,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     };
 
     std::vector<sycl::event> events(arguments.kernelCount);
-
-    // Warmup
-    sycl.queue.single_task(kernel).wait();
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

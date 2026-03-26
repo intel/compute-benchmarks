@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,16 +57,10 @@ static TestResult run(const ReadAfterAtomicWriteArguments &arguments, Statistics
     cl_kernel kernel = clCreateKernel(program, kernelName, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Warmup
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, sizeof(useAtomic), &useAtomic));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(shuffleRead), &shuffleRead));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 3, sizeof(loopIterations), &loopIterations));
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-    if (eventForEnqueue) {
-        ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

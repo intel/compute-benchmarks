@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -163,16 +163,6 @@ static TestResult run(const UsmCopyMultipleBlitsArguments &arguments, Statistics
                                                                queue.copySize,
                                                                queue.event, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(queue.list));
-    }
-
-    // Warmup
-    for (PerQueueData &queue : queues) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(queue.queue,
-                                                                   1,
-                                                                   &queue.list,
-                                                                   nullptr));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(queue.queue,
-                                                           std::numeric_limits<uint64_t>::max()));
     }
 
     // Benchmark

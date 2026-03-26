@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,20 +147,6 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         if (measureCompletionTime)
             timer.measureEnd();
     };
-
-    // warmup
-    for (auto iteration = 0u; iteration < arguments.numThreads; iteration++) {
-        std::vector<std::thread> threads;
-        for (size_t j = 0u; j < arguments.numThreads; j++) {
-            threads.emplace_back([&, j] {
-                Timer dummyTimer;
-                worker(j, dummyTimer);
-            });
-        }
-        for (auto &thread : threads) {
-            thread.join();
-        }
-    }
 
     // Benchmark
     for (size_t i = 0u; i < arguments.iterations; i++) {

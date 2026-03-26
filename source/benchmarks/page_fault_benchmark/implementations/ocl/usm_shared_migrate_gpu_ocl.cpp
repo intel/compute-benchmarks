@@ -46,19 +46,8 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     cl_kernel kernel = clCreateKernel(program, "fill_with_ones", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Warmup
-    ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, 0, buffer));
-    for (auto elementIndex = 0u; elementIndex < elementsCount; elementIndex++) {
-        buffer[elementIndex] = 0;
-    }
-
-    if (arguments.prefetchMemory) {
-        ASSERT_CL_SUCCESS(clEnqueueMigrateMemINTEL(opencl.commandQueue, buffer, arguments.bufferSize, 0, 0, nullptr, nullptr));
-    }
-
     const auto gws = elementsCount;
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
+    ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, 0, buffer));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,19 +80,6 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
     }
 
     std::shared_mutex barrier;
-    // Warmup
-    {
-        std::unique_lock lock(barrier);
-        std::vector<std::unique_ptr<std::thread>> threads;
-        for (auto i = 0u; i < arguments.numberOfThreads; i++) {
-            threads.push_back(std::unique_ptr<std::thread>(
-                new std::thread(enqueueSvmCopy, queues[i % queues.size()], cmdLists[i], &barrier)));
-        }
-        lock.unlock();
-        for (auto i = 0u; i < arguments.numberOfThreads; i++) {
-            threads[i]->join();
-        }
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

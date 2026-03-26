@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,13 +74,6 @@ static TestResult run(const UsmBidirectionalCopyArguments &arguments, Statistics
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(tile0CmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(tile1CmdList));
-
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(tile0CmdQueue, 1, &tile0CmdList, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(tile1CmdQueue, 1, &tile1CmdList, nullptr));
-
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(tile0CmdQueue, std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(tile1CmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

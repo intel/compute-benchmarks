@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -141,23 +141,6 @@ static TestResult run(const ImmediateCommandListCompletionArguments &arguments, 
     }
 
     std::shared_mutex barrier;
-    // Warmup
-    for (auto i = 0u; i < 5; i++) {
-        std::unique_lock lock(barrier);
-        std::vector<std::unique_ptr<std::thread>> threads;
-        for (auto j = 0u; j < arguments.numberOfThreads; ++j) {
-            threads.push_back(std::unique_ptr<std::thread>(
-                new std::thread(issueToImmediateCmdList, &threadData[j], &barrier)));
-        }
-        lock.unlock();
-        for (auto j = 0u; j < arguments.numberOfThreads; ++j) {
-            threads[j]->join();
-        }
-
-        for (auto j = 0u; j < arguments.numberOfThreads; ++j) {
-            zeEventHostReset(threadData[j].event);
-        }
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

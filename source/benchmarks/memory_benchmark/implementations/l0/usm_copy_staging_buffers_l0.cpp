@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,16 +85,6 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
     }
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.commandQueueDevice, &commandQueueDesc->desc, &cmdList));
-
-    // Warmup
-    if (arguments.dstPlacement == UsmMemoryPlacement::Device) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, dst, usmHost[0], offset, nullptr, 0, nullptr));
-    } else {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, usmHost[0], src, offset, nullptr, 0, nullptr));
-    }
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, event, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

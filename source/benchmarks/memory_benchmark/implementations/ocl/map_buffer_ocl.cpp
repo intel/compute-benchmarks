@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,12 +51,8 @@ static TestResult run(const MapBufferArguments &arguments, Statistics &statistic
         return compressionStatus;
     }
 
-    // Warmup
     const auto mapFlags = convertMapFlags(arguments.mapFlags);
-    void *ptr = clEnqueueMapBuffer(opencl.commandQueue, buffer, CL_BLOCKING, mapFlags, 0, arguments.size, 0, nullptr, nullptr, &retVal);
-    ASSERT_CL_SUCCESS(retVal);
-    ASSERT_CL_SUCCESS(clEnqueueUnmapMemObject(opencl.commandQueue, buffer, ptr, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
+    void *ptr = nullptr;
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

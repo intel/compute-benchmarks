@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,13 +71,6 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
     ze_command_list_handle_t cmdList{};
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, queueProperties.selectedEngine);
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
-
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopyRegion(cmdList, destination, &reg, static_cast<uint32_t>(arguments.region[0]), static_cast<uint32_t>(arguments.region[0] * arguments.region[1]),
-                                                                 source, &reg, static_cast<uint32_t>(arguments.region[0]), static_cast<uint32_t>(arguments.region[0] * arguments.region[1]),
-                                                                 event, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

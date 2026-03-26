@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,6 @@ static TestResult run(const UsmRandomMemoryAllocationArguments &arguments, Stati
     auto size = makeRandomDistribution(arguments.sizeDistribution, arguments.minSize, arguments.maxSize);
     auto operation = std::uniform_int_distribution<int>{0, 1};
 
-    // Warmup
     std::vector<void *> ptrs;
     std::mt19937 gen{0};
     ptrs.reserve(arguments.operationCount * arguments.iterations);

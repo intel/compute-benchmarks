@@ -43,14 +43,6 @@ static TestResult run(const UsmSharedMigrateGpuForFillArguments &arguments, Stat
     const size_t elementsCount = arguments.bufferSize / sizeof(cl_int);
     const uint8_t pattern = 1;
 
-    // Warmup
-    if (arguments.prefetchMemory) {
-        ASSERT_CL_SUCCESS(clEnqueueMigrateMemINTEL(opencl.commandQueue, buffer, arguments.bufferSize, 0, 0, nullptr, nullptr));
-    }
-
-    ASSERT_CL_SUCCESS(clEnqueueMemFillINTEL(opencl.commandQueue, buffer, &pattern, 1, arguments.bufferSize, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
-
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         // Migrate whole resource to CPU

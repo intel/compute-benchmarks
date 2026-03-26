@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,9 +37,6 @@ static TestResult run(const ReadBufferMisalignedArguments &arguments, Statistics
     ASSERT_CL_SUCCESS(retVal);
     ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillBuffer(opencl.commandQueue, buffer, arguments.size, BufferContents::IncreasingBytes));
     auto cpuBuffer = CpuAllocationHelper::allocateMisalignedAllocation(arguments.size, MemoryConstants::cachelineSize, arguments.misalignmentFromCacheline);
-
-    // Warmup
-    ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, arguments.size, cpuBuffer.get(), 0, nullptr, nullptr));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

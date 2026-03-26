@@ -69,7 +69,6 @@ static TestResult run(const ReductionArguments &arguments, Statistics &statistic
     cl_event profilingEvent{};
     cl_ulong timeNs{};
 
-    // Warmup kernel
     const size_t gws = arguments.numberOfElements;
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, nullptr, 0, nullptr, &profilingEvent));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,18 +144,6 @@ static TestResult run(const UsmImmediateCopyCopyMultipleBlitsArguments &argument
     }
 
     blitSizeAssigner.validate();
-
-    // Warmup
-    for (PerListData &list : lists) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(list.list,
-                                                               list.copyDst,
-                                                               list.copySrc,
-                                                               list.copySize,
-                                                               list.event, 0, nullptr));
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(list.event,
-                                                        std::numeric_limits<uint64_t>::max()));
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(list.event));
-    }
 
     // Benchmark
     Timer timer;

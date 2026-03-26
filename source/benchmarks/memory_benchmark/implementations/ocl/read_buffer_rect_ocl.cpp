@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,12 +49,7 @@ static TestResult run(const ReadBufferRectArguments &arguments, Statistics &stat
     ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, buffer, pattern, sizeof(pattern) / sizeof(pattern[0]), 0, arguments.size, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
-    // Warmup
     size_t bufferOffset[3] = {};
-    ASSERT_CL_SUCCESS(clEnqueueReadBufferRect(opencl.commandQueue, buffer, CL_BLOCKING,
-                                              bufferOffset, arguments.origin, arguments.region,
-                                              arguments.rPitch, arguments.sPitch, arguments.rPitch, arguments.sPitch,
-                                              cpuBuffer.get(), 0, nullptr, nullptr));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

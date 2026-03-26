@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,10 +63,8 @@ static TestResult run(const WriteImageArguments &arguments, Statistics &statisti
     ASSERT_CL_SUCCESS(HostptrReuseHelper::allocateBufferHostptr(opencl, arguments.hostPtrPlacement, imageSizeInBytes, hostptrAlloc));
     ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillUsmBufferOrHostPtr(opencl.commandQueue, hostptrAlloc.ptr, imageSizeInBytes, arguments.hostPtrPlacement, BufferContents::Random));
 
-    // Warmup
     const size_t origin[] = {0, 0, 0};
     const size_t *region = arguments.size;
-    ASSERT_CL_SUCCESS(clEnqueueWriteImage(opencl.commandQueue, image, true, origin, region, 0, 0, hostptrAlloc.ptr, 0, nullptr, nullptr));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

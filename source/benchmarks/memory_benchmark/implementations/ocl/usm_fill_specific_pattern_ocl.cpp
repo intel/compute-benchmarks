@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,10 +43,7 @@ static TestResult run(const UsmFillSpecificPatternArguments &arguments, Statisti
     UsmHelperOcl::Alloc dstAlloc{};
     ASSERT_CL_SUCCESS(UsmHelperOcl::allocate(opencl, arguments.usmMemoryPlacement, arguments.bufferSize, dstAlloc));
 
-    // Warmup
     const std::vector<uint8_t> &pattern = arguments.pattern;
-    ASSERT_CL_SUCCESS(clEnqueueMemFillINTEL(opencl.commandQueue, dstAlloc.ptr, pattern.data(), pattern.size(), arguments.bufferSize, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

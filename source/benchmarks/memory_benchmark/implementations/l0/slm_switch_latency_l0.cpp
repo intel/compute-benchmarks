@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,14 +102,6 @@ static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &st
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernels[i], &dispatchTraits, profilingEvents[i], 1, &profilingEvents[i - 1]));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
-
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
-
-    for (auto j = 0u; j < kernelCount; j++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(profilingEvents[j]));
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,9 +34,6 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     Timer timer;
     const size_t wgc = arguments.workgroupCount;
     const size_t lws = arguments.workgroupSize;
-
-    // Warmup
-    empty(wgc, lws);
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

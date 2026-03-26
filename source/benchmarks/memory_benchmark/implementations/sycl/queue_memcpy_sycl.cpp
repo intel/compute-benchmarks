@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,10 +35,6 @@ static TestResult run(const QueueMemcpyArguments &arguments, Statistics &statist
     };
     source = allocateMemory(arguments.sourcePlacement);
     destination = allocateMemory(arguments.destinationPlacement);
-
-    // Warmup
-    sycl.queue.memcpy(destination, source, arguments.size);
-    sycl.queue.wait();
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

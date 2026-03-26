@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,15 +85,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
         // Finalize the graph
         auto executable_graph = graph.finalize();
-
-        // Warmup
-        if (!arguments.useEvents) {
-            sycl::ext::oneapi::experimental::execute_graph(queue, executable_graph);
-            queue.wait();
-        } else {
-            sycl::event event = queue.ext_oneapi_graph(executable_graph);
-            event.wait();
-        }
 
         // Benchmark
         for (auto i = 0u; i < arguments.iterations; i++) {

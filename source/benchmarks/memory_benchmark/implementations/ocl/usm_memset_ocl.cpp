@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,10 +43,7 @@ static TestResult run(const UsmMemsetArguments &arguments, Statistics &statistic
     UsmHelperOcl::Alloc dstAlloc{};
     ASSERT_CL_SUCCESS(UsmHelperOcl::allocate(opencl, arguments.usmMemoryPlacement, arguments.bufferSize, dstAlloc));
 
-    // Warmup
     const uint8_t memsetValue = 0x1;
-    ASSERT_CL_SUCCESS(clEnqueueMemsetINTEL(opencl.commandQueue, dstAlloc.ptr, memsetValue, arguments.bufferSize, 0, nullptr, nullptr));
-    ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

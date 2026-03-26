@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,10 +18,6 @@
 #include <thread>
 
 void enqueueSvmCopy(cl_command_queue queue, void *src, void *dst, size_t size, std::shared_mutex *barrier, pfn_clEnqueueMemcpyINTEL clEnqueueMemcpyINTEL) {
-    // warmup
-    EXPECT_CL_SUCCESS(clEnqueueMemcpyINTEL(queue, CL_FALSE, dst, src, size, 0, nullptr, nullptr));
-    EXPECT_CL_SUCCESS(clFinish(queue));
-
     std::shared_lock sharedLock(*barrier);
     // benchmark
     EXPECT_CL_SUCCESS(clEnqueueMemcpyINTEL(queue, CL_FALSE, dst, src, size, 0, nullptr, nullptr));
@@ -76,19 +72,6 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
     }
 
     std::shared_mutex barrier;
-    // Warmup
-    {
-        std::unique_lock lock(barrier);
-        std::vector<std::unique_ptr<std::thread>> threads;
-        for (auto i = 0u; i < arguments.numberOfThreads; i++) {
-            threads.push_back(std::unique_ptr<std::thread>(
-                new std::thread(enqueueSvmCopy, commandQueues[i % commandQueues.size()], srcAllocs[i].ptr, dstAllocs[i].ptr, bufferForCopySize, &barrier, clEnqueueMemcpyINTEL)));
-        }
-        lock.unlock();
-        for (auto i = 0u; i < arguments.numberOfThreads; i++) {
-            threads[i]->join();
-        }
-    }
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {

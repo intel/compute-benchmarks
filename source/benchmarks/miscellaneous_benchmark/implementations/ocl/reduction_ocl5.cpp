@@ -104,7 +104,6 @@ TestResult run(const ReductionArguments5 &arguments, Statistics &statistics) {
     cl_event profilingEvent{};
     cl_ulong timeNs{};
 
-    // Warmup kernel
     const size_t gws = arguments.numberOfElements / 2;
     const size_t lws = 512u;
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));

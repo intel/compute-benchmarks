@@ -53,10 +53,6 @@ static TestResult run(const NonUsmCopyArguments &arguments, Statistics &statisti
         memset(destination, 1u, arguments.size);
     }
 
-    // Warmup
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, arguments.size, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
-
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
