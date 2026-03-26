@@ -31,8 +31,7 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
                                                   .setGraphFunctions(true);
     LevelZero l0{extensionProperties};
     // note: Only in-order queues are supported in this benchmark
-    CommandList cmdListImmediate_1{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
-    CommandList cmdListImmediate_2{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
+    CommandList cmdListImmediate{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
 
     const uint32_t wgc = args.kernelWGCount;
     const uint32_t wgs = args.kernelWGSize;
@@ -54,6 +53,7 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
     const int block_table_size = 8192;
     size_t xnumel_0 = input_len * num_attention_heads * head_dim;
     size_t xnumel_1 = input_len * num_key_value_heads * head_dim;
+    size_t xnumel_2 = input_len * intermediate_size;
 
     // variables used for graph 1
     DeviceMemory<int> input_token_id{l0, input_len};
@@ -140,41 +140,41 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
     int R0_BLOCK = 2048;
 
     if (args.graphScenario == 0 || args.graphScenario == 1) {
-        ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListBeginCaptureIntoGraph(cmdListImmediate_1.get(), graph_1.get(), nullptr));
-        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_1.get(), kernel_fused_embedding_layernorm.get(),
+        ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListBeginCaptureIntoGraph(cmdListImmediate.get(), graph_1.get(), nullptr));
+        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_fused_embedding_layernorm.get(),
                                                  input_token_id.getAddress(), embedding_table.getAddress(), input_layernorm.getAddress(),
                                                  fused_embedding_layernorm_output.getAddress(), residual.getAddress(),
                                                  &input_len, &hidden_size, &XBLOCK_1, &R0_BLOCK));
-        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_1.get(), kernel_triton_poi_fused_1_3.get(),
+        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_triton_poi_fused_1_3.get(),
                                                  linear_qkv_output.getAddress(), position_ids.getAddress(), rope_embedding_weight.getAddress(), q_rope_output.getAddress(), k_rope_output.getAddress(),
                                                  &xnumel_0, &xnumel_1, &XBLOCK_2));
-        ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListEndGraphCapture(cmdListImmediate_1.get(), graph_1.getAddress(), nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListEndGraphCapture(cmdListImmediate.get(), graph_1.getAddress(), nullptr));
         graph_1.instantiate();
     }
     if (args.graphScenario == 0 || args.graphScenario == 2) {
-        ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListBeginCaptureIntoGraph(cmdListImmediate_1.get(), graph_2.get(), nullptr));
-        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_1.get(), kernel_fused_between_attn_mlp.get(),
+        ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListBeginCaptureIntoGraph(cmdListImmediate.get(), graph_2.get(), nullptr));
+        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_fused_between_attn_mlp.get(),
                                                  o_proj_output.getAddress(), residual.getAddress(), post_attention_layernorm.getAddress(), layernorm_output.getAddress(), &input_len, &hidden_size, &XBLOCK_1, &R0_BLOCK));
-        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_1.get(), kernel_fused_silu_slice.get(),
-                                                 up_project_gate_output.getAddress(), fused_silu_slice_output.getAddress(), &input_len, &intermediate_size, &XBLOCK_2));
-        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_1.get(), kernel_fused_between_mlp_qkvlinear.get(),
+        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_fused_silu_slice.get(),
+                                                 up_project_gate_output.getAddress(), fused_silu_slice_output.getAddress(), &xnumel_2, &XBLOCK_2));
+        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_fused_between_mlp_qkvlinear.get(),
                                                  down_project_output.getAddress(), fused_embedding_layernorm_output.getAddress(), residual.getAddress(), input_layernorm.getAddress(),
                                                  fused_embedding_layernorm_output_2.getAddress(), residual_2.getAddress(), &input_len, &hidden_size, &XBLOCK_1, &R0_BLOCK));
-        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_1.get(), kernel_triton_poi_fused_1_3.get(),
+        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_triton_poi_fused_1_3.get(),
                                                  linear_qkv_output.getAddress(), position_ids.getAddress(), rope_embedding_weight.getAddress(), q_rope_output.getAddress(), k_rope_output.getAddress(),
                                                  &xnumel_0, &xnumel_1, &XBLOCK_2));
-        ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListEndGraphCapture(cmdListImmediate_1.get(), graph_2.getAddress(), nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListEndGraphCapture(cmdListImmediate.get(), graph_2.getAddress(), nullptr));
         graph_2.instantiate();
     }
     if (args.graphScenario == 0 || args.graphScenario == 3) {
-        ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListBeginCaptureIntoGraph(cmdListImmediate_1.get(), graph_3.get(), nullptr));
-        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_1.get(), kernel_fused_between_attn_mlp.get(),
+        ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListBeginCaptureIntoGraph(cmdListImmediate.get(), graph_3.get(), nullptr));
+        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_fused_between_attn_mlp.get(),
                                                  o_proj_output.getAddress(), residual.getAddress(), post_attention_layernorm.getAddress(), layernorm_output.getAddress(), &input_len, &hidden_size, &XBLOCK_1, &R0_BLOCK));
-        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_1.get(), kernel_fused_silu_slice.get(),
-                                                 up_project_gate_output.getAddress(), fused_silu_slice_output.getAddress(), &input_len, &intermediate_size, &XBLOCK_2));
-        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_1.get(), kernel_fused_layernorm_last.get(),
-                                                 down_project_output.getAddress(), fused_embedding_layernorm_output.getAddress(), residual.getAddress(), input_layernorm.getAddress(), &input_len, &hidden_size));
-        ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListEndGraphCapture(cmdListImmediate_1.get(), graph_3.getAddress(), nullptr));
+        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_fused_silu_slice.get(),
+                                                 up_project_gate_output.getAddress(), fused_silu_slice_output.getAddress(), &xnumel_2, &XBLOCK_2));
+        ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_fused_layernorm_last.get(),
+                                                 down_project_output.getAddress(), fused_embedding_layernorm_output.getAddress(), residual.getAddress(), input_layernorm.getAddress(), &input_len, &hidden_size, &XBLOCK_1, &R0_BLOCK));
+        ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListEndGraphCapture(cmdListImmediate.get(), graph_3.getAddress(), nullptr));
         graph_3.instantiate();
     }
 
@@ -201,31 +201,31 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
         *      graph 3 (post attention layer normalization): fused_between_attn_mlp + fused_silu_slice + fused_layernorm_last
         */
         if (args.graphScenario == 0) {
-            ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmdListImmediate_2.get(), graph_1.getExecutable(), nullptr, nullptr, 0, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmdListImmediate.get(), graph_1.getExecutable(), nullptr, nullptr, 0, nullptr));
             for (int j = 1; j < num_hidden_layers; j++) {
-                ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_2.get(), kernel_reshape_and_cache.get(),
+                ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_reshape_and_cache.get(),
                                                          k_rope_output.getAddress(), v.getAddress(), key_cache.getAddress(), value_cache.getAddress(), slot_mapping.getAddress(), k_scale.getAddress(), v_scale.getAddress()));
-                ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_2.get(), kernel_flash_attn.get(),
+                ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_flash_attn.get(),
                                                          q_rope_output.getAddress(), key_cache.getAddress(), value_cache.getAddress(), flash_attn_output.getAddress(), cu_seqlens_q.getAddress(), cu_seqlens_k.getAddress(), seqused_k.getAddress(), block_table.getAddress(),
                                                          &input_len, &input_len, &attn_dropout, &softmax_scale, &causal, &return_softmax, &block_start, &block_end, &attn_bias, &use_alibi));
-                ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdListImmediate_2.get(), UINT64_MAX));
-                ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmdListImmediate_2.get(), graph_2.getExecutable(), nullptr, nullptr, 0, nullptr));
+                ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdListImmediate.get(), UINT64_MAX));
+                ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmdListImmediate.get(), graph_2.getExecutable(), nullptr, nullptr, 0, nullptr));
             }
-            ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_2.get(), kernel_reshape_and_cache.get(),
+            ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_reshape_and_cache.get(),
                                                      k_rope_output.getAddress(), v.getAddress(), key_cache.getAddress(), value_cache.getAddress(), slot_mapping.getAddress(), k_scale.getAddress(), v_scale.getAddress()));
-            ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate_2.get(), kernel_flash_attn.get(),
+            ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmdListImmediate.get(), kernel_flash_attn.get(),
                                                      q_rope_output.getAddress(), key_cache.getAddress(), value_cache.getAddress(), flash_attn_output.getAddress(), cu_seqlens_q.getAddress(), cu_seqlens_k.getAddress(), seqused_k.getAddress(), block_table.getAddress(),
                                                      &input_len, &input_len, &attn_dropout, &softmax_scale, &causal, &return_softmax, &block_start, &block_end, &attn_bias, &use_alibi));
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdListImmediate_2.get(), UINT64_MAX));
-            ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmdListImmediate_2.get(), graph_3.getExecutable(), nullptr, nullptr, 0, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdListImmediate.get(), UINT64_MAX));
+            ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmdListImmediate.get(), graph_3.getExecutable(), nullptr, nullptr, 0, nullptr));
         } else if (args.graphScenario == 1) {
-            ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmdListImmediate_2.get(), graph_1.getExecutable(), nullptr, nullptr, 0, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmdListImmediate.get(), graph_1.getExecutable(), nullptr, nullptr, 0, nullptr));
         } else if (args.graphScenario == 2) {
-            ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmdListImmediate_2.get(), graph_2.getExecutable(), nullptr, nullptr, 0, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmdListImmediate.get(), graph_2.getExecutable(), nullptr, nullptr, 0, nullptr));
         } else if (args.graphScenario == 3) {
-            ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmdListImmediate_2.get(), graph_3.getExecutable(), nullptr, nullptr, 0, nullptr));
+            ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListAppendGraph(cmdListImmediate.get(), graph_3.getExecutable(), nullptr, nullptr, 0, nullptr));
         }
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdListImmediate_2.get(), UINT64_MAX));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdListImmediate.get(), UINT64_MAX));
 
         profiler.measureEnd();
         profiler.pushStats(statistics);

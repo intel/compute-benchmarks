@@ -26,13 +26,13 @@ __kernel void mock_triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_0(
     if (in_ptr2)
         v += in_ptr2[gid];
 
-    if (out_ptr0)
-        out_ptr0[gid] = v;
     if (out_ptr2)
         out_ptr2[gid] = v;
-    int use_params = xnumel + r0_numel + XBLOCK + R0_BLOCK;
-    if (out_ptr0)
-        out_ptr0[gid] = out_ptr0[gid] + (float)(use_params);
+
+    if (out_ptr0) {
+        int use_params = xnumel + r0_numel + XBLOCK + R0_BLOCK;
+        out_ptr0[gid] = v + (float)(use_params);
+    }
 }
 
 __kernel void mock_reshape_and_cache(
@@ -102,13 +102,11 @@ __kernel void mock_flash_attn(
     if (in_ptr6)
         v += (float)in_ptr6[0];
 
-    if (out_ptr0)
-        out_ptr0[gid] = v;
-
-    int use_params = scalar0 + scalar1 + (int)scalar2 + (int)scalar3 + scalar4 +
+    if (out_ptr0) {
+        int use_params = scalar0 + scalar1 + (int)scalar2 + (int)scalar3 + scalar4 +
                      scalar5 + scalar6 + scalar7 + (int)scalar8 + scalar9;
-    if (out_ptr0)
-        out_ptr0[gid] = out_ptr0[gid] + (float)use_params;
+        out_ptr0[gid] = v + (float)use_params;
+    }
 }
 
 __kernel void mock_triton_poi_fused_1_3(
@@ -131,14 +129,13 @@ __kernel void mock_triton_poi_fused_1_3(
     if (in_ptr2)
         v += in_ptr2[gid];
 
-    if (out_ptr0)
-        out_ptr0[gid] = v;
     if (out_ptr1)
         out_ptr1[gid] = v;
 
-    int use_params = xnumel_0 + xnumel_1 + XBLOCK;
-    if (out_ptr0)
-        out_ptr0[gid] = out_ptr0[gid] + (float)use_params;
+    if (out_ptr0) {
+        int use_params = xnumel_0 + xnumel_1 + XBLOCK;
+        out_ptr0[gid] = v + (float)use_params;
+    }
 }
 
 __kernel void mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0(
@@ -161,12 +158,10 @@ __kernel void mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0(
     if (in_ptr2)
         v += in_ptr2[gid];
 
-    if (out_ptr0)
-        out_ptr0[gid] = v;
-
-    int use_params = r0_numel + XBLOCK + R0_BLOCK;
-    if (out_ptr0)
-        out_ptr0[gid] = out_ptr0[gid] + (float)use_params;
+    if (out_ptr0) {
+        int use_params = r0_numel + XBLOCK + R0_BLOCK;
+        out_ptr0[gid] = v + (float)use_params;
+    }
 }
 
 __kernel void mock_triton_poi_fused_mul_silu_slice_1(
@@ -180,12 +175,10 @@ __kernel void mock_triton_poi_fused_mul_silu_slice_1(
     if (in_ptr0)
         v += in_ptr0[gid];
 
-    if (out_ptr0)
-        out_ptr0[gid] = v;
-
-    int use_params = xnumel + XBLOCK;
-    if (out_ptr0)
-        out_ptr0[gid] = out_ptr0[gid] + (float)use_params;
+    if (out_ptr0) {
+        int use_params = xnumel + XBLOCK;
+        out_ptr0[gid] = v + (float)use_params;
+    }
 }
 
 __kernel void mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_2(
@@ -212,14 +205,13 @@ __kernel void mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_2(
     if (in_ptr3)
         v += in_ptr3[gid];
 
-    if (out_ptr0)
-        out_ptr0[gid] = v;
     if (out_ptr1)
         out_ptr1[gid] = v;
 
-    int use_params = r0_numel + XBLOCK + R0_BLOCK;
-    if (out_ptr0)
-        out_ptr0[gid] = out_ptr0[gid] + (float)use_params;
+    if (out_ptr0) {
+        int use_params = r0_numel + XBLOCK + R0_BLOCK;
+        out_ptr0[gid] = v + (float)use_params;
+    }
 }
 
 __kernel void mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_2_last_layer(
@@ -244,10 +236,8 @@ __kernel void mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_2_last_layer
     if (in_ptr3)
         v += in_ptr3[gid];
 
-    if (in_out_ptr0)
-        in_out_ptr0[gid] = v;
-
-    int use_params = r0_numel + XBLOCK + R0_BLOCK;
-    if (in_out_ptr0)
-        in_out_ptr0[gid] = in_out_ptr0[gid] + (float)use_params;
+    if (in_out_ptr0) {
+        int use_params = r0_numel + XBLOCK + R0_BLOCK;
+        in_out_ptr0[gid] = v + (float)use_params;
+    }
 }

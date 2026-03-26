@@ -34,13 +34,13 @@ void mock_triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_0(
     if (in_ptr2)
         v += in_ptr2[id];
 
-    if (out_ptr0)
-        out_ptr0[id] = v;
     if (out_ptr2)
         out_ptr2[id] = v;
-    int use_params = xnumel + r0_numel + XBLOCK + R0_BLOCK;
-    if (out_ptr0)
-        out_ptr0[id] = out_ptr0[id] + static_cast<data_type>(use_params);
+
+    if (out_ptr0) {
+        int use_params = xnumel + r0_numel + XBLOCK + R0_BLOCK;
+        out_ptr0[id] = v + static_cast<data_type>(use_params);
+    }
 }
 
 template <typename data_type>
@@ -87,14 +87,13 @@ void mock_triton_poi_fused_1_3(
     if (in_ptr2)
         v += in_ptr2[id];
 
-    if (out_ptr0)
-        out_ptr0[id] = v;
     if (out_ptr1)
         out_ptr1[id] = v;
 
-    int use_params = xnumel_0 + xnumel_1 + XBLOCK;
-    if (out_ptr0)
-        out_ptr0[id] = out_ptr0[id] + static_cast<data_type>(use_params);
+    if (out_ptr0) {
+        int use_params = xnumel_0 + xnumel_1 + XBLOCK;
+        out_ptr0[id] = v + static_cast<data_type>(use_params);
+    }
 }
 
 template <typename data_type>
@@ -209,13 +208,11 @@ void mock_flash_attn(
     if (in_ptr6)
         v += static_cast<data_type>(in_ptr6[0]);
 
-    if (out_ptr0)
-        out_ptr0[id] = v;
-
-    int use_params = scalar0 + scalar1 + static_cast<int>(scalar2) + static_cast<int>(scalar3) + static_cast<int>(scalar4) +
-                     static_cast<int>(scalar5) + scalar6 + scalar7 + static_cast<int>(scalar8) + static_cast<int>(scalar9);
-    if (out_ptr0)
-        out_ptr0[id] = out_ptr0[id] + static_cast<data_type>(use_params);
+    if (out_ptr0) {
+        int use_params = scalar0 + scalar1 + static_cast<int>(scalar2) + static_cast<int>(scalar3) + static_cast<int>(scalar4) +
+                         static_cast<int>(scalar5) + scalar6 + scalar7 + static_cast<int>(scalar8) + static_cast<int>(scalar9);
+        out_ptr0[id] = v + static_cast<data_type>(use_params);
+    }
 }
 
 template <typename data_type>
@@ -271,12 +268,10 @@ void mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0(
     if (in_ptr2)
         v += in_ptr2[id];
 
-    if (out_ptr0)
-        out_ptr0[id] = v;
-
-    int use_params = r0_numel + XBLOCK + R0_BLOCK;
-    if (out_ptr0)
-        out_ptr0[id] = out_ptr0[id] + static_cast<data_type>(use_params);
+    if (out_ptr0) {
+        int use_params = r0_numel + XBLOCK + R0_BLOCK;
+        out_ptr0[id] = v + static_cast<data_type>(use_params);
+    }
 }
 
 template <typename data_type>
@@ -313,12 +308,10 @@ void mock_triton_poi_fused_mul_silu_slice_1(
     if (in_ptr0)
         v += in_ptr0[id];
 
-    if (out_ptr0)
-        out_ptr0[id] = v;
-
-    int use_params = xnumel + XBLOCK;
-    if (out_ptr0)
-        out_ptr0[id] = out_ptr0[id] + static_cast<data_type>(use_params);
+    if (out_ptr0) {
+        int use_params = xnumel + XBLOCK;
+        out_ptr0[id] = v + static_cast<data_type>(use_params);
+    }
 }
 
 template <typename data_type>
@@ -364,14 +357,13 @@ void mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_2(
     if (in_ptr3)
         v += in_ptr3[id];
 
-    if (out_ptr0)
-        out_ptr0[id] = v;
     if (out_ptr1)
         out_ptr1[id] = v;
 
-    int use_params = r0_numel + XBLOCK + R0_BLOCK;
-    if (out_ptr0)
-        out_ptr0[id] = out_ptr0[id] + static_cast<data_type>(use_params);
+    if (out_ptr0) {
+        int use_params = r0_numel + XBLOCK + R0_BLOCK;
+        out_ptr0[id] = v + static_cast<data_type>(use_params);
+    }
 }
 
 template <typename data_type>
@@ -421,12 +413,10 @@ void mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_2_last_layer(
     if (in_ptr3)
         v += in_ptr3[id];
 
-    if (in_out_ptr0)
-        in_out_ptr0[id] = v;
-
-    int use_params = r0_numel + XBLOCK + R0_BLOCK;
-    if (in_out_ptr0)
-        in_out_ptr0[id] = in_out_ptr0[id] + static_cast<data_type>(use_params);
+    if (in_out_ptr0) {
+        int use_params = r0_numel + XBLOCK + R0_BLOCK;
+        in_out_ptr0[id] = v + static_cast<data_type>(use_params);
+    }
 }
 
 template <typename data_type>

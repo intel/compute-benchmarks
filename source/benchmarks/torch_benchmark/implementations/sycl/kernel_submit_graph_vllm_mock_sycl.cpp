@@ -92,14 +92,11 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
     auto block_table = make_device_ptr<int>(sycl, BATCH_SIZE * block_table_size);
 
     // variables used for graph 2
-    auto o_proj_weight = make_device_ptr<unsigned char>(sycl, hidden_size * hidden_size);
     auto o_proj_output = make_device_ptr<data_type>(sycl, input_len * hidden_size);
     auto post_attention_layernorm = make_device_ptr<data_type>(sycl, hidden_size);
     auto layernorm_output = make_device_ptr<data_type>(sycl, input_len * hidden_size);
-    auto up_project_gate_weight = make_device_ptr<unsigned char>(sycl, hidden_size * intermediate_size * 2);
     auto up_project_gate_output = make_device_ptr<data_type>(sycl, input_len * intermediate_size * 2);
     auto fused_silu_slice_output = make_device_ptr<data_type>(sycl, input_len * intermediate_size);
-    auto down_project_weight = make_device_ptr<unsigned char>(sycl, intermediate_size * hidden_size);
     auto down_project_output = make_device_ptr<data_type>(sycl, input_len * hidden_size);
 
     // input_layernorm: reuse the variables from graph 1
@@ -156,28 +153,27 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
     }
 
     // benchmark
-    /* Currently there is an implicit sync inside execute_graph call
-     * so only measuring exec + sync is meaningful in terms of comparing
-     * perf with L0
-     *
-     * graph scenario 0 is a combined graph execution of all graphs of Llama-3.2-1B without the gemm kernel
-     * graph_1
-     * for i in 1...num_hidden_layers:
-     *      launch_kernel_reshape_and_cache
-     *      launch_kernel_flash_attn
-     *      graph 2
-     * launch_kernel_reshape_and_cache
-     * launch_kernel_flash_attn
-     * graph 3
-     *
-     * graph scenarios 1-3 are executing graph 1-3 separately:
-     *      graph 1 (layer normalization): fused_embedding_layernorm + triton_poi_fused_1_3
-     *      graph 2 (self-attention layer): fused_between_attn_mlp + fused_silu_slice + fused_between_mlp_qkvlinear + triton_poi_fused_1_3
-     *      graph 3 (post attention layer normalization): fused_between_attn_mlp + fused_silu_slice + fused_layernorm_last
-     */
+    // Currently there is an implicit sync inside execute_graph call
+    // so only measuring exec + sync is meaningful in terms of comparing
+    // perf with L0
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
 
+        /* graph scenario 0 is a combined graph execution of all graphs of Llama-3.2-1B without the gemm kernel
+         * graph_1
+         * for i in 1...num_hidden_layers:
+         *      launch_kernel_reshape_and_cache
+         *      launch_kernel_flash_attn
+         *      graph 2
+         * launch_kernel_reshape_and_cache
+         * launch_kernel_flash_attn
+         * graph 3
+         *
+         * graph scenarios 1-3 are executing graph 1-3 separately:
+         *      graph 1 (layer normalization): fused_embedding_layernorm + triton_poi_fused_1_3
+         *      graph 2 (self-attention layer): fused_between_attn_mlp + fused_silu_slice + fused_between_mlp_qkvlinear + triton_poi_fused_1_3
+         *      graph 3 (post attention layer normalization): fused_between_attn_mlp + fused_silu_slice + fused_layernorm_last
+         */
         if (args.graphScenario == 0) {
             syclex::execute_graph(sycl.queue, *graph_exec_1);
             for (int j = 0; j < num_hidden_layers - 1; ++j) {
