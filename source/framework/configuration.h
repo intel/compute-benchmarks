@@ -68,6 +68,7 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument interactivePrints;
     PositiveIntegerArgument iterations;
     NonNegativeIntegerArgument warmupIterations;
+    NonNegativeIntegerArgument trimOutliers;
     IntegerArgument sleepFor;
     ApiArgument selectedApi;
     BooleanFlagArgument noIntelExtensions;

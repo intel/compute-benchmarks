@@ -30,6 +30,7 @@ Configuration::Configuration()
       interactivePrints(*this, "interactivePrints", "display test name before running it. May cause unexcpected results when redirecting output to files."),
       iterations(*this, "iterations", "select how many times each test will be run"),
       warmupIterations(*this, "warmupIterations", "select how many warmup iterations will be run before actual test iterations"),
+      trimOutliers(*this, "trimOutliers", "percentage of samples to trim from each end before computing statistics (0-49)"),
       sleepFor(*this, "sleepFor", "sleep for specified amount of time after running each test, in milliseconds"),
       selectedApi(*this, "api", "Compute API to be used"),
       noIntelExtensions(*this, "no-intel-extensions", "do not run benchmark requiring Intel specific extensions"),
@@ -77,6 +78,7 @@ Configuration::Configuration()
     verbose = false;
     interactivePrints = false;
     warmupIterations = 1;
+    trimOutliers = 0;
     iterations = 10;
     sleepFor = 20;
     selectedApi = Api::All;
@@ -137,6 +139,9 @@ Configuration &Configuration::get() {
 
 bool Configuration::validateArgumentsExtra() const {
     if (csv && verbose) {
+        return false;
+    }
+    if (trimOutliers >= 50) {
         return false;
     }
     return true;

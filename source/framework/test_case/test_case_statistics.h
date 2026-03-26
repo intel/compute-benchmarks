@@ -62,7 +62,7 @@ class TestCaseStatistics : public Statistics {
 };
 
 struct TestCaseStatistics::Metrics {
-    explicit Metrics(const SamplesVector &samples, size_t iterationsToSkip);
+    explicit Metrics(const SamplesVector &samples, size_t iterationsToSkip, size_t trimPercentage);
     Value min;
     Value max;
     Value mean;
@@ -70,15 +70,17 @@ struct TestCaseStatistics::Metrics {
     Value standardDeviation;
 
   private:
-    static Value calculateMin(const SamplesVector &samples, size_t iterationsToSkip);
-    static Value calculateMax(const SamplesVector &samples, size_t iterationsToSkip);
-    static Value calculateMean(const SamplesVector &samples, size_t iterationsToSkip);
-    static Value calculateMedian(const SamplesVector &samples, size_t iterationsToSkip);
-    static Value calculateStandardDeviation(const SamplesVector &samples, Value mean, size_t iterationsToSkip);
+    using ConstIter = SamplesVector::const_iterator;
+    static SamplesVector getTrimmedSamples(const SamplesVector &samples, size_t iterationsToSkip, size_t trimPercentage);
+    static Value calculateMin(ConstIter begin, ConstIter end);
+    static Value calculateMax(ConstIter begin, ConstIter end);
+    static Value calculateMean(ConstIter begin, ConstIter end);
+    static Value calculateMedian(ConstIter begin, ConstIter end);
+    static Value calculateStandardDeviation(ConstIter begin, ConstIter end, Value mean);
 };
 
 struct TestCaseStatistics::MetricsStrings {
-    MetricsStrings(const std::string &name, const Samples &samples, bool reachedInfinity, size_t iterationsToSkip);
+    MetricsStrings(const std::string &name, const Samples &samples, bool reachedInfinity, size_t iterationsToSkip, size_t trimPercentage);
     Metrics metrics;
     std::string min;
     std::string max;
