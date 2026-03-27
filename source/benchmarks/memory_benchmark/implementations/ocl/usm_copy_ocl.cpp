@@ -21,7 +21,7 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
 
     if (arguments.reuseCommandList == true ||
         requiresImport(arguments.sourcePlacement) ||
-        requiresImport(arguments.sourcePlacement)) {
+        requiresImport(arguments.destinationPlacement)) {
         return TestResult::ApiNotCapable;
     }
 

@@ -125,6 +125,8 @@ static TestResult run(const MultipleImmediateCmdListsWithDependenciesArguments &
     for (auto i = 0u; i < arguments.cmdlistCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernels[i]));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdLists[i]));
+    }
+    for (auto i = 0u; i < totalEventCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(events[i]));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));

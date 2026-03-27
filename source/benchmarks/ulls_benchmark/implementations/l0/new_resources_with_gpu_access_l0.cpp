@@ -57,7 +57,7 @@ static TestResult run(const NewResourcesWithGpuAccessArguments &arguments, Stati
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, 1, 1));
 
     const auto bufferSize = arguments.size;
-    const ze_device_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    const ze_device_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     const ze_group_count_t dispatchTraits{groupsCount, 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
