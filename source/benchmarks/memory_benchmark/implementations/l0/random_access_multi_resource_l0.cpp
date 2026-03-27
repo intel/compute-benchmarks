@@ -64,6 +64,12 @@ static TestResult run(const RandomAccessMultiResourceArguments &arguments, Stati
         return TestResult::InvalidArgs;
     }
 
+    // Create kernel
+    const auto kernelBinary = FileHelper::loadBinaryFile("access_device_mem_random.spv");
+    if (kernelBinary.size() == 0) {
+        return TestResult::KernelNotFound;
+    }
+
     // Create buffers
     void *fstSrcBuffer{}, *sndSrcBuffer{}, *offsetBuffer{}, *result{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.firstPlacement, levelzero, firstSize, &fstSrcBuffer));
@@ -81,11 +87,6 @@ static TestResult run(const RandomAccessMultiResourceArguments &arguments, Stati
     std::uniform_int_distribution<uint32_t> distr(0, static_cast<uint32_t>(maxPossibleAccessIndex) - 1);
     for (auto index = 0u; index < workItemCnt; index++) {
         randBuff[index] = distr(generator);
-    }
-    // Create kernel
-    const auto kernelBinary = FileHelper::loadBinaryFile("access_device_mem_random.spv");
-    if (kernelBinary.size() == 0) {
-        return TestResult::KernelNotFound;
     }
     ze_module_desc_t moduleDesc{
         ZE_STRUCTURE_TYPE_MODULE_DESC,

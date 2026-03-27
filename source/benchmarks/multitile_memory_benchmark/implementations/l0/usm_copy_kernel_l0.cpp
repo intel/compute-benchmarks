@@ -32,16 +32,16 @@ static TestResult run(const UsmCopyKernelArguments &arguments, Statistics &stati
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(arguments.queuePlacement);
 
-    // Create buffers
-    void *src{}, *dst{};
-    ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.srcPlacement, levelzero, arguments.size, &src));
-    ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.dstPlacement, levelzero, arguments.size, &dst));
-
     // Create kernel
     const auto kernelBinary = FileHelper::loadBinaryFile("multitile_memory_benchmark_copy_buffer.spv");
     if (kernelBinary.size() == 0) {
         return TestResult::KernelNotFound;
     }
+
+    // Create buffers
+    void *src{}, *dst{};
+    ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.srcPlacement, levelzero, arguments.size, &src));
+    ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.dstPlacement, levelzero, arguments.size, &dst));
     ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.inputSize = kernelBinary.size();

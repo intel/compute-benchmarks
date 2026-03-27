@@ -32,17 +32,17 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     }
     Timer timer;
 
-    // Create buffer
-    void *bufferVoid{};
-    ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.bufferPlacement, levelzero, arguments.bufferSize, &bufferVoid));
-    int32_t *buffer = static_cast<int32_t *>(bufferVoid);
-    const size_t elementsCount = arguments.bufferSize / sizeof(uint32_t);
-
     // Create kernel
     const auto kernelBinary = FileHelper::loadBinaryFile("multitile_memory_benchmark_fill_with_ones.spv");
     if (kernelBinary.size() == 0) {
         return TestResult::KernelNotFound;
     }
+
+    // Create buffer
+    void *bufferVoid{};
+    ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.bufferPlacement, levelzero, arguments.bufferSize, &bufferVoid));
+    int32_t *buffer = static_cast<int32_t *>(bufferVoid);
+    const size_t elementsCount = arguments.bufferSize / sizeof(uint32_t);
     ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.inputSize = kernelBinary.size();

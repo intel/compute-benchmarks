@@ -25,6 +25,12 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
     LevelZero levelzero;
     Timer timer;
 
+    // Create kernel
+    const auto kernelBinary = FileHelper::loadBinaryFile("memory_benchmark_fill_with_ones.spv");
+    if (kernelBinary.size() == 0) {
+        return TestResult::KernelNotFound;
+    }
+
     // Create buffers
     const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
@@ -32,12 +38,6 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocShared(levelzero.context, &deviceAllocationDesc, &hostAllocationDesc, arguments.bufferSize, 0, levelzero.device, &buffer));
     int32_t *bufferInt = static_cast<int32_t *>(buffer);
     const size_t elementsCount = arguments.bufferSize / sizeof(uint32_t);
-
-    // Create kernel
-    const auto kernelBinary = FileHelper::loadBinaryFile("memory_benchmark_fill_with_ones.spv");
-    if (kernelBinary.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
     ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.inputSize = kernelBinary.size();
