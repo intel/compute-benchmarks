@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,5 @@
 EXECUTE_AT_APP_INIT {
     const std::string name = "emu_benchmark";
     const std::string description = "Emulation Benchmark is a set of tests aimed at measuring performance of emulated math operations performed in kernels.";
-    const int testCaseColumnWidth = 61;
-    BenchmarkInfo::initialize(name, description, testCaseColumnWidth);
+    BenchmarkInfo::initialize(name, description);
 };

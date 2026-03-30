@@ -76,14 +76,16 @@ class TestCase : public TestCaseBase {
             return false;
         }
 
-        // Try running with all possible APIs. If some are disabled, e.g. --api=ocl is passed, then the rest will be skipped in run() method
-        if (!Configuration::get().noColumnNames) {
-            TestCaseStatistics::printStatisticsHeader(Configuration::get().printType);
+        // For CSV, print the header immediately before any rows (same as AllTestsGtestListener::OnTestProgramStart)
+        if (!Configuration::get().noColumnNames && Configuration::get().printType == Configuration::PrintType::Csv) {
+            TestCaseStatistics::printStatisticsHeader(Configuration::get().printType, 0);
         }
+        // Try running with all possible APIs. If some are disabled, e.g. --api=ocl is passed, then the rest will be skipped in run() method
         for (int apiIndex = static_cast<int>(Api::FIRST); apiIndex <= static_cast<int>(Api::LAST); apiIndex++) {
             arguments.api = static_cast<Api>(apiIndex);
             run(arguments);
         }
+        TestCaseStatistics::flushBufferedResults(Configuration::get().printType);
         return true;
     }
 
@@ -167,11 +169,6 @@ class TestCase : public TestCaseBase {
         const auto &testMap = TestMap::get();
         if (testMap.find(getTestCaseName()) == testMap.end()) {
             printTestMapWarning();
-        }
-
-        // Check if test case name with config is not too long
-        if (!Configuration::get().dumpCommandLines && !arguments.isSingleTestMode) {
-            printTestCaseNameLengthWarning(testCaseNameWithConfig);
         }
 
         // Run the test

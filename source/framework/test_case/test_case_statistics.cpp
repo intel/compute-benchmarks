@@ -7,15 +7,16 @@
 
 #include "test_case_statistics.h"
 
-#include "framework/benchmark_info.h"
 #include "framework/utility/error.h"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
+#include <sstream>
 #include <type_traits>
 
 TestCaseStatistics::TestCaseStatistics(size_t maxSamplesCount, Configuration::PrintType printType)
@@ -190,7 +191,7 @@ struct ColumnInfo {
 
     static std::array<ColumnInfo, 8> getColumns() {
         return {{
-            {BenchmarkInfo::get().getTestCaseNameColumnWidth(), "TestCase"},
+            {100, "TestCase"},
             {15, "Mean"},
             {15, "Median"},
             {15, "StdDev"},
@@ -202,15 +203,20 @@ struct ColumnInfo {
     }
 };
 
-void TestCaseStatistics::printStatisticsHeader(Configuration::PrintType printType) {
+std::vector<TestCaseStatistics::BufferedLine> TestCaseStatistics::testResults;
+int TestCaseStatistics::lastTransientLineWidth = 0;
+
+void TestCaseStatistics::printStatisticsHeader(Configuration::PrintType printType, int nameColumnWidth) {
     const auto columns = ColumnInfo::getColumns();
     const auto columnCount = columns.size();
+    const int nameWidth = nameColumnWidth > 0 ? nameColumnWidth : columns[0].width;
     switch (printType) {
     case Configuration::PrintType::DefaultWithVerbose:
     case Configuration::PrintType::Default:
     case Configuration::PrintType::Noop: {
-        for (const ColumnInfo &column : columns) {
-            std::cout << std::setw(column.width) << column.label;
+        std::cout << std::left << std::setw(nameWidth) << columns[0].label << std::right;
+        for (size_t i = 1; i < columnCount; i++) {
+            std::cout << std::setw(columns[i].width) << columns[i].label;
         }
         std::cout << std::endl;
         break;
@@ -231,14 +237,22 @@ void TestCaseStatistics::printStatisticsHeader(Configuration::PrintType printTyp
 }
 
 void TestCaseStatistics::printStatisticsBeforeTest(const std::string &testCaseName) const {
-    // Ending line with carriage return instead of newline will cause the next print to overwrite this line
-    printStatisticsString(testCaseName, "", '\r');
+    if (Configuration::get().interactivePrints) {
+        // With buffered output, just print the name on its own line so the user can see progress
+        std::cout << testCaseName << '\n'
+                  << std::flush;
+    } else {
+        // Ending line with carriage return instead of newline will cause the next print to overwrite this line
+        printStatisticsString(testCaseName, "", '\r');
+    }
 }
 
 void TestCaseStatistics::printClearLineAfterTest() const {
-    const ColumnInfo firstColumn = ColumnInfo::getColumns()[0];
-    std::string spaces(firstColumn.width, ' ');
-    std::cout << spaces << '\r';
+    if (Configuration::get().interactivePrints) {
+        return;
+    }
+    std::cout << std::string(lastTransientLineWidth, ' ') << '\r';
+    lastTransientLineWidth = 0;
 }
 
 void TestCaseStatistics::printStatistics(const std::string &testCaseName) const {
@@ -270,17 +284,17 @@ void TestCaseStatistics::printStatisticsDefault(const std::string &testCaseName)
         const Samples &samples = samplesEntry.second;
         const MetricsStrings metricsStrings{samplesName, samples, this->reachedInfinity, Configuration::get().warmupIterations, Configuration::get().trimOutliers};
 
-        int column = 0;
-        std::cout << std::setw(columns[column++].width) << (isFirst ? testCaseName : "");
-        std::cout << std::setw(columns[column++].width) << metricsStrings.mean;
-        std::cout << std::setw(columns[column++].width) << metricsStrings.median;
-        std::cout << std::setw(columns[column++].width) << metricsStrings.standardDeviation;
-        std::cout << std::setw(columns[column++].width) << metricsStrings.min;
-        std::cout << std::setw(columns[column++].width) << metricsStrings.max;
-        std::cout << std::setw(columns[column++].width) << metricsStrings.type;
-        std::cout << ' ' << std::setw(columns[column++].width - 1) << metricsStrings.label;
-        std::cout << std::endl;
+        int column = 1; // skip name column -- handled separately
+        std::ostringstream results;
+        results << std::setw(columns[column++].width) << metricsStrings.mean;
+        results << std::setw(columns[column++].width) << metricsStrings.median;
+        results << std::setw(columns[column++].width) << metricsStrings.standardDeviation;
+        results << std::setw(columns[column++].width) << metricsStrings.min;
+        results << std::setw(columns[column++].width) << metricsStrings.max;
+        results << std::setw(columns[column++].width) << metricsStrings.type;
+        results << ' ' << std::setw(columns[column++].width - 1) << metricsStrings.label;
 
+        testResults.push_back({isFirst ? testCaseName : "", results.str()});
         isFirst = false;
     }
 }
@@ -294,10 +308,11 @@ void TestCaseStatistics::printStatisticsNoop(const std::string &testCaseName) co
         paddingLeft += columns[i].width;
     }
 
-    std::cout << std::setw(columns.front().width) << testCaseName;
-    std::cout << std::setw(paddingLeft) << std::to_string(this->noopSample.type);
-    std::cout << std::setw(columns.back().width) << std::to_string(this->noopSample.unit);
-    std::cout << std::endl;
+    std::ostringstream results;
+    results << std::setw(paddingLeft) << std::to_string(this->noopSample.type);
+    results << std::setw(columns.back().width) << std::to_string(this->noopSample.unit);
+
+    testResults.push_back({testCaseName, results.str()});
 }
 
 void TestCaseStatistics::printStatisticsCsv(const std::string &testCaseName) const {
@@ -322,18 +337,19 @@ void TestCaseStatistics::printStatisticsCsv(const std::string &testCaseName) con
 
 void TestCaseStatistics::printStatisticsVerbose() const {
     for (const auto &samplesEntry : this->samplesMap) {
-        std::cout << "individual ";
+        std::ostringstream line;
+        line << "individual ";
         if (const auto &samplesName = samplesEntry.first; samplesName != "") {
-            std::cout << samplesName << ' ';
+            line << samplesName << ' ';
         }
-        std::cout << "results: [ ";
-
+        line << "results: [ ";
         for (const auto &sample : samplesEntry.second.vector) {
-            std::cout << sample << ' ';
+            line << sample << ' ';
         }
-        std::cout << "]\n";
+        line << "]";
+        testResults.push_back({"", line.str(), true});
     }
-    std::cout << '\n';
+    testResults.push_back({"", "", true});
 }
 
 void TestCaseStatistics::printStatisticsString(const std::string &testCaseName, const std::string &message, char lineEnding) const {
@@ -343,10 +359,21 @@ void TestCaseStatistics::printStatisticsString(const std::string &testCaseName, 
     case Configuration::PrintType::DefaultWithVerbose:
     case Configuration::PrintType::Default:
     case Configuration::PrintType::Noop: {
-        std::cout << std::setw(columns[0].width) << testCaseName;
-        const size_t maxStringWidth = columns[1].width + columns[2].width + columns[3].width;
-        std::cout << std::setw(maxStringWidth) << message;
-        std::cout << lineEnding;
+        if (lineEnding == '\r') {
+            // Transient before-test display -- print immediately
+            const int nameWidth = std::max(columns[0].width, static_cast<int>(testCaseName.size()));
+            std::cout << std::setw(nameWidth) << testCaseName;
+            const size_t maxStringWidth = columns[1].width + columns[2].width + columns[3].width;
+            std::cout << std::setw(maxStringWidth) << message;
+            lastTransientLineWidth = nameWidth + static_cast<int>(maxStringWidth);
+            std::cout << lineEnding;
+        } else {
+            // Final result line -- buffer for aligned flush
+            const size_t maxStringWidth = columns[1].width + columns[2].width + columns[3].width;
+            std::ostringstream results;
+            results << std::setw(maxStringWidth) << message;
+            testResults.push_back({testCaseName, results.str()});
+        }
         break;
     }
     case Configuration::PrintType::Csv: {
@@ -363,6 +390,35 @@ void TestCaseStatistics::printStatisticsString(const std::string &testCaseName, 
     default:
         FATAL_ERROR("unknown print type selected");
     }
+}
+
+void TestCaseStatistics::flushBufferedResults(Configuration::PrintType printType) {
+    if (testResults.empty()) {
+        return;
+    }
+
+    // Find the longest test case name across all buffered entries, but at least as wide as the header label
+    const auto columns = ColumnInfo::getColumns();
+    int maxNameWidth = static_cast<int>(std::strlen(columns[0].label));
+    for (const auto &line : testResults) {
+        if (!line.isFullLine) {
+            maxNameWidth = std::max(maxNameWidth, static_cast<int>(line.name.size()));
+        }
+    }
+
+    if (!Configuration::get().noColumnNames) {
+        printStatisticsHeader(printType, maxNameWidth);
+    }
+
+    for (const auto &line : testResults) {
+        if (line.isFullLine) {
+            std::cout << line.results << '\n';
+        } else {
+            std::cout << std::setw(maxNameWidth) << std::left << line.name << std::right << line.results << '\n';
+        }
+    }
+    std::cout.flush();
+    testResults.clear();
 }
 
 TestCaseStatistics::Metrics::Metrics(const SamplesVector &samples, size_t iterationsToSkip, size_t trimPercentage) {

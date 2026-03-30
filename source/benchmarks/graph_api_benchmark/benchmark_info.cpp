@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,5 @@
 EXECUTE_AT_APP_INIT {
     const std::string name = "graph_api_benchmark";
     const std::string description = "Graph Api Overhead Benchmark is a set of tests aimed at measuring CPU-side execution duration of SYCL Graphs API calls.";
-    const int testCaseColumnWidth = 64;
-    BenchmarkInfo::initialize(name, description, testCaseColumnWidth);
+    BenchmarkInfo::initialize(name, description);
 };

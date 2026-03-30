@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,5 +27,4 @@ class TestCaseBase : public TestCaseInterface {
 
     // Warnings
     void printTestMapWarning() const;
-    void printTestCaseNameLengthWarning(const std::string &testCaseNameWithConfig) const;
 };

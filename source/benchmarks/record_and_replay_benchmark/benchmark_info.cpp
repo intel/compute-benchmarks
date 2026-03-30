@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,5 @@
 EXECUTE_AT_APP_INIT {
     const std::string name = "record_and_replay_benchmark";
     const std::string description = "Record and Replay Benchmark is a set of tests aimed at measuring performance of recording and execution of commandlist graphs.";
-    const int testCaseColumnWidth = 64;
-    BenchmarkInfo::initialize(name, description, testCaseColumnWidth);
+    BenchmarkInfo::initialize(name, description);
 };

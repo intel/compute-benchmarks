@@ -77,6 +77,7 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument noop;
     BooleanFlagArgument noHeaders;
     BooleanFlagArgument noColumnNames;
+    BooleanFlagArgument noProgressBar;
     BooleanFlagArgument doNotPrintBandwidth;
     BooleanArgument dumpErrorsImmediately;
     StringListArgument argFilter;

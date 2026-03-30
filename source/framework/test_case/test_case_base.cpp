@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "test_case_base.h"
 
-#include "framework/benchmark_info.h"
 #include "framework/configuration.h"
 #include "framework/test_case/test_case_argument_container.h"
 
@@ -107,16 +106,4 @@ void TestCaseBase::printTestMapWarning() const {
     printed = true;
 
     std::cerr << "WARNING: \"" << getTestCaseName() << "\" is not added to the test map. This is an issue in the benchmark causing single-test mode to not work.\n";
-}
-
-void TestCaseBase::printTestCaseNameLengthWarning(const std::string &testCaseNameWithConfig) const {
-    const static size_t columnWidth = BenchmarkInfo::get().getTestCaseNameColumnWidth();
-    static size_t maxWidth = columnWidth;
-
-    const size_t currentWidth = testCaseNameWithConfig.length();
-    if (currentWidth > maxWidth && Configuration::get().verbose) {
-        maxWidth = currentWidth;
-        std::cerr << "WARNING: current TestCase column width of " << columnWidth << " is too small. Consider changing it to " << maxWidth << ". "
-                  << "This is an issue in the benchmark which may cause the output to appear weird, but does not break any functionality.\n";
-    }
 }

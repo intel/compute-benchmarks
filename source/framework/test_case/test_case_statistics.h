@@ -12,6 +12,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 class TestCaseStatistics : public Statistics {
   public:
@@ -38,13 +39,20 @@ class TestCaseStatistics : public Statistics {
     bool isEmpty() const override;
     bool isFull() const override;
 
-    static void printStatisticsHeader(Configuration::PrintType printType);
+    static void printStatisticsHeader(Configuration::PrintType printType, int nameColumnWidth);
+    static void flushBufferedResults(Configuration::PrintType printType);
     void printStatisticsBeforeTest(const std::string &testCaseName) const;
     void printClearLineAfterTest() const;
     void printStatistics(const std::string &testCaseName) const;
     void printStatisticsString(const std::string &testCaseName, const std::string &message, char lineEnding = '\n') const;
 
   private:
+    struct BufferedLine {
+        std::string name;
+        std::string results;
+        bool isFullLine = false;
+    };
+
     static void overrideMeasurementUnit(MeasurementUnit &unit);
     void pushValue(Value value, const std::string &description, MeasurementUnit unit, MeasurementType type);
     void printStatisticsDefault(const std::string &testCaseName) const;
@@ -56,6 +64,9 @@ class TestCaseStatistics : public Statistics {
     SamplesMap samplesMap = {};
     Samples noopSample = {};
     bool reachedInfinity = false;
+
+    static std::vector<BufferedLine> testResults;
+    static int lastTransientLineWidth;
 
     struct Metrics;
     struct MetricsStrings;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,18 +22,15 @@ class BenchmarkInfo {
     // Singleton accessors
     static BenchmarkInfo &get();
     static void initialize(const std::string &name,
-                           const std::string &description,
-                           int testCaseColumnWidth);
+                           const std::string &description);
 
     // Getters
     std::string getBenchmarkName() const;
     std::string getBenchmarkFilename() const;
     std::string getBenchmarkDescription() const;
-    int getTestCaseNameColumnWidth() const;
 
   private:
     static std::unique_ptr<BenchmarkInfo> instance;
     std::string name{};
     std::string description{};
-    int testCaseColumnWidth = 0;
 };

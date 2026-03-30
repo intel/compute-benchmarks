@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,5 @@
 EXECUTE_AT_APP_INIT {
     const std::string name = "miscellaneous_benchmark";
     const std::string description = "Miscellaneous Benchmark is a set of tests measuring different simple compute scenarios.";
-    const int testCaseColumnWidth = 90;
-    BenchmarkInfo::initialize(name, description, testCaseColumnWidth);
+    BenchmarkInfo::initialize(name, description);
 };

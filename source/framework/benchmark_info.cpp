@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,13 +16,12 @@ BenchmarkInfo &BenchmarkInfo::get() {
     return *instance;
 }
 
-void BenchmarkInfo::initialize(const std::string &name, const std::string &description, int testCaseColumnWidth) {
+void BenchmarkInfo::initialize(const std::string &name, const std::string &description) {
     FATAL_ERROR_IF(instance != nullptr, "BenchmarkInfo::initialize() called multiple times");
 
     instance = std::make_unique<BenchmarkInfo>();
     instance->name = name;
     instance->description = description;
-    instance->testCaseColumnWidth = testCaseColumnWidth;
 }
 
 std::string BenchmarkInfo::getBenchmarkName() const {
@@ -39,8 +38,4 @@ std::string BenchmarkInfo::getBenchmarkFilename() const {
 
 std::string BenchmarkInfo::getBenchmarkDescription() const {
     return description;
-}
-
-int BenchmarkInfo::getTestCaseNameColumnWidth() const {
-    return testCaseColumnWidth;
 }
