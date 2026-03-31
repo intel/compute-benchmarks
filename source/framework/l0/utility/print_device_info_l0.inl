@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 namespace L0 {
 
-void printDeviceInfo() {
+void printDeviceInfo(std::ostream &output) {
     ContextProperties contextProperties = ContextProperties::create().disable();
     QueueProperties queueProperties = QueueProperties::create().disable();
     LevelZero levelzero(queueProperties, contextProperties);
@@ -26,7 +26,7 @@ void printDeviceInfo() {
     std::string driverVersion = std::to_string((driverProperties.driverVersion & 0xFF000000) >> 24) + "." +
                                 std::to_string((driverProperties.driverVersion & 0x00FF0000) >> 16) + "." +
                                 std::to_string(driverProperties.driverVersion & 0x0000FFFF);
-    std::cout << "LevelZero driver version: " << driverVersion << std::endl;
+    output << "LevelZero driver version: " << driverVersion << std::endl;
 
     ze_device_properties_t deviceProperties{ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_eu_count_ext_t zeEuCountDesc = {ZE_STRUCTURE_TYPE_EU_COUNT_EXT};
@@ -34,15 +34,15 @@ void printDeviceInfo() {
     ZE_RESULT_SUCCESS_OR_ERROR(zeDeviceGetProperties(levelzero.device, &deviceProperties));
     IntelProduct intelProduct = getIntelProduct(deviceProperties);
     IntelGen intelGen = getIntelGen(intelProduct);
-    std::cout << "\tDevice: " << deviceProperties.name << std::endl;
-    std::cout << "\t\tvendorId:     0x" << std::hex << deviceProperties.vendorId << std::endl;
-    std::cout << "\t\tdeviceId:     0x" << std::hex << deviceProperties.deviceId << " (intelProduct=" << std::to_string(intelProduct) << ", intelGen=" << std::to_string(intelGen) << ")\n";
-    std::cout << "\t\tclockFreq:    " << std::dec << deviceProperties.coreClockRate << std::endl;
-    std::cout << "\t\tconfig:       " << deviceProperties.numSlices << "x" << deviceProperties.numSubslicesPerSlice << "x" << deviceProperties.numEUsPerSubslice << std::endl;
-    std::cout << "\t\teuCount:      " << zeEuCountDesc.numTotalEUs << std::endl;
-    std::cout << "\t\tthreadsPerEu: " << deviceProperties.numThreadsPerEU << std::endl;
+    output << "\tDevice: " << deviceProperties.name << std::endl;
+    output << "\t\tvendorId:     0x" << std::hex << deviceProperties.vendorId << std::endl;
+    output << "\t\tdeviceId:     0x" << std::hex << deviceProperties.deviceId << " (intelProduct=" << std::to_string(intelProduct) << ", intelGen=" << std::to_string(intelGen) << ")\n";
+    output << "\t\tclockFreq:    " << std::dec << deviceProperties.coreClockRate << std::endl;
+    output << "\t\tconfig:       " << deviceProperties.numSlices << "x" << deviceProperties.numSubslicesPerSlice << "x" << deviceProperties.numEUsPerSubslice << std::endl;
+    output << "\t\teuCount:      " << zeEuCountDesc.numTotalEUs << std::endl;
+    output << "\t\tthreadsPerEu: " << deviceProperties.numThreadsPerEU << std::endl;
 
-    std::cout << std::endl;
+    output << std::endl;
 }
 
 static void printAvailableDevices() {

@@ -78,6 +78,8 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument noHeaders;
     BooleanFlagArgument noColumnNames;
     BooleanFlagArgument noProgressBar;
+    StringArgument htmlOutput;
+    StringArgument mdOutput;
     BooleanFlagArgument doNotPrintBandwidth;
     BooleanArgument dumpErrorsImmediately;
     StringListArgument argFilter;

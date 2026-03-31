@@ -41,6 +41,9 @@ class TestCaseStatistics : public Statistics {
 
     static void printStatisticsHeader(Configuration::PrintType printType, int nameColumnWidth);
     static void flushBufferedResults(Configuration::PrintType printType);
+    static void writeHtmlResults(const std::string &filePath);
+    static void writeMdResults(const std::string &filePath);
+    static void setDeviceInfo(const std::string &info);
     void printStatisticsBeforeTest(const std::string &testCaseName) const;
     void printClearLineAfterTest() const;
     void printStatistics(const std::string &testCaseName) const;
@@ -67,6 +70,7 @@ class TestCaseStatistics : public Statistics {
 
     static std::vector<BufferedLine> testResults;
     static int lastTransientLineWidth;
+    static std::string deviceInfo;
 
     struct Metrics;
     struct MetricsStrings;

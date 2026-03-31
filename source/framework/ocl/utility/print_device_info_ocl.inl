@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 namespace OCL {
 
-static void printDeviceInfo() {
+static void printDeviceInfo(std::ostream &output) {
     ContextProperties contextProperties = ContextProperties::create().disable();
     QueueProperties queueProperties = QueueProperties::create().disable();
     Opencl opencl(queueProperties, contextProperties);
@@ -19,27 +19,27 @@ static void printDeviceInfo() {
     cl_uint bufferUint;
 
     CL_SUCCESS_OR_ERROR(clGetPlatformInfo(opencl.platform, CL_PLATFORM_NAME, sizeof(bufferString), bufferString, nullptr), "clGetPlatformInfo failed");
-    std::cout << "OpenCL Platform: " << bufferString << std::endl;
+    output << "OpenCL Platform: " << bufferString << std::endl;
 
     CL_SUCCESS_OR_ERROR(clGetDeviceInfo(opencl.device, CL_DEVICE_NAME, sizeof(bufferString), bufferString, nullptr), "clGetDeviceInfo failed");
-    std::cout << "\tDevice: " << bufferString << std::endl;
+    output << "\tDevice: " << bufferString << std::endl;
 
     CL_SUCCESS_OR_ERROR(clGetDeviceInfo(opencl.device, CL_DRIVER_VERSION, sizeof(bufferString), bufferString, nullptr), "clGetDeviceInfo failed");
-    std::cout << "\t\tdriverVersion: " << bufferString << std::endl;
+    output << "\t\tdriverVersion: " << bufferString << std::endl;
 
     CL_SUCCESS_OR_ERROR(clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(bufferUint), &bufferUint, nullptr), "clGetDeviceInfo failed");
-    std::cout << "\t\tcomputeUnits:  " << bufferUint << std::endl;
+    output << "\t\tcomputeUnits:  " << bufferUint << std::endl;
 
     CL_SUCCESS_OR_ERROR(clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(bufferUint), &bufferUint, nullptr), "clGetDeviceInfo failed");
-    std::cout << "\t\tclockFreq:     " << bufferUint << std::endl;
+    output << "\t\tclockFreq:     " << bufferUint << std::endl;
 
     IntelProduct intelProduct = getIntelProduct(opencl);
     IntelGen intelGen = getIntelGen(intelProduct);
     if (intelProduct != IntelProduct::Unknown) {
-        std::cout << "\t\tintelProduct:  " << std::to_string(intelProduct) << " (intelGen: " << std::to_string(intelGen) << ")\n";
+        output << "\t\tintelProduct:  " << std::to_string(intelProduct) << " (intelGen: " << std::to_string(intelGen) << ")\n";
     }
 
-    std::cout << std::endl;
+    output << std::endl;
 }
 
 static void printAvailableDevices() {

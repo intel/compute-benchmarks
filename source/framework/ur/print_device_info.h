@@ -106,22 +106,22 @@ ur_backend_t getAdapterBackend(ur_adapter_handle_t adapter) {
     return getInfo<ur_backend_t>(adapter, urAdapterGetInfo, UR_ADAPTER_INFO_BACKEND);
 }
 
-void printDeviceInfo() {
+void printDeviceInfo(std::ostream &output) {
     UrState ur;
 
-    std::cout << "Adapter: " << getAdapterBackend(ur.adapter) << std::endl;
-    std::cout << "  Platform: " << getPlatformVendorName(ur.platform) << std::endl;
+    output << "Adapter: " << getAdapterBackend(ur.adapter) << std::endl;
+    output << "  Platform: " << getPlatformVendorName(ur.platform) << std::endl;
 
-    std::cout << "\tDevice: " << getDeviceName(ur.device) << std::endl;
-    std::cout << "\t\tType: " << getDeviceType(ur.device) << std::endl;
-    std::cout << "\t\tvendorId:     0x" << std::hex << getDeviceVendorId(ur.device) << std::endl;
-    std::cout << "\t\tdeviceId:     0x" << std::hex << getDeviceId(ur.device) << std::endl;
-    std::cout << "\t\tclockFreq:    " << std::dec << getDeviceClockRate(ur.device) << std::endl;
-    std::cout << "\t\tconfig:       " << getDeviceNumSlices(ur.device) << "x" << getDeviceNumSubslicesPerSlice(ur.device) << "x" << getDeviceNumEUPerSubslice(ur.device) << std::endl;
-    std::cout << "\t\teuCount:      " << getDeviceNumSlices(ur.device) * getDeviceNumSubslicesPerSlice(ur.device) * getDeviceNumEUPerSubslice(ur.device) << std::endl;
-    std::cout << "\t\tthreadsPerEu: " << getDeviceNumThreadPerEU(ur.device) << std::endl;
+    output << "\tDevice: " << getDeviceName(ur.device) << std::endl;
+    output << "\t\tType: " << getDeviceType(ur.device) << std::endl;
+    output << "\t\tvendorId:     0x" << std::hex << getDeviceVendorId(ur.device) << std::endl;
+    output << "\t\tdeviceId:     0x" << std::hex << getDeviceId(ur.device) << std::endl;
+    output << "\t\tclockFreq:    " << std::dec << getDeviceClockRate(ur.device) << std::endl;
+    output << "\t\tconfig:       " << getDeviceNumSlices(ur.device) << "x" << getDeviceNumSubslicesPerSlice(ur.device) << "x" << getDeviceNumEUPerSubslice(ur.device) << std::endl;
+    output << "\t\teuCount:      " << getDeviceNumSlices(ur.device) * getDeviceNumSubslicesPerSlice(ur.device) * getDeviceNumEUPerSubslice(ur.device) << std::endl;
+    output << "\t\tthreadsPerEu: " << getDeviceNumThreadPerEU(ur.device) << std::endl;
 
-    std::cout << std::endl;
+    output << std::endl;
 }
 
 static void printAvailableDevices() {

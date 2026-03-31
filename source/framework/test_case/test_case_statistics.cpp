@@ -7,12 +7,18 @@
 
 #include "test_case_statistics.h"
 
+#include "framework/argument/abstract/argument.h"
+#include "framework/benchmark_info.h"
+#include "framework/test_map.h"
 #include "framework/utility/error.h"
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstring>
+#include <ctime>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
@@ -189,7 +195,9 @@ struct ColumnInfo {
     int width;
     const char *label;
 
-    static std::array<ColumnInfo, 8> getColumns() {
+    using Columns = std::array<ColumnInfo, 8>;
+
+    static Columns getColumns() {
         return {{
             {100, "TestCase"},
             {15, "Mean"},
@@ -205,6 +213,55 @@ struct ColumnInfo {
 
 std::vector<TestCaseStatistics::BufferedLine> TestCaseStatistics::testResults;
 int TestCaseStatistics::lastTransientLineWidth = 0;
+std::string TestCaseStatistics::deviceInfo;
+
+void TestCaseStatistics::setDeviceInfo(const std::string &info) {
+    deviceInfo = info;
+}
+
+static std::string htmlEscape(const std::string &text) {
+    std::string escaped;
+    escaped.reserve(text.size());
+    for (const char c : text) {
+        switch (c) {
+        case '&':
+            escaped += "&amp;";
+            break;
+        case '<':
+            escaped += "&lt;";
+            break;
+        case '>':
+            escaped += "&gt;";
+            break;
+        case '"':
+            escaped += "&quot;";
+            break;
+        default:
+            escaped += c;
+        }
+    }
+    return escaped;
+}
+
+// Extract and trim the column at colIndex from a BufferedLine::results string
+// built with fixed-width right-aligned columns. colIndex matches the ColumnInfo
+// index (columns[0] is the name column, columns[1..7] are metric columns).
+static std::string extractColumn(const std::string &results, const ColumnInfo::Columns &columns, size_t colIndex) {
+    int offset = 0;
+    for (size_t i = 1; i < colIndex; i++) {
+        offset += columns[i].width;
+    }
+    if (static_cast<size_t>(offset) >= results.size()) {
+        return {};
+    }
+    std::string val = results.substr(offset, columns[colIndex].width);
+    auto start = val.find_first_not_of(' ');
+    if (start == std::string::npos) {
+        return {};
+    }
+    auto end = val.find_last_not_of(' ');
+    return val.substr(start, end - start + 1);
+}
 
 void TestCaseStatistics::printStatisticsHeader(Configuration::PrintType printType, int nameColumnWidth) {
     const auto columns = ColumnInfo::getColumns();
@@ -418,7 +475,170 @@ void TestCaseStatistics::flushBufferedResults(Configuration::PrintType printType
         }
     }
     std::cout.flush();
+
+    const std::string &htmlPath = Configuration::get().htmlOutput;
+    if (!htmlPath.empty()) {
+        writeHtmlResults(htmlPath);
+    }
+
+    const std::string &mdPath = Configuration::get().mdOutput;
+    if (!mdPath.empty()) {
+        writeMdResults(mdPath);
+    }
+
     testResults.clear();
+}
+
+static std::string currentTimestamp() {
+    std::time_t t = std::time(nullptr);
+    std::tm tm = {};
+#ifdef _WIN32
+    localtime_s(&tm, &t);
+#else
+    localtime_r(&t, &tm);
+#endif
+    std::ostringstream timestamp;
+    timestamp << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+    return timestamp.str();
+}
+
+void TestCaseStatistics::writeHtmlResults(const std::string &filePath) {
+    std::ofstream htmlFile(filePath);
+    if (!htmlFile) {
+        std::cerr << "ERROR: cannot open HTML output file: " << filePath << '\n';
+        return;
+    }
+
+    const std::string benchmarkName = BenchmarkInfo::get().getBenchmarkName();
+    const auto &cfg = Configuration::get();
+
+    htmlFile << "<!DOCTYPE html>\n<html>\n<head>\n"
+             << "<meta charset=\"utf-8\">\n"
+             << "<title>" << htmlEscape(benchmarkName) << " results</title>\n"
+             << "<style>\n"
+             << "body{font-family:sans-serif;margin:2em;}\n"
+             << "h1{margin-bottom:0.2em;}\n"
+             << "p.meta{color:#555;margin-top:0;}\n"
+             << "table{border-collapse:collapse;width:100%;}\n"
+             << "th{background:#333;color:#fff;padding:6px 12px;text-align:left;}\n"
+             << "td{padding:5px 12px;border-bottom:1px solid #ddd;font-family:monospace;}\n"
+             << "tr:nth-child(even){background:#f5f5f5;}\n"
+             << "tr:hover{background:#fffbe6;}\n"
+             << "</style>\n</head>\n<body>\n"
+             << "<h1>" << htmlEscape(benchmarkName) << "</h1>\n"
+             << "<p class=\"meta\">Iterations: " << cfg.iterations
+             << " &nbsp;|&nbsp; Warmup: " << cfg.warmupIterations
+             << " &nbsp;|&nbsp; " << currentTimestamp() << "</p>\n";
+
+    if (!deviceInfo.empty()) {
+        htmlFile << "<pre style=\"background:#f0f0f0;padding:0.8em;border-radius:4px;font-size:0.9em;white-space:pre-wrap;\">"
+                 << htmlEscape(deviceInfo)
+                 << "</pre>\n";
+    }
+
+    const auto columns = ColumnInfo::getColumns();
+
+    htmlFile << "<table>\n<thead><tr>";
+    for (const auto &col : columns) {
+        htmlFile << "<th>" << col.label << "</th>";
+    }
+    htmlFile << "</tr></thead>\n<tbody>\n";
+
+    for (const auto &line : testResults) {
+        if (line.isFullLine) {
+            continue;
+        }
+        htmlFile << "<tr><td>" << htmlEscape(line.name) << "</td>";
+        for (size_t colIndex = 1; colIndex < columns.size(); colIndex++) {
+            htmlFile << "<td>" << htmlEscape(extractColumn(line.results, columns, colIndex)) << "</td>";
+        }
+        htmlFile << "</tr>\n";
+    }
+
+    htmlFile << "</tbody>\n</table>\n";
+
+    htmlFile << "<h2>Test Descriptions</h2>\n";
+    for (const auto &entry : TestMap::get()) {
+        const TestCaseInterface &testCase = *entry.second;
+        if (testCase.getApisWithImplementation().empty()) {
+            continue;
+        }
+        htmlFile << "<h3>" << htmlEscape(testCase.getTestCaseName()) << "</h3>\n"
+                 << "<p>" << htmlEscape(testCase.getHelp()) << "</p>\n";
+        const auto arguments = testCase.getArguments();
+        const auto &args = arguments->getArguments();
+        if (!args.empty()) {
+            htmlFile << "<table>\n<thead><tr><th>Argument</th><th>Description</th></tr></thead>\n<tbody>\n";
+            for (const Argument *arg : args) {
+                htmlFile << "<tr><td>" << htmlEscape(arg->getKey()) << "</td>"
+                         << "<td>" << htmlEscape(arg->getExtraHelp()) << "</td></tr>\n";
+            }
+            htmlFile << "</tbody>\n</table>\n";
+        }
+    }
+
+    htmlFile << "</body>\n</html>\n";
+}
+
+void TestCaseStatistics::writeMdResults(const std::string &filePath) {
+    std::ofstream mdFile(filePath);
+    if (!mdFile) {
+        std::cerr << "ERROR: cannot open Markdown output file: " << filePath << '\n';
+        return;
+    }
+
+    const std::string benchmarkName = BenchmarkInfo::get().getBenchmarkName();
+    const auto &cfg = Configuration::get();
+
+    mdFile << "# " << benchmarkName << "\n\n"
+           << "- **Iterations:** " << cfg.iterations << "\n"
+           << "- **Warmup:** " << cfg.warmupIterations << "\n"
+           << "- **Date:** " << currentTimestamp() << "\n\n";
+
+    if (!deviceInfo.empty()) {
+        mdFile << "```\n"
+               << deviceInfo << "```\n\n";
+    }
+
+    const auto columns = ColumnInfo::getColumns();
+
+    for (const auto &col : columns) {
+        mdFile << "| " << col.label << " ";
+    }
+    mdFile << "|\n";
+    for (size_t i = 0; i < columns.size(); i++) {
+        mdFile << "|---";
+    }
+    mdFile << "|\n";
+
+    for (const auto &line : testResults) {
+        if (line.isFullLine) {
+            continue;
+        }
+        mdFile << "| " << line.name;
+        for (size_t colIndex = 1; colIndex < columns.size(); colIndex++) {
+            mdFile << " | " << extractColumn(line.results, columns, colIndex);
+        }
+        mdFile << " |\n";
+    }
+
+    mdFile << "\n## Test Descriptions\n";
+    for (const auto &entry : TestMap::get()) {
+        const TestCaseInterface &testCase = *entry.second;
+        if (testCase.getApisWithImplementation().empty()) {
+            continue;
+        }
+        mdFile << "\n### " << testCase.getTestCaseName() << "\n\n"
+               << testCase.getHelp() << "\n";
+        const auto arguments = testCase.getArguments();
+        const auto &args = arguments->getArguments();
+        if (!args.empty()) {
+            mdFile << "\n| Argument | Description |\n|---|---|\n";
+            for (const Argument *arg : args) {
+                mdFile << "| " << arg->getKey() << " | " << arg->getExtraHelp() << " |\n";
+            }
+        }
+    }
 }
 
 TestCaseStatistics::Metrics::Metrics(const SamplesVector &samples, size_t iterationsToSkip, size_t trimPercentage) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "framework/configuration.h"
 #include "framework/gtest_event_listener.h"
 #include "framework/print_device_info.h"
+#include "framework/test_case/test_case_statistics.h"
 #include "framework/test_map.h"
 #include "framework/utility/common_help_message.h"
 #include "framework/utility/string_utils.h"
@@ -221,7 +222,9 @@ int BenchmarkMain::main() {
 
     // Run tests
     if (!Configuration::get().noHeaders) {
-        DeviceInfo::printDeviceInfo();
+        const std::string deviceInfoStr = DeviceInfo::getDeviceInfoString();
+        std::cout << deviceInfoStr;
+        TestCaseStatistics::setDeviceInfo(deviceInfoStr);
         printVersion(false, "Benchmark version: ");
     }
     ::testing::InitGoogleTest(&argc, argv);

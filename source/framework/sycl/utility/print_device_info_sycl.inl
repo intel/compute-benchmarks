@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ std::map<sycl::backend, std::string> backendToString{
     {sycl::backend::all, "All"}};
 #endif
 
-void printDeviceInfo() {
+void printDeviceInfo(std::ostream &output) {
     auto device = sycl::device{sycl::gpu_selector_v};
     auto platform = device.get_platform();
 
@@ -47,19 +47,19 @@ void printDeviceInfo() {
     auto backend = platform.get_backend();
 
 #ifdef __ACPP__
-    std::cout << "Using SYCL backend: "
-              << "AdaptiveCpp" << std::endl;
+    output << "Using SYCL backend: "
+           << "AdaptiveCpp" << std::endl;
 #else
-    std::cout << "Using SYCL backend: " << backendToString[backend] << std::endl;
+    output << "Using SYCL backend: " << backendToString[backend] << std::endl;
 #endif
-    std::cout << "Driver version: " << driverVersion << std::endl;
+    output << "Driver version: " << driverVersion << std::endl;
 
-    std::cout << "\tDevice: " << deviceName << std::endl;
-    std::cout << "\t\tVendor:\t" << vendorName << std::endl;
-    std::cout << "\t\tType:\t" << deviceType << std::endl;
-    std::cout << "\t\tVersion:\t" << version << std::endl;
+    output << "\tDevice: " << deviceName << std::endl;
+    output << "\t\tVendor:\t" << vendorName << std::endl;
+    output << "\t\tType:\t" << deviceType << std::endl;
+    output << "\t\tVersion:\t" << version << std::endl;
 
-    std::cout << std::endl;
+    output << std::endl;
 }
 
 static void printAvailableDevices() {
