@@ -115,7 +115,6 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
 
             ur_kernel_handle_t kernel;
             EXPECT_UR_RESULT_SUCCESS(urKernelCreate(program, kernelName, &kernel));
-            EXPECT_UR_RESULT_SUCCESS(urKernelSetArgPointer(kernel, 0, nullptr, usm[i][j]));
             kernels[i].push_back(kernel);
         }
 
@@ -152,7 +151,13 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
             ur_event_handle_t *finalSignalEventPtr = useEvents ? &events[i][2] : nullptr;
 
             EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, usm_ptr, src_buffer, allocSize, 0, nullptr, memcpySignalEventPtr));
-            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(queue, kernel, n_dimensions, &global_offset, &arraySize, nullptr, nullptr, useEvents, memcpySignalEventPtr, kernelSignalEventPtr));
+
+            ur_exp_kernel_arg_value_t val = {};
+            val.pointer = usm_ptr;
+
+            ur_exp_kernel_arg_properties_t args[] = {
+                {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_POINTER, 0, sizeof(usm_ptr), val}};
+            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunchWithArgsExp(queue, kernel, n_dimensions, &global_offset, &arraySize, nullptr, 1, args, nullptr, useEvents, memcpySignalEventPtr, kernelSignalEventPtr));
             EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, host_dst, usm_ptr, allocSize, useEvents, kernelSignalEventPtr, finalSignalEventPtr));
 
             if (useBarrier) {
@@ -165,7 +170,8 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
 
         if (useEvents) {
             for (size_t i = 0; i < numOpsPerThread; i++) {
-                EXPECT_UR_RESULT_SUCCESS(urEventWait(1, &events[i].back()));
+                ur_event_handle_t &lastEvent = useBarrier ? events[i][3] : events[i][2];
+                EXPECT_UR_RESULT_SUCCESS(urEventWait(1, &lastEvent));
             }
         } else {
             EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));

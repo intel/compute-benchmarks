@@ -43,12 +43,11 @@ static TestResult run(const UsmRandomMemoryAllocationArguments &arguments, Stati
     for (auto j = 0u; j < arguments.iterations; j++) {
         timer.measureStart();
 
-        if (operation(gen)) { // alloc
+        if (operation(gen) || ptrs.empty()) { // alloc
             void *ptr;
             ASSERT_UR_RESULT_SUCCESS(UR::UsmHelper::allocate(arguments.usmMemoryPlacement, ur.context, ur.device, size->get(gen), &ptr));
             ptrs.push_back(ptr);
         } else { // free
-            assert(!ptrs.empty());
             size_t idx = std::uniform_int_distribution<size_t>{0, ptrs.size() - 1}(gen);
             std::swap(ptrs[idx], ptrs.back());
             ASSERT_UR_RESULT_SUCCESS(urUSMFree(ur.context, ptrs.back()));

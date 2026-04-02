@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,9 +16,9 @@ namespace UR::UsmHelper {
 static ur_result_t allocate(UsmRuntimeMemoryPlacement placement, ur_context_handle_t context, ur_device_handle_t device, size_t size, void **ptr) {
     switch (placement) {
     case UsmRuntimeMemoryPlacement::Host:
-        return urUSMDeviceAlloc(context, device, nullptr, nullptr, size, ptr);
-    case UsmRuntimeMemoryPlacement::Device:
         return urUSMHostAlloc(context, nullptr, nullptr, size, ptr);
+    case UsmRuntimeMemoryPlacement::Device:
+        return urUSMDeviceAlloc(context, device, nullptr, nullptr, size, ptr);
     case UsmRuntimeMemoryPlacement::Shared:
         return urUSMSharedAlloc(context, device, nullptr, nullptr, size, ptr);
     default:
@@ -27,5 +27,3 @@ static ur_result_t allocate(UsmRuntimeMemoryPlacement placement, ur_context_hand
 }
 
 } // namespace UR::UsmHelper
-
-// urUSMDeviceAlloc()

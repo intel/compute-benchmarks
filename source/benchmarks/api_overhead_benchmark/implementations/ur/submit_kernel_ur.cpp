@@ -64,18 +64,20 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     for (auto i = 0u; i < arguments.iterations; i++) {
         profiler.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
-            EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
-                kernel, 0, sizeof(int), nullptr,
-                reinterpret_cast<void *>(&kernelExecutionTime)));
+            ur_exp_kernel_arg_value_t val = {};
+            val.value = reinterpret_cast<void *>(&kernelExecutionTime);
+
+            ur_exp_kernel_arg_properties_t args[] = {
+                {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_VALUE, 0, sizeof(kernelExecutionTime), val}};
 
             ur_event_handle_t *signalEvent = nullptr;
             if (arguments.useEvents) {
                 signalEvent = &events[iteration];
             }
 
-            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
+            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunchWithArgsExp(
                 queue, kernel, n_dimensions, nullptr,
-                &local_size[0], &global_size[0], nullptr, 0, nullptr, signalEvent));
+                &global_size[0], &local_size[0], 1, args, nullptr, 0, nullptr, signalEvent));
         }
 
         if (!arguments.measureCompletionTime) {

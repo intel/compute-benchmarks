@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,9 +37,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(UsmRuntimeMemoryPlacement::Host, UsmRuntimeMemoryPlacement::Device, UsmRuntimeMemoryPlacement::Shared),
         ::testing::Values(128, 1024),
-        ::testing::Values(8, MemoryConstants::kiloByte),
-        ::testing::Values(4 * MemoryConstants::kiloByte,
-                          64 * MemoryConstants::kiloByte,
-                          512 * MemoryConstants::kiloByte,
+        ::testing::Values(MemoryConstants::megaByte),
+        ::testing::Values(MemoryConstants::megaByte,
                           4 * MemoryConstants::megaByte),
         ::testing::Values(DistributionKind::Uniform, DistributionKind::LogUniform)));

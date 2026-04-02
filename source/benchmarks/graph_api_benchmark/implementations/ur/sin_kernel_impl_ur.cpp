@@ -104,20 +104,25 @@ TestResult SinKernelGraphUR::runKernels() {
     float *dest = graphOutputData.get();
     float *source = graphInputData.get();
 
-    EXPECT_UR_RESULT_SUCCESS(urKernelSetArgPointer(kernelAssign, 0, nullptr, dest));
-    EXPECT_UR_RESULT_SUCCESS(urKernelSetArgPointer(kernelAssign, 1, nullptr, source));
+    ur_exp_kernel_arg_value_t val1 = {}, val2 = {};
+    val1.pointer = dest;
+    val2.pointer = source;
+
+    ur_exp_kernel_arg_properties_t args[] = {
+        {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_POINTER, 0, sizeof(dest), val1},
+        {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_POINTER, 1, sizeof(source), val2}};
 
     if (withGraphs) {
         assert(cmdBuffer != nullptr && "Command buffer is not initialized");
-        EXPECT_UR_RESULT_SUCCESS(urCommandBufferAppendKernelLaunchExp(
+        EXPECT_UR_RESULT_SUCCESS(urCommandBufferAppendKernelLaunchWithArgsExp(
             cmdBuffer, kernelAssign, n_dimensions, &global_offset, global_size,
-            nullptr, 0, nullptr, 0, nullptr, 0, nullptr, &syncPoints[0], nullptr,
+            nullptr, 2, args, 0, nullptr, 0, nullptr, 0, nullptr, &syncPoints[0], nullptr,
             nullptr));
     } else {
         assert(queue != nullptr && "Queue is not initialized");
         EXPECT_UR_RESULT_SUCCESS(
-            urEnqueueKernelLaunch(queue, kernelAssign, n_dimensions, &global_offset,
-                                  global_size, nullptr, nullptr, 0, nullptr, nullptr));
+            urEnqueueKernelLaunchWithArgsExp(queue, kernelAssign, n_dimensions, &global_offset,
+                                             global_size, nullptr, 2, args, nullptr, 0, nullptr, nullptr));
     }
 
     for (uint32_t i = 0; i < numKernels; ++i) {
@@ -126,18 +131,24 @@ TestResult SinKernelGraphUR::runKernels() {
         dest = graphOutputData.get();
         source = graphInputData.get();
 
-        EXPECT_UR_RESULT_SUCCESS(urKernelSetArgPointer(kernelSin, 0, nullptr, dest));
-        EXPECT_UR_RESULT_SUCCESS(urKernelSetArgPointer(kernelSin, 1, nullptr, source));
+        ur_exp_kernel_arg_value_t val1 = {}, val2 = {};
+        val1.pointer = dest;
+        val2.pointer = source;
 
+        ur_exp_kernel_arg_properties_t args[] = {
+            {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_POINTER, 0, sizeof(dest), val1},
+            {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_POINTER, 1, sizeof(source), val2}};
         if (withGraphs) {
-            EXPECT_UR_RESULT_SUCCESS(urCommandBufferAppendKernelLaunchExp(
+
+            EXPECT_UR_RESULT_SUCCESS(urCommandBufferAppendKernelLaunchWithArgsExp(
                 cmdBuffer, kernelSin, n_dimensions, &global_offset, global_size,
-                nullptr, 0, nullptr, 1, &syncPoints[i], 0, nullptr,
+                nullptr, 2, args, 0, nullptr, 1, &syncPoints[i], 0, nullptr,
                 &syncPoints[i + 1], nullptr, nullptr));
         } else {
-            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
+
+            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunchWithArgsExp(
                 queue, kernelSin, n_dimensions, &global_offset, global_size,
-                nullptr, nullptr, 0, nullptr, nullptr));
+                nullptr, 2, args, nullptr, 0, nullptr, nullptr));
         }
     }
 

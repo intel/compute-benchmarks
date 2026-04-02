@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,21 +100,28 @@ TestResult Decoder2GraphUR::runLayer() {
     uint32_t numIncrements = INCREMENTS_PER_KERNEL;
     int *data = graphData.get();
 
+    ur_exp_kernel_arg_value_t val1 = {};
+    val1.value = static_cast<void *>(&numIncrements);
+    ur_exp_kernel_arg_value_t val2 = {};
+    val2.pointer = data;
+
+    ur_exp_kernel_arg_properties_t args[] = {
+        {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_VALUE, 0, sizeof(numIncrements), val1},
+        {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_POINTER, 1, sizeof(data), val2}};
+
     // Launch kernels for this layer
     for (uint32_t i = 0; i < KERNELS_PER_LAYER; ++i) {
-        EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(kernel, 0, sizeof(uint32_t), nullptr, &numIncrements));
-        EXPECT_UR_RESULT_SUCCESS(urKernelSetArgPointer(kernel, 1, nullptr, data));
         if (useGraphs) {
             // Append to command buffer
-            EXPECT_UR_RESULT_SUCCESS(urCommandBufferAppendKernelLaunchExp(
+            EXPECT_UR_RESULT_SUCCESS(urCommandBufferAppendKernelLaunchWithArgsExp(
                 cmdBuffer, kernel, nDimensions, &globalOffset, globalWorkGroupSize,
-                nullptr, 0, nullptr, 0, nullptr, 0, nullptr,
+                nullptr, 2, args, 0, nullptr, 0, nullptr, 0, nullptr,
                 nullptr, nullptr, nullptr));
         } else {
             // Eager submission
-            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
+            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunchWithArgsExp(
                 queue, kernel, nDimensions, &globalOffset, globalWorkGroupSize,
-                nullptr, nullptr, 0, nullptr, nullptr));
+                nullptr, 2, args, nullptr, 0, nullptr, nullptr));
         }
     }
 

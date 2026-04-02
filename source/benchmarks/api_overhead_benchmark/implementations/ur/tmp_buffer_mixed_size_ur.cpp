@@ -37,11 +37,15 @@ TestResult execKernel(UrState &ur, ur_kernel_handle_t kernel, QueueData queueDat
         ASSERT_UR_RESULT_SUCCESS(urEnqueueUSMDeviceAllocExp(queueData.queue, nullptr, bufferSize, nullptr, 0, nullptr, &tmpBuffer, nullptr));
     }
 
-    ASSERT_UR_RESULT_SUCCESS(urKernelSetArgValue(kernel, 0, sizeof(tmpBuffer), nullptr, reinterpret_cast<void *>(&tmpBuffer)));
+    ur_exp_kernel_arg_value_t val = {};
+    val.pointer = tmpBuffer;
+
+    ur_exp_kernel_arg_properties_t args[] = {
+        {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_POINTER, 0, sizeof(tmpBuffer), val}};
 
     constexpr size_t globalOffset[] = {0};
     size_t globalSize[] = {bufferSize / sizeof(int)};
-    ASSERT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(queueData.queue, kernel, 1, globalOffset, globalSize, nullptr, nullptr, 0, nullptr, nullptr));
+    ASSERT_UR_RESULT_SUCCESS(urEnqueueKernelLaunchWithArgsExp(queueData.queue, kernel, 1, globalOffset, globalSize, nullptr, 1, args, nullptr, 0, nullptr, nullptr));
 
     if (arguments.strategy == TmpMemoryStrategy::Sync) {
         ASSERT_UR_RESULT_SUCCESS(urQueueFinish(queueData.queue));
@@ -93,6 +97,16 @@ static TestResult run(const TmpBufferMixedSizeArguments &arguments, Statistics &
     // Setup
     UrState ur;
     Timer timer;
+
+    if (arguments.strategy == TmpMemoryStrategy::Async) {
+        ur_bool_t usmPoolSupport = false;
+        auto status = urDeviceGetInfo(ur.device, UR_DEVICE_INFO_ASYNC_USM_ALLOCATIONS_SUPPORT_EXP,
+                                      sizeof(usmPoolSupport), &usmPoolSupport, nullptr);
+
+        if (status != UR_RESULT_SUCCESS || !usmPoolSupport) {
+            return TestResult::DeviceNotCapable;
+        }
+    }
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_fill_with_ones.spv");

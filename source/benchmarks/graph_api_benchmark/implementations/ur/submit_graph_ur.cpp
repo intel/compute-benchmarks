@@ -72,10 +72,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
     ur_kernel_handle_t kernel;
     EXPECT_UR_RESULT_SUCCESS(urKernelCreate(program, kernelName, &kernel));
-    int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime);
-    EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
-        kernel, 0, sizeof(int), nullptr,
-        reinterpret_cast<void *>(&kernelOperationsCount)));
 
     ur_queue_handle_t queue;
     ur_queue_properties_t queueProperties = {};
@@ -125,12 +121,16 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         EXPECT_UR_RESULT_SUCCESS(urQueueBeginCaptureIntoGraphExp(queue, graph));
 
         for (auto i = 0u; i < arguments.numKernels; i++) {
-            EXPECT_UR_RESULT_SUCCESS(urKernelSetArgValue(
-                kernel, 0, sizeof(int), nullptr,
-                reinterpret_cast<void *>(&kernelOperationsCount)));
-            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunch(
+
+            int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime);
+            ur_exp_kernel_arg_value_t val = {};
+            val.value = static_cast<void *>(&kernelOperationsCount);
+
+            ur_exp_kernel_arg_properties_t args[] = {
+                {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_VALUE, 0, sizeof(kernelOperationsCount), val}};
+            EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunchWithArgsExp(
                 queue, kernel, n_dimensions, &global_offset, global_size,
-                nullptr, nullptr, 0, nullptr, nullptr));
+                nullptr, 1, args, nullptr, 0, nullptr, nullptr));
         }
 
         EXPECT_UR_RESULT_SUCCESS(urQueueEndGraphCaptureExp(queue, &graph));
