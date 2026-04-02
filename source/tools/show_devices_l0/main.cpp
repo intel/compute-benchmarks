@@ -64,6 +64,128 @@ std::string parseCaps(ze_memory_access_cap_flags_t flags) {
     return capsToReturn;
 }
 
+std::string parseFpFlags(ze_device_fp_flags_t flags) {
+    if (flags == 0u)
+        return "NONE";
+    std::string s;
+    if (flags & ZE_DEVICE_FP_FLAG_DENORM)
+        s += "DENORM ";
+    if (flags & ZE_DEVICE_FP_FLAG_INF_NAN)
+        s += "INF_NAN ";
+    if (flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST)
+        s += "ROUND_TO_NEAREST ";
+    if (flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO)
+        s += "ROUND_TO_ZERO ";
+    if (flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF)
+        s += "ROUND_TO_INF ";
+    if (flags & ZE_DEVICE_FP_FLAG_FMA)
+        s += "FMA ";
+    if (flags & ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT)
+        s += "ROUNDED_DIVIDE_SQRT ";
+    if (flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT)
+        s += "SOFT_FLOAT ";
+    return s;
+}
+
+int printComputeProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
+    ze_device_compute_properties_t computeProps = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES};
+    if (zeDeviceGetComputeProperties(device, &computeProps) != ZE_RESULT_SUCCESS) {
+        std::cerr << "zeDeviceGetComputeProperties failed\n";
+        return -1;
+    }
+    std::string tab(numberOfTabs, '\t');
+    std::cout << tab << "Compute properties:\n"
+              << tab << "\tmaxTotalGroupSize:   " << computeProps.maxTotalGroupSize << "\n"
+              << tab << "\tmaxGroupSize:        " << computeProps.maxGroupSizeX << " x "
+              << computeProps.maxGroupSizeY << " x " << computeProps.maxGroupSizeZ << "\n"
+              << tab << "\tmaxGroupCount:       " << computeProps.maxGroupCountX << " x "
+              << computeProps.maxGroupCountY << " x " << computeProps.maxGroupCountZ << "\n"
+              << tab << "\tmaxSharedLocalMemory:" << computeProps.maxSharedLocalMemory << "\n"
+              << tab << "\tsubGroupSizes:       ";
+    for (uint32_t i = 0; i < computeProps.numSubGroupSizes; i++) {
+        std::cout << computeProps.subGroupSizes[i];
+        if (i + 1 < computeProps.numSubGroupSizes)
+            std::cout << ", ";
+    }
+    std::cout << "\n";
+    return 0;
+}
+
+int printModuleProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
+    ze_device_module_properties_t moduleProps = {ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES};
+    if (zeDeviceGetModuleProperties(device, &moduleProps) != ZE_RESULT_SUCCESS) {
+        std::cerr << "zeDeviceGetModuleProperties failed\n";
+        return -1;
+    }
+    std::string tab(numberOfTabs, '\t');
+    std::string modFlags;
+    if (moduleProps.flags == 0) {
+        modFlags = "NONE";
+    } else {
+        if (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_FP16)
+            modFlags += "FP16 ";
+        if (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_FP64)
+            modFlags += "FP64 ";
+        if (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS)
+            modFlags += "INT64_ATOMICS ";
+        if (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_DP4A)
+            modFlags += "DP4A ";
+    }
+    std::cout << tab << "Module properties:\n"
+              << tab << "\tspirv version:    " << ZE_MAJOR_VERSION(moduleProps.spirvVersionSupported)
+              << "." << ZE_MINOR_VERSION(moduleProps.spirvVersionSupported) << "\n"
+              << tab << "\tflags:            " << modFlags << "\n"
+              << tab << "\tfp16 flags:       " << parseFpFlags(moduleProps.fp16flags) << "\n"
+              << tab << "\tfp32 flags:       " << parseFpFlags(moduleProps.fp32flags) << "\n"
+              << tab << "\tfp64 flags:       " << parseFpFlags(moduleProps.fp64flags) << "\n"
+              << tab << "\tmaxArgumentsSize: " << moduleProps.maxArgumentsSize << "\n"
+              << tab << "\tprintfBufferSize: " << moduleProps.printfBufferSize << "\n";
+    return 0;
+}
+
+int printImageProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
+    ze_device_image_properties_t imageProps = {ZE_STRUCTURE_TYPE_DEVICE_IMAGE_PROPERTIES};
+    if (zeDeviceGetImageProperties(device, &imageProps) != ZE_RESULT_SUCCESS) {
+        std::cerr << "zeDeviceGetImageProperties failed\n";
+        return -1;
+    }
+    std::string tab(numberOfTabs, '\t');
+    std::cout << tab << "Image properties:\n"
+              << tab << "\tmaxImageDims1D:      " << imageProps.maxImageDims1D << "\n"
+              << tab << "\tmaxImageDims2D:      " << imageProps.maxImageDims2D << "\n"
+              << tab << "\tmaxImageDims3D:      " << imageProps.maxImageDims3D << "\n"
+              << tab << "\tmaxImageBufferSize:  " << imageProps.maxImageBufferSize << "\n"
+              << tab << "\tmaxImageArraySlices: " << imageProps.maxImageArraySlices << "\n"
+              << tab << "\tmaxSamplers:         " << imageProps.maxSamplers << "\n"
+              << tab << "\tmaxReadImageArgs:    " << imageProps.maxReadImageArgs << "\n"
+              << tab << "\tmaxWriteImageArgs:   " << imageProps.maxWriteImageArgs << "\n";
+    return 0;
+}
+
+int printCacheProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
+    uint32_t count = 0;
+    if (zeDeviceGetCacheProperties(device, &count, nullptr) != ZE_RESULT_SUCCESS || count == 0) {
+        return 0;
+    }
+    std::vector<ze_device_cache_properties_t> cacheProps(count, {ZE_STRUCTURE_TYPE_DEVICE_CACHE_PROPERTIES});
+    if (zeDeviceGetCacheProperties(device, &count, cacheProps.data()) != ZE_RESULT_SUCCESS) {
+        std::cerr << "zeDeviceGetCacheProperties failed\n";
+        return -1;
+    }
+    std::string tab(numberOfTabs, '\t');
+    std::cout << tab << "Cache properties (" << count << "):\n";
+    for (uint32_t i = 0; i < count; i++) {
+        std::string cacheFlags;
+        if (cacheProps[i].flags & ZE_DEVICE_CACHE_PROPERTY_FLAG_USER_CONTROL)
+            cacheFlags += "USER_CONTROL ";
+        if (cacheFlags.empty())
+            cacheFlags = "NONE";
+        std::cout << tab << "\t[" << i << "] size: " << cacheProps[i].cacheSize
+                  << "  flags: " << cacheFlags << "\n";
+    }
+    return 0;
+}
+
 int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
     ze_device_properties_t deviceProperties = {};
     ze_result_t res = zeDeviceGetProperties(device, &deviceProperties);
@@ -112,17 +234,102 @@ int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
     }
     std::cout << tabDelimiter << "\tflags: [" << flagStr << " ]\n";
 
-    ze_device_memory_properties_t memoryProperties = {};
+    auto memoryTypeToString = [](ze_device_memory_ext_type_t type) -> std::string {
+        switch (type) {
+        case ZE_DEVICE_MEMORY_EXT_TYPE_HBM:
+            return "HBM";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_HBM2:
+            return "HBM2";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_DDR:
+            return "DDR";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_DDR2:
+            return "DDR2";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_DDR3:
+            return "DDR3";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_DDR4:
+            return "DDR4";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_DDR5:
+            return "DDR5";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR:
+            return "LPDDR";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR3:
+            return "LPDDR3";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4:
+            return "LPDDR4";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5:
+            return "LPDDR5";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_SRAM:
+            return "SRAM";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_L1:
+            return "L1";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_L3:
+            return "L3";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_GRF:
+            return "GRF";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_SLM:
+            return "SLM";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_GDDR4:
+            return "GDDR4";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_GDDR5:
+            return "GDDR5";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_GDDR5X:
+            return "GDDR5X";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6:
+            return "GDDR6";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6X:
+            return "GDDR6X";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7:
+            return "GDDR7";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_HBM2E:
+            return "HBM2E";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_HBM3:
+            return "HBM3";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_HBM3E:
+            return "HBM3E";
+        case ZE_DEVICE_MEMORY_EXT_TYPE_HBM4:
+            return "HBM4";
+        default:
+            return "UNKNOWN";
+        }
+    };
+    auto bandwidthUnitToString = [](ze_bandwidth_unit_t unit) -> std::string {
+        switch (unit) {
+        case ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC:
+            return "bytes/ns";
+        case ZE_BANDWIDTH_UNIT_BYTES_PER_CLOCK:
+            return "bytes/clock";
+        default:
+            return "unknown";
+        }
+    };
+
     uint32_t count = 0u;
     res = zeDeviceGetMemoryProperties(device, &count, nullptr);
-    if (res == ZE_RESULT_SUCCESS && count == 1) {
-        if (zeDeviceGetMemoryProperties(device, &count, &memoryProperties) != ZE_RESULT_SUCCESS) {
+    if (res == ZE_RESULT_SUCCESS && count > 0) {
+        std::vector<ze_device_memory_ext_properties_t> memoryExtProperties(count);
+        std::vector<ze_device_memory_properties_t> memoryProperties(count);
+        for (uint32_t i = 0; i < count; i++) {
+            memoryExtProperties[i].stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_EXT_PROPERTIES;
+            memoryExtProperties[i].pNext = nullptr;
+            memoryProperties[i].stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES;
+            memoryProperties[i].pNext = &memoryExtProperties[i];
+        }
+        if (zeDeviceGetMemoryProperties(device, &count, memoryProperties.data()) != ZE_RESULT_SUCCESS) {
             std::cerr << "zeDeviceGetMemoryProperties failed\n";
             return -1;
         }
-        std::cout << tabDelimiter << "Memory properties: \n";
-        std::cout << tabDelimiter << "\ttotal size: " << std::dec << memoryProperties.totalSize << "\n";
-        std::cout << tabDelimiter << "\tmax clock rate: " << memoryProperties.maxClockRate << "\n";
+        std::cout << tabDelimiter << "Memory properties (" << count << "):\n";
+        for (uint32_t i = 0; i < count; i++) {
+            std::cout << tabDelimiter << "\t[" << i << "] name:           " << memoryProperties[i].name << "\n";
+            std::cout << tabDelimiter << "\t[" << i << "] total size:     " << std::dec << memoryProperties[i].totalSize << "\n";
+            std::cout << tabDelimiter << "\t[" << i << "] max clock rate: " << memoryProperties[i].maxClockRate << "\n";
+            std::cout << tabDelimiter << "\t[" << i << "] type:           " << memoryTypeToString(memoryExtProperties[i].type) << "\n";
+            std::cout << tabDelimiter << "\t[" << i << "] physical size:  " << memoryExtProperties[i].physicalSize << "\n";
+            std::cout << tabDelimiter << "\t[" << i << "] read BW:        " << memoryExtProperties[i].readBandwidth
+                      << " " << bandwidthUnitToString(memoryExtProperties[i].bandwidthUnit) << "\n";
+            std::cout << tabDelimiter << "\t[" << i << "] write BW:       " << memoryExtProperties[i].writeBandwidth
+                      << " " << bandwidthUnitToString(memoryExtProperties[i].bandwidthUnit) << "\n";
+        }
     }
 
     ze_device_memory_access_properties_t memoryAccessCapabilities = {};
@@ -151,6 +358,26 @@ int printPropertiesForAllSubDevices(ze_device_handle_t device, uint32_t numberOf
     }
 
     ret = printAvailableEngines(device, numberOfTabs);
+    if (ret) {
+        return -1;
+    }
+
+    ret = printComputeProperties(device, numberOfTabs);
+    if (ret) {
+        return -1;
+    }
+
+    ret = printModuleProperties(device, numberOfTabs);
+    if (ret) {
+        return -1;
+    }
+
+    ret = printImageProperties(device, numberOfTabs);
+    if (ret) {
+        return -1;
+    }
+
+    ret = printCacheProperties(device, numberOfTabs);
     if (ret) {
         return -1;
     }
