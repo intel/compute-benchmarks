@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@
 #include "framework/sycl/sycl.h"
 
 namespace SYCL::UsmHelper {
+
+static constexpr auto misalignedOffset = 4u;
 
 void *allocate(UsmMemoryPlacement placement, const Sycl &sycl, size_t size);
 
