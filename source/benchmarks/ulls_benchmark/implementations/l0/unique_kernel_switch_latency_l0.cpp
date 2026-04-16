@@ -38,8 +38,8 @@ static TestResult run(const UniqueKernelSwitchLatencyArguments &arguments, Stati
         auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_unique_kernel_switch_latency.cl", "uniqueKernel", &kernels[i], &modules[i], nullptr);
         if (kernelLoadRes != TestResult::Success) {
             for (auto j = 0u; j < i; ++j) {
-                zeKernelDestroy(kernels[j]);
-                zeModuleDestroy(modules[j]);
+                EXPECT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernels[j]));
+                EXPECT_ZE_RESULT_SUCCESS(zeModuleDestroy(modules[j]));
             }
             return kernelLoadRes;
         }
