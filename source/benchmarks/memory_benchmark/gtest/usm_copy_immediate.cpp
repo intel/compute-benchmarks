@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
 #include "framework/utility/memory_constants.h"
+#include "framework/utility/usm_copy_direction_skip.h"
 [[maybe_unused]] static const inline RegisterTestCase<UsmCopyImmediate> registerTestCase{};
 
 #include <gtest/gtest.h>
@@ -27,6 +28,10 @@ TEST_P(UsmCopyImmediateTest, Test) {
     args.forceBlitter = std::get<4>(GetParam());
     args.useEvents = std::get<5>(GetParam());
     args.withCopyOffload = std::get<6>(GetParam());
+
+    if (shouldSkipCopyDirection(args.sourcePlacement, args.destinationPlacement)) {
+        GTEST_SKIP();
+    }
 
     if (args.forceBlitter && args.withCopyOffload) {
         GTEST_SKIP(); // If copy offload were to be executed on blitter

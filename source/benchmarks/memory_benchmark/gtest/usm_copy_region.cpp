@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
 #include "framework/utility/memory_constants.h"
+#include "framework/utility/usm_copy_direction_skip.h"
 [[maybe_unused]] static const inline RegisterTestCase<UsmCopyRegion> registerTestCase{};
 
 #include <gtest/gtest.h>
@@ -30,6 +31,10 @@ TEST_P(UsmCopyRegionTest, Test) {
     args.contents = std::get<5>(GetParam());
     args.forceBlitter = std::get<6>(GetParam());
     args.useEvents = std::get<7>(GetParam());
+
+    if (shouldSkipCopyDirection(args.sourcePlacement, args.destinationPlacement)) {
+        GTEST_SKIP();
+    }
 
     UsmCopyRegion test;
     test.run(args);

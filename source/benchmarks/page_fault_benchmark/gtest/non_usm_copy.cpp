@@ -12,6 +12,8 @@
 #include "framework/utility/memory_constants.h"
 [[maybe_unused]] static const inline RegisterTestCase<NonUsmCopy> registerTestCase{};
 
+#include "framework/utility/usm_copy_direction_skip.h"
+
 #include <gtest/gtest.h>
 
 class NonUsmCopyTest : public ::testing::TestWithParam<std::tuple<UsmMemoryPlacement, UsmMemoryPlacement, size_t, bool, bool, bool>> {
@@ -26,6 +28,10 @@ TEST_P(NonUsmCopyTest, Test) {
     args.updateOnHost = std::get<3>(GetParam());
     args.reallocate = std::get<4>(GetParam());
     args.prefetch = std::get<5>(GetParam());
+
+    if (shouldSkipCopyDirection(args.sourcePlacement, args.destinationPlacement)) {
+        GTEST_SKIP();
+    }
 
     NonUsmCopy test;
     test.run(args);

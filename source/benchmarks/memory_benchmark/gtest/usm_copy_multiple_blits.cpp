@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
 #include "framework/utility/memory_constants.h"
+#include "framework/utility/usm_copy_direction_skip.h"
 
 #include <gtest/gtest.h>
 
@@ -25,6 +26,10 @@ TEST_P(UsmCopyMultipleBlitsTest, Test) {
     args.destinationPlacement = std::get<2>(GetParam());
     args.size = std::get<3>(GetParam());
     args.blitters = std::get<4>(GetParam());
+
+    if (shouldSkipCopyDirection(args.sourcePlacement, args.destinationPlacement)) {
+        GTEST_SKIP();
+    }
 
     UsmCopyMultipleBlits test;
     test.run(args);

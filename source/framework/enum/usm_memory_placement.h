@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,33 @@ inline constexpr bool isSharedSystemPointer(UsmMemoryPlacement inputType) {
         return true;
     }
     return false;
+}
+
+inline constexpr bool isDeviceMemoryType(UsmMemoryPlacement inputType) {
+    switch (inputType) {
+    case UsmMemoryPlacement::Device:
+    case UsmMemoryPlacement::Shared:
+        return true;
+    default:
+        return false;
+    }
+}
+
+inline constexpr bool isHostMemoryType(UsmMemoryPlacement inputType) {
+    switch (inputType) {
+    case UsmMemoryPlacement::Host:
+    case UsmMemoryPlacement::NonUsm:
+    case UsmMemoryPlacement::NonUsmMapped:
+    case UsmMemoryPlacement::NonUsmMisaligned:
+    case UsmMemoryPlacement::NonUsm4KBAligned:
+    case UsmMemoryPlacement::NonUsm2MBAligned:
+    case UsmMemoryPlacement::NonUsmImportedMisaligned:
+    case UsmMemoryPlacement::NonUsmImported4KBAligned:
+    case UsmMemoryPlacement::NonUsmImported2MBAligned:
+        return true;
+    default:
+        return false;
+    }
 }
 
 inline constexpr bool isUsmMemoryType(UsmMemoryPlacement inputType) {

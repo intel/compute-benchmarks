@@ -10,6 +10,7 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
 #include "framework/utility/memory_constants.h"
+#include "framework/utility/usm_copy_direction_skip.h"
 
 #include <gtest/gtest.h>
 
@@ -26,6 +27,10 @@ TEST_P(CopyPriorityPreemptionTest, Test) {
     args.src = std::get<3>(GetParam());
     args.dst = std::get<4>(GetParam());
     args.forceBlitter = std::get<5>(GetParam());
+
+    if (shouldSkipCopyDirection(args.src, args.dst)) {
+        GTEST_SKIP();
+    }
 
     CopyPriorityPreemption test;
     test.run(args);

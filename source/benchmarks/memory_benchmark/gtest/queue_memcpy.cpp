@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/memory_constants.h"
+#include "framework/utility/usm_copy_direction_skip.h"
 
 #include <gtest/gtest.h>
 
@@ -22,6 +23,11 @@ TEST_P(QueueMemcpyTest, Test) {
     args.sourcePlacement = std::get<0>(GetParam());
     args.destinationPlacement = std::get<1>(GetParam());
     args.size = std::get<2>(GetParam());
+
+    if (shouldSkipCopyDirection(args.sourcePlacement, args.destinationPlacement)) {
+        GTEST_SKIP();
+    }
+
     QueueMemcpy test;
     test.run(args);
 }
