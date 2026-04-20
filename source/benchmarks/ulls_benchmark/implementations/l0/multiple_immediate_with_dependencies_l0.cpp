@@ -6,6 +6,7 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/queue_families_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
@@ -14,29 +15,21 @@
 
 #include <gtest/gtest.h>
 
-TestResult runSingleIteration(const MultipleImmediateCmdListsWithDependenciesArguments &arguments, const std::vector<ze_command_list_handle_t> &cmdLists,
-                              const std::vector<ze_kernel_handle_t> &kernels, std::vector<ze_event_handle_t> &events, uint32_t submissionsPerQueue) {
+static TestResult runSingleIteration(const MultipleImmediateCmdListsWithDependenciesArguments &arguments, const std::vector<ze_command_list_handle_t> &cmdLists,
+                                     const std::vector<ze_kernel_handle_t> &kernels, const std::vector<ze_event_handle_t> &events) {
     const ze_group_count_t groupCount{1, 1, 1};
     const uint32_t cmdlistCount = static_cast<uint32_t>(arguments.cmdlistCount);
-    const uint32_t totalEventCount = submissionsPerQueue * cmdlistCount;
-
-    uint32_t eventIdentifier = 0;
-
-    // Dispatch first kernel on each cmd list, to mark them as active
-    for (uint32_t i = 0u; i < cmdlistCount; i++) {
-        eventIdentifier = i * submissionsPerQueue;
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdLists[i], kernels[i], &groupCount, events[eventIdentifier], 0, nullptr));
-    }
+    const uint32_t submissionsPerQueue = static_cast<uint32_t>(arguments.submissionsPerQueue);
 
     for (uint32_t i = 0u; i < cmdlistCount; i++) {
-        for (uint32_t j = 1u; j < submissionsPerQueue; j++) {
-            eventIdentifier = (i * submissionsPerQueue) + j;
-
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdLists[i], kernels[i], &groupCount, events[eventIdentifier], 1, &events[eventIdentifier - 1]));
+        for (uint32_t j = 0u; j < submissionsPerQueue; j++) {
+            ze_event_handle_t signalEvent = (j == submissionsPerQueue - 1u) ? events[i] : nullptr;
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdLists[i], kernels[i], &groupCount, signalEvent, 0, nullptr));
         }
     }
+
     if (arguments.useEventForHostSync) {
-        for (uint32_t i = 0u; i < totalEventCount; i++) {
+        for (uint32_t i = 0u; i < cmdlistCount; i++) {
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(events[i], std::numeric_limits<uint64_t>::max()));
         }
     } else {
@@ -59,25 +52,13 @@ static TestResult run(const MultipleImmediateCmdListsWithDependenciesArguments &
     LevelZero levelzero{QueueProperties::create().disable()};
     Timer timer;
 
-    const uint32_t submissionsPerQueue = 4u;
-    const uint32_t totalEventCount = submissionsPerQueue * static_cast<uint32_t>(arguments.cmdlistCount);
+    const uint32_t cmdlistCount = static_cast<uint32_t>(arguments.cmdlistCount);
 
-    // Create events
-    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = totalEventCount;
-    ze_event_pool_handle_t eventPool;
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
-    ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
-    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
-    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-    std::vector<ze_event_handle_t> events(totalEventCount);
-    for (auto i = 0u; i < totalEventCount; i++) {
-        eventDesc.index = i;
-        ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[i]));
+    std::vector<ze_event_handle_t> events(cmdlistCount);
+    for (auto i = 0u; i < cmdlistCount; i++) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &defaultIntelCounterBasedEventDesc, &events[i]));
     }
 
-    // Create and configure kernels
     const auto kernelBinary = FileHelper::loadBinaryFile("ulls_benchmark_eat_time.spv");
     if (kernelBinary.size() == 0) {
         return TestResult::KernelNotFound;
@@ -91,46 +72,39 @@ static TestResult run(const MultipleImmediateCmdListsWithDependenciesArguments &
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;
     kernelDesc.pKernelName = "eat_time";
-    std::vector<ze_kernel_handle_t> kernels(arguments.cmdlistCount);
-    for (auto i = 0u; i < arguments.cmdlistCount; i++) {
+    std::vector<ze_kernel_handle_t> kernels(cmdlistCount);
+    for (auto i = 0u; i < cmdlistCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernels[i]));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernels[i], 1, 1, 1));
         int32_t time = 100;
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[i], 0, sizeof(time), &time));
     }
 
-    // Create an immediate command lists
-    std::vector<ze_command_list_handle_t> cmdLists(arguments.cmdlistCount);
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, Engine::Ccs0);
-    for (auto i = 0u; i < arguments.cmdlistCount; i++) {
+    commandQueueDesc->desc.flags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::vector<ze_command_list_handle_t> cmdLists(cmdlistCount);
+    for (auto i = 0u; i < cmdlistCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdLists[i]));
     }
 
-    // Benchmark
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
         timer.measureStart();
-        auto result = runSingleIteration(arguments, cmdLists, kernels, events, submissionsPerQueue);
+        auto result = runSingleIteration(arguments, cmdLists, kernels, events);
         if (result != TestResult::Success) {
             return result;
         }
         timer.measureEnd();
-        for (auto i = 0u; i < totalEventCount; i++) {
-            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[i]));
-        }
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
-
-    for (auto i = 0u; i < arguments.cmdlistCount; i++) {
+    for (auto i = 0u; i < cmdlistCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernels[i]));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdLists[i]));
     }
-    for (auto i = 0u; i < totalEventCount; i++) {
+    for (auto i = 0u; i < cmdlistCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(events[i]));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     return TestResult::Success;
 }
 

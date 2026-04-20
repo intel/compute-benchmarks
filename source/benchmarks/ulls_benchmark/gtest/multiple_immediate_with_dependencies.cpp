@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,14 +13,15 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<MultipleImmediateCmdListsWithDependencies> registerTestCase{};
 
-class MultipleImmediateCmdListsWithDependenciesTests : public ::testing::TestWithParam<std::tuple<Api, size_t, bool>> {
+class MultipleImmediateCmdListsWithDependenciesTests : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, bool>> {
 };
 
 TEST_P(MultipleImmediateCmdListsWithDependenciesTests, Test) {
     MultipleImmediateCmdListsWithDependenciesArguments args{};
     args.api = std::get<0>(GetParam());
     args.cmdlistCount = std::get<1>(GetParam());
-    args.useEventForHostSync = std::get<2>(GetParam());
+    args.submissionsPerQueue = std::get<2>(GetParam());
+    args.useEventForHostSync = std::get<3>(GetParam());
 
     MultipleImmediateCmdListsWithDependencies test;
     test.run(args);
@@ -32,4 +33,5 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(Api::L0),
         ::testing::Values(1, 2, 4, 8),
+        ::testing::Values(1, 4),
         ::testing::Values(true, false)));

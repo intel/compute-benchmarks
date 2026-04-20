@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,11 @@
 
 struct MultipleImmediateCmdListsWithDependenciesArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument cmdlistCount;
+    PositiveIntegerArgument submissionsPerQueue;
     BooleanArgument useEventForHostSync;
     MultipleImmediateCmdListsWithDependenciesArguments()
         : cmdlistCount(*this, "cmdlistCount", "Count of command lists"),
+          submissionsPerQueue(*this, "submissionsPerQueue", "Number of kernel submissions per command list"),
           useEventForHostSync(*this, "UseEventForHostSync",
                               "If true, use events to synchronize with host. If false, use zeCommandListHostSynchronize") {}
 };
