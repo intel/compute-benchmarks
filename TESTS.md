@@ -79,6 +79,14 @@ SeparateAtomicsExplicit|enqueues kernel performing an atomic operation on differ
 
 
 
+# compute_benchmark
+Compute Benchmark is a set of tests aimed at measuring floating point compute throughput of GPU kernels.
+| Test name | Description | Params | L0 | OCL |
+|-----------|-------------|--------|----|-----|
+SinglePrecisionPerformance|measures single precision floating point throughput in GFLOPS by executing FMA operations in a kernel, dispatch size is determined automatically from device capabilities|<ul><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
+
+
+
 # emu_benchmark
 Emulation Benchmark is a set of tests aimed at measuring performance of emulated math operations performed in kernels.
 | Test name | Description | Params | L0 | OCL |

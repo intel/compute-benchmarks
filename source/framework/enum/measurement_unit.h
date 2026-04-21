@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@ enum class MeasurementUnit {
     Microseconds,
     Nanoseconds,
     GigabytesPerSecond,
+    GigaFLOPS,
     Latency,
     Percentage,
     MicroJoules,
@@ -32,6 +33,8 @@ inline std::string to_string(MeasurementUnit unit) {
         return "[us]";
     case MeasurementUnit::GigabytesPerSecond:
         return "[GB/s]";
+    case MeasurementUnit::GigaFLOPS:
+        return "[GFLOPS]";
     case MeasurementUnit::Latency:
         return "[clk]";
     case MeasurementUnit::Percentage:

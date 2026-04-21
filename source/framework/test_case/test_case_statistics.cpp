@@ -64,6 +64,7 @@ void TestCaseStatistics::pushValue(Clock::duration time, MeasurementUnit unit, M
         break;
     }
     case MeasurementUnit::GigabytesPerSecond:
+    case MeasurementUnit::GigaFLOPS:
         FATAL_ERROR("Buffer size needs to be passed when unit is ", std::to_string(unit));
     default:
         FATAL_ERROR("Unknown measurement unit");
@@ -72,7 +73,7 @@ void TestCaseStatistics::pushValue(Clock::duration time, MeasurementUnit unit, M
 
 void TestCaseStatistics::pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, const std::string &description) {
     static_assert(std::is_floating_point_v<Value>, "Need floating point type for the below cast to work properly");
-    if (unit != MeasurementUnit::GigabytesPerSecond) {
+    if (unit != MeasurementUnit::GigabytesPerSecond && unit != MeasurementUnit::GigaFLOPS) {
         FATAL_ERROR("Test is passing size which requires Bandwidth calculcation, please fix benchmark");
     }
 
@@ -90,6 +91,12 @@ void TestCaseStatistics::pushValue(Clock::duration time, uint64_t size, Measurem
         const Value timeNanoseconds = timeSeconds * 1e9;
         const Value bandwidth = size / timeNanoseconds; // Bytes/Nanoseconds = Gigabytes/Seconds
         this->pushValue(bandwidth, description, unit, type);
+        break;
+    }
+    case MeasurementUnit::GigaFLOPS: {
+        const Value timeNanoseconds = timeSeconds * 1e9;
+        const Value throughput = size / timeNanoseconds; // FLOP/Nanoseconds = GigaFLOPS
+        this->pushValue(throughput, description, unit, type);
         break;
     }
     default:
