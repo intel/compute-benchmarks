@@ -29,5 +29,5 @@ INSTANTIATE_TEST_SUITE_P(
     SinglePrecisionPerformanceTest,
     SinglePrecisionPerformanceTest,
     ::testing::Combine(
-        ::testing::Values(Api::OpenCL, Api::L0),
+        ::testing::Values(Api::OpenCL, Api::L0, Api::OPT),
         ::testing::Values(true)));

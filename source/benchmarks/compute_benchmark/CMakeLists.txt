@@ -5,3 +5,4 @@
 #
 
 add_benchmark(compute_benchmark ocl l0)
+add_subdirectories()
