@@ -100,7 +100,7 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
     const size_t gws = arguments.workgroupSize * arguments.workgroupCount;
     const size_t loopIterations = 200u;                                // tweakable constant
     const size_t operationsPerLoop = 128u;                             // non-tweakable constant, this is hardcoded in the kernel code
-    const size_t initIterations = 1 + arguments.mixGrfModes;           // warmup + mixGrf iterations
+    const size_t initIterations = arguments.mixGrfModes;               // mixGrf iterations
     const size_t enqueueCount = arguments.iterations + initIterations; // non-tweakable constant
     const auto data = MathOperationHelper::generateTestData(arguments.dataType, arguments.operation, loopIterations, operationsPerLoop, enqueueCount);
 
