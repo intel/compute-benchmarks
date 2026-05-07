@@ -261,13 +261,9 @@ TestResult mutateList(TestEnv &env,
     ze_group_count_t groupCount = env.groupCount;
 
     if (iteration % 2 != 0) {
-        // preserve overall size of group size, change within dimensions, enough to cause group size mutation in odd iterations
-        uint32_t tmpValue = grpSize[1];
-        grpSize[1] = grpSize[0];
-        grpSize[0] = tmpValue;
-
-        // increase group count causes group count mutation in odd iterations
-        groupCount.groupCountX += 1;
+        // halve X group size and double X group count to preserve total thread count (groupCountX * grpSize[0] = env.size)
+        grpSize[0] /= 2;
+        groupCount.groupCountX *= 2;
 
         // switch memory argument from default in odd iterations
         dest = env.graphInputData.get();
@@ -330,6 +326,11 @@ TestResult fillList(const MutateGraphArguments &arguments, TestEnv &env, ze_comm
     float *dest = env.graphOutputData.get();
     float *source = env.graphInputData.get();
 
+    // make sure that we change the inputs to prevent Runtime optimizations for the same value
+    if (iteration % 2 != 0) {
+        std::swap(source, dest);
+    }
+
     for (uint32_t kernelId = 0; kernelId < arguments.numKernels; ++kernelId) {
         ze_event_handle_t previous = nullptr;
         ze_event_handle_t next = nullptr;
@@ -347,12 +348,6 @@ TestResult fillList(const MutateGraphArguments &arguments, TestEnv &env, ze_comm
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(currentKernelHandle, env.size, 1, 1, grpSize,
                                                           grpSize + 1, grpSize + 2));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(currentKernelHandle, grpSize[0], grpSize[1], grpSize[2]));
-
-        // make sure that we change the inputs to prevent Runtime optimizations for the same value
-        if (iteration % 2 != 0) {
-            std::swap(source, dest);
-            std::swap(grpSize[0], grpSize[1]);
-        }
 
         ASSERT_ZE_RESULT_SUCCESS(
             zeKernelSetArgumentValue(currentKernelHandle, 0, sizeof(float *), &dest));
