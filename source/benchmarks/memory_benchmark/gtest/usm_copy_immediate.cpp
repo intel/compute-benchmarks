@@ -58,7 +58,7 @@ INSTANTIATE_TEST_SUITE_P(
     UsmCopyImmediateTestLIMITED,
     UsmCopyImmediateTest,
     ::testing::Combine(
-        ::testing::Values(UsmMemoryPlacement::Device),
+        ::testing::Values(UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared),
         ::testing::Values(UsmMemoryPlacement::NonUsm4KBAligned),
         ::testing::Values(128 * megaByte),
         ::testing::Values(BufferContents::Zeros),

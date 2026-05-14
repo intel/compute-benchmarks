@@ -56,7 +56,7 @@ INSTANTIATE_TEST_SUITE_P(
     UsmCopyTest,
     ::testing::Combine(
         ::testing::Values(Api::L0, Api::OpenCL),
-        ::testing::Values(UsmMemoryPlacement::Device),
+        ::testing::Values(UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared),
         ::testing::Values(UsmMemoryPlacement::NonUsm4KBAligned),
         ::testing::Values(128 * megaByte),
         ::testing::Values(BufferContents::Zeros),
