@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(false, true),
-        ::testing::Values(1u, 10u),
+        ::testing::Values(10u),
         ::testing::Values(false, true),
         ::testing::Values(1u, 100u),
         ::testing::Values(false, true),
