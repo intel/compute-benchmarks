@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,7 +83,12 @@ TestResult Decoder2GraphSYCL::runAllLayers() {
 TestResult Decoder2GraphSYCL::recordGraph() {
     // No-op if eager execution is used
     if (useGraphs) {
-        graph = sycl_ext::command_graph<sycl_ext::graph_state::modifiable>(*queue);
+        // Use native recording when no host tasks are captured (host tasks cannot be captured at the backend level)
+        const bool useNativeRecording = !useHostTasks;
+        sycl::property_list graphProps = useNativeRecording
+                                             ? sycl::property_list{sycl_ext::property::graph::enable_native_recording{}}
+                                             : sycl::property_list{};
+        graph = sycl_ext::command_graph<sycl_ext::graph_state::modifiable>{queue->get_context(), queue->get_device(), graphProps};
 
         graph->begin_recording(*queue);
         if (useHostTasks)

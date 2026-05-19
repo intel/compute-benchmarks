@@ -61,8 +61,13 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
             }
         };
 
-        // Building the graph without explicit dependencies
-        sycl::ext::oneapi::experimental::command_graph graph(queue.get_context(), queue.get_device());
+        // Use native recording when queue recording is used with an in-order queue and no host tasks
+        namespace sycl_ext = sycl::ext::oneapi::experimental;
+        const bool useNativeRecording = !arguments.useExplicit && arguments.inOrderQueue && !arguments.useHostTasks;
+        sycl::property_list graphProps = useNativeRecording
+                                             ? sycl::property_list{sycl_ext::property::graph::enable_native_recording{}}
+                                             : sycl::property_list{};
+        sycl_ext::command_graph graph(queue.get_context(), queue.get_device(), graphProps);
         if (arguments.useExplicit) {
             for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
                 graph.add([&](sycl::handler &h) { h.parallel_for(range, eat_time); });
