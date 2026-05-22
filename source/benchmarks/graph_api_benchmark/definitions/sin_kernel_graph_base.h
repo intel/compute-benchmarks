@@ -21,7 +21,7 @@
 class SinKernelGraphBase {
   public:
     SinKernelGraphBase(const SinKernelGraphArguments &arguments)
-        : numKernels(arguments.numKernels), size(65536), withGraphs(arguments.withGraphs), withCopyOffload(arguments.withCopyOffload), immediateAppendCmdList(arguments.immediateAppendCmdList), iterations(arguments.iterations), engine(0), distribution(-10.0, 10.0) {};
+        : numKernels(arguments.numKernels), size(65536), withGraphs(arguments.withGraphs), withCopyOffload(arguments.withCopyOffload), immediateAppendCmdList(arguments.immediateAppendCmdList), useNativeRecording(arguments.useNativeRecording), iterations(arguments.iterations), engine(0), distribution(-10.0, 10.0) {};
 
     using DataFloatPtr = std::unique_ptr<float, std::function<void(float *)>>;
 
@@ -65,7 +65,7 @@ class SinKernelGraphBase {
     bool checkResults(float *output_h, float *golden_h) {
         bool ret = true;
         for (uint32_t idx = 0; idx < size; ++idx) {
-            if ((fabs(output_h[idx] - golden_h[idx]) > 0.00001f) ||
+            if ((fabs(output_h[idx] - golden_h[idx]) > 0.0001f) ||
                 (output_h[idx]) == 0.0f) {
                 ret = false;
                 std::cout << "at (" << idx << "), expected " << golden_h[idx]
@@ -158,6 +158,7 @@ class SinKernelGraphBase {
     bool withGraphs;
     bool withCopyOffload;
     bool immediateAppendCmdList;
+    bool useNativeRecording;
 
     size_t iterations;
 

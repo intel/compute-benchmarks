@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,11 @@
 
 #pragma once
 
+#include "framework/l0/extension_properties.h"
+
 #include "definitions/decoder2_graph_base.h"
 
+#include <level_zero/ze_api.h>
 #include <memory>
 #include <optional>
 #include <sycl/sycl.hpp>
@@ -32,6 +35,7 @@ class Decoder2GraphSYCL : public Decoder2GraphBase<Decoder2GraphSYCL> {
 
     TestResult runLayer();
     TestResult runAllLayers();
+    TestResult runAllLayersNative();
     bool isUnsupported();
 
   private:
@@ -39,4 +43,7 @@ class Decoder2GraphSYCL : public Decoder2GraphBase<Decoder2GraphSYCL> {
 
     std::optional<sycl_ext::command_graph<sycl_ext::graph_state::modifiable>> graph;
     std::optional<sycl_ext::command_graph<sycl_ext::graph_state::executable>> execGraph;
+
+    L0::L0CommandListAppendHostFunction zeCommandListAppendHostFunction = nullptr;
+    ze_command_list_handle_t zeCommandList = nullptr;
 };

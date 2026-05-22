@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,12 +20,14 @@ struct SinKernelGraphArguments : TestCaseArgumentContainer {
     BooleanArgument withGraphs;
     BooleanArgument withCopyOffload;
     BooleanArgument immediateAppendCmdList;
+    BooleanArgument useNativeRecording;
 
     SinKernelGraphArguments()
         : numKernels(*this, "numKernels", "Number of kernel invocations"),
           withGraphs(*this, "withGraphs", "Runs with or without graphs"),
           withCopyOffload(*this, "withCopyOffload", "Enable driver copy offload (only valid for L0)"),
-          immediateAppendCmdList(*this, "immediateAppendCmdList", "Use zeCommandListImmediateAppendCommandListsExp to submit graph (only valid for L0)") {}
+          immediateAppendCmdList(*this, "immediateAppendCmdList", "Use zeCommandListImmediateAppendCommandListsExp to submit graph (only valid for L0)"),
+          useNativeRecording(*this, "UseNativeRecording", "Enables property::graph::enable_native_recording on the command graph (only valid for SYCL)") {}
 };
 
 struct SinKernelGraph : TestCase<SinKernelGraphArguments> {

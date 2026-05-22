@@ -5,13 +5,16 @@
  *
  */
 
+#include "framework/l0/extension_properties.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/combo_profiler.h"
 
 #include "definitions/submit_graph.h"
 
 #include <gtest/gtest.h>
+#include <sycl/ext/oneapi/backend/level_zero.hpp>
 #include <sycl/sycl.hpp>
+#include <variant>
 #if __has_include(<sycl/ext/oneapi/experimental/graph.hpp>)
 #include <sycl/ext/oneapi/experimental/graph.hpp>
 #define HAS_SYCL_GRAPH
@@ -61,9 +64,31 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
             }
         };
 
-        // Use native recording when queue recording is used with an in-order queue and no host tasks
+        // Native recording requires record-and-replay on an in-order queue. Host tasks are
+        // supported through the L0 host-function path below (SYCL host_task is unsupported
+        // under native recording). The flag only opts out of an otherwise-capable config.
         namespace sycl_ext = sycl::ext::oneapi::experimental;
-        const bool useNativeRecording = !arguments.useExplicit && arguments.inOrderQueue && !arguments.useHostTasks;
+        const bool canUseNativeRecording = !arguments.useExplicit && arguments.inOrderQueue;
+        const bool useNativeRecording = arguments.useNativeRecording && canUseNativeRecording;
+
+        // When native recording is combined with host tasks, replace SYCL host_task with
+        // zeCommandListAppendHostFunction on the queue's native immediate command list.
+        // The handle and extension entrypoint must be obtained before begin_recording.
+        ze_command_list_handle_t zeCommandList = nullptr;
+        L0::L0CommandListAppendHostFunction zeCommandListAppendHostFunction = nullptr;
+        if (useNativeRecording && arguments.useHostTasks) {
+            ze_driver_handle_t driver = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(queue.get_device().get_platform());
+            zeDriverGetExtensionFunctionAddress(driver, "zeCommandListAppendHostFunction",
+                                                reinterpret_cast<void **>(&zeCommandListAppendHostFunction));
+            auto nativeQueue = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(queue);
+            if (std::holds_alternative<ze_command_list_handle_t>(nativeQueue)) {
+                zeCommandList = std::get<ze_command_list_handle_t>(nativeQueue);
+            }
+            if (!zeCommandListAppendHostFunction || !zeCommandList) {
+                return TestResult::ApiNotCapable;
+            }
+        }
+
         sycl::property_list graphProps = useNativeRecording
                                              ? sycl::property_list{sycl_ext::property::graph::enable_native_recording{}}
                                              : sycl::property_list{};
@@ -81,9 +106,23 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
                 queue.parallel_for(range, eat_time);
             }
             if (arguments.useHostTasks) {
-                queue.submit([&](sycl::handler &cgh) {
-                    cgh.host_task([=]() { eat_time(0); });
-                });
+                if (useNativeRecording) {
+                    // SYCL host_task is unsupported under native recording; use the L0 host function.
+                    auto hostFunction = [](void *userData) {
+                        const int operations = *static_cast<int *>(userData);
+                        if (operations > 4) {
+                            volatile int value = operations;
+                            while (value > 1)
+                                value -= 1;
+                        }
+                    };
+                    zeCommandListAppendHostFunction(zeCommandList, reinterpret_cast<void *>(+hostFunction),
+                                                    &kernelOperationsCount, nullptr, nullptr, 0, nullptr);
+                } else {
+                    queue.submit([&](sycl::handler &cgh) {
+                        cgh.host_task([=]() { eat_time(0); });
+                    });
+                }
             }
             graph.end_recording();
         }

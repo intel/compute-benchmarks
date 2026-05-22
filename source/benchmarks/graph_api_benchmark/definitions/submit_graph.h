@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ struct SubmitGraphArguments : TestCaseArgumentContainer {
     BooleanArgument useEvents;
     BooleanArgument useExplicit;
     BooleanArgument emulateGraphs;
+    BooleanArgument useNativeRecording;
     PositiveIntegerArgument numKernels;
     PositiveIntegerArgument kernelExecutionTime;
     BooleanArgument measureCompletionTime;
@@ -28,6 +29,7 @@ struct SubmitGraphArguments : TestCaseArgumentContainer {
           useEvents(*this, "UseEvents", "Do not create and track events for synchronization"),
           useExplicit(*this, "UseExplicit", "Using Explicit Graph Creation mode vs. Record and Replay"),
           emulateGraphs(*this, "EmulateGraphs", "Emulate graph execution (1) or use graph API (0)"),
+          useNativeRecording(*this, "UseNativeRecording", "Enables property::graph::enable_native_recording on the command graph (only valid for SYCL)"),
           numKernels(*this, "NumKernels", "Number of kernels to submit to the queue"),
           kernelExecutionTime(*this, "KernelExecutionTime", "Approximately how long a single kernel executes, in us"),
           measureCompletionTime(*this, "MeasureCompletionTime", "Measures time taken to complete the submission (default is to measure only submit calls)") {}

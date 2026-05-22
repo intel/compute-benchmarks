@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<SubmitGraph> registerTestCase{};
 
-class SubmitGraphTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, bool, bool, bool, bool, size_t, size_t, bool>> {
+class SubmitGraphTest : public ::testing::TestWithParam<std::tuple<Api, bool, bool, bool, bool, bool, bool, bool, size_t, size_t, bool>> {
 };
 
 TEST_P(SubmitGraphTest, Test) {
@@ -26,16 +26,17 @@ TEST_P(SubmitGraphTest, Test) {
     args.useEvents = std::get<4>(GetParam());
     args.useExplicit = std::get<5>(GetParam());
     args.emulateGraphs = std::get<6>(GetParam());
-    args.numKernels = std::get<7>(GetParam());
-    args.kernelExecutionTime = std::get<8>(GetParam());
-    args.measureCompletionTime = std::get<9>(GetParam());
+    args.useNativeRecording = std::get<7>(GetParam());
+    args.numKernels = std::get<8>(GetParam());
+    args.kernelExecutionTime = std::get<9>(GetParam());
+    args.measureCompletionTime = std::get<10>(GetParam());
     SubmitGraph test;
     test.run(args);
 }
 
 // The flag space is backend-specific, so split it into per-backend suites that
 // only generate combinations each API can actually run (avoids ApiNotCapable):
-//  - useHostTasks and useExplicit are SYCL-only.
+//  - useHostTasks, useExplicit and useNativeRecording are SYCL-only.
 //  - emulateGraphs selects the backend: command-buffer/emulation (L0, OpenCL,
 //    UR) vs native graph record & replay (L0, SYCL, UR).
 //  - UR's native graph mode requires an in-order queue.
@@ -52,6 +53,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),   // useEvents
         ::testing::Values(false),         // useExplicit (SYCL-only)
         ::testing::Values(true),          // emulateGraphs
+        ::testing::Values(false),         // useNativeRecording (SYCL-only)
         ::testing::Values(4u, 32u),       // numKernels
         ::testing::Values(1u),            // kernelExecutionTime
         ::testing::Values(false, true))); // measureCompletionTime
@@ -69,6 +71,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),   // useEvents
         ::testing::Values(false),         // useExplicit (SYCL-only)
         ::testing::Values(false),         // emulateGraphs
+        ::testing::Values(false),         // useNativeRecording (SYCL-only)
         ::testing::Values(4u, 32u),       // numKernels
         ::testing::Values(1u),            // kernelExecutionTime
         ::testing::Values(false, true))); // measureCompletionTime
@@ -85,11 +88,13 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),   // useEvents
         ::testing::Values(false),         // useExplicit (SYCL-only)
         ::testing::Values(false),         // emulateGraphs
+        ::testing::Values(false),         // useNativeRecording (SYCL-only)
         ::testing::Values(4u, 32u),       // numKernels
         ::testing::Values(1u),            // kernelExecutionTime
         ::testing::Values(false, true))); // measureCompletionTime
 
-// SYCL native graph, exercising the SYCL-only host-task and explicit-graph paths.
+// SYCL native graph, exercising the SYCL-only host-task, explicit-graph and
+// native-recording paths.
 INSTANTIATE_TEST_SUITE_P(
     SubmitGraphSycl,
     SubmitGraphTest,
@@ -101,6 +106,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),   // useEvents
         ::testing::Values(false, true),   // useExplicit
         ::testing::Values(false),         // emulateGraphs
+        ::testing::Values(false, true),   // useNativeRecording (SYCL-only)
         ::testing::Values(4u, 32u),       // numKernels
         ::testing::Values(1u),            // kernelExecutionTime
         ::testing::Values(false, true))); // measureCompletionTime

@@ -82,9 +82,11 @@ TestResult SinKernelGraphSYCL::runKernels() {
 }
 
 TestResult SinKernelGraphSYCL::recordGraph() {
-    // Use native recording by default: queue is always in-order, no host tasks, no buffers
+    sycl::property_list graphProps = useNativeRecording
+                                         ? sycl::property_list{sycl_ext::property::graph::enable_native_recording{}}
+                                         : sycl::property_list{};
     graph = sycl_ext::command_graph<sycl_ext::graph_state::modifiable>{
-        queue->get_context(), queue->get_device(), {sycl_ext::property::graph::enable_native_recording{}}};
+        queue->get_context(), queue->get_device(), graphProps};
 
     graph->begin_recording(*queue);
     runKernels();

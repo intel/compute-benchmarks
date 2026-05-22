@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,8 @@ class Decoder2GraphBase {
           numTokens(static_cast<uint32_t>(arguments.numTokens)),
           useGraphs(arguments.useGraphs),
           emulateGraphs(arguments.emulateGraphs),
-          useHostTasks(arguments.useHostTasks) {}
+          useHostTasks(arguments.useHostTasks),
+          useNativeRecording(arguments.useNativeRecording) {}
 
     using DataIntPtr = std::unique_ptr<int, std::function<void(int *)>>;
 
@@ -220,6 +221,7 @@ class Decoder2GraphBase {
     bool useGraphs;
     bool emulateGraphs;
     bool useHostTasks;
+    bool useNativeRecording;
 
     DataIntPtr graphData;
 };

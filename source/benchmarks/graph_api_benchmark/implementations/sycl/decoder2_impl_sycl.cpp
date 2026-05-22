@@ -11,7 +11,9 @@
 #include "framework/test_case/test_case.h"
 
 #include <memory>
+#include <sycl/ext/oneapi/backend/level_zero.hpp>
 #include <sycl/sycl.hpp>
+#include <variant>
 
 Decoder2GraphSYCL::DataIntPtr Decoder2GraphSYCL::allocDevice(uint32_t count) {
     int *devicePtr = sycl::malloc_device<int>(count, *queue);
@@ -37,6 +39,24 @@ TestResult Decoder2GraphSYCL::init() {
     if (!queue->get_device().has(sycl::aspect::usm_host_allocations) &&
         !queue->get_device().has(sycl::aspect::usm_device_allocations)) {
         return TestResult::DeviceNotCapable;
+    }
+
+    if ((useGraphs && useNativeRecording && useHostTasks)) {
+        // Get the L0 driver from the SYCL platform and load zeCommandListAppendHostFunction.
+        // This replaces SYCL host_task, which is unsupported in native recording mode.
+        ze_driver_handle_t driver = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(queue->get_device().get_platform());
+        zeDriverGetExtensionFunctionAddress(driver, "zeCommandListAppendHostFunction",
+                                            reinterpret_cast<void **>(&zeCommandListAppendHostFunction));
+
+        // Retrieve the native immediate command list for the in-order SYCL queue.
+        // Must be obtained before begin_recording; the same handle is used during recording.
+        auto nativeQ = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(*queue);
+        if (std::holds_alternative<ze_command_list_handle_t>(nativeQ)) {
+            zeCommandList = std::get<ze_command_list_handle_t>(nativeQ);
+        }
+        if (!zeCommandListAppendHostFunction || !zeCommandList) {
+            return TestResult::ApiNotCapable;
+        }
     }
 
     return TestResult::Success;
@@ -80,21 +100,32 @@ TestResult Decoder2GraphSYCL::runAllLayers() {
     return TestResult::Success;
 }
 
+TestResult Decoder2GraphSYCL::runAllLayersNative() {
+    auto callback = [](void *userData) { static_cast<Decoder2GraphSYCL *>(userData)->gpuHostTask(); };
+    for (uint32_t i = 0; i < LAYER_NUM; ++i) {
+        runLayer();
+        zeCommandListAppendHostFunction(zeCommandList, reinterpret_cast<void *>(+callback), this, nullptr, nullptr, 0, nullptr);
+    }
+    return TestResult::Success;
+}
+
 TestResult Decoder2GraphSYCL::recordGraph() {
     // No-op if eager execution is used
     if (useGraphs) {
-        // Use native recording when no host tasks are captured (host tasks cannot be captured at the backend level)
-        const bool useNativeRecording = !useHostTasks;
         sycl::property_list graphProps = useNativeRecording
                                              ? sycl::property_list{sycl_ext::property::graph::enable_native_recording{}}
                                              : sycl::property_list{};
         graph = sycl_ext::command_graph<sycl_ext::graph_state::modifiable>{queue->get_context(), queue->get_device(), graphProps};
 
         graph->begin_recording(*queue);
-        if (useHostTasks)
-            runAllLayers();
-        else
+        if (useHostTasks) {
+            if (useNativeRecording)
+                runAllLayersNative(); // zeCommandListAppendHostFunction instead of host_task
+            else
+                runAllLayers(); // SYCL host_task
+        } else {
             runLayer();
+        }
         graph->end_recording();
 
         execGraph = sycl_ext::command_graph<sycl_ext::graph_state::executable>(graph->finalize());
