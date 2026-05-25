@@ -89,6 +89,14 @@ SinglePrecisionPerformance|measures single precision floating point throughput i
 
 
 
+# cpu_efficiency_benchmark
+CPU Efficiency Benchmark measures CPU cost, utilization, and latency tradeoffs of host-side wait and synchronization paths.
+| Test name | Description | Params | L0 | OCL |
+|-----------|-------------|--------|----|-----|
+EventHostSynchronize|Measures zeEventHostSynchronize latency, thread and process CPU time, and CPU utilization for work submitted to an immediate command list|<ul><li>--batchSize Number of zeEventHostSynchronize calls measured per result</li><li>--kernelExecutionTime Approximately how long a single kernel executes, in us</li></ul>|:heavy_check_mark:|:x:|
+
+
+
 # emu_benchmark
 Emulation Benchmark is a set of tests aimed at measuring performance of emulated math operations performed in kernels.
 | Test name | Description | Params | L0 | OCL |
