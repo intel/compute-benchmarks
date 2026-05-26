@@ -93,7 +93,7 @@ SinglePrecisionPerformance|measures single precision floating point throughput i
 CPU Efficiency Benchmark measures CPU cost, utilization, and latency tradeoffs of host-side wait and synchronization paths.
 | Test name | Description | Params | L0 | OCL |
 |-----------|-------------|--------|----|-----|
-EventHostSynchronize|Measures zeEventHostSynchronize latency, thread and process CPU time, and CPU utilization for work submitted to an immediate command list|<ul><li>--batchSize Number of zeEventHostSynchronize calls measured per result</li><li>--kernelExecutionTime Approximately how long a single kernel executes, in us</li></ul>|:heavy_check_mark:|:x:|
+EventHostSynchronize|Measures zeEventHostSynchronize latency, thread and process CPU time, and CPU utilization for work submitted to an immediate command list|<ul><li>--batchSize Number of zeEventHostSynchronize calls measured per result</li><li>--inOrderQueue Use an in-order immediate command list with counter-based events (0 or 1)</li><li>--kernelExecutionTime Approximately how long a single kernel executes, in us</li><li>--useKernelTimestamps Use events with kernel timestamp support (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
 
 
 

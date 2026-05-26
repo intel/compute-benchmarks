@@ -13,10 +13,14 @@
 struct EventHostSynchronizeArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument kernelExecutionTime;
     PositiveIntegerArgument batchSize;
+    BooleanArgument useKernelTimestamps;
+    BooleanArgument inOrderQueue;
 
     EventHostSynchronizeArguments()
         : kernelExecutionTime(*this, "kernelExecutionTime", "Approximately how long a single kernel executes, in us"),
-          batchSize(*this, "batchSize", "Number of zeEventHostSynchronize calls measured per result") {}
+          batchSize(*this, "batchSize", "Number of zeEventHostSynchronize calls measured per result"),
+          useKernelTimestamps(*this, "useKernelTimestamps", "Use events with kernel timestamp support"),
+          inOrderQueue(*this, "inOrderQueue", "Use an in-order immediate command list with counter-based events") {}
 };
 
 struct EventHostSynchronize : TestCase<EventHostSynchronizeArguments> {
