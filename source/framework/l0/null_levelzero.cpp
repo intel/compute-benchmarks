@@ -576,6 +576,7 @@ ze_device_handle_t zerTranslateIdentifierToDeviceHandle(uint32_t identifier) {
 
 ZE_MOCK_SUCCESS(zeDeviceSynchronize, ze_device_handle_t);
 ZE_MOCK_SUCCESS(zeCommandListAppendLaunchKernelWithArguments, ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t, const ze_group_size_t, void **, const void *const, ze_event_handle_t, uint32_t, ze_event_handle_t *);
+ZE_MOCK_SUCCESS(zeCommandListAppendLaunchKernelWithParameters, ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t *, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *);
 
 // Core counter-based event APIs (v1.15)
 ZE_MOCK_SUCCESS(zeEventCounterBasedCreate, ze_context_handle_t, ze_device_handle_t, const ze_event_counter_based_desc_t *, ze_event_handle_t *)
