@@ -46,6 +46,9 @@ static TestResult run(const NewResourcesSubmissionHostArguments &arguments, Stat
     const size_t lws = 1;
     const size_t sizeInBytes = arguments.size;
 
+    // Keep the previous allocation alive while creating the next one so the driver hands out a fresh VA
+    void *previousHostMemory = nullptr;
+
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
@@ -56,12 +59,18 @@ static TestResult run(const NewResourcesSubmissionHostArguments &arguments, Stat
         timer.measureEnd();
 
         ASSERT_CL_SUCCESS(retVal);
-        ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, hostMemory));
+        if (previousHostMemory != nullptr) {
+            ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, previousHostMemory));
+        }
+        previousHostMemory = hostMemory;
 
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup
+    if (previousHostMemory != nullptr) {
+        ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, previousHostMemory));
+    }
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     return TestResult::Success;

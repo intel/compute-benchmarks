@@ -60,6 +60,9 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList{};
 
+    // Keep the previous allocation alive while creating the next one so the driver hands out a fresh VA
+    void *previousBuffer = nullptr;
+
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocShared(levelzero.context, &deviceAllocationDesc, &hostAllocationDesc, arguments.bufferSize, 0, levelzero.device, &buffer));
@@ -75,7 +78,14 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
-        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffer));
+        if (previousBuffer != nullptr) {
+            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, previousBuffer));
+        }
+        previousBuffer = buffer;
+    }
+
+    if (previousBuffer != nullptr) {
+        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, previousBuffer));
     }
 
     return TestResult::Success;

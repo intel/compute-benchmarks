@@ -64,6 +64,9 @@ static TestResult run(const NewResourcesWithGpuAccessArguments &arguments, Stati
     ze_command_list_handle_t cmdList;
     void *buffer = nullptr;
 
+    // Keep the previous allocation alive while creating the next one so the driver hands out a fresh VA
+    void *previousBuffer = nullptr;
+
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
@@ -87,9 +90,16 @@ static TestResult run(const NewResourcesWithGpuAccessArguments &arguments, Stati
         // Cleanup after iteration
         ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, buffer, bufferSize));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
-        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffer));
+        if (previousBuffer != nullptr) {
+            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, previousBuffer));
+        }
+        previousBuffer = buffer;
 
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+    }
+
+    if (previousBuffer != nullptr) {
+        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, previousBuffer));
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));

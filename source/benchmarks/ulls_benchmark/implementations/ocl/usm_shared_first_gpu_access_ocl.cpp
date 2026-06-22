@@ -51,6 +51,9 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
     const size_t gws = 1;
     const size_t lws = 1;
 
+    // Keep the previous allocation alive while creating the next one so the driver hands out a fresh VA
+    void *previousBuffer = nullptr;
+
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         void *buffer = clSharedMemAllocINTEL(opencl.context, opencl.device, properties, arguments.bufferSize, 0u, &retVal);
@@ -63,7 +66,14 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
         timer.measureEnd();
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
 
-        ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, buffer));
+        if (previousBuffer != nullptr) {
+            ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, previousBuffer));
+        }
+        previousBuffer = buffer;
+    }
+
+    if (previousBuffer != nullptr) {
+        ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, previousBuffer));
     }
 
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));

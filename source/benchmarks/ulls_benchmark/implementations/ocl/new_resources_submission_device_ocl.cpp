@@ -42,6 +42,9 @@ static TestResult run(const NewResourcesSubmissionDeviceArguments &arguments, St
     const size_t lws = 1;
     const size_t sizeInBytes = arguments.size;
 
+    // Keep the previous allocation alive while creating the next one so the driver hands out a fresh VA
+    cl_mem previousBuffer = nullptr;
+
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
@@ -52,12 +55,18 @@ static TestResult run(const NewResourcesSubmissionDeviceArguments &arguments, St
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
 
-        ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
+        if (previousBuffer != nullptr) {
+            ASSERT_CL_SUCCESS(clReleaseMemObject(previousBuffer));
+        }
+        previousBuffer = buffer;
 
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
     // Cleanup
+    if (previousBuffer != nullptr) {
+        ASSERT_CL_SUCCESS(clReleaseMemObject(previousBuffer));
+    }
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     return TestResult::Success;

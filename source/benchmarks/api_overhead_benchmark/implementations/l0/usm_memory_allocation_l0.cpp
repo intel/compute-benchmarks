@@ -28,6 +28,9 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
 
     void *ptr{};
 
+    // Keep the previous allocation alive across the next one so the driver hands out a fresh VA
+    void *previousPtr = nullptr;
+
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         if (arguments.measureMode == AllocationMeasureMode::Allocate ||
@@ -42,13 +45,20 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
             timer.measureStart();
         }
 
-        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, ptr));
+        if (previousPtr != nullptr) {
+            ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, previousPtr));
+        }
+        previousPtr = ptr;
 
         if (arguments.measureMode == AllocationMeasureMode::Free ||
             arguments.measureMode == AllocationMeasureMode::Both) {
             timer.measureEnd();
         }
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+    }
+
+    if (previousPtr != nullptr) {
+        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, previousPtr));
     }
     return TestResult::Success;
 }
