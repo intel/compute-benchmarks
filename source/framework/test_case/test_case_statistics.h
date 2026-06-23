@@ -62,6 +62,8 @@ class TestCaseStatistics : public Statistics {
     void printStatisticsNoop(const std::string &testCaseName) const;
     void printStatisticsCsv(const std::string &testCaseName) const;
     void printStatisticsVerbose() const;
+    void collectHistograms(const std::string &testCaseName) const;
+    std::string renderHistogram(const std::string &testCaseName, const std::string &samplesName, const Samples &samples) const;
 
     const Configuration::PrintType printType;
     SamplesMap samplesMap = {};
@@ -69,6 +71,7 @@ class TestCaseStatistics : public Statistics {
     bool reachedInfinity = false;
 
     static std::vector<BufferedLine> testResults;
+    static std::vector<std::string> histograms;
     static int lastTransientLineWidth;
     static std::string deviceInfo;
 

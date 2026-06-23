@@ -88,6 +88,7 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument markTimers;
     BooleanFlagArgument measurePower;
     BooleanFlagArgument printAllResults;
+    BooleanFlagArgument printHistogram;
     ProfilerTypeArgument profilerType;
 
     // Test specific params

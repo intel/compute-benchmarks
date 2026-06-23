@@ -219,6 +219,7 @@ struct ColumnInfo {
 };
 
 std::vector<TestCaseStatistics::BufferedLine> TestCaseStatistics::testResults;
+std::vector<std::string> TestCaseStatistics::histograms;
 int TestCaseStatistics::lastTransientLineWidth = 0;
 std::string TestCaseStatistics::deviceInfo;
 
@@ -337,6 +338,11 @@ void TestCaseStatistics::printStatistics(const std::string &testCaseName) const 
     default:
         FATAL_ERROR("unknown print type selected");
     }
+
+    if (Configuration::get().printHistogram &&
+        (printType == Configuration::PrintType::Default || printType == Configuration::PrintType::DefaultWithVerbose)) {
+        collectHistograms(testCaseName);
+    }
 }
 
 void TestCaseStatistics::printStatisticsDefault(const std::string &testCaseName) const {
@@ -416,6 +422,254 @@ void TestCaseStatistics::printStatisticsVerbose() const {
     testResults.push_back({"", "", true});
 }
 
+void TestCaseStatistics::collectHistograms(const std::string &testCaseName) const {
+    for (const auto &samplesEntry : this->samplesMap) {
+        std::string histogram = renderHistogram(testCaseName, samplesEntry.first, samplesEntry.second);
+        if (!histogram.empty()) {
+            histograms.push_back(std::move(histogram));
+        }
+    }
+}
+
+std::string TestCaseStatistics::renderHistogram(const std::string &testCaseName, const std::string &samplesName, const Samples &samples) const {
+    constexpr size_t maxBins = 20;
+    constexpr size_t barWidth = 50;
+
+    const size_t skip = std::min(static_cast<size_t>(Configuration::get().warmupIterations), samples.vector.size());
+    if (skip >= samples.vector.size()) {
+        return {};
+    }
+    struct Sample {
+        Value value;
+        size_t iteration;
+    };
+    std::vector<Sample> data;
+    data.reserve(samples.vector.size() - skip);
+    for (size_t j = skip; j < samples.vector.size(); j++) {
+        data.push_back({samples.vector[j], j - skip + 1});
+    }
+
+    std::sort(data.begin(), data.end(), [](const Sample &a, const Sample &b) { return a.value < b.value; });
+    const Value minValue = data.front().value;
+    const Value maxValue = data.back().value;
+    const size_t sampleCount = data.size();
+
+    auto quantile = [&](double q) -> Value {
+        if (sampleCount == 1) {
+            return data.front().value;
+        }
+        const double position = q * static_cast<double>(sampleCount - 1);
+        const size_t index = static_cast<size_t>(position);
+        const double frac = position - static_cast<double>(index);
+        if (index + 1 < sampleCount) {
+            return data[index].value + (data[index + 1].value - data[index].value) * static_cast<Value>(frac);
+        }
+        return data[index].value;
+    };
+    const Value q1 = quantile(0.25);
+    const Value median = quantile(0.5);
+    const Value q3 = quantile(0.75);
+    const Value iqr = q3 - q1;
+
+    Value focusLo = minValue;
+    Value focusHi = maxValue;
+    if (iqr > 0) {
+        focusLo = std::max(minValue, q1 - Value{1.5} * iqr);
+        focusHi = std::min(maxValue, q3 + Value{1.5} * iqr);
+    }
+    if (!(focusHi > focusLo)) {
+        focusLo = minValue;
+        focusHi = maxValue;
+    }
+
+    struct Row {
+        Value lo;
+        Value hi;
+        char loBracket;
+        char hiBracket;
+        size_t count;
+        bool isMedian = false;
+        Value sample = 0;
+    };
+    std::vector<Row> rows;
+
+    const auto bulkBegin = std::lower_bound(data.begin(), data.end(), focusLo,
+                                            [](const Sample &s, Value v) { return s.value < v; });
+    const auto bulkEnd = std::upper_bound(data.begin(), data.end(), focusHi,
+                                          [](Value v, const Sample &s) { return v < s.value; });
+    const size_t underflow = static_cast<size_t>(std::distance(data.begin(), bulkBegin));
+    const size_t overflow = static_cast<size_t>(std::distance(bulkEnd, data.end()));
+
+    auto appendLogTailRows = [&](Value rangeLo, Value rangeHi, std::vector<Sample>::const_iterator begin,
+                                 std::vector<Sample>::const_iterator end, bool lowerTail) {
+        const size_t count = static_cast<size_t>(std::distance(begin, end));
+        if (count == 0) {
+            return;
+        }
+        const char loBracket = lowerTail ? '[' : '(';
+        const char hiBracket = lowerTail ? ')' : ']';
+        if (!(rangeHi > rangeLo) || rangeLo <= 0) {
+            rows.push_back({rangeLo, rangeHi, loBracket, hiBracket, count, false, (count == 1) ? begin->value : Value{0}});
+            return;
+        }
+
+        constexpr double binsPerDecade = 3.0;
+        const double logLo = std::log(rangeLo);
+        const double logHi = std::log(rangeHi);
+        const double decades = std::log10(rangeHi / rangeLo);
+        const size_t tailBins = std::max<size_t>(1, std::min(maxBins, static_cast<size_t>(std::ceil(decades * binsPerDecade))));
+
+        std::vector<size_t> tailCounts(tailBins, 0);
+        std::vector<Value> tailSample(tailBins, 0);
+        for (auto it = begin; it != end; ++it) {
+            const double frac = (std::log(it->value) - logLo) / (logHi - logLo);
+            size_t index = static_cast<size_t>(frac * static_cast<double>(tailBins));
+            if (index >= tailBins) {
+                index = tailBins - 1;
+            }
+            tailCounts[index]++;
+            tailSample[index] = it->value;
+        }
+        for (size_t k = 0; k < tailBins; k++) {
+            if (tailCounts[k] == 0) {
+                continue;
+            }
+            const Value lo = (k == 0) ? rangeLo : static_cast<Value>(std::exp(logLo + (logHi - logLo) * static_cast<double>(k) / static_cast<double>(tailBins)));
+            const Value hi = (k + 1 == tailBins) ? rangeHi : static_cast<Value>(std::exp(logLo + (logHi - logLo) * static_cast<double>(k + 1) / static_cast<double>(tailBins)));
+            rows.push_back({lo, hi, loBracket, hiBracket, tailCounts[k], false, (tailCounts[k] == 1) ? tailSample[k] : Value{0}});
+        }
+    };
+
+    appendLogTailRows(minValue, focusLo, data.begin(), bulkBegin, true);
+
+    const bool singleBulkValue = !(focusHi > focusLo);
+    const size_t bulkBinCount = singleBulkValue ? 1 : std::max<size_t>(1, std::min(maxBins, sampleCount));
+    const Value bulkBinWidth = singleBulkValue ? Value{0} : (focusHi - focusLo) / static_cast<Value>(bulkBinCount);
+    auto bulkBinOf = [&](Value value) -> size_t {
+        if (bulkBinWidth <= 0) {
+            return 0;
+        }
+        size_t index = static_cast<size_t>((value - focusLo) / bulkBinWidth);
+        if (index >= bulkBinCount) {
+            index = bulkBinCount - 1;
+        }
+        return index;
+    };
+    std::vector<size_t> bulkCounts(bulkBinCount, 0);
+    std::vector<Value> bulkSample(bulkBinCount, 0);
+    for (auto it = bulkBegin; it != bulkEnd; ++it) {
+        const size_t index = bulkBinOf(it->value);
+        bulkCounts[index]++;
+        bulkSample[index] = it->value;
+    }
+    const bool medianInBulk = !(median < focusLo) && !(median > focusHi);
+    const size_t medianBulkBin = medianInBulk ? bulkBinOf(median) : bulkBinCount;
+    for (size_t i = 0; i < bulkBinCount; i++) {
+        const bool isMedianBin = (i == medianBulkBin);
+        if (bulkCounts[i] == 0 && !isMedianBin) {
+            continue;
+        }
+        const Value lo = focusLo + bulkBinWidth * static_cast<Value>(i);
+        const bool isLast = (i + 1 == bulkBinCount);
+        const Value hi = isLast ? focusHi : (focusLo + bulkBinWidth * static_cast<Value>(i + 1));
+        rows.push_back({lo, hi, '[', isLast ? ']' : ')', bulkCounts[i], isMedianBin, (bulkCounts[i] == 1) ? bulkSample[i] : Value{0}});
+    }
+
+    appendLogTailRows(focusHi, maxValue, bulkEnd, data.end(), false);
+
+    auto formatValue = [](Value value) {
+        std::ostringstream stream;
+        stream << std::fixed << std::setprecision(3) << value;
+        return stream.str();
+    };
+
+    auto rowContains = [](const Row &row, Value value) {
+        const bool lowOk = (row.loBracket == '[') ? (value >= row.lo) : (value > row.lo);
+        const bool highOk = (row.hiBracket == ']') ? (value <= row.hi) : (value < row.hi);
+        return lowOk && highOk;
+    };
+    if (!medianInBulk) {
+        for (Row &row : rows) {
+            if (rowContains(row, median)) {
+                row.isMedian = true;
+                break;
+            }
+        }
+    }
+
+    size_t maxCount = 0;
+    size_t edgeWidth = 0;
+    for (const Row &row : rows) {
+        maxCount = std::max(maxCount, row.count);
+        edgeWidth = std::max({edgeWidth, formatValue(row.lo).size(), formatValue(row.hi).size()});
+    }
+    const size_t countWidth = std::to_string(maxCount).size();
+
+    auto rangeString = [&](const Row &row) {
+        std::ostringstream stream;
+        if (row.count == 1) {
+            stream << '[' << formatValue(row.sample) << ']';
+        } else {
+            stream << row.loBracket
+                   << std::setw(static_cast<int>(edgeWidth)) << std::right << formatValue(row.lo) << ", "
+                   << std::setw(static_cast<int>(edgeWidth)) << std::right << formatValue(row.hi)
+                   << row.hiBracket;
+        }
+        return stream.str();
+    };
+    size_t rangeWidth = 0;
+    for (const Row &row : rows) {
+        rangeWidth = std::max(rangeWidth, rangeString(row).size());
+    }
+
+    const std::string label = samplesName.empty() ? std::to_string(samples.unit)
+                                                  : (samplesName + " " + std::to_string(samples.unit));
+
+    std::ostringstream out;
+    out << "Histogram: " << testCaseName << "\n";
+    out << "  metric: " << label << "  samples: " << sampleCount
+        << "  min: " << formatValue(minValue) << "  median: " << formatValue(median)
+        << "  max: " << formatValue(maxValue);
+    if (underflow > 0 || overflow > 0) {
+        out << "  (" << (underflow + overflow) << " samples outside the bulk shown as log-scaled tail rows)";
+    }
+    out << "\n";
+
+    const size_t maxIteration = data.back().iteration;
+
+    size_t cumulative = 0;
+    for (size_t r = 0; r < rows.size(); r++) {
+        const Row &row = rows[r];
+        size_t barLength = 0;
+        if (maxCount > 0) {
+            barLength = static_cast<size_t>(std::lround(static_cast<double>(row.count) / static_cast<double>(maxCount) * barWidth));
+            if (row.count > 0 && barLength == 0) {
+                barLength = 1;
+            }
+        }
+
+        cumulative += row.count;
+        const double percentile = 100.0 * static_cast<double>(cumulative) / static_cast<double>(sampleCount);
+        std::ostringstream percentileStream;
+        percentileStream << std::fixed << std::setprecision(2) << percentile << "%";
+
+        out << "  " << std::setw(7) << std::right << percentileStream.str()
+            << "  " << (row.isMedian ? '>' : ' ') << ' '
+            << std::setw(static_cast<int>(rangeWidth)) << std::right << rangeString(row) << " | "
+            << std::setw(static_cast<int>(countWidth)) << std::right << row.count << " | "
+            << std::string(barLength, '#');
+        if (r + 1 == rows.size()) {
+            out << " (max " << formatValue(maxValue) << " at iteration " << maxIteration << ")";
+        }
+        if (row.isMedian) {
+            out << " <== median";
+        }
+        out << "\n";
+    }
+
+    return out.str();
+}
+
 void TestCaseStatistics::printStatisticsString(const std::string &testCaseName, const std::string &message, char lineEnding) const {
     const auto columns = ColumnInfo::getColumns();
     const auto columnCount = columns.size();
@@ -458,6 +712,7 @@ void TestCaseStatistics::printStatisticsString(const std::string &testCaseName, 
 
 void TestCaseStatistics::flushBufferedResults(Configuration::PrintType printType) {
     if (testResults.empty()) {
+        histograms.clear();
         return;
     }
 
@@ -482,6 +737,15 @@ void TestCaseStatistics::flushBufferedResults(Configuration::PrintType printType
         }
     }
     std::cout.flush();
+
+    if (!histograms.empty()) {
+        std::cout << '\n';
+        for (const auto &histogram : histograms) {
+            std::cout << histogram << '\n';
+        }
+        std::cout.flush();
+        histograms.clear();
+    }
 
     const std::string &htmlPath = Configuration::get().htmlOutput;
     if (!htmlPath.empty()) {
