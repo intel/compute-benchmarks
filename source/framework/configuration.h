@@ -46,6 +46,7 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument version;
     BooleanFlagArgument hwInfo;
     BooleanFlagArgument generateDocs;
+    BooleanFlagArgument listTestSuites;
 
     // OCL params
     IntegerArgument oclPlatformIndex;

@@ -90,6 +90,25 @@ int BenchmarkMain::generateDocs() {
     return 0;
 }
 
+int BenchmarkMain::listTestSuites() {
+    // InitGoogleTest registers parameterized tests, making suite and test counts
+    // available through the reflection API without running any test.
+    ::testing::InitGoogleTest(&argc, argv);
+    const ::testing::UnitTest *unitTest = ::testing::UnitTest::GetInstance();
+
+    const int testSuiteCount = unitTest->total_test_suite_count();
+    int totalTestCount = 0;
+    for (int i = 0; i < testSuiteCount; i++) {
+        const ::testing::TestSuite *testSuite = unitTest->GetTestSuite(i);
+        const int testCount = testSuite->total_test_count();
+        totalTestCount += testCount;
+        std::cout << testSuite->name() << ';' << testCount << '\n';
+    }
+    std::cout << "Total: " << testSuiteCount << " test suites, " << totalTestCount << " test cases" << '\n';
+
+    return 0;
+}
+
 BenchmarkMain::BenchmarkMain(int argc, char **argv, const std::string benchmarkVersion)
     : argc(argc),
       argv(argv),
@@ -207,6 +226,9 @@ int BenchmarkMain::main() {
     const Configuration &configuration = Configuration::get();
     if (configuration.generateDocs) {
         return generateDocs();
+    }
+    if (configuration.listTestSuites) {
+        return listTestSuites();
     }
     if (configuration.hwInfo) {
         DeviceInfo::printAvailableDevices();

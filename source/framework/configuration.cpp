@@ -16,6 +16,7 @@ Configuration::Configuration()
       version(*this, "version", "Shows benchmark version"),
       hwInfo(*this, "hwInfo", "Shows available devices"),
       generateDocs(*this, "generateDocs", "Generate .md file describing available tests"),
+      listTestSuites(*this, "listTestSuites", "List all test suites with the number of test cases in each"),
       oclPlatformIndex(*this, "oclPlatformIndex", "OpenCL platform index"),
       oclDeviceIndex(*this, "oclDeviceIndex", "OpenCL device index inside the platform"),
       useOOQ(*this, "useOOQ", "Use out of order queue if it is supported"),
@@ -61,6 +62,7 @@ Configuration::Configuration()
     version = false;
     hwInfo = false;
     generateDocs = false;
+    listTestSuites = false;
 
     // OCL params
     oclPlatformIndex = -1;

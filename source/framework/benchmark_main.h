@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ class BenchmarkMain {
     int printVersion(bool enableWarning, const char *prefix = "");
     void printHelp();
     int generateDocs();
+    int listTestSuites();
 
     int executeSingleTest(const std::string &testName);
     int executeAllTests();
