@@ -38,7 +38,7 @@ static void submit_kernel_slm(sycl::queue &q, data_type *out, const std::size_t 
                           for (size_t i = local_id; i < slm_num; i += local_size) {
                               slm[i] = 0.1f * i;
                           }
-                          item.barrier(sycl::access::fence_space::local_space);
+                          sycl::group_barrier(item.get_group());
                           if (local_id == 0) {
                               out[1] = 13.0f;
                           }
