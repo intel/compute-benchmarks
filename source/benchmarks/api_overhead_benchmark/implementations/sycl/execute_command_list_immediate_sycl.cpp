@@ -28,7 +28,14 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
     sycl::nd_range<1> range(gws, lws);
 
     // Create kernel
-    const auto empty = [=]([[maybe_unused]] auto i) {};
+    int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime * 4);
+    const auto eat_time = [=]([[maybe_unused]] auto i) {
+        if (kernelOperationsCount > 4) {
+            volatile int value = kernelOperationsCount;
+            while (value > 1)
+                value -= 1;
+        }
+    };
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -36,9 +43,9 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
         sycl::event event{};
         for (auto iteration = 0u; iteration < arguments.amountOfCalls; iteration++) {
             if (arguments.useEventForHostSync) {
-                event = sycl.queue.parallel_for(range, event, empty);
+                event = sycl.queue.parallel_for(range, event, eat_time);
             } else {
-                sycl.queue.parallel_for(range, empty);
+                sycl.queue.parallel_for(range, eat_time);
             }
         }
 
