@@ -2,7 +2,7 @@ components:
   infra:
     branch: master
     dest_dir: infra
-    revision: v8298
+    revision: v8341
     fetch_tags: true
     type: git
   benchmarks-clang-format:
