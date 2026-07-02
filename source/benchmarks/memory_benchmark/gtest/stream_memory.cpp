@@ -36,18 +36,32 @@ TEST_P(StreamMemoryTest, Test) {
 
 using namespace MemoryConstants;
 INSTANTIATE_TEST_SUITE_P(
-    StreamMemoryTest,
+    StreamMemoryDeviceTest,
     StreamMemoryTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
         ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
-        ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 256 * megaByte),
-        ::testing::Values(false, true),
-        ::testing::Values(BufferContents::Zeros, BufferContents::Random),
-        ::testing::ValuesIn(UsmRuntimeMemoryPlacementArgument::deviceAndHost),
+        ::testing::Values(1 * megaByte, 32 * megaByte, 256 * megaByte),
+        ::testing::Values(true),
+        ::testing::Values(BufferContents::Zeros, BufferContents::Random), // Zeros vs Random measures compression impact on device memory
+        ::testing::Values(UsmRuntimeMemoryPlacement::Device),
         ::testing::Values(1u),
-        ::testing::Values(1, 4),
-        ::testing::Values(1024, 256)));
+        ::testing::Values(4),
+        ::testing::Values(256)));
+
+INSTANTIATE_TEST_SUITE_P(
+    StreamMemoryHostTest,
+    StreamMemoryTest,
+    ::testing::Combine(
+        ::CommonGtestArgs::allApis(),
+        ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
+        ::testing::Values(1 * megaByte, 32 * megaByte, 256 * megaByte),
+        ::testing::Values(true),
+        ::testing::Values(BufferContents::Random), // host memory is not compressed
+        ::testing::Values(UsmRuntimeMemoryPlacement::Host),
+        ::testing::Values(1u),
+        ::testing::Values(4),
+        ::testing::Values(256)));
 
 INSTANTIATE_TEST_SUITE_P(
     StreamMemoryTestLIMITED,
@@ -61,4 +75,4 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(UsmRuntimeMemoryPlacement::Device),
         ::testing::Values(1u),
         ::testing::Values(4),
-        ::testing::Values(1024, 256)));
+        ::testing::Values(256)));
