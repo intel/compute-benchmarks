@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,9 +34,6 @@ TEST_P(ExecuteCommandListImmediateCopyQueueTest, Test) {
     if (isTestSkipped(Configuration::get().reducedSizeCAL, testType)) {
         GTEST_SKIP();
     }
-    if (args.isCopyOnly && args.withCopyOffload) {
-        GTEST_SKIP(); // If copy offload were to be executed on blitter
-    }
 
     ExecuteCommandListImmediateCopyQueue test;
     test.run(args);
@@ -44,16 +41,34 @@ TEST_P(ExecuteCommandListImmediateCopyQueueTest, Test) {
 
 constexpr static size_t megaByte = 1024 * 1024;
 
+// Representative host->device and device->device placement pairs only, covering both
+// append-only and completion-time measurement. Copy offload only applies to the
+// compute engine.
 INSTANTIATE_TEST_SUITE_P(
     ExecuteCommandListImmediateCopyQueueTest,
     ExecuteCommandListImmediateCopyQueueTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::Values(true, false),
+        ::testing::Values(false),
         ::testing::Values(false, true),
-        ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
-        ::testing::ValuesIn(UsmMemoryPlacementArgument::limitedTargets),
+        ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Device),
+        ::testing::Values(UsmMemoryPlacement::Device),
         ::testing::Values(64 * megaByte),
         ::testing::Values(false, true),
         ::testing::Values(false, true),
+        ::testing::Values(TestType::Regular)));
+
+// Copy-only queue (blitter); copy offload does not apply.
+INSTANTIATE_TEST_SUITE_P(
+    ExecuteCommandListImmediateCopyQueueCopyOnlyTest,
+    ExecuteCommandListImmediateCopyQueueTest,
+    ::testing::Combine(
+        ::CommonGtestArgs::allApis(),
+        ::testing::Values(true),
+        ::testing::Values(false, true),
+        ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Device),
+        ::testing::Values(UsmMemoryPlacement::Device),
+        ::testing::Values(64 * megaByte),
+        ::testing::Values(false, true),
+        ::testing::Values(false),
         ::testing::Values(TestType::Regular)));
