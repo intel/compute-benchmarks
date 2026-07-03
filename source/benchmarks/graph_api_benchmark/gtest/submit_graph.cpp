@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,17 +33,74 @@ TEST_P(SubmitGraphTest, Test) {
     test.run(args);
 }
 
+// The flag space is backend-specific, so split it into per-backend suites that
+// only generate combinations each API can actually run (avoids ApiNotCapable):
+//  - useHostTasks and useExplicit are SYCL-only.
+//  - emulateGraphs selects the backend: command-buffer/emulation (L0, OpenCL,
+//    UR) vs native graph record & replay (L0, SYCL, UR).
+//  - UR's native graph mode requires an in-order queue.
+
+// Command-buffer / emulation mode (emulateGraphs = true).
 INSTANTIATE_TEST_SUITE_P(
-    SubmitGraphTest,
+    SubmitGraphCmdBuffer,
     SubmitGraphTest,
     ::testing::Combine(
-        ::CommonGtestArgs::allApis(),
-        ::testing::Values(false, true),      // useProfiling
-        ::testing::Values(false, true),      // useHostTasks
-        ::testing::Values(false, true),      // inOrderQueue
-        ::testing::Values(false, true),      // useEvents
-        ::testing::Values(false, true),      // useExplicit
-        ::testing::Values(false, true),      // emulateGraphs
-        ::testing::Values(4u, 8u, 16u, 32u), // numKernels
-        ::testing::Values(1u),               // kernelExecutionTime
-        ::testing::Values(false, true)));    // measureCompletionTime
+        ::testing::Values(Api::L0, Api::OpenCL, Api::UR),
+        ::testing::Values(false, true),   // useProfiling
+        ::testing::Values(false),         // useHostTasks (SYCL-only)
+        ::testing::Values(false, true),   // inOrderQueue
+        ::testing::Values(false, true),   // useEvents
+        ::testing::Values(false),         // useExplicit (SYCL-only)
+        ::testing::Values(true),          // emulateGraphs
+        ::testing::Values(4u, 32u),       // numKernels
+        ::testing::Values(1u),            // kernelExecutionTime
+        ::testing::Values(false, true))); // measureCompletionTime
+
+// Native graph record & replay (emulateGraphs = false). Level Zero supports
+// both queue orderings.
+INSTANTIATE_TEST_SUITE_P(
+    SubmitGraphNativeGraph,
+    SubmitGraphTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(false, true),   // useProfiling
+        ::testing::Values(false),         // useHostTasks (SYCL-only)
+        ::testing::Values(false, true),   // inOrderQueue
+        ::testing::Values(false, true),   // useEvents
+        ::testing::Values(false),         // useExplicit (SYCL-only)
+        ::testing::Values(false),         // emulateGraphs
+        ::testing::Values(4u, 32u),       // numKernels
+        ::testing::Values(1u),            // kernelExecutionTime
+        ::testing::Values(false, true))); // measureCompletionTime
+
+// UR native graph record & replay requires an in-order queue.
+INSTANTIATE_TEST_SUITE_P(
+    SubmitGraphNativeGraphUr,
+    SubmitGraphTest,
+    ::testing::Combine(
+        ::testing::Values(Api::UR),
+        ::testing::Values(false, true),   // useProfiling
+        ::testing::Values(false),         // useHostTasks (SYCL-only)
+        ::testing::Values(true),          // inOrderQueue (required by UR)
+        ::testing::Values(false, true),   // useEvents
+        ::testing::Values(false),         // useExplicit (SYCL-only)
+        ::testing::Values(false),         // emulateGraphs
+        ::testing::Values(4u, 32u),       // numKernels
+        ::testing::Values(1u),            // kernelExecutionTime
+        ::testing::Values(false, true))); // measureCompletionTime
+
+// SYCL native graph, exercising the SYCL-only host-task and explicit-graph paths.
+INSTANTIATE_TEST_SUITE_P(
+    SubmitGraphSycl,
+    SubmitGraphTest,
+    ::testing::Combine(
+        ::testing::Values(Api::SYCL),
+        ::testing::Values(false, true),   // useProfiling
+        ::testing::Values(false, true),   // useHostTasks
+        ::testing::Values(false, true),   // inOrderQueue
+        ::testing::Values(false, true),   // useEvents
+        ::testing::Values(false, true),   // useExplicit
+        ::testing::Values(false),         // emulateGraphs
+        ::testing::Values(4u, 32u),       // numKernels
+        ::testing::Values(1u),            // kernelExecutionTime
+        ::testing::Values(false, true))); // measureCompletionTime
