@@ -37,28 +37,46 @@ TEST_P(NonUsmStreamMemoryTest, Test) {
 
 using namespace MemoryConstants;
 INSTANTIATE_TEST_SUITE_P(
-    StreamMemoryTest,
+    NonUsmStreamMemoryDeviceTest,
     NonUsmStreamMemoryTest,
     ::testing::Combine(
         ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
-        ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 128 * megaByte, 512 * megaByte),
-        ::testing::Values(false, true),
+        ::testing::Values(1 * megaByte, 32 * megaByte, 256 * megaByte),
+        ::testing::Values(true),
+        // Zeros vs Random measures compression impact on device memory
         ::testing::Values(BufferContents::Zeros, BufferContents::Random),
-        ::testing::ValuesIn(UsmMemoryPlacementArgument::deviceAndHost),
+        ::testing::Values(UsmMemoryPlacement::Device),
         ::testing::Values(1u),
         ::testing::Values(1),
         ::testing::Values(1024),
         ::testing::Values(false)));
 
 INSTANTIATE_TEST_SUITE_P(
-    StreamMemoryTestNonUsm,
+    NonUsmStreamMemoryHostTest,
     NonUsmStreamMemoryTest,
     ::testing::Combine(
         ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
-        ::testing::Values(1 * megaByte, 8 * megaByte, 32 * megaByte, 256 * megaByte),
-        ::testing::Values(false, true),
+        ::testing::Values(1 * megaByte, 32 * megaByte, 256 * megaByte),
+        ::testing::Values(true),
+        // host memory migrates to device on access and can be compressed there
         ::testing::Values(BufferContents::Zeros, BufferContents::Random),
-        ::testing::ValuesIn(UsmMemoryPlacementArgument::nonUsmTargets),
+        ::testing::Values(UsmMemoryPlacement::Host),
+        ::testing::Values(1u),
+        ::testing::Values(1),
+        ::testing::Values(1024),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(
+    NonUsmStreamMemoryPrefetchTest,
+    NonUsmStreamMemoryTest,
+    ::testing::Combine(
+        ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
+        ::testing::Values(1 * megaByte, 32 * megaByte, 256 * megaByte),
+        ::testing::Values(true),
+        // non-USM memory migrates to device (page-fault or explicit prefetch) and can be compressed there
+        ::testing::Values(BufferContents::Zeros, BufferContents::Random),
+        // alignment extremes
+        ::testing::Values(UsmMemoryPlacement::NonUsmMisaligned, UsmMemoryPlacement::NonUsm2MBAligned),
         ::testing::Values(1u),
         ::testing::Values(1),
         ::testing::Values(1024),

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,19 +35,121 @@ TEST_P(RecordGraphTest, Test) {
     test.run(args);
 }
 
+// Each suite below, except RecordGraphLargeTest, sweeps exactly one
+// graph-shape dimension while holding the other five
+// (fork/lvl/cmdSet/instantiation/appendKern/appendCopy) at a baseline of 1
+// -- except nLvls in the forks suite, which is 2, since forks require at
+// least one nesting level to have any effect. RecordGraphLargeTest instead
+// sets all six dimensions to their prior maximum values.
 INSTANTIATE_TEST_SUITE_P(
-    RecordGraphTest,
+    RecordGraphForksTest,
     RecordGraphTest,
     ::testing::Combine(
         ::testing::Values(Api::L0),
-        ::testing::Values(0, 1, 2),    // nForksInLvl
-        ::testing::Values(1, 4),       // nLvls
-        ::testing::Values(1, 10),      // nCmdSetsInLvl
-        ::testing::Values(0, 1, 10),   // nInstantiations
-        ::testing::Values(0, 1, 10),   // nAppendKern
-        ::testing::Values(0, 1, 10),   // nAppendCopy
+        ::testing::Values(0, 1, 2), // nForksInLvl
+        ::testing::Values(2),       // nLvls (>1, otherwise forks never nest and this sweep is a no-op)
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1),
         ::testing::Values(true),       // mRec
         ::testing::Values(true),       // mInst
         ::testing::Values(false),      // mDest
         ::testing::Values(false, true) // emulate
         ));
+
+INSTANTIATE_TEST_SUITE_P(
+    RecordGraphLevelsTest,
+    RecordGraphTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(1),
+        ::testing::Values(1, 4), // nLvls
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(true),
+        ::testing::Values(true),
+        ::testing::Values(false),
+        ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    RecordGraphCmdSetsTest,
+    RecordGraphTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1, 10), // nCmdSetsInLvl
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(true),
+        ::testing::Values(true),
+        ::testing::Values(false),
+        ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    RecordGraphInstantiationsTest,
+    RecordGraphTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(0, 1, 10), // nInstantiations
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(true),
+        ::testing::Values(true),
+        ::testing::Values(false),
+        ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    RecordGraphAppendKernTest,
+    RecordGraphTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(0, 1, 10), // nAppendKern
+        ::testing::Values(1),
+        ::testing::Values(true),
+        ::testing::Values(true),
+        ::testing::Values(false),
+        ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    RecordGraphAppendCopyTest,
+    RecordGraphTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(0, 1, 10), // nAppendCopy
+        ::testing::Values(true),
+        ::testing::Values(true),
+        ::testing::Values(false),
+        ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    RecordGraphLargeTest,
+    RecordGraphTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(2),  // nForksInLvl
+        ::testing::Values(4),  // nLvls
+        ::testing::Values(10), // nCmdSetsInLvl
+        ::testing::Values(10), // nInstantiations
+        ::testing::Values(10), // nAppendKern
+        ::testing::Values(10), // nAppendCopy
+        ::testing::Values(true),
+        ::testing::Values(true),
+        ::testing::Values(false),
+        ::testing::Values(false, true)));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(0, 1),
         ::testing::Values(UsmMemoryPlacement::Device, UsmMemoryPlacement::Host),
         ::testing::Values(0, 1),
-        ::testing::Values(4, 8, 16, 32, 64, 256, 1024, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 33554432, 67108864, 134217728),
+        ::testing::Values(4, 32, 256, 4096, 65536, 1048576, 16777216, 134217728),
         ::testing::Values(1)));
 
 INSTANTIATE_TEST_SUITE_P(
