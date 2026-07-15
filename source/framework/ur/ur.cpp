@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,23 +9,83 @@
 
 #include "error.h"
 
+#include <cstdlib>
+#include <mutex>
 #include <stdexcept>
 #include <vector>
 
-UrState::UrState() {
-    ur_device_init_flags_t device_flags = 0;
-    EXPECT_UR_RESULT_SUCCESS(urLoaderInit(device_flags, nullptr));
+namespace {
+std::once_flag urInitOnce;
+ur_adapter_handle_t levelZeroAdapter = nullptr;
 
-    uint32_t adapter_count = 0;
-    EXPECT_UR_RESULT_SUCCESS(urAdapterGet(0, nullptr, &adapter_count));
+void teardownUrAtExit() {
+    if (levelZeroAdapter) {
+        EXPECT_UR_RESULT_SUCCESS(urAdapterRelease(levelZeroAdapter));
+        levelZeroAdapter = nullptr;
+    }
+    EXPECT_UR_RESULT_SUCCESS(urLoaderTearDown());
+}
 
-    if (adapter_count == 0) {
+void initializeUrAndSelectAdapter() {
+    if (levelZeroAdapter != nullptr) {
+        return;
+    }
+
+    ur_device_init_flags_t deviceFlags = 0;
+    EXPECT_UR_RESULT_SUCCESS(urLoaderInit(deviceFlags, nullptr));
+
+    uint32_t adapterCount = 0;
+    EXPECT_UR_RESULT_SUCCESS(urAdapterGet(0, nullptr, &adapterCount));
+    if (adapterCount == 0) {
+        EXPECT_UR_RESULT_SUCCESS(urLoaderTearDown());
         FATAL_ERROR("No adapters found");
     }
 
-    // if more than one adapter is found, select the first one
+    std::vector<ur_adapter_handle_t> adapters(adapterCount);
+    EXPECT_UR_RESULT_SUCCESS(urAdapterGet(adapterCount, adapters.data(), nullptr));
 
-    EXPECT_UR_RESULT_SUCCESS(urAdapterGet(1, &adapter, nullptr));
+    for (auto candAdapter : adapters) {
+        ur_backend_t backend{};
+        EXPECT_UR_RESULT_SUCCESS(urAdapterGetInfo(candAdapter, UR_ADAPTER_INFO_BACKEND,
+                                                  sizeof(backend), &backend, nullptr));
+        if (backend == UR_BACKEND_LEVEL_ZERO) {
+            levelZeroAdapter = candAdapter;
+            break;
+        }
+    }
+
+    for (auto &adapter : adapters) {
+        if (adapter != levelZeroAdapter) {
+            EXPECT_UR_RESULT_SUCCESS(urAdapterRelease(adapter));
+        }
+    }
+
+    if (levelZeroAdapter == nullptr) {
+        EXPECT_UR_RESULT_SUCCESS(urLoaderTearDown());
+        FATAL_ERROR("No Level Zero adapter found.");
+    }
+
+    std::atexit(teardownUrAtExit);
+}
+
+// Initialize loader and select Level Zero adapter only once per process.
+// Right now UrState is used once in early benchmark configuration, then again
+// in some UR benchmarks. We shouldn't initialize loader twice.
+ur_adapter_handle_t getLevelZeroAdapter() {
+    std::call_once(urInitOnce, initializeUrAndSelectAdapter);
+    EXPECT_UR_RESULT_SUCCESS(urAdapterRetain(levelZeroAdapter));
+    return levelZeroAdapter;
+}
+
+} // namespace
+
+UrState::UrState() {
+    adapter = nullptr;
+    platform = nullptr;
+    context = nullptr;
+    device = nullptr;
+
+    adapter = getLevelZeroAdapter();
 
     uint32_t platform_count = 0;
     EXPECT_UR_RESULT_SUCCESS(urPlatformGet(adapter, 0, nullptr, &platform_count));
@@ -57,7 +117,7 @@ UrState::UrState() {
 
     for (auto &device : devices) {
         if (device != this->device) {
-            urDeviceRelease(device);
+            EXPECT_UR_RESULT_SUCCESS(urDeviceRelease(device));
         }
     }
 
@@ -74,5 +134,4 @@ UrState::~UrState() {
     if (adapter) {
         urAdapterRelease(adapter);
     }
-    urLoaderTearDown();
 }

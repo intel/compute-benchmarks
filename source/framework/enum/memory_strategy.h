@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-enum class TmpMemoryStrategy {
+enum class MemoryStrategy {
     Unknown,
     // Allocate memory using synchronous API, synchronize after kernel execution, and free memory.
     Sync,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "definitions/tmp_buffer_mixed_size.h"
 
-#include "framework/enum/tmp_memory_strategy.h"
+#include "framework/enum/memory_strategy.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/common_gtest_args.h"
 #include "framework/utility/memory_constants.h"
@@ -16,7 +16,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<TmpBufferMixedSize> registerTestCase{};
 
-class TmpBufferMixedSizeTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, TmpMemoryStrategy, size_t>> {
+class TmpBufferMixedSizeTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, MemoryStrategy, size_t>> {
 };
 
 TEST_P(TmpBufferMixedSizeTest, Test) {
@@ -39,7 +39,7 @@ INSTANTIATE_TEST_SUITE_P(
                           8 * MemoryConstants::kiloByte,
                           8 * MemoryConstants::megaByte),
         ::testing::Values(4, 16),
-        ::testing::Values(TmpMemoryStrategy::Async, TmpMemoryStrategy::Static, TmpMemoryStrategy::Sync),
+        ::testing::Values(MemoryStrategy::Async, MemoryStrategy::Static, MemoryStrategy::Sync),
         ::testing::Values(10)));
 
 INSTANTIATE_TEST_SUITE_P(
@@ -49,5 +49,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(4 * MemoryConstants::megaByte),
         ::testing::Values(8),
-        ::testing::Values(TmpMemoryStrategy::Async),
+        ::testing::Values(MemoryStrategy::Async),
         ::testing::Values(10)));

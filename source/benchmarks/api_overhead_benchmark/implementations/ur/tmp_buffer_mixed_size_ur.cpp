@@ -31,9 +31,9 @@ TestResult execKernel(UrState &ur, ur_kernel_handle_t kernel, QueueData queueDat
     size_t bufferSize = (var == SizeVariant::Small ? arguments.sizeSmall : arguments.sizeSmall * arguments.sizeLargeRatio);
 
     void *tmpBuffer = queueData.tmpBuffer;
-    if (arguments.strategy == TmpMemoryStrategy::Sync) {
+    if (arguments.strategy == MemoryStrategy::Sync) {
         ASSERT_UR_RESULT_SUCCESS(urUSMDeviceAlloc(ur.context, ur.device, nullptr, nullptr, bufferSize, &tmpBuffer));
-    } else if (arguments.strategy == TmpMemoryStrategy::Async) {
+    } else if (arguments.strategy == MemoryStrategy::Async) {
         ASSERT_UR_RESULT_SUCCESS(urEnqueueUSMDeviceAllocExp(queueData.queue, nullptr, bufferSize, nullptr, 0, nullptr, &tmpBuffer, nullptr));
     }
 
@@ -47,10 +47,10 @@ TestResult execKernel(UrState &ur, ur_kernel_handle_t kernel, QueueData queueDat
     size_t globalSize[] = {bufferSize / sizeof(int)};
     ASSERT_UR_RESULT_SUCCESS(urEnqueueKernelLaunchWithArgsExp(queueData.queue, kernel, 1, globalOffset, globalSize, nullptr, 1, args, nullptr, 0, nullptr, nullptr));
 
-    if (arguments.strategy == TmpMemoryStrategy::Sync) {
+    if (arguments.strategy == MemoryStrategy::Sync) {
         ASSERT_UR_RESULT_SUCCESS(urQueueFinish(queueData.queue));
         ASSERT_UR_RESULT_SUCCESS(urUSMFree(ur.context, tmpBuffer));
-    } else if (arguments.strategy == TmpMemoryStrategy::Async) {
+    } else if (arguments.strategy == MemoryStrategy::Async) {
         ASSERT_UR_RESULT_SUCCESS(urEnqueueUSMFreeExp(queueData.queue, nullptr, tmpBuffer, 0, nullptr, nullptr));
     }
 
@@ -61,7 +61,7 @@ TestResult execKernel(UrState &ur, ur_kernel_handle_t kernel, QueueData queueDat
 // Async allocation API enables buffers to be reused between the queues.
 TestResult scenario(UrState &ur, ur_kernel_handle_t kernel, QueueData queueDataA, QueueData queueDataB, const TmpBufferMixedSizeArguments &arguments) {
     size_t sizeLarge = arguments.sizeSmall * arguments.sizeLargeRatio;
-    if (arguments.strategy == TmpMemoryStrategy::Static) {
+    if (arguments.strategy == MemoryStrategy::Static) {
         ASSERT_UR_RESULT_SUCCESS(urUSMDeviceAlloc(ur.context, ur.device, nullptr, nullptr, sizeLarge, &queueDataA.tmpBuffer));
         ASSERT_UR_RESULT_SUCCESS(urUSMDeviceAlloc(ur.context, ur.device, nullptr, nullptr, sizeLarge, &queueDataB.tmpBuffer));
     }
@@ -77,7 +77,7 @@ TestResult scenario(UrState &ur, ur_kernel_handle_t kernel, QueueData queueDataA
     ASSERT_UR_RESULT_SUCCESS(urQueueFinish(queueDataA.queue));
     ASSERT_UR_RESULT_SUCCESS(urQueueFinish(queueDataB.queue));
 
-    if (arguments.strategy == TmpMemoryStrategy::Static) {
+    if (arguments.strategy == MemoryStrategy::Static) {
         ASSERT_UR_RESULT_SUCCESS(urUSMFree(ur.context, queueDataA.tmpBuffer));
         ASSERT_UR_RESULT_SUCCESS(urUSMFree(ur.context, queueDataB.tmpBuffer));
     }
@@ -98,7 +98,7 @@ static TestResult run(const TmpBufferMixedSizeArguments &arguments, Statistics &
     UrState ur;
     Timer timer;
 
-    if (arguments.strategy == TmpMemoryStrategy::Async) {
+    if (arguments.strategy == MemoryStrategy::Async) {
         ur_bool_t usmPoolSupport = false;
         auto status = urDeviceGetInfo(ur.device, UR_DEVICE_INFO_ASYNC_USM_ALLOCATIONS_SUPPORT_EXP,
                                       sizeof(usmPoolSupport), &usmPoolSupport, nullptr);

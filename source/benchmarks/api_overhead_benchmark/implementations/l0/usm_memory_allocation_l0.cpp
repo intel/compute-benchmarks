@@ -31,6 +31,14 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
     // Keep the previous allocation alive across the next one so the driver hands out a fresh VA
     void *previousPtr = nullptr;
 
+    switch (arguments.strategy) {
+    case MemoryStrategy::Sync:
+        break;
+    default:
+        std::cerr << "L0 only supports Sync memory strategy" << std::endl;
+        return TestResult::InvalidArgs;
+    }
+
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         if (arguments.measureMode == AllocationMeasureMode::Allocate ||

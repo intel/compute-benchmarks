@@ -8,9 +8,9 @@
 #pragma once
 
 #include "framework/argument/abstract/enum_argument.h"
-#include "framework/enum/tmp_memory_strategy.h"
+#include "framework/enum/memory_strategy.h"
 
-struct TmpMemoryStrategyArgument : EnumArgument<TmpMemoryStrategyArgument, TmpMemoryStrategy> {
+struct MemoryStrategyArgument : EnumArgument<MemoryStrategyArgument, MemoryStrategy> {
     using EnumArgument::EnumArgument;
     ThisType &operator=(EnumType newValue) {
         this->value = newValue;

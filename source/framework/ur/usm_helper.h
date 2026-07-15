@@ -26,4 +26,17 @@ static ur_result_t allocate(UsmRuntimeMemoryPlacement placement, ur_context_hand
     }
 }
 
+[[maybe_unused]] static ur_result_t allocate_async(UsmRuntimeMemoryPlacement placement, ur_queue_handle_t queue, size_t size, void **ptr) {
+    switch (placement) {
+    case UsmRuntimeMemoryPlacement::Host:
+        return urEnqueueUSMHostAllocExp(queue, nullptr, size, nullptr, 0, nullptr, ptr, nullptr);
+    case UsmRuntimeMemoryPlacement::Device:
+        return urEnqueueUSMDeviceAllocExp(queue, nullptr, size, nullptr, 0, nullptr, ptr, nullptr);
+    case UsmRuntimeMemoryPlacement::Shared:
+        return urEnqueueUSMSharedAllocExp(queue, nullptr, size, nullptr, 0, nullptr, ptr, nullptr);
+    default:
+        return UR_RESULT_ERROR_INVALID_OPERATION;
+    }
+}
+
 } // namespace UR::UsmHelper

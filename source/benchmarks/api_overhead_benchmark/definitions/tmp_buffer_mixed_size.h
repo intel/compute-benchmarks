@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,13 +8,13 @@
 #pragma once
 
 #include "framework/argument/basic_argument.h"
-#include "framework/argument/enum/tmp_memory_strategy_argument.h"
+#include "framework/argument/enum/memory_strategy_argument.h"
 #include "framework/test_case/test_case.h"
 
 struct TmpBufferMixedSizeArguments : TestCaseArgumentContainer {
     ByteSizeArgument sizeSmall;
     PositiveIntegerArgument sizeLargeRatio;
-    TmpMemoryStrategyArgument strategy;
+    MemoryStrategyArgument strategy;
     PositiveIntegerArgument numKernelsSmall;
 
     TmpBufferMixedSizeArguments()

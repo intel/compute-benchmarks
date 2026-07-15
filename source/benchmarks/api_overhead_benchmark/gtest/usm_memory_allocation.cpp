@@ -15,6 +15,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<UsmMemoryAllocation> registerTestCase{};
 
+// Default test uses synchronous allocations - they are supported by all APIs and all USM placement types.
 class UsmMemoryAllocationTest : public ::testing::TestWithParam<std::tuple<Api, UsmRuntimeMemoryPlacement, size_t, AllocationMeasureMode>> {
 };
 
@@ -24,6 +25,7 @@ TEST_P(UsmMemoryAllocationTest, Test) {
     args.usmMemoryPlacement = std::get<1>(GetParam());
     args.size = std::get<2>(GetParam());
     args.measureMode = std::get<3>(GetParam());
+    args.strategy = MemoryStrategy::Sync;
     UsmMemoryAllocation test;
     test.run(args);
 }

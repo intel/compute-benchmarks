@@ -92,7 +92,7 @@ Configuration::Configuration()
     csv = false;
     verbose = false;
     interactivePrints = false;
-    warmupIterations = 1;
+    warmupIterations = 3;
     trimOutliers = 0;
     iterations = 10;
     sleepFor = 20;
