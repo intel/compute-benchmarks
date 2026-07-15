@@ -14,6 +14,7 @@
 
 #include "definitions/immediate_cmdlist_submission.h"
 
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <mutex>
 #include <shared_mutex>
@@ -87,9 +88,10 @@ static TestResult run(const ImmediateCommandListSubmissionArguments &arguments, 
     }
 
     const auto numberOfSupportedEngines = supportedEngineInfo.size();
-    if (supportedEngineInfo.size() * arguments.threadsPerEngine > arguments.numberOfThreads) {
-        return TestResult::InvalidArgs;
-    }
+    // Assign 'threadsPerEngine' threads to each engine, using only as many engines as the thread
+    // budget allows (at least one). This keeps the benchmark comparable across platforms that expose
+    // a different number of compute-capable command queue groups.
+    const size_t enginesToUse = std::max(size_t{1}, std::min(numberOfSupportedEngines, arguments.numberOfThreads / arguments.threadsPerEngine));
 
     ze_command_queue_desc_t commandQueueDesc = {};
     commandQueueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
@@ -125,8 +127,8 @@ static TestResult run(const ImmediateCommandListSubmissionArguments &arguments, 
 
     for (auto i = 0u; i < arguments.numberOfThreads; i++) {
 
-        commandQueueDesc.ordinal = supportedEngineInfo[i % numberOfSupportedEngines].ordinal;
-        commandQueueDesc.index = supportedEngineInfo[i % numberOfSupportedEngines].engineIndex;
+        commandQueueDesc.ordinal = supportedEngineInfo[i % enginesToUse].ordinal;
+        commandQueueDesc.index = supportedEngineInfo[i % enginesToUse].engineIndex;
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Host, levelzero, bufferSize, &threadData[i].hostMemory));
         ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, threadData[i].hostMemory, bufferSize));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &threadData[i].cmdList));
