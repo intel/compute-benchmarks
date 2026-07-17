@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,9 @@
 #include "framework/workload/workload_io.h"
 
 #include <iostream>
+#include <string_view>
 
-void WorkloadStatistics::pushPercentage(double value, MeasurementUnit unit, MeasurementType type, const std::string &description) {
+void WorkloadStatistics::pushPercentage(double value, MeasurementUnit unit, MeasurementType type, std::string_view description) {
     FATAL_ERROR_IF(type != MeasurementType::Unknown, "WorkloadStatistics does not support setting measurement type");
     FATAL_ERROR_IF(unit != MeasurementUnit::Unknown, "WorkloadStatistics does not support setting measurement type");
     FATAL_ERROR_IF(description != "", "WorkloadStatistics does not support multiple statistics groups");
@@ -22,7 +23,7 @@ void WorkloadStatistics::pushPercentage(double value, MeasurementUnit unit, Meas
     result << value << ' ';
 }
 
-void WorkloadStatistics::pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, const std::string &description) {
+void WorkloadStatistics::pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, std::string_view description) {
     FATAL_ERROR_IF(type != MeasurementType::Unknown, "WorkloadStatistics does not support setting measurement type");
     FATAL_ERROR_IF(unit != MeasurementUnit::Unknown, "WorkloadStatistics does not support setting measurement type");
     FATAL_ERROR_IF(description != "", "WorkloadStatistics does not support multiple statistics groups");
@@ -37,13 +38,13 @@ void WorkloadStatistics::pushValue([[maybe_unused]] Clock::duration time,
                                    [[maybe_unused]] uint64_t size,
                                    [[maybe_unused]] MeasurementUnit unit,
                                    MeasurementType type,
-                                   const std::string &description) {
+                                   std::string_view description) {
     FATAL_ERROR_IF(type != MeasurementType::Unknown, "WorkloadStatistics does not support setting measurement type");
     FATAL_ERROR_IF(description != "", "WorkloadStatistics does not support multiple statistics groups");
     FATAL_ERROR("Not implemented");
 }
 
-void WorkloadStatistics::pushCpuCounter([[maybe_unused]] uint64_t count, [[maybe_unused]] MeasurementUnit unit, MeasurementType type, const std::string &description) {
+void WorkloadStatistics::pushCpuCounter([[maybe_unused]] uint64_t count, [[maybe_unused]] MeasurementUnit unit, MeasurementType type, std::string_view description) {
     FATAL_ERROR_IF(type != MeasurementType::Unknown, "WorkloadStatistics does not support setting measurement type");
     FATAL_ERROR_IF(description != "", "WorkloadStatistics does not support multiple statistics groups");
     FATAL_ERROR("Not implemented");
@@ -52,7 +53,7 @@ void WorkloadStatistics::pushCpuCounter([[maybe_unused]] uint64_t count, [[maybe
 void WorkloadStatistics::pushEnergy([[maybe_unused]] size_t microJoules,
                                     [[maybe_unused]] MeasurementUnit unit,
                                     MeasurementType type,
-                                    const std::string &description) {
+                                    std::string_view description) {
     FATAL_ERROR_IF(type != MeasurementType::Unknown, "WorkloadStatistics does not support setting measurement type");
     FATAL_ERROR_IF(description != "", "WorkloadStatistics does not support multiple statistics groups");
     FATAL_ERROR("Not implemented");
@@ -61,7 +62,7 @@ void WorkloadStatistics::pushEnergy([[maybe_unused]] size_t microJoules,
 void WorkloadStatistics::pushEnergy([[maybe_unused]] double watts,
                                     [[maybe_unused]] MeasurementUnit unit,
                                     MeasurementType type,
-                                    const std::string &description) {
+                                    std::string_view description) {
     FATAL_ERROR_IF(type != MeasurementType::Unknown, "WorkloadStatistics does not support setting measurement type");
     FATAL_ERROR_IF(description != "", "WorkloadStatistics does not support multiple statistics groups");
     FATAL_ERROR("Not implemented");

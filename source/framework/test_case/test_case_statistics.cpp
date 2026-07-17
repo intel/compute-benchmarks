@@ -30,7 +30,7 @@ TestCaseStatistics::TestCaseStatistics(size_t maxSamplesCount, Configuration::Pr
       printType(printType) {
 }
 
-void TestCaseStatistics::pushPercentage(double value, MeasurementUnit unit, MeasurementType type, const std::string &description) {
+void TestCaseStatistics::pushPercentage(double value, MeasurementUnit unit, MeasurementType type, std::string_view description) {
     if (unit != MeasurementUnit::Percentage) {
         FATAL_ERROR("Incorrect measurement unit");
     }
@@ -41,7 +41,7 @@ void TestCaseStatistics::pushPercentage(double value, MeasurementUnit unit, Meas
     this->pushValue(percentage, description, unit, type);
 }
 
-void TestCaseStatistics::pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, const std::string &description) {
+void TestCaseStatistics::pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, std::string_view description) {
     static_assert(std::is_floating_point_v<Value>, "Need floating point type for the below cast to work properly");
     const Value timeSeconds = std::chrono::duration_cast<std::chrono::duration<Value>>(time).count();
 
@@ -71,7 +71,7 @@ void TestCaseStatistics::pushValue(Clock::duration time, MeasurementUnit unit, M
     }
 }
 
-void TestCaseStatistics::pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, const std::string &description) {
+void TestCaseStatistics::pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, std::string_view description) {
     static_assert(std::is_floating_point_v<Value>, "Need floating point type for the below cast to work properly");
     if (unit != MeasurementUnit::GigabytesPerSecond && unit != MeasurementUnit::GigaFLOPS) {
         FATAL_ERROR("Test is passing size which requires Bandwidth calculcation, please fix benchmark");
@@ -104,7 +104,7 @@ void TestCaseStatistics::pushValue(Clock::duration time, uint64_t size, Measurem
     }
 }
 
-void TestCaseStatistics::pushCpuCounter(uint64_t count, MeasurementUnit unit, MeasurementType type, const std::string &description) {
+void TestCaseStatistics::pushCpuCounter(uint64_t count, MeasurementUnit unit, MeasurementType type, std::string_view description) {
     switch (unit) {
     case MeasurementUnit::CpuHardwareCounter: {
         const Value cpuCounter = static_cast<Value>(count);
@@ -116,7 +116,7 @@ void TestCaseStatistics::pushCpuCounter(uint64_t count, MeasurementUnit unit, Me
     }
 }
 
-void TestCaseStatistics::pushEnergy(size_t microJoules, MeasurementUnit unit, MeasurementType type, const std::string &description) {
+void TestCaseStatistics::pushEnergy(size_t microJoules, MeasurementUnit unit, MeasurementType type, std::string_view description) {
     switch (unit) {
     case MeasurementUnit::MicroJoules: {
         const Value energyMicroJoules = static_cast<Value>(microJoules);
@@ -128,7 +128,7 @@ void TestCaseStatistics::pushEnergy(size_t microJoules, MeasurementUnit unit, Me
     }
 }
 
-void TestCaseStatistics::pushEnergy(double watts, MeasurementUnit unit, MeasurementType type, const std::string &description) {
+void TestCaseStatistics::pushEnergy(double watts, MeasurementUnit unit, MeasurementType type, std::string_view description) {
     switch (unit) {
     case MeasurementUnit::Watts: {
         const Value powerWatts = static_cast<Value>(watts);
@@ -172,11 +172,16 @@ void TestCaseStatistics::overrideMeasurementUnit(MeasurementUnit &unit) {
     }
 }
 
-void TestCaseStatistics::pushValue(Value value, const std::string &description, MeasurementUnit unit, MeasurementType type) {
+void TestCaseStatistics::pushValue(Value value, std::string_view description, MeasurementUnit unit, MeasurementType type) {
     FATAL_ERROR_IF(unit == MeasurementUnit::Unknown, "Concrete MeasurementUnit has to be specified");
     FATAL_ERROR_IF(type == MeasurementType::Unknown, "Concrete MeasurementType has to be specified");
 
-    auto &samples = this->samplesMap[description];
+    // avoid creating string for lookup
+    auto it = this->samplesMap.find(description);
+    if (it == this->samplesMap.end()) {
+        it = this->samplesMap.emplace(std::string(description), Samples{}).first;
+    }
+    auto &samples = it->second;
 
     // We expect a precise amount of measurements requested by the user.
     FATAL_ERROR_IF(samples.vector.size() == maxSamplesCount, "Too many values pushed by the test");
