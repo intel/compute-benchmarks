@@ -11,6 +11,7 @@
 #include <cstring>
 #include <iomanip>
 #include <iostream>
+#include <level_zero/ze_intel_gpu.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -140,6 +141,83 @@ int printModuleProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
               << tab << "\tfp64 flags:       " << parseFpFlags(moduleProps.fp64flags) << "\n"
               << tab << "\tmaxArgumentsSize: " << moduleProps.maxArgumentsSize << "\n"
               << tab << "\tprintfBufferSize: " << moduleProps.printfBufferSize << "\n";
+    return 0;
+}
+
+int printPeakThroughput(ze_device_handle_t device, uint32_t numberOfTabs) {
+    ze_device_ip_version_ext_t ipVersion = {ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT};
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    deviceProps.pNext = &ipVersion;
+    if (zeDeviceGetProperties(device, &deviceProps) != ZE_RESULT_SUCCESS) {
+        std::cerr << "zeDeviceGetProperties failed\n";
+        return -1;
+    }
+
+    ze_intel_device_module_dp_exp_properties_t dpProps = {ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES};
+    ze_device_module_properties_t moduleProps = {ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES};
+    moduleProps.pNext = &dpProps;
+    if (zeDeviceGetModuleProperties(device, &moduleProps) != ZE_RESULT_SUCCESS) {
+        std::cerr << "zeDeviceGetModuleProperties failed\n";
+        return -1;
+    }
+
+    const uint64_t numEUs = static_cast<uint64_t>(deviceProps.numSlices) *
+                            deviceProps.numSubslicesPerSlice * deviceProps.numEUsPerSubslice;
+    const uint32_t simd = deviceProps.physicalEUSimdWidth;
+    const double clockGHz = deviceProps.coreClockRate / 1000.0;
+    constexpr uint32_t systolicDepth = 8;
+
+    const bool hasFp16 = (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_FP16) != 0;
+    const bool hasFp64 = (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_FP64) != 0;
+    const bool hasDp4a = (dpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A) != 0;
+    const bool hasDpas = (dpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS) != 0;
+
+    std::string tab(numberOfTabs, '\t');
+    std::cout << tab << "Peak throughput (dense theoretical, FMA counted as 2 ops):\n"
+              << tab << "\tipVersion: 0x" << std::hex << ipVersion.ipVersion << std::dec
+              << "  EUs: " << numEUs << " (" << deviceProps.numSlices << " x "
+              << deviceProps.numSubslicesPerSlice << " x " << deviceProps.numEUsPerSubslice << ")"
+              << "  SIMD: " << simd << "  clock: " << clockGHz << " GHz\n"
+              << tab << "\tDP4A: " << hasDp4a << "  DPAS(XMX): " << hasDpas
+              << "  systolicDepth: " << systolicDepth << "\n";
+
+    if (numEUs == 0 || deviceProps.coreClockRate == 0) {
+        std::cout << tab << "\t(topology/clock unavailable - cannot compute peak)\n";
+        return 0;
+    }
+
+    std::ios_base::fmtflags backup(std::cout.flags());
+    std::streamsize precBackup = std::cout.precision();
+    char fillBackup = std::cout.fill(' ');
+    std::cout << std::fixed << std::setprecision(1);
+
+    auto printRow = [&](const char *dtype, const char *engine, double opsPerClkPerEu, const char *unit) {
+        const double peakTera = opsPerClkPerEu * static_cast<double>(numEUs) * clockGHz / 1000.0;
+        std::cout << tab << "\t  " << std::setw(5) << std::left << dtype << " "
+                  << std::setw(7) << std::left << engine << " "
+                  << std::setw(9) << std::right << peakTera << " " << unit << "\n";
+    };
+
+    printRow("FP32", "vector", 2.0 * simd, "TFLOPS");
+    if (hasFp16)
+        printRow("FP16", "vector", 2.0 * simd * 2, "TFLOPS");
+    if (hasFp64)
+        printRow("FP64", "vector", 2.0 * simd, "TFLOPS*");
+    if (hasDp4a)
+        printRow("INT8", "dp4a", 2.0 * simd * 4, "TOPS");
+
+    if (hasDpas) {
+        printRow("BF16", "xmx", 2.0 * simd * systolicDepth * 2, "TFLOPS");
+        printRow("FP16", "xmx", 2.0 * simd * systolicDepth * 2, "TFLOPS");
+        printRow("INT8", "xmx", 2.0 * simd * systolicDepth * 2, "TOPS");
+        if (simd >= 16)
+            printRow("TF32", "xmx", 2.0 * simd * systolicDepth * 1, "TFLOPS*");
+    }
+    std::cout << tab << "\t(* rate/support not exposed by Level Zero; treat as upper bound)\n";
+
+    std::cout.flags(backup);
+    std::cout.precision(precBackup);
+    std::cout.fill(fillBackup);
     return 0;
 }
 
@@ -368,6 +446,11 @@ int printPropertiesForAllSubDevices(ze_device_handle_t device, uint32_t numberOf
     }
 
     ret = printModuleProperties(device, numberOfTabs);
+    if (ret) {
+        return -1;
+    }
+
+    ret = printPeakThroughput(device, numberOfTabs);
     if (ret) {
         return -1;
     }
