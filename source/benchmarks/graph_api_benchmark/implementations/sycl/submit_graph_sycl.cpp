@@ -156,6 +156,11 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
 #endif
     } catch (sycl::exception &e) {
+        // A device without graph record-and-replay support throws feature_not_supported
+        // when enable_native_recording is requested; treat that as a skip, not a failure.
+        if (e.code() == sycl::errc::feature_not_supported) {
+            return TestResult::DeviceNotCapable;
+        }
         std::cerr << "Caught SYCL exception: " << e.what() << "\n";
         return TestResult::Error;
     }
