@@ -65,38 +65,20 @@ static TestResult waitForAllBlittersToComplete(std::vector<PerBlitterWorkInfo> &
 
 static TestResult prepareWorkForBlitters(std::vector<PerBlitterWorkInfo> &blitterWorkInfos,
                                          bool isH2d, const BcsBitmaskArgument &blitter,
-                                         uint32_t mainCopyOrdinal, uint32_t linkCopyOrdinal,
-                                         std::vector<ze_command_queue_group_properties_t> &queueProperties,
                                          void *srcBuffer, void *dstBuffer, uint32_t sizeToCopy,
                                          ze_event_pool_handle_t &eventPool, uint32_t &eventIndex,
                                          LevelZero &levelzero) {
-
-    uint32_t ordinal = 0;
-    uint32_t index = 0;
 
     auto totalSize = sizeToCopy;
     auto engineCount = blitter.getEnabledBits().size();
 
     for (size_t blitterIndex : blitter.getEnabledBits()) {
-        const bool isMainCopyEngine = blitterIndex == 0;
-        if (isMainCopyEngine) {
-            if (mainCopyOrdinal == std::numeric_limits<uint32_t>::max()) {
-                return TestResult::DeviceNotCapable;
-            }
-            ordinal = mainCopyOrdinal;
-            index = 0;
-        } else {
-            if (linkCopyOrdinal == std::numeric_limits<uint32_t>::max() || blitterIndex > queueProperties[linkCopyOrdinal].numQueues) {
-                return TestResult::DeviceNotCapable;
-            }
-            ordinal = linkCopyOrdinal;
-            index = static_cast<uint32_t>(blitterIndex - queueProperties[mainCopyOrdinal].numQueues);
+        const auto blitterQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, EngineHelper::getBlitterEngineFromIndex(blitterIndex));
+        if (blitterQueueDesc == nullptr) {
+            return TestResult::DeviceNotCapable;
         }
 
-        ze_command_queue_desc_t cmdQueueDesc = {};
-        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-        cmdQueueDesc.ordinal = ordinal;
-        cmdQueueDesc.index = index;
+        const auto &cmdQueueDesc = blitterQueueDesc->desc;
 
         PerBlitterWorkInfo info{};
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context,
@@ -145,14 +127,6 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
     }
     LevelZero levelzero;
 
-    uint32_t numQueueGroups = 0;
-    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetCommandQueueGroupProperties(levelzero.device,
-                                                                    &numQueueGroups,
-                                                                    nullptr));
-    if (numQueueGroups == 0) {
-        return TestResult::DeviceNotCapable;
-    }
-
     uint32_t h2dTransferDirectionEnabled = arguments.h2dBlitters.getEnabledBits().size() > 0 ? 1 : 0;
     uint32_t d2hTransferDirectionEnabled = arguments.d2hBlitters.getEnabledBits().size() > 0 ? 1 : 0;
 
@@ -161,24 +135,6 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
     ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetProperties(levelzero.device, &deviceProperties));
     if (deviceProperties.maxMemAllocSize < memoryRequired) {
         return TestResult::DeviceNotCapable;
-    }
-
-    std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
-    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetCommandQueueGroupProperties(levelzero.device,
-                                                                    &numQueueGroups,
-                                                                    queueProperties.data()));
-
-    uint32_t mainCopyOrdinal = std::numeric_limits<uint32_t>::max();
-    uint32_t linkCopyOrdinal = std::numeric_limits<uint32_t>::max();
-    for (uint32_t i = 0; i < numQueueGroups; i++) {
-        if ((queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) == 0 &&
-            (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY)) {
-            if (queueProperties[i].numQueues == 1) {
-                mainCopyOrdinal = i;
-            } else {
-                linkCopyOrdinal = i;
-            }
-        }
     }
 
     // Create buffers
@@ -211,14 +167,14 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
     // Create selected blitter lists
     std::vector<PerBlitterWorkInfo> blitterWorkInfos;
 
-    result = prepareWorkForBlitters(blitterWorkInfos, true, arguments.h2dBlitters, mainCopyOrdinal, linkCopyOrdinal,
-                                    queueProperties, h2dTransferBuffers.hostBuffer, h2dTransferBuffers.deviceBuffer, static_cast<uint32_t>(arguments.size),
+    result = prepareWorkForBlitters(blitterWorkInfos, true, arguments.h2dBlitters,
+                                    h2dTransferBuffers.hostBuffer, h2dTransferBuffers.deviceBuffer, static_cast<uint32_t>(arguments.size),
                                     eventPool, eventIndex, levelzero);
     if (result != TestResult::Success) {
         return result;
     }
-    result = prepareWorkForBlitters(blitterWorkInfos, false, arguments.d2hBlitters, mainCopyOrdinal, linkCopyOrdinal,
-                                    queueProperties, d2hTransferBuffers.deviceBuffer, d2hTransferBuffers.hostBuffer, static_cast<uint32_t>(arguments.size),
+    result = prepareWorkForBlitters(blitterWorkInfos, false, arguments.d2hBlitters,
+                                    d2hTransferBuffers.deviceBuffer, d2hTransferBuffers.hostBuffer, static_cast<uint32_t>(arguments.size),
                                     eventPool, eventIndex, levelzero);
     if (result != TestResult::Success) {
         return result;

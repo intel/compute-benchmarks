@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,32 +51,6 @@ static TestResult run(const UsmImmediateP2PCopyMultipleBlitsArguments &arguments
         return TestResult::DeviceNotCapable;
     }
 
-    uint32_t numQueueGroups = 0;
-    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetCommandQueueGroupProperties(srcDevice,
-                                                                    &numQueueGroups,
-                                                                    nullptr));
-    if (numQueueGroups == 0) {
-        return TestResult::DeviceNotCapable;
-    }
-
-    std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
-    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetCommandQueueGroupProperties(srcDevice,
-                                                                    &numQueueGroups,
-                                                                    queueProperties.data()));
-
-    uint32_t mainCopyOrdinal = std::numeric_limits<uint32_t>::max();
-    uint32_t linkCopyOrdinal = std::numeric_limits<uint32_t>::max();
-    for (uint32_t i = 0; i < numQueueGroups; i++) {
-        if ((queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) == 0 &&
-            (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY)) {
-            if (queueProperties[i].numQueues == 1) {
-                mainCopyOrdinal = i;
-            } else {
-                linkCopyOrdinal = i;
-            }
-        }
-    }
-
     // Create selected blitter lists
     struct PerListData {
         ze_command_list_handle_t list;
@@ -98,25 +72,18 @@ static TestResult run(const UsmImmediateP2PCopyMultipleBlitsArguments &arguments
     eventPoolDesc.count = maxNumberOfEngines;
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &srcDevice, &eventPool));
 
-    ze_command_queue_desc_t cmdQueueDesc = {};
-    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-
     uint32_t eventIndex = 0;
     for (size_t blitterIndex : arguments.blitters.getEnabledBits()) {
+        const auto blitterQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(srcDevice, EngineHelper::getBlitterEngineFromIndex(blitterIndex));
+        if (blitterQueueDesc == nullptr) {
+            return TestResult::DeviceNotCapable;
+        }
+        const auto &cmdQueueDesc = blitterQueueDesc->desc;
+
         const bool isMainCopyEngine = blitterIndex == 0;
         if (isMainCopyEngine) {
-            if (mainCopyOrdinal == std::numeric_limits<uint32_t>::max()) {
-                return TestResult::DeviceNotCapable;
-            }
-            cmdQueueDesc.ordinal = mainCopyOrdinal;
-            cmdQueueDesc.index = 0;
             blitSizeAssigner.addMainCopyEngine();
         } else {
-            if (linkCopyOrdinal == std::numeric_limits<uint32_t>::max() || blitterIndex >= queueProperties[linkCopyOrdinal].numQueues) {
-                return TestResult::DeviceNotCapable;
-            }
-            cmdQueueDesc.ordinal = linkCopyOrdinal;
-            cmdQueueDesc.index = static_cast<uint32_t>(blitterIndex - queueProperties[mainCopyOrdinal].numQueues);
             blitSizeAssigner.addLinkCopyEngine();
         }
 
