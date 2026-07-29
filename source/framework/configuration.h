@@ -10,6 +10,7 @@
 #include "framework/argument/argument_container.h"
 #include "framework/argument/basic_argument.h"
 #include "framework/argument/boolean_flag_argument.h"
+#include "framework/argument/cpu_affinity_mask_argument.h"
 #include "framework/argument/enum/api_argument.h"
 #include "framework/argument/enum/device_selection_argument.h"
 #include "framework/argument/enum/profiler_type_argument.h"
@@ -71,6 +72,7 @@ struct Configuration : ArgumentContainer {
     NonNegativeIntegerArgument warmupIterations;
     NonNegativeIntegerArgument trimOutliers;
     IntegerArgument sleepFor;
+    CpuAffinityMaskArgument cpuAffinityMask;
     ApiArgument selectedApi;
     BooleanFlagArgument noIntelExtensions;
     BooleanFlagArgument dumpCommandLines;

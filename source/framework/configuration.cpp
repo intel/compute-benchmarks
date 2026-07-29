@@ -33,6 +33,7 @@ Configuration::Configuration()
       warmupIterations(*this, "warmupIterations", "select how many warmup iterations will be run before actual test iterations"),
       trimOutliers(*this, "trimOutliers", "percentage of samples to trim from each end before computing statistics (0-49)"),
       sleepFor(*this, "sleepFor", "sleep for specified amount of time after running each test, in milliseconds"),
+      cpuAffinityMask(*this, "cpuAffinityMask", "pin the benchmark to the given logical CPUs (up to 64, bit i = CPU i), either as a bitmask - decimal or 0x-prefixed hex (e.g. 5 or 0x5 = CPU0+CPU2) - or as a CPU list (e.g. 0,2,4-7); threads and child processes inherit the mask; 0 (default) leaves CPU affinity untouched, so use 1 to pin to CPU0 alone"),
       selectedApi(*this, "api", "Compute API to be used"),
       noIntelExtensions(*this, "no-intel-extensions", "do not run benchmark requiring Intel specific extensions"),
       dumpCommandLines(*this, "dumpCommandLines", "output commandline arguments to run the each test"),
@@ -87,6 +88,7 @@ Configuration::Configuration()
     trimOutliers = 0;
     iterations = 10;
     sleepFor = 20;
+    cpuAffinityMask = 0;
     selectedApi = Api::All;
     noIntelExtensions = false;
     dumpCommandLines = false;

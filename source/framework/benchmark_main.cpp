@@ -17,8 +17,68 @@
 #include "framework/utility/string_utils.h"
 #include "framework/utility/working_directory_helper.h"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <string>
+
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
+#include <cerrno>
+#include <cstring>
+#include <sched.h>
+#endif
+
+namespace {
+// Set CPU affinity to the logical CPUs in the bitmask. Windows pins the whole
+// process; Linux pins the calling (main) thread - threads created afterward
+// inherit the mask. Returns true only when the affinity in effect matches the
+// requested mask exactly, describing the failure in errorMessage otherwise.
+bool pinToCpuMask(uint64_t mask, std::string &errorMessage) {
+#ifdef _WIN32
+    if (SetProcessAffinityMask(GetCurrentProcess(), static_cast<DWORD_PTR>(mask)) == 0) {
+        errorMessage = "SetProcessAffinityMask failed with GetLastError()=" + std::to_string(GetLastError());
+        return false;
+    }
+    return true;
+#else
+    cpu_set_t requested;
+    CPU_ZERO(&requested);
+    for (int cpu = 0; cpu < static_cast<int>(CpuAffinityMaskArgument::maxCpuCount); ++cpu) {
+        if (mask & (1ull << cpu)) {
+            CPU_SET(cpu, &requested);
+        }
+    }
+    if (sched_setaffinity(0, sizeof(requested), &requested) != 0) {
+        errorMessage = std::string("sched_setaffinity failed with errno=") + std::strerror(errno);
+        return false;
+    }
+
+    // sched_setaffinity silently intersects the request with the online CPUs and
+    // still reports success, so read the mask back and require an exact match.
+    cpu_set_t applied;
+    CPU_ZERO(&applied);
+    if (sched_getaffinity(0, sizeof(applied), &applied) != 0) {
+        errorMessage = std::string("sched_getaffinity failed with errno=") + std::strerror(errno);
+        return false;
+    }
+    for (int cpu = 0; cpu < static_cast<int>(CpuAffinityMaskArgument::maxCpuCount); ++cpu) {
+        if (CPU_ISSET(cpu, &requested) != CPU_ISSET(cpu, &applied)) {
+            errorMessage = "kernel narrowed the mask, CPU " + std::to_string(cpu) + " is offline, does not exist, or is excluded by a cpuset/cgroup or an inherited affinity";
+            return false;
+        }
+    }
+    return true;
+#endif
+}
+} // namespace
 
 int BenchmarkMain::printVersion(bool enableWarning, const char *prefix) {
     if (!benchmarkVersion.empty()) {
@@ -211,6 +271,25 @@ int BenchmarkMain::setupEnvironment() {
     if (!Configuration::parseArgumentsForConfiguration(commandLineArguments)) {
         std::cerr << "Error parsing command line\n";
         return 1;
+    }
+
+    // Opt-in CPU pinning (a zero mask leaves affinity untouched).
+    if (const uint64_t mask = Configuration::get().cpuAffinityMask; mask != 0u) {
+        std::string errorMessage{};
+        if (!pinToCpuMask(mask, errorMessage)) {
+            std::cerr << "ERROR: failed to set CPU affinity mask 0x" << std::hex << mask << std::dec
+                      << ": " << errorMessage << std::endl;
+            return 1;
+        }
+        if (!Configuration::get().noHeaders) {
+            std::cout << "CPU affinity: pinned to CPUs";
+            for (int cpu = 0; cpu < static_cast<int>(CpuAffinityMaskArgument::maxCpuCount); ++cpu) {
+                if (mask & (1ull << cpu)) {
+                    std::cout << ' ' << cpu;
+                }
+            }
+            std::cout << std::endl;
+        }
     }
 
     return 0;
