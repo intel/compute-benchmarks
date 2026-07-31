@@ -10,6 +10,7 @@
 #include "framework/ocl/utility/compression_helper.h"
 #include "framework/ocl/utility/profiling_helper.h"
 #include "framework/ocl/utility/program_helper_ocl.h"
+#include "framework/ocl/utility/sub_group_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/compiler_options_builder.h"
 #include "framework/utility/memory_constants.h"
@@ -37,10 +38,15 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     Opencl opencl(queueProperties);
 
-    const size_t subgroupSize = 16;
+    const size_t subgroupSize = SubGroupHelper::selectSubGroupSize(opencl.device, {16, 32});
+    if (subgroupSize == 0) {
+        return TestResult::DeviceNotCapable;
+    }
+
     const size_t vectorSize = 4;
     const size_t singleSendSizeInBytes = subgroupSize * vectorSize * sizeof(float);
-    const size_t numOfSends = 16U; // per 2k-4k tiles in one loop iteration
+    const size_t threadTileSizeInBytes = 4 * kiloByte;
+    const size_t numOfSends = threadTileSizeInBytes / singleSendSizeInBytes; // keeps the per-thread tile independent of the sub-group size
     const size_t numOfLoops = 500U;
     const auto threadTileSizeInSubgroup = singleSendSizeInBytes * numOfSends;
     size_t euNum = 0;
@@ -157,7 +163,7 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
     // check if surface can be covered with more than one slice
     if ((2 * numHwThreads * threadTileSizeInSubgroup) < static_cast<cl_uint>(arguments.size)) {
         slotMask = numHwThreads;
-        sliceSize = numHwThreads * threadTileSizeInSubgroup;
+        sliceSize = static_cast<cl_uint>(numHwThreads * threadTileSizeInSubgroup);
         const auto numMaxSlices = static_cast<cl_uint>(arguments.size) / sliceSize;
         // can cover with more than one slice for all threads
         sliceMask = 1;
@@ -171,9 +177,9 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
         // hit cache
         sliceSize = 256 * kiloByte;
         sliceMask = (static_cast<cl_uint>(arguments.size) / sliceSize) - 1;
-        slotMask = sliceSize / threadTileSizeInSubgroup;
+        slotMask = static_cast<cl_uint>(sliceSize / threadTileSizeInSubgroup);
     } else {
-        slotMask = static_cast<cl_uint>(arguments.size) / threadTileSizeInSubgroup;
+        slotMask = static_cast<cl_uint>(arguments.size / threadTileSizeInSubgroup);
     }
 
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(source), &source));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "framework/ocl/utility/compression_helper.h"
 #include "framework/ocl/utility/profiling_helper.h"
 #include "framework/ocl/utility/program_helper_ocl.h"
+#include "framework/ocl/utility/sub_group_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/compiler_options_builder.h"
 #include "framework/utility/file_helper.h"
@@ -44,6 +45,11 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
 
     const cl_uint numThreadsPerEu = (gpuGen >= IntelGen::XeHpCore) ? 8 : 7;
 
+    const size_t subGroupSize = SubGroupHelper::selectSubGroupSize(opencl.device, {16, 32});
+    if (subGroupSize == 0) {
+        return TestResult::DeviceNotCapable;
+    }
+
     const size_t numOfLoops = 128U;
     const size_t lws = 256;
     const size_t vectorSize = 4;
@@ -55,7 +61,7 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
     ASSERT_CL_SUCCESS(clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(euNum), &euNum, nullptr));
     ASSERT_CL_SUCCESS(clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(gpuFreq), &gpuFreq, nullptr));
 
-    const size_t workSize = euNum * numThreadsPerEu * 16;
+    const size_t workSize = euNum * numThreadsPerEu * subGroupSize;
     const size_t inOutBuffSize = workSize * vectorSize * sizeof(uint32_t);
     const size_t numDataGroups = 5;
 
@@ -66,6 +72,7 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
     buildOptions.addOption("-cl-fast-relaxed-math ");
     buildOptions.addDefinitionKeyValue("KERNEL_LOOP_ITERATIONS", numOfLoops);
     buildOptions.addDefinitionKeyValue("MAX_GROUPS", numDataGroups);
+    buildOptions.addDefinitionKeyValue("SUBGROUP_SIZE", subGroupSize);
 
     // Create buffer
     const cl_mem_flags memFlagsIn = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
@@ -112,7 +119,7 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
             "\n    return (uint4)(pSharedData[i.x], pSharedData[i.y], pSharedData[i.z], pSharedData[i.w]);"
             "\n}"
             "\n"
-            "\n__attribute__((intel_reqd_sub_group_size(16)))"
+            "\n__attribute__((intel_reqd_sub_group_size(SUBGROUP_SIZE)))"
             "\n__kernel void slmRead_latencyTest(__global const uint4* restrict src, __global uint4* restrict dst,"
             "\n    __global const uint* restrict pSharedData)"
             "\n{"
