@@ -44,5 +44,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(256 * MemoryConstants::megaByte),
         ::testing::Values(4 * MemoryConstants::kiloByte),
         ::testing::Values(UsmMemoryPlacement::Device, UsmMemoryPlacement::Host),
-        ::testing::Values(UsmMemoryPlacement::Device, UsmMemoryPlacement::Host),
+        ::testing::Values(UsmMemoryPlacement::Device),
         ::testing::Values(false, true)));

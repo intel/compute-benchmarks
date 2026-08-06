@@ -29,6 +29,13 @@ static TestResult run(const CopyPriorityPreemptionArguments &arguments, Statisti
     if (levelzero.commandQueue == nullptr) {
         return TestResult::DeviceNotCapable;
     }
+    if (!levelzero.isCounterBasedEventsSupported()) {
+        return TestResult::ApiNotCapable;
+    }
+
+    if (arguments.longCopySize < sizeof(uint64_t) || arguments.dst != UsmMemoryPlacement::Device) {
+        return TestResult::InvalidArgs;
+    }
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
@@ -37,6 +44,7 @@ static TestResult run(const CopyPriorityPreemptionArguments &arguments, Statisti
     void *longDst{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.src, levelzero, arguments.longCopySize, &longSrc));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.dst, levelzero, arguments.longCopySize, &longDst));
+    ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, longDst, arguments.longCopySize));
 
     // Allocate memory for short copy (high priority)
     void *shortSrc{};
@@ -64,13 +72,39 @@ static TestResult run(const CopyPriorityPreemptionArguments &arguments, Statisti
     ze_event_handle_t hpEvent{};
     ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &cbDesc, &hpEvent));
 
+    uint32_t incrementValue = 0;
+    ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetAggregatedCopyOffloadIncrementValue(levelzero.device, &incrementValue));
+    ze_event_counter_based_external_aggregate_storage_desc_t aggregateStorageDesc{
+        .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC,
+        .pNext = nullptr,
+        .deviceAddress = static_cast<uint64_t *>(longDst),
+        .incrementValue = incrementValue,
+        .completionValue = 1};
+    ze_event_counter_based_desc_t npStartDesc{
+        .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC,
+        .pNext = &aggregateStorageDesc,
+        .flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE,
+        .signal = ZE_EVENT_SCOPE_FLAG_DEVICE,
+        .wait = ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+    ze_event_handle_t npStartEvent{};
+    ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &npStartDesc, &npStartEvent));
+
+    const uint8_t onePattern = 1u;
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(normalCmdList, longSrc, &onePattern, sizeof(onePattern), arguments.longCopySize, nullptr, 0, nullptr));
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(normalCmdList, std::numeric_limits<uint64_t>::max()));
+
     // Benchmark
+    const uint8_t zeroPattern = 0u;
     for (auto i = 0u; i < arguments.iterations; i++) {
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(normalCmdList, longDst, &zeroPattern, sizeof(zeroPattern), sizeof(uint64_t), nullptr, 0, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(normalCmdList, std::numeric_limits<uint64_t>::max()));
+
         // Submit long copy on normal-priority queue
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(normalCmdList, longDst, longSrc, arguments.longCopySize, npEvent, 0, nullptr));
 
         // Submit short copy on high-priority queue
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(highCmdList, shortDst, shortSrc, arguments.shortCopySize, hpEvent, 0, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(highCmdList, shortDst, shortSrc, arguments.shortCopySize, hpEvent, 1, &npStartEvent));
 
         // Wait for high-priority copy to complete
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(highCmdList, std::numeric_limits<uint64_t>::max()));
@@ -91,9 +125,11 @@ static TestResult run(const CopyPriorityPreemptionArguments &arguments, Statisti
     // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(npEvent));
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(hpEvent));
+    ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(npStartEvent));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(normalCmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(highCmdList));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.src, levelzero, longSrc));
+    ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, longDst, arguments.longCopySize));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.dst, levelzero, longDst));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.src, levelzero, shortSrc));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.dst, levelzero, shortDst));
