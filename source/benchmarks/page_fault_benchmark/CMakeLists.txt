@@ -4,4 +4,4 @@
 # SPDX-License-Identifier: MIT
 #
 
-add_benchmark(page_fault_benchmark l0)
+add_benchmark(page_fault_benchmark ocl l0)
