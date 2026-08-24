@@ -8,6 +8,7 @@
 #include "framework/enum/measurement_type.h"
 #include "framework/l0/levelzero.h"
 #include "framework/l0/utility/error.h"
+#include "framework/l0/utility/usable_memory_helper.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/file_helper.h"
 #include "framework/utility/memory_constants.h"
@@ -78,7 +79,9 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
     // Consider the 3 allocations used in the benchmark and additional size due to alignment requirements
     const uint64_t maxMemoryRequiredByBenchmark = allocationSize + workItemCnt * offsetAccessBytesPerThread + 1 +
                                                   alignment * 3u;
-    if (memPropertiesCount == 0 || memProperties.totalSize < maxMemoryRequiredByBenchmark) {
+    // totalSize is the whole pool, which on integrated parts is shared with the host and overstates what can be committed
+    const uint64_t memoryAvailableToBenchmark = UsableMemoryHelper::query(levelzero.device).value_or(memProperties.totalSize);
+    if (memPropertiesCount == 0 || memoryAvailableToBenchmark < maxMemoryRequiredByBenchmark) {
         return TestResult::DeviceNotCapable;
     }
 
