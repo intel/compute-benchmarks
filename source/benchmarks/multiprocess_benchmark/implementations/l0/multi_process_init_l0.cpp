@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ static TestResult run(const MultiProcessInitArguments &arguments, Statistics &st
         return TestResult::Nooped;
     }
     ProcessGroup processes{"init_workload_l0", arguments.numberOfProcesses};
+    processes.addArgumentAll("iterations", std::to_string(arguments.iterations));
     processes.addArgumentAll("initFlag", std::to_string(arguments.initFlag));
 
     for (auto i = 0u; i < processes.size(); i++) {
