@@ -66,7 +66,7 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
         // Measure accessing the resource
         timer.measureStart();
         if (arguments.accessAllBytes) {
-            for (auto elementIndex = 0u; elementIndex < elementsCount; elementIndex++) {
+            for (size_t elementIndex = 0; elementIndex < elementsCount; elementIndex++) {
                 buffer[elementIndex] = 0;
             }
         } else {
