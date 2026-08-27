@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,8 @@ cl_int BufferContentsHelperOcl::fillBufferWithRandomBytes(cl_command_queue queue
 
 cl_int BufferContentsHelperOcl::fillBufferWithZeros(cl_command_queue queue, cl_mem buffer, size_t bufferSize) {
     const cl_uint pattern[] = {0};
-    CL_SUCCESS_OR_RETURN(clEnqueueFillBuffer(queue, buffer, pattern, sizeof(pattern), 0, bufferSize, 0, nullptr, nullptr));
+    size_t patternSize = std::min(sizeof(pattern), bufferSize);
+    CL_SUCCESS_OR_RETURN(clEnqueueFillBuffer(queue, buffer, pattern, patternSize, 0, bufferSize, 0, nullptr, nullptr));
     CL_SUCCESS_OR_RETURN(clFinish(queue));
     return CL_SUCCESS;
 }
@@ -125,7 +126,8 @@ cl_int BufferContentsHelperOcl::fillUsmBufferWithZeros(cl_command_queue queue, v
 
     // Fill with zeros
     const cl_uint pattern[] = {0};
-    CL_SUCCESS_OR_RETURN(clEnqueueMemFillINTEL(queue, usmBuffer, pattern, sizeof(pattern), bufferSize, 0, nullptr, nullptr));
+    size_t patternSize = std::min(sizeof(pattern), bufferSize);
+    CL_SUCCESS_OR_RETURN(clEnqueueMemFillINTEL(queue, usmBuffer, pattern, patternSize, bufferSize, 0, nullptr, nullptr));
     CL_SUCCESS_OR_RETURN(clFinish(queue));
 
     return CL_SUCCESS;
