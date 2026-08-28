@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,17 @@
 
 #include <fcntl.h>
 #include <memory>
+#include <poll.h>
+#include <signal.h>
 #include <sstream>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+// A child that dies, wedges, or loses a wakeup must cost one scenario, not the whole run. Any
+// legitimate iteration is orders of magnitude shorter than this; the point of the bound is only
+// that the benchmark fails with a diagnostic instead of hanging.
+constexpr int synchronizationTimeoutMs = 300 * 1000;
 
 struct ProcessDataLinux {
     struct ProcessPipes {
@@ -63,57 +70,63 @@ void Process::run() {
         // Store all data in Process class
         this->osSpecificData = processDataLinux.release();
     } else {
-        // We're in child process
+        // We're in child process. Nothing below may return to the caller: a forked child
+        // that unwinds back into the test framework runs the remaining scenarios itself
+        // and forks again on each of them, which multiplies into a fork storm.
+        try {
+            // Redirect stdout to our pipe
+            FATAL_ERROR_IF_SYS_CALL_FAILED(dup2(processDataLinux->stdOutPipe.write, STDOUT_FILENO), "dup2 for stdout failed");
 
-        // Redirect stdout to our pipe
-        FATAL_ERROR_IF_SYS_CALL_FAILED(dup2(processDataLinux->stdOutPipe.write, STDOUT_FILENO), "dup2 for stdout failed");
+            // Close pipes that we won't need (these are descriptors, which will be used by parent)
+            FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->synchronizationPipeParentToChild.write), "closing pipe failed");
+            FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->synchronizationPipeChildToParent.read), "closing pipe failed");
+            FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->measurementPipe.read), "closing pipe failed");
+            FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->stdOutPipe.read), "closing pipe failed");
 
-        // Close pipes that we won't need (these are descriptors, which will be used by parent)
-        FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->synchronizationPipeParentToChild.write), "closing pipe failed");
-        FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->synchronizationPipeChildToParent.read), "closing pipe failed");
-        FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->measurementPipe.read), "closing pipe failed");
-        FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->stdOutPipe.read), "closing pipe failed");
+            // Below pipe endpoints will be explicitly used by the child workload and they should be closed by it.
+            this->addArgument("synchronizationPipeIn", std::to_string(processDataLinux->synchronizationPipeParentToChild.read));
+            this->addArgument("synchronizationPipeOut", std::to_string(processDataLinux->synchronizationPipeChildToParent.write));
+            this->addArgument("measurementPipe", std::to_string(processDataLinux->measurementPipe.write));
 
-        // Below pipe endpoints will be explicitly used by the child workload and they should be closed by it.
-        this->addArgument("synchronizationPipeIn", std::to_string(processDataLinux->synchronizationPipeParentToChild.read));
-        this->addArgument("synchronizationPipeOut", std::to_string(processDataLinux->synchronizationPipeChildToParent.write));
-        this->addArgument("measurementPipe", std::to_string(processDataLinux->measurementPipe.write));
-
-        // Prepare arguments
-        std::vector<std::string> argumentsForExecStrings = {};
-        argumentsForExecStrings.reserve(this->arguments.size());
-        for (auto &argument : this->arguments) {
-            std::string str = argument.first;
-            if (!argument.second.empty()) {
-                str += "=";
-                str += argument.second;
+            // Prepare arguments
+            std::vector<std::string> argumentsForExecStrings = {};
+            argumentsForExecStrings.reserve(this->arguments.size());
+            for (auto &argument : this->arguments) {
+                std::string str = argument.first;
+                if (!argument.second.empty()) {
+                    str += "=";
+                    str += argument.second;
+                }
+                argumentsForExecStrings.push_back(std::move(str));
             }
-            argumentsForExecStrings.push_back(std::move(str));
-        }
-        std::vector<char *> argumentsForExec = {};
-        argumentsForExec.reserve(argumentsForExecStrings.size() + 1);
-        for (auto &argumentsForExecString : argumentsForExecStrings) {
-            argumentsForExec.push_back(argumentsForExecString.data());
-        }
-        argumentsForExec.push_back(nullptr);
+            std::vector<char *> argumentsForExec = {};
+            argumentsForExec.reserve(argumentsForExecStrings.size() + 1);
+            for (auto &argumentsForExecString : argumentsForExecStrings) {
+                argumentsForExec.push_back(argumentsForExecString.data());
+            }
+            argumentsForExec.push_back(nullptr);
 
-        // Prepare environment
-        for (auto &envVariable : this->envVariables) {
-            FATAL_ERROR_IF_SYS_CALL_FAILED(setenv(envVariable.first.c_str(), envVariable.second.c_str(), 1), "setenv failed");
-        }
+            // Prepare environment
+            for (auto &envVariable : this->envVariables) {
+                FATAL_ERROR_IF_SYS_CALL_FAILED(setenv(envVariable.first.c_str(), envVariable.second.c_str(), 1), "setenv failed");
+            }
 
-        // Enable inheritance for requested handles
-        for (int handle : handlesForInheritance) {
-            int currentFlags = fcntl(handle, F_GETFD);
-            FATAL_ERROR_IF_SYS_CALL_FAILED(currentFlags, "Failed getting descriptor flags for fd=", handle)
-            FATAL_ERROR_IF_SYS_CALL_FAILED(fcntl(handle, F_SETFD, currentFlags & ~FD_CLOEXEC), "Failed getting descriptor flags for fd=", handle);
-        }
+            // Enable inheritance for requested handles
+            for (int handle : handlesForInheritance) {
+                int currentFlags = fcntl(handle, F_GETFD);
+                FATAL_ERROR_IF_SYS_CALL_FAILED(currentFlags, "Failed getting descriptor flags for fd=", handle)
+                FATAL_ERROR_IF_SYS_CALL_FAILED(fcntl(handle, F_SETFD, currentFlags & ~FD_CLOEXEC), "Failed getting descriptor flags for fd=", handle);
+            }
 
-        // Load new binary image
-        extern char **environ;
-        const int execResult = execve(this->exeName.c_str(), argumentsForExec.data(), environ);
-        FATAL_ERROR_IF_SYS_CALL_FAILED(execResult, "Sys call execve failed, ");
-        FATAL_ERROR("Unreachable code after execve");
+            // Load new binary image
+            extern char **environ;
+            const int execResult = execve(this->exeName.c_str(), argumentsForExec.data(), environ);
+            FATAL_ERROR_IF_SYS_CALL_FAILED(execResult, "Sys call execve failed, ");
+            FATAL_ERROR("Unreachable code after execve");
+        } catch (...) {
+            // Fall through: the child must never resume the benchmark suite.
+        }
+        _exit(static_cast<int>(TestResult::Error));
     }
 }
 
@@ -123,10 +136,22 @@ void Process::freeOsSpecificData() {
         return;
     }
 
-    // Close pipes, that were used by the parent
-    FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->synchronizationPipeParentToChild.write), "closing pipe failed");
-    FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->synchronizationPipeChildToParent.read), "closing pipe failed");
-    FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->measurementPipe.read), "closing pipe failed");
+    // A master that bails out early - a timeout, or any exception thrown between runAll() and
+    // waitForFinishAll() - must not leave its workers behind. They hold IPC handles and spin on
+    // barriers that nobody will ever signal, so they would burn a core each for the rest of the run.
+    if (!processDataLinux->ended && processDataLinux->childPid > 0) {
+        kill(processDataLinux->childPid, SIGKILL);
+        int status{};
+        while (waitpid(processDataLinux->childPid, &status, 0) == -1 && errno == EINTR) {
+        }
+        processDataLinux->ended = true;
+    }
+
+    // Close pipes that were used by the parent. This runs from a destructor, potentially while an
+    // exception is propagating, so failures are swallowed rather than thrown.
+    close(processDataLinux->synchronizationPipeParentToChild.write);
+    close(processDataLinux->synchronizationPipeChildToParent.read);
+    close(processDataLinux->measurementPipe.read);
 
     delete processDataLinux;
 }
@@ -213,6 +238,19 @@ void Process::synchronizationSignal() {
 
 void Process::synchronizationWait() {
     ProcessDataLinux *processDataLinux = static_cast<ProcessDataLinux *>(this->osSpecificData);
+
+    // Bounded, so that a child which never reaches its synchronization point fails this scenario
+    // instead of blocking the whole run until the harness kills it.
+    pollfd pollDescriptor{};
+    pollDescriptor.fd = processDataLinux->synchronizationPipeChildToParent.read;
+    pollDescriptor.events = POLLIN;
+    int ready = 0;
+    do {
+        ready = poll(&pollDescriptor, 1, synchronizationTimeoutMs);
+    } while (ready < 0 && errno == EINTR);
+    FATAL_ERROR_IF_SYS_CALL_FAILED(ready, "polling a child process synchronization pipe failed");
+    FATAL_ERROR_IF(ready == 0, "Timed out after ", synchronizationTimeoutMs / 1000,
+                   "s waiting for a synchronization signal from child process '", this->processName, "'");
 
     char buffer = {};
     ssize_t numberOfBytesRead = read(processDataLinux->synchronizationPipeChildToParent.read, &buffer, 1u);

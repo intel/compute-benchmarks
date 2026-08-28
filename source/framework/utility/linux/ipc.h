@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,9 +18,12 @@ TestResult socketCreate(int &socketNew);
 
 TestResult socketBindAndListen(const int socketLocal, const std::string &socketName);
 
-TestResult socketAccept(const int socketListening, std::vector<int> &activeSockets, int &socketNew);
+// A zero timeout means "block forever". Callers driving a benchmark should always pass a
+// positive value so that a worker that never shows up fails the scenario instead of hanging
+// the whole run indefinitely.
+TestResult socketAccept(const int socketListening, std::vector<int> &activeSockets, int &socketNew, const int timeoutSeconds = 0);
 
-TestResult socketConnect(const int socketLocal, const std::string &socketName);
+TestResult socketConnect(const int socketLocal, const std::string &socketName, const int timeoutSeconds = 0);
 
 TestResult socketSendDataWithFd(const int socketReceiver, const int fd, void *data, const ssize_t nBytes);
 

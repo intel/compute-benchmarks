@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,15 +24,33 @@ static TestResult run(const Heat3DArguments &, Statistics &) {
 #include "framework/utility/linux/ipc.h"
 
 #ifndef USE_PIDFD
-const std::string masterSocketName{"/tmp/heat3d.socket"};
+// The name must be unique per benchmark process: a fixed path is shared by every concurrent
+// run on the machine, so two instances unlink and rebind each other's socket.
+static std::string getMasterSocketName(pid_t parentPid) {
+    return "/tmp/heat3d." + std::to_string(parentPid) + ".socket";
+}
+// Bound for waiting on a worker to connect. A worker that fails to start must fail the
+// scenario rather than block the run indefinitely.
+constexpr int workerConnectTimeoutSeconds = 120;
 #endif // USE_PIDFD
+
+// A worker that failed to start can never reach the barrier, so an unbounded wait here turns a
+// broken deployment into a hung run instead of a failed scenario.
+constexpr uint64_t barrierTimeoutNs = 120ull * 1000 * 1000 * 1000;
 
 static TestResult ipcBarrierMaster(std::vector<ze_event_handle_t> &barrierEvents) {
     const uint32_t nRanks = barrierEvents.size() / 2;
 
     // Wait for worker processes
     for (uint32_t i = 0; i < nRanks; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(barrierEvents[i], UINT64_MAX));
+        if (const ze_result_t waitResult = zeEventHostSynchronize(barrierEvents[i], barrierTimeoutNs);
+            waitResult == ZE_RESULT_NOT_READY) {
+            std::cerr << "Heat3D: rank " << i << " did not reach the barrier within "
+                      << (barrierTimeoutNs / 1000000000ull) << "s" << std::endl;
+            return TestResult::Error;
+        } else {
+            ASSERT_ZE_RESULT_SUCCESS(waitResult);
+        }
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(barrierEvents[i]));
     }
 
@@ -62,7 +80,9 @@ static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) 
         return TestResult::DeviceNotCapable;
     }
 
-    if ((levelzero.getIpcProperties().flags & ZE_IPC_PROPERTY_FLAG_MEMORY) == 0) {
+    // Both memory and event pool handles are exported below, so both capabilities are required.
+    const ze_ipc_property_flags_t requiredIpcFlags = ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL;
+    if ((levelzero.getIpcProperties().flags & requiredIpcFlags) != requiredIpcFlags) {
         return TestResult::DeviceNotCapable;
     }
 
@@ -86,7 +106,14 @@ static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) 
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &barrierEvPoolDesc, 0, nullptr, &barrierEvPool));
     ze_ipc_event_pool_handle_t barrierEvPoolIpcHandle;
     std::fill_n(barrierEvPoolIpcHandle.data, ZE_MAX_IPC_HANDLE_SIZE, static_cast<char>(0));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolGetIpcHandle(barrierEvPool, &barrierEvPoolIpcHandle));
+    // Some drivers advertise ZE_IPC_PROPERTY_FLAG_EVENT_POOL but still reject the export,
+    // so the runtime answer decides whether the scenario can run at all.
+    if (const ze_result_t ipcResult = zeEventPoolGetIpcHandle(barrierEvPool, &barrierEvPoolIpcHandle);
+        ipcResult == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
+        return TestResult::DeviceNotCapable;
+    } else {
+        ASSERT_ZE_RESULT_SUCCESS(ipcResult);
+    }
 
     std::vector<ze_event_handle_t> barrierEvents(2 * nRanks);
     ze_event_desc_t barrierEventDesc = {};
@@ -122,18 +149,19 @@ static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) 
     // For initParams
 #ifdef USE_PIDFD
     // Wait for IPC handles to be written into the initBuffer
-    ipcBarrierMaster(barrierEvents);
+    ASSERT_TEST_RESULT_SUCCESS(ipcBarrierMaster(barrierEvents));
 #else
+    const std::string masterSocketName = getMasterSocketName(getpid());
     int socketMaster = -1;
-    socketCreate(socketMaster);
-    socketBindAndListen(socketMaster, masterSocketName);
+    ASSERT_TEST_RESULT_SUCCESS(socketCreate(socketMaster));
+    ASSERT_TEST_RESULT_SUCCESS(socketBindAndListen(socketMaster, masterSocketName));
 
     std::vector<int> socketWorkers{};
     for (uint32_t i = 0; i < nRanks; i++) {
         int socketWorker = -1;
-        socketAccept(socketMaster, socketWorkers, socketWorker);
-        socketSendDataWithFd(socketWorker, *reinterpret_cast<int *>(initBufferIpcHandle.data), initBufferIpcHandle.data, ZE_MAX_IPC_HANDLE_SIZE);
-        socketSendDataWithFd(socketWorker, *reinterpret_cast<int *>(barrierEvPoolIpcHandle.data), barrierEvPoolIpcHandle.data, ZE_MAX_IPC_HANDLE_SIZE);
+        ASSERT_TEST_RESULT_SUCCESS(socketAccept(socketMaster, socketWorkers, socketWorker, workerConnectTimeoutSeconds));
+        ASSERT_TEST_RESULT_SUCCESS(socketSendDataWithFd(socketWorker, *reinterpret_cast<int *>(initBufferIpcHandle.data), initBufferIpcHandle.data, ZE_MAX_IPC_HANDLE_SIZE));
+        ASSERT_TEST_RESULT_SUCCESS(socketSendDataWithFd(socketWorker, *reinterpret_cast<int *>(barrierEvPoolIpcHandle.data), barrierEvPoolIpcHandle.data, ZE_MAX_IPC_HANDLE_SIZE));
     }
 
     for (auto sd : socketWorkers) {
@@ -146,19 +174,19 @@ static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) 
         if (nRanks == 1) {
             break;
         }
-        ipcBarrierMaster(barrierEvents);
-        ipcBarrierMaster(barrierEvents);
+        ASSERT_TEST_RESULT_SUCCESS(ipcBarrierMaster(barrierEvents));
+        ASSERT_TEST_RESULT_SUCCESS(ipcBarrierMaster(barrierEvents));
     }
 #endif // USE_PIDFD
 
     for (auto i = 0u; i < arguments.iterations; i++) {
         // Init unpacking the receive buffers
-        ipcBarrierMaster(barrierEvents);
+        ASSERT_TEST_RESULT_SUCCESS(ipcBarrierMaster(barrierEvents));
 
         processes.synchronizeAll(1);
 
         for (size_t t = 0; t < arguments.timesteps; t++) {
-            ipcBarrierMaster(barrierEvents);
+            ASSERT_TEST_RESULT_SUCCESS(ipcBarrierMaster(barrierEvents));
         }
     }
 

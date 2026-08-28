@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,7 +100,11 @@ TestResult run(const Heat3DArguments &, Statistics &, WorkloadSynchronization &,
 #include "framework/utility/linux/ipc.h"
 
 #ifndef USE_PIDFD
-const std::string masterSocketName{"/tmp/heat3d.socket"};
+// Must match getMasterSocketName() in heat3d_l0.cpp.
+static std::string getMasterSocketName(pid_t parentPid) {
+    return "/tmp/heat3d." + std::to_string(parentPid) + ".socket";
+}
+constexpr int masterConnectTimeoutSeconds = 120;
 #endif // USE_PIDFD
 
 // Identify the six facets of a sub-domain
@@ -147,6 +151,7 @@ struct ParamsTy {
     int socketWorker{};
 #endif // USE_PIDFD
 
+    pid_t parentPid{};
     uint32_t rank{}, nRanks{};
     // Number of sub-domains in each direction
     uint32_t nSubDomainX{}, nSubDomainY{}, nSubDomainZ{};
@@ -453,6 +458,7 @@ static TestResult initParams(ParamsTy &params, const Heat3DArguments &arguments)
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(params.levelzero.context, params.levelzero.device, &queueDesc, &params.cmdlist));
 
+    params.parentPid = static_cast<pid_t>(arguments.parentPid);
     params.rank = arguments.rank;
     params.nRanks = arguments.nSubDomainX * arguments.nSubDomainY * arguments.nSubDomainZ;
     params.nSubDomainX = arguments.nSubDomainX;
@@ -500,8 +506,8 @@ static TestResult initParams(ParamsTy &params, const Heat3DArguments &arguments)
     deserializeAndPatchIpcHandle(arguments.parentPid, std::string(arguments.initBufferIpcHandle), initBufferIpcHandle.data);
     ASSERT_ZE_RESULT_SUCCESS(zeMemOpenIpcHandle(params.levelzero.context, params.levelzero.device, initBufferIpcHandle, 0, &params.initBuffer));
 #else
-    socketCreate(params.socketWorker);
-    socketConnect(params.socketWorker, masterSocketName);
+    ASSERT_TEST_RESULT_SUCCESS(socketCreate(params.socketWorker));
+    ASSERT_TEST_RESULT_SUCCESS(socketConnect(params.socketWorker, getMasterSocketName(arguments.parentPid), masterConnectTimeoutSeconds));
 
     int fd = -1;
 
@@ -595,7 +601,7 @@ static TestResult initParams(ParamsTy &params, const Heat3DArguments &arguments)
         int ipcSocket = -1;
         socketCreate(ipcSocket);
         EXPECT_TRUE(ipcSocket > 0);
-        const std::string socketName = "/tmp/heat3d_" + std::to_string(r) + ".socket";
+        const std::string socketName = "/tmp/heat3d_" + std::to_string(params.parentPid) + "_" + std::to_string(r) + ".socket";
 
         ipcBarrierWorker(params);
 

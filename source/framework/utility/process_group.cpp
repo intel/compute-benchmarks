@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,14 +37,21 @@ void ProcessGroup::runAll() {
 }
 
 void ProcessGroup::synchronizeAll(size_t iterationsCount) {
-    for (auto iteration = 0u; iteration < iterationsCount; iteration++) {
-        for (Process &process : processes) {
-            process.synchronizationWait();
-        }
+    // An uncaught exception calls std::terminate without unwinding the stack, so relying on ~Process
+    // to reap the children is not enough: tear them down here, before the throw leaves this frame.
+    try {
+        for (auto iteration = 0u; iteration < iterationsCount; iteration++) {
+            for (Process &process : processes) {
+                process.synchronizationWait();
+            }
 
-        for (Process &process : processes) {
-            process.synchronizationSignal();
+            for (Process &process : processes) {
+                process.synchronizationSignal();
+            }
         }
+    } catch (...) {
+        processes.clear();
+        throw;
     }
 }
 

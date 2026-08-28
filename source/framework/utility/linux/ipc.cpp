@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ TestResult socketBindAndListen(const int socketLocal, const std::string &socketN
     return TestResult::Success;
 }
 
-TestResult socketAccept(const int socketListening, std::vector<int> &activeSockets, int &socketNew) {
+TestResult socketAccept(const int socketListening, std::vector<int> &activeSockets, int &socketNew, const int timeoutSeconds) {
     fd_set fdSet{};
     FD_ZERO(&fdSet);
     FD_SET(socketListening, &fdSet);
@@ -65,9 +65,15 @@ TestResult socketAccept(const int socketListening, std::vector<int> &activeSocke
             maxFd = socketDescriptor;
         }
     }
-    const int activity = select(maxFd + 1, &fdSet, nullptr, nullptr, nullptr);
+    timeval timeout{};
+    timeout.tv_sec = timeoutSeconds;
+    const int activity = select(maxFd + 1, &fdSet, nullptr, nullptr, timeoutSeconds > 0 ? &timeout : nullptr);
     if ((activity < 0) && (errno != EINTR)) {
         std::cerr << "Server select() failed with " << getErrorFromErrno() << std::endl;
+        return TestResult::Error;
+    }
+    if (activity == 0) {
+        std::cerr << "Server select() timed out after " << timeoutSeconds << "s waiting for a worker" << std::endl;
         return TestResult::Error;
     }
     if (!FD_ISSET(socketListening, &fdSet)) {
@@ -86,7 +92,7 @@ TestResult socketAccept(const int socketListening, std::vector<int> &activeSocke
     return TestResult::Success;
 }
 
-TestResult socketConnect(const int socketLocal, const std::string &socketName) {
+TestResult socketConnect(const int socketLocal, const std::string &socketName, const int timeoutSeconds) {
     if (socketName.length() + 1 > sizeof(sockaddr_un::sun_path)) {
         return TestResult::Error;
     }
@@ -100,9 +106,16 @@ TestResult socketConnect(const int socketLocal, const std::string &socketName) {
         }
     }
 
+    const useconds_t retryIntervalUs = 10000;
+    const uint64_t maxRetries = timeoutSeconds > 0 ? (uint64_t(timeoutSeconds) * 1000000ull) / retryIntervalUs : 0;
+    uint64_t retries = 0;
     while (-1 == connect(socketLocal, reinterpret_cast<sockaddr *>(&address), sizeof(address))) {
         if (errno == ENOENT) {
-            usleep(10000);
+            if (maxRetries != 0 && ++retries > maxRetries) {
+                std::cerr << "Worker connect() timed out after " << timeoutSeconds << "s waiting for " << socketName << std::endl;
+                return TestResult::Error;
+            }
+            usleep(retryIntervalUs);
         } else {
             std::cerr << "Worker connect() failed with " << getErrorFromErrno() << std::endl;
             return TestResult::Error;
