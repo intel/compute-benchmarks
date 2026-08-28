@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
             for (const auto &entry : benchmark.testCases) {
                 const TestCase &testCase = entry.second;
 
-                if (location.empty() && !hasAnyApi(testCase, apiColumns)) {
+                if (!hasAnyApi(testCase, apiColumns)) {
                     continue;
                 }
 
