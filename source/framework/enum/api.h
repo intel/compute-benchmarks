@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,11 +25,12 @@ enum class Api {
     OMP,
     UR,
     OPT,
+    Vulkan,
 
     // Special values
     COUNT,
     FIRST = OpenCL,
-    LAST = OPT,
+    LAST = Vulkan,
     All = 0xffff,
 };
 
@@ -48,6 +49,8 @@ inline std::string to_string(Api api) {
         return "omp";
     case Api::UR:
         return "ur";
+    case Api::Vulkan:
+        return "vk";
     default:
         return to_string_additional(api);
     }
@@ -68,6 +71,8 @@ inline std::string getUserFriendlyApiName(Api api) {
         return "OpenMP";
     case Api::UR:
         return "UnifiedRuntime";
+    case Api::Vulkan:
+        return "Vulkan";
     default:
         return getUserFriendlyAdditionalApiName(api);
     }
@@ -88,6 +93,8 @@ inline Api parseApi(const std::string &value) {
         return Api::OMP;
     } else if (value == "ur") {
         return Api::UR;
+    } else if (value == "vk") {
+        return Api::Vulkan;
     } else {
         return parseAdditionalApi(value);
     }
@@ -101,6 +108,7 @@ inline bool validateApi(Api api) {
     case Api::OMP:
     case Api::UR:
     case Api::OPT:
+    case Api::Vulkan:
         return true;
     default:
         return false;

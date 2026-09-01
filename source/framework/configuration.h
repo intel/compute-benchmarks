@@ -62,6 +62,10 @@ struct Configuration : ArgumentContainer {
     NonNegativeIntegerArgument urPlatformIndex;
     NonNegativeIntegerArgument urDeviceIndex;
 
+    // VK params
+    NonNegativeIntegerArgument vkDeviceIndex;
+    BooleanFlagArgument vkEnableValidation;
+
     // Api agnostic params
     StringArgument test;
     DeviceSelectionArgument subDeviceSelection;

@@ -28,6 +28,7 @@ It is structured into two sections:
   - [2.2 Test configurations and permutations](#test-permutations)
   - [2.3 Generating documentation](#benchmarks-docs)
   - [2.4 SPIR-V translation](#spirv-translation)
+  - [2.5 Vulkan shader translation](#vulkan-shader-translation)
 
 ## 1. Contribution process overview <a id="contribution-overview"></a>
 ### 1.1 Commit message <a id="commit-message"></a>
@@ -147,3 +148,15 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 ./scripts/compile_to_spv.sh /compute-benchmarks/source/benchmarks/record_and_replay_benchmark/kernels/graph_api_benchmark_kernel_assign.cl
 ```
 5. The generated .spv file will be written to your current directory.
+
+### 2.5 Vulkan shader translation <a id="vulkan-shader-translation"></a>
+Vulkan compute shaders (\*.comp) live in [source/kernels/vk](source/kernels/vk) and are translated into SPIR-V using `glslc`, distributed with the [Vulkan SDK](https://vulkan.lunarg.com/) or as the `glslc` package on Debian/Ubuntu. Compute Benchmarks provide the [compile_to_spv_vulkan.sh](scripts/compile_to_spv_vulkan.sh) utility script to help with the procedure. The script requires the `glslc` binary to be present in your PATH.
+
+Vulkan SPIR-V and OpenCL SPIR-V are disjoint execution environments, so the two flavours can never be used interchangeably. All kernels are copied flat into the output directory, therefore the generated files must be prefixed with `vk_` to avoid colliding with their OpenCL counterparts. The script does this automatically.
+
+To generate a SPIR-V file, run the script from the [source/kernels](source/kernels) directory (replace with your shader path):
+```
+cd source/kernels
+../../scripts/compile_to_spv_vulkan.sh vk/ulls_benchmark_empty_kernel.comp
+```
+The generated .spv file will be written to your current directory and should be committed together with the shader source.

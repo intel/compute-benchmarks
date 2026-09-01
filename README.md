@@ -90,6 +90,34 @@ For Intel MPI, setting `I_MPI_OFFLOAD=1` or `I_MPI_OFFLOAD=2` is required; for o
 
 The MPI benchmarks are only supported on Linux.
 
+### Building with Vulkan support
+
+Vulkan implementations of benchmarks will be built if:
+
+* the CMake option `BUILD_VK` is set to `ON`;
+
+`BUILD_VK` defaults to `OFF`, so machines without a Vulkan SDK are unaffected.
+
+A system SDK is *not* required to build. CMake first tries its `FindVulkan` module, and falls back to [third_party/vulkan-sdk](third_party/vulkan-sdk) when nothing is found, the same way OpenCL and Level Zero do. Set `USE_SYSTEM_VULKAN=OFF` to force the bundled SDK.
+
+To *run* the benchmarks you additionally need:
+
+* a Vulkan driver (ICD) for your device. Use `vulkaninfo --summary` to confirm which ICD the loader picks - a `deviceType` of `CPU` means a software rasterizer was selected instead of your GPU;
+* `glslc` is only needed to regenerate the shaders, the compiled `.spv` files are committed to the repository.
+
+##### Example
+
+```
+git clone --recurse-submodules https://github.com/intel/compute-benchmarks
+cd compute-benchmarks
+mkdir build
+cd build
+cmake .. -DBUILD_VK=ON
+cmake --build . --config Release
+```
+
+When more than one Vulkan physical device is present, select one with `--vkDeviceIndex=<n>`. Run the benchmark with `--hwInfo` to list the available devices. The Vulkan validation layer can be enabled with `--vkEnableValidation`.
+
 ### Binary types
 Each benchmark suite can be built as a single-api binary or as a an all-api binary.
 - Single-api binaries are named like `ulls_benchmark_ocl` and do not load libraries from not used APIs. They are built by default and can be disabled by passing `-DBUILD_SINGLE_API_BINARIES=OFF` to CMake.
@@ -101,7 +129,7 @@ cmake .. -DBUILD_ALL_API_BINARIES=OFF -DBUILD_SINGLE_API_BINARIES=ON
 ```
 
 ### SDK
-ComputeBenchmarks will try to find SDKs for the APIs used. In case of inability to find those, it will use libraries contained in [third_party/opencl-sdk](third_party/opencl-sdk) and [third_party/level-zero-sdk](third_party/level-zero-sdk) directories. The libraries were compiled on Ubuntu 20.04 LTS. Using a different setup may result in build failures due to ABI incompatibility, so it's safest to have the SDK installed in your system.
+ComputeBenchmarks will try to find SDKs for the APIs used. In case of inability to find those, it will use libraries contained in [third_party/opencl-sdk](third_party/opencl-sdk), [third_party/level-zero-sdk](third_party/level-zero-sdk) and [third_party/vulkan-sdk](third_party/vulkan-sdk) directories. The libraries were compiled on Ubuntu 20.04 LTS. Using a different setup may result in build failures due to ABI incompatibility, so it's safest to have the SDK installed in your system.
 
 ### Contributing
 Information on how to contribute to ComputeBenchmarks can be found in [CONTRIBUTING.md](CONTRIBUTING.md)

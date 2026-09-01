@@ -20,6 +20,6 @@ struct ApiArgument : EnumArgument<ApiArgument, Api> {
 
     static constexpr const char *enumName = "api";
     const static inline EnumType invalidEnumValue = EnumType::Unknown;
-    const static inline EnumType enumValues[6] = {EnumType::OpenCL, EnumType::L0, EnumType::SYCL, EnumType::OMP, EnumType::OPT, EnumType::All};
-    static constexpr const char *enumValuesNames[6] = {"ocl", "l0", "sycl", "omp", "opt", "all"};
+    const static inline EnumType enumValues[7] = {EnumType::OpenCL, EnumType::L0, EnumType::SYCL, EnumType::OMP, EnumType::OPT, EnumType::Vulkan, EnumType::All};
+    static constexpr const char *enumValuesNames[7] = {"ocl", "l0", "sycl", "omp", "opt", "vk", "all"};
 };

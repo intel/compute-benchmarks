@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2025 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -24,6 +24,7 @@ message(STATUS "Build options:")
 benchmark_option_group("Flags for selecting targets to be built")
 benchmark_option(BUILD_L0 ON)
 benchmark_option(BUILD_OCL ON)
+benchmark_option(BUILD_VK OFF)
 benchmark_option(BUILD_UR OFF)
 benchmark_option(BUILD_SYCL OFF)
 benchmark_option(BUILD_SYCL_WITH_CUDA OFF)
@@ -31,6 +32,7 @@ benchmark_option(BUILD_OMP OFF)
 benchmark_option(BUILD_MPI OFF)
 benchmark_option(NULL_L0 OFF)
 benchmark_option(USE_SYSTEM_LEVEL_ZERO ON)
+benchmark_option(USE_SYSTEM_VULKAN ON)
 if(COMMAND add_custom_benchmark_options)
     add_custom_benchmark_options()
 endif()
@@ -68,6 +70,6 @@ benchmark_option(LOG_BENCHMARK_TARGETS OFF)
 benchmark_option(ALLOW_WARNINGS OFF)
 
 # Additional checks
-if (NOT BUILD_L0 AND NOT BUILD_OCL AND NOT BUILD_SYCL AND NOT BUILD_UR AND NOT BUILD_OMP)
+if (NOT BUILD_L0 AND NOT BUILD_OCL AND NOT BUILD_SYCL AND NOT BUILD_UR AND NOT BUILD_OMP AND NOT BUILD_VK)
     message(FATAL_ERROR "No API was selected for testing. No benchmarks will be produced")
 endif()
