@@ -8,24 +8,28 @@
 #pragma once
 
 #include "framework/argument/abstract/argument.h"
+#include "framework/utility/cpu_topology.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cerrno>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
+#include <optional>
 #include <sstream>
+#include <string>
 
-// CPU affinity mask. The mask is stored in a uint64_t, so at most 64 CPUs (bit i
-// = CPU i) can be addressed; this is a storage limit of this argument, not of the
-// OS scheduler (Linux cpu_set_t and Windows processor groups both go higher). On
-// Windows SetProcessAffinityMask is relative to the process's current processor
-// group, so bit i selects the i-th CPU within that group. Accepts either a number
-// (decimal or 0x-prefixed hex, e.g. 255, 0xff00) or a CPU list (e.g. 0,2,4-7).
-// Value 0 means "not set".
+// CPU affinity mask (bit i = CPU i), limited to 64 CPUs. On Windows, bit i is
+// the i-th CPU in the process's current processor group, not global CPU i.
+//
+// Accepts a number (decimal or 0x-hex), a CPU list (0,2,4-7), or on Intel
+// hybrid CPUs a core-type keyword ("p-cores"/"e-cores", resolved via CPUID).
+// A non-hybrid CPU makes the keyword a no-op; a hybrid CPU with none of the
+// requested type is an error. 0 means "not set".
 struct CpuAffinityMaskArgument : Argument {
     using Argument::Argument;
-    static constexpr uint64_t maxCpuCount = 64u;
+    static constexpr uint64_t maxCpuCount = CpuTopologyDetail::maxDetectableCpuCount;
 
     operator uint64_t() const {
         return value;
@@ -50,12 +54,57 @@ struct CpuAffinityMaskArgument : Argument {
 
     void parseImpl(const std::string &valueToParse) override {
         this->value = 0u;
+
+        if (const auto coreType = parseCoreTypeKeyword(valueToParse)) {
+            std::string errorMessage{};
+            uint64_t mask = 0u;
+            switch (getCpuMaskForCoreType(*coreType, mask, errorMessage)) {
+            case CoreTypeLookupResult::Success:
+                this->value = mask;
+                this->valid = true;
+                break;
+            case CoreTypeLookupResult::NotHybrid:
+                // Also on stdout: captured output of a p-cores and an e-cores run on the same non-hybrid machine must differ.
+                std::cerr << "cpuAffinityMask \"" << valueToParse << "\" ignored: " << errorMessage << '\n';
+                std::cout << "CPU affinity: not pinned, \"" << valueToParse << "\" ignored on this machine" << std::endl;
+                this->value = 0u;
+                this->valid = true;
+                break;
+            case CoreTypeLookupResult::NoMatchingCpu:
+                this->value = 0u;
+                this->valid = false;
+                std::cerr << "Invalid cpuAffinityMask \"" << valueToParse << "\": " << errorMessage << '\n';
+                break;
+            }
+            return;
+        }
+
         const bool isCpuList = valueToParse.find_first_of(",-") != std::string::npos;
         this->valid = isCpuList ? parseCpuList(valueToParse) : parseNumber(valueToParse);
         if (!this->valid) {
-            std::cerr << "Invalid cpuAffinityMask \"" << valueToParse << "\": expected a bitmask (decimal or 0x-prefixed hex) "
-                      << "or a list of CPU indices 0-" << (maxCpuCount - 1) << " (e.g. 0,2,4-7)\n";
+            std::cerr << "Invalid cpuAffinityMask \"" << valueToParse << "\": expected a bitmask (decimal or 0x-prefixed hex), "
+                      << "a list of CPU indices 0-" << (maxCpuCount - 1) << " (e.g. 0,2,4-7), "
+                      << "or a core-type keyword (p-cores, e-cores)\n";
         }
+    }
+
+    static std::optional<CpuCoreType> parseCoreTypeKeyword(const std::string &valueToParse) {
+        std::string normalized;
+        normalized.reserve(valueToParse.size());
+        for (const char character : valueToParse) {
+            if (character == '-' || character == '_') {
+                continue;
+            }
+            normalized += static_cast<char>(std::tolower(static_cast<unsigned char>(character)));
+        }
+
+        if (normalized == "pcores") {
+            return CpuCoreType::Performance;
+        }
+        if (normalized == "ecores") {
+            return CpuCoreType::Efficiency;
+        }
+        return std::nullopt;
     }
 
     bool parseNumber(const std::string &valueToParse) {
