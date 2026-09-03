@@ -1,7 +1,7 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-add_benchmark(emu_benchmark ocl)
+add_benchmark(emu_benchmark ocl l0)

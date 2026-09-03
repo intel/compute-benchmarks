@@ -111,7 +111,7 @@ EventHostSynchronize|Measures zeEventHostSynchronize latency, thread and process
 Emulation Benchmark is a set of tests aimed at measuring performance of emulated math operations performed in kernels.
 | Test name | Description | Params | L0 | OCL |
 |-----------|-------------|--------|----|-----|
-Int64Div|enqueues kernel performing an int64 division emulation|<ul><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li><li>--wgc Work group count</li><li>--wgs Work group size</li></ul>|:x:|:heavy_check_mark:|
+Int64Div|enqueues kernel performing an int64 division emulation|<ul><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li><li>--wgc Work group count</li><li>--wgs Work group size</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
 
 
 
