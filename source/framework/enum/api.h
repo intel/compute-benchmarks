@@ -24,6 +24,7 @@ enum class Api {
     SYCLPREVIEW,
     OMP,
     UR,
+    OL,
     OPT,
     Vulkan,
 
@@ -49,6 +50,8 @@ inline std::string to_string(Api api) {
         return "omp";
     case Api::UR:
         return "ur";
+    case Api::OL:
+        return "ol";
     case Api::Vulkan:
         return "vk";
     default:
@@ -71,6 +74,8 @@ inline std::string getUserFriendlyApiName(Api api) {
         return "OpenMP";
     case Api::UR:
         return "UnifiedRuntime";
+    case Api::OL:
+        return "Liboffload";
     case Api::Vulkan:
         return "Vulkan";
     default:
@@ -93,6 +98,8 @@ inline Api parseApi(const std::string &value) {
         return Api::OMP;
     } else if (value == "ur") {
         return Api::UR;
+    } else if (value == "ol") {
+        return Api::OL;
     } else if (value == "vk") {
         return Api::Vulkan;
     } else {
@@ -107,6 +114,7 @@ inline bool validateApi(Api api) {
     case Api::SYCL:
     case Api::OMP:
     case Api::UR:
+    case Api::OL:
     case Api::OPT:
     case Api::Vulkan:
         return true;

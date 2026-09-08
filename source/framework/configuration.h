@@ -66,6 +66,9 @@ struct Configuration : ArgumentContainer {
     NonNegativeIntegerArgument vkDeviceIndex;
     BooleanFlagArgument vkEnableValidation;
 
+    // OL params
+    NonNegativeIntegerArgument olDeviceIndex;
+
     // Api agnostic params
     StringArgument test;
     DeviceSelectionArgument subDeviceSelection;

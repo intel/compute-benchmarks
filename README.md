@@ -90,6 +90,56 @@ For Intel MPI, setting `I_MPI_OFFLOAD=1` or `I_MPI_OFFLOAD=2` is required; for o
 
 The MPI benchmarks are only supported on Linux.
 
+### Building with LLVM Offload support
+
+LLVM Offload implementations of the benchmarks will be built if:
+
+* the CMake option `BUILD_OL` is set to `ON`;
+* LLVM's `liboffload` has been built and installed from
+  [llvm-project revision cdd1900816f625eb1f38a6e755c49ccadec56209](https://github.com/llvm/llvm-project/commit/cdd1900816f625eb1f38a6e755c49ccadec56209)
+  with the Offload runtime enabled;
+* `LIBOFFLOAD_INCLUDE_DIR` points to the LLVM installation's include directory;
+* `LIBOFFLOAD_LIBRARY_DIR` points to the LLVM installation's library directory.
+
+`BUILD_OL` defaults to `OFF`. The Offload API is under active development, so
+other llvm-project revisions are not guaranteed to provide a compatible API.
+The LLVM source is not fetched by the benchmark's build.
+
+The Offload runtime must be built with the plugins supported by the target 
+machine, e.g. for Level Zero, the CMake option `LIBOMPTARGET_PLUGINS_TO_BUILD`
+should be set to `level_zero`.
+
+A known-good configuration for liboffload with the Level Zero plugin is
+provided below for reference:
+
+```bash
+cmake -S llvm -B llvm/build -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DLLVM_TARGETS_TO_BUILD='host;SPIRV;NVPTX' \
+  -DLLVM_ENABLE_PROJECTS='clang;clang-tools-extra;lldb;lld' \
+  -DLLVM_ENABLE_RUNTIMES='offload;openmp;libc;libsycl' \
+  -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF \
+  -DLIBOMPTARGET_PLUGINS_TO_BUILD="level_zero" \
+  -DLLVM_PARALLEL_LINK_JOBS=10 \
+  -DLLVM_ENABLE_BINDINGS=OFF \
+  '-DLLVM_LIT_ARGS=-v -vv' \
+  -DCMAKE_INSTALL_PREFIX=/path/to/llvm/install
+```
+
+Configure the benchmarks against a working installation:
+
+```bash
+cmake -S . -B build \
+    -DBUILD_OL=ON \
+    -DLIBOFFLOAD_INCLUDE_DIR=/path/to/llvm-install/include \
+    -DLIBOFFLOAD_LIBRARY_DIR=/path/to/llvm-install/lib
+cmake --build build --config Release
+```
+
+When more than one Offload device is present, select one with
+`--olDeviceIndex=<n>`. Run a benchmark with `--hwInfo` to list the available
+devices.
+
 ### Building with Vulkan support
 
 Vulkan implementations of benchmarks will be built if:

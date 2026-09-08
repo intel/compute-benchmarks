@@ -26,6 +26,7 @@ Configuration::Configuration()
       urDeviceIndex(*this, "urDeviceIndex", "UR device index inside the adapter"),
       vkDeviceIndex(*this, "vkDeviceIndex", "Vulkan physical device index"),
       vkEnableValidation(*this, "vkEnableValidation", "Enable the Vulkan validation layer"),
+      olDeviceIndex(*this, "olDeviceIndex", "Liboffload device index"),
       test(*this, "test", "Selects particular test for execution. All arguments of the test must be provided"),
       subDeviceSelection(*this, "subDeviceSelection", "Device to be used in the benchmarks. Might be ignored by some specific tests"),
       csv(*this, "csv", "dump results in CSV format for easy imports to spreadsheets"),
@@ -80,6 +81,8 @@ Configuration::Configuration()
 
     urPlatformIndex = 0;
     urDeviceIndex = 0;
+
+    olDeviceIndex = 0;
 
     // OCL & SYCL params
     useOOQ = true;
