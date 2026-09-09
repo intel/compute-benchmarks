@@ -32,6 +32,9 @@ static TestResult run(const CopyEntireImageArguments &arguments, Statistics &sta
     if (!ImageHelperL0::validateImageDimensions(levelzero.device, arguments.size)) {
         return TestResult::DeviceNotCapable;
     }
+    if (arguments.useEvents && !levelzero.isCounterBasedEventsSupported()) {
+        return TestResult::DeviceNotCapable;
+    }
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     const auto channelOrder = ImageHelperL0::ChannelOrder::RGBA;
@@ -52,23 +55,24 @@ static TestResult run(const CopyEntireImageArguments &arguments, Statistics &sta
     const auto imageSizeInBytes = ImageHelperL0::getImageSizeInBytes(channelOrder, channelFormat, arguments.size);
 
     // Create event
-    ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     if (arguments.useEvents) {
-        ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
-        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-        eventPoolDesc.count = 1;
-        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
-        ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
-        eventDesc.index = 0;
-        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+        ze_event_counter_based_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+        eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE |
+                          ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE |
+                          ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
+        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
         eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-        ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
+        ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &eventDesc, &event));
     }
 
     // Create command list
-    ze_command_list_desc_t cmdListDesc{};
+    ze_command_list_desc_t cmdListDesc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
+    cmdListDesc.flags |= ZE_COMMAND_LIST_FLAG_IN_ORDER;
+    if (!arguments.forceBlitter) {
+        cmdListDesc.flags |= ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT;
+    }
     ze_command_list_handle_t cmdList{};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendImageCopy(cmdList, dstImage, srcImage, event, 0, nullptr));
@@ -95,7 +99,6 @@ static TestResult run(const CopyEntireImageArguments &arguments, Statistics &sta
     // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     if (arguments.useEvents) {
-        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeImageDestroy(srcImage));

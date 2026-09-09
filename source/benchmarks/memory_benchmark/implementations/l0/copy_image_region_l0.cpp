@@ -32,6 +32,9 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
     if (!ImageHelperL0::validateImageDimensions(levelzero.device, arguments.size)) {
         return TestResult::DeviceNotCapable;
     }
+    if (!levelzero.isCounterBasedEventsSupported()) {
+        return TestResult::DeviceNotCapable;
+    }
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     const auto channelOrder = ImageHelperL0::ChannelOrder::RGBA;
@@ -59,25 +62,23 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
     const ze_image_region_t reg = {0u, 0u, 0u, (uint32_t)arguments.size[0], (uint32_t)arguments.size[1], (uint32_t)arguments.size[2]};
 
     // Create event
-    ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
-    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
-    ze_event_pool_flags_t eventPoolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    ze_event_counter_based_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
     if (arguments.useEvents) {
-        eventPoolFlags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+        eventDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
     }
-    eventPoolDesc.flags = eventPoolFlags;
-    eventPoolDesc.count = 1;
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
-    ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
-    eventDesc.index = 0;
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-    ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
+    ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &eventDesc, &event));
 
     // Create an immediate command list
     ze_command_list_handle_t cmdList{};
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, queueProperties.selectedEngine);
+    commandQueueDesc->desc.flags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    if (!arguments.forceBlitter) {
+        commandQueueDesc->desc.flags |= ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT;
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
 
     // Benchmark
@@ -96,12 +97,10 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
         } else {
             statistics.pushValue(timer.get(), imageSizeInBytes, typeSelector.getUnit(), typeSelector.getType());
         }
-        ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }
 
     // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
 
     ASSERT_ZE_RESULT_SUCCESS(zeImageDestroy(srcImage));
