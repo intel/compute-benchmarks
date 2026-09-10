@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ struct MultiArgumentKernelTimeArguments : TestCaseArgumentContainer {
           lws(*this, "lws", "local work size"),
           groupCount(*this, "groupCount", "total amount of work groups"),
           reverseOrder(*this, "reverseOrder", "set kernel arguments in reverse order"),
-          useL0NewArgApi(*this, "newApi", "utilize zeCommandListAppendLaunchKernelWithArguments for L0 submissions") {}
+          useL0NewArgApi(*this, "newApi", "utilize zeCommandListAppendLaunchKernelWithArguments for L0 submissions, on Vulkan writes all arguments of a kernel with a single vkUpdateDescriptorSets call instead of one call per argument") {}
 };
 
 struct MultiArgumentKernelTime : TestCase<MultiArgumentKernelTimeArguments> {

@@ -1,0 +1,43 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#version 450
+
+#ifndef ARG_COUNT
+#error "ARG_COUNT must be defined on the glslc command line, for example -DARG_COUNT=16"
+#endif
+
+#ifndef USE_GLOBAL_IDS
+#error "USE_GLOBAL_IDS must be defined on the glslc command line as 0 or 1"
+#endif
+
+layout(local_size_x_id = 0) in;
+
+layout(std430, set = 0, binding = 0) buffer UintBuffer {
+    uint data[];
+} arguments[ARG_COUNT];
+
+// Both variants must keep a static reference to each element of arguments[].
+// glslang keeps the declaration and its decorations in both variants. However,
+// when the driver compiles the pipeline, it removes binding table entries for
+// resources that are not read. The dispatch then does no work for each argument.
+// USE_GLOBAL_IDS only selects the source of the condition for a branch that
+// never executes. gl_NumWorkGroups is a run-time value. Thus, the compiler cannot
+// replace the condition with a constant during vkCreateComputePipelines, as it
+// could with a specialization constant.
+void main() {
+#if USE_GLOBAL_IDS
+    const uint id = gl_GlobalInvocationID.x;
+#else
+    const uint id = gl_NumWorkGroups.x;
+#endif
+    if (id == 12349876) {
+        for (uint i = 0u; i < ARG_COUNT; i++) {
+            arguments[i].data[0] += 1u;
+        }
+    }
+}

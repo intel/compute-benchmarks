@@ -150,13 +150,36 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 5. The generated .spv file will be written to your current directory.
 
 ### 2.5 Vulkan shader translation <a id="vulkan-shader-translation"></a>
-Vulkan compute shaders (\*.comp) live in [source/kernels/vk](source/kernels/vk) and are translated into SPIR-V using `glslc`, distributed with the [Vulkan SDK](https://vulkan.lunarg.com/) or as the `glslc` package on Debian/Ubuntu. Compute Benchmarks provide the [compile_to_spv_vulkan.sh](scripts/compile_to_spv_vulkan.sh) utility script to help with the procedure. The script requires the `glslc` binary to be present in your PATH.
+Vulkan compute shaders (\*.comp) live in [source/kernels/vk](source/kernels/vk) and are translated into SPIR-V using `glslc`, distributed with the [Vulkan SDK](https://vulkan.lunarg.com/) or as the `glslc` package on Debian/Ubuntu. Compute Benchmarks provide the [compile_to_spv_vk.sh](scripts/compile_to_spv_vk.sh) utility script to help with the procedure, and [compile_to_spv_vk.ps1](scripts/compile_to_spv_vk.ps1) as its Windows counterpart. Both take the same arguments. The bash script requires the `glslc` binary to be present in your PATH; the PowerShell one also falls back to `%VULKAN_SDK%\Bin\glslc.exe`.
 
 Vulkan SPIR-V and OpenCL SPIR-V are disjoint execution environments, so the two flavours can never be used interchangeably. All kernels are copied flat into the output directory, therefore the generated files must be prefixed with `vk_` to avoid colliding with their OpenCL counterparts. The script does this automatically.
 
 To generate a SPIR-V file, run the script from the [source/kernels](source/kernels) directory (replace with your shader path):
 ```
 cd source/kernels
-../../scripts/compile_to_spv_vulkan.sh vk/ulls_benchmark_empty_kernel.comp
+../../scripts/compile_to_spv_vk.sh vk/ulls_benchmark_empty_kernel.comp
 ```
 The generated .spv file will be written to your current directory and should be committed together with the shader source.
+
+A shader can also be compiled several times with different preprocessor defines, which is needed whenever a value has to be a compile time constant of the module rather than a specialization constant. Pass the defines as the second argument and a suffix for the output name as the third one:
+```
+cd source/kernels
+../../scripts/compile_to_spv_vk.sh vk/api_overhead_benchmark_multi_arg_kernel.comp "-DARG_COUNT=16 -DUSE_GLOBAL_IDS=0" _16
+```
+This writes `vk_api_overhead_benchmark_multi_arg_kernel_16.spv`.
+
+`api_overhead_benchmark_multi_arg_kernel.comp` requires both `ARG_COUNT` and `USE_GLOBAL_IDS` to be defined, and the suffix has to match the defines, because the benchmark selects the binary by name. The full set of committed binaries is generated with:
+```
+cd source/kernels
+for argCount in 1 4 8 16 32 64; do
+  ../../scripts/compile_to_spv_vk.sh vk/api_overhead_benchmark_multi_arg_kernel.comp "-DARG_COUNT=$argCount -DUSE_GLOBAL_IDS=0" "_$argCount"
+  ../../scripts/compile_to_spv_vk.sh vk/api_overhead_benchmark_multi_arg_kernel.comp "-DARG_COUNT=$argCount -DUSE_GLOBAL_IDS=1" "_${argCount}_ids"
+done
+```
+
+The PowerShell script regenerates every committed `vk_*.spv` in one go with `-All`, which is the equivalent of the loop above plus the shaders that need no defines:
+```
+cd source\kernels
+..\..\scripts\compile_to_spv_vk.ps1 -All
+```
+Always regenerate the whole set with a single `glslc` version. Different versions emit different generator ids and result numbering, so mixing them produces binaries that differ far beyond the intended change.
