@@ -1,0 +1,46 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#version 450
+
+#ifndef USE_GLOBAL_IDS
+#error "USE_GLOBAL_IDS must be defined on the glslc command line as 0 or 1"
+#endif
+
+#ifndef USE_LOCAL_IDS
+#error "USE_LOCAL_IDS must be defined on the glslc command line as 0 or 1"
+#endif
+#ifndef ATOMIC_PER_WORKGROUP
+#error "ATOMIC_PER_WORKGROUP must be defined on the glslc command line as 0 or 1"
+#endif
+
+layout(local_size_x_id = 0) in;
+
+layout(std430, set = 0, binding = 0) buffer OutputBuffer {
+    uint data[];
+} outputBuffer;
+
+void main() {
+#if ATOMIC_PER_WORKGROUP
+    if (gl_LocalInvocationID.x == 0u) {
+        uint value = atomicAdd(outputBuffer.data[0], 0xffffffffu);
+        if (value == 1u) {
+            outputBuffer.data[1] = 1337u;
+        }
+    }
+#else
+#if USE_GLOBAL_IDS
+    const uint id = gl_GlobalInvocationID.x;
+#elif USE_LOCAL_IDS
+    const uint id = gl_LocalInvocationID.x;
+#else
+    const uint id = 0u;
+#endif
+    // Preserve the original None/Local workloads, including overlapping writes.
+    outputBuffer.data[id] = 1u;
+#endif
+}

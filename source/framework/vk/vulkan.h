@@ -110,14 +110,19 @@ class VulkanFence : NoCopyOrMove {
 
 class VulkanBuffer : NoCopyOrMove {
   public:
-    VulkanBuffer(Vulkan &vulkan, VkDeviceSize size);
+    VulkanBuffer(Vulkan &vulkan, VkDeviceSize size, VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VkMemoryPropertyFlags memoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     ~VulkanBuffer() noexcept;
     operator VkBuffer() const { return buffer_; }
+    void *mappedPtr() const { return mappedPtr_; }
+    void flush() const;
+    void invalidate() const;
 
   private:
     Vulkan &vulkan_;
     VkBuffer buffer_ = VK_NULL_HANDLE;
     VkDeviceMemory memory_ = VK_NULL_HANDLE;
+    void *mappedPtr_ = nullptr;
+    bool hostCoherent_ = false;
 };
 
 } // namespace VK

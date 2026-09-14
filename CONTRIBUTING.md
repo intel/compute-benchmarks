@@ -162,7 +162,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 5. The generated .spv file will be written to your current directory.
 
 ### 2.6 Vulkan shader translation <a id="vulkan-shader-translation"></a>
-Vulkan compute shaders (\*.comp) live in [source/kernels/vk](source/kernels/vk) and are translated into SPIR-V using `glslc`, distributed with the [Vulkan SDK](https://vulkan.lunarg.com/) or as the `glslc` package on Debian/Ubuntu. Compute Benchmarks provide the [compile_to_spv_vk.sh](scripts/compile_to_spv_vk.sh) utility script to help with the procedure, and [compile_to_spv_vk.ps1](scripts/compile_to_spv_vk.ps1) as its Windows counterpart. Both take the same arguments. The bash script requires the `glslc` binary to be present in your PATH; the PowerShell one also falls back to `%VULKAN_SDK%\Bin\glslc.exe`.
+Vulkan compute shaders (\*.comp) live in [source/kernels/vk](source/kernels/vk) and are translated into SPIR-V using `glslc`, distributed with the [Vulkan SDK](https://vulkan.lunarg.com/) or as the `glslc` package on Debian/Ubuntu. Compute Benchmarks provide the [compile_to_spv_vk.sh](scripts/compile_to_spv_vk.sh) utility script to help with the procedure. It requires the `glslc` binary to be present in your PATH.
 
 Vulkan SPIR-V and OpenCL SPIR-V are disjoint execution environments, so the two flavours can never be used interchangeably. All kernels are copied flat into the output directory, therefore the generated files must be prefixed with `vk_` to avoid colliding with their OpenCL counterparts. The script does this automatically.
 
@@ -189,9 +189,15 @@ for argCount in 1 4 8 16 32 64; do
 done
 ```
 
-The PowerShell script regenerates every committed `vk_*.spv` in one go with `-All`, which is the equivalent of the loop above plus the shaders that need no defines:
+`ulls_benchmark_write_one.comp` follows the same rule with `USE_GLOBAL_IDS`, `USE_LOCAL_IDS` and `ATOMIC_PER_WORKGROUP`. All three are mandatory, and the suffix again has to match the defines:
 ```
-cd source\kernels
-..\..\scripts\compile_to_spv_vk.ps1 -All
+cd source/kernels
+for variant in ":0 0 0" "_global_ids:1 0 0" "_local_ids:0 1 0" "_atomic_per_workgroup:0 0 1"; do
+  suffix="${variant%%:*}"
+  read -r global local atomic <<< "${variant#*:}"
+  ../../scripts/compile_to_spv_vk.sh vk/ulls_benchmark_write_one.comp \
+    "-DUSE_GLOBAL_IDS=$global -DUSE_LOCAL_IDS=$local -DATOMIC_PER_WORKGROUP=$atomic" "$suffix"
+done
 ```
+
 Always regenerate the whole set with a single `glslc` version. Different versions emit different generator ids and result numbering, so mixing them produces binaries that differ far beyond the intended change.

@@ -251,18 +251,18 @@ VulkanFence::~VulkanFence() noexcept {
     }
 }
 
-VulkanBuffer::VulkanBuffer(Vulkan &vulkan, VkDeviceSize size) : vulkan_(vulkan) {
+VulkanBuffer::VulkanBuffer(Vulkan &vulkan, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperties) : vulkan_(vulkan) {
     VkBufferCreateInfo bufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
     bufferCreateInfo.size = size;
-    bufferCreateInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    bufferCreateInfo.usage = usage;
     bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     VK_RESULT_SUCCESS_OR_ERROR(vkCreateBuffer(vulkan_.device, &bufferCreateInfo, nullptr, &this->buffer_));
 
     VkMemoryRequirements memoryRequirements{};
     vkGetBufferMemoryRequirements(vulkan_.device, this->buffer_, &memoryRequirements);
-    const uint32_t memoryTypeIndex = vulkan_.findMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    const uint32_t memoryTypeIndex = vulkan_.findMemoryType(memoryRequirements.memoryTypeBits, memoryProperties);
     if (memoryTypeIndex == Vulkan::invalidMemoryTypeIndex) {
-        FATAL_ERROR("No device local memory type available for a storage buffer.");
+        FATAL_ERROR("No compatible memory type available for the requested buffer properties.");
     }
 
     VkMemoryAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
@@ -270,9 +270,38 @@ VulkanBuffer::VulkanBuffer(Vulkan &vulkan, VkDeviceSize size) : vulkan_(vulkan) 
     allocateInfo.memoryTypeIndex = memoryTypeIndex;
     VK_RESULT_SUCCESS_OR_ERROR(vkAllocateMemory(vulkan_.device, &allocateInfo, nullptr, &this->memory_));
     VK_RESULT_SUCCESS_OR_ERROR(vkBindBufferMemory(vulkan_.device, this->buffer_, this->memory_, 0));
+
+    if (memoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+        const VkMemoryPropertyFlags flags = vulkan_.physicalDeviceMemoryProperties.memoryTypes[memoryTypeIndex].propertyFlags;
+        this->hostCoherent_ = (flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) != 0;
+        VK_RESULT_SUCCESS_OR_ERROR(vkMapMemory(vulkan_.device, this->memory_, 0, VK_WHOLE_SIZE, 0, &this->mappedPtr_));
+    }
+}
+
+void VulkanBuffer::flush() const {
+    if (this->mappedPtr_ == nullptr || this->hostCoherent_) {
+        return;
+    }
+    VkMappedMemoryRange mappedRange{VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE};
+    mappedRange.memory = this->memory_;
+    mappedRange.size = VK_WHOLE_SIZE;
+    VK_RESULT_SUCCESS_OR_ERROR(vkFlushMappedMemoryRanges(vulkan_.device, 1, &mappedRange));
+}
+
+void VulkanBuffer::invalidate() const {
+    if (this->mappedPtr_ == nullptr || this->hostCoherent_) {
+        return;
+    }
+    VkMappedMemoryRange mappedRange{VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE};
+    mappedRange.memory = this->memory_;
+    mappedRange.size = VK_WHOLE_SIZE;
+    VK_RESULT_SUCCESS_OR_ERROR(vkInvalidateMappedMemoryRanges(vulkan_.device, 1, &mappedRange));
 }
 
 VulkanBuffer::~VulkanBuffer() noexcept {
+    if (this->mappedPtr_ != nullptr) {
+        vkUnmapMemory(vulkan_.device, this->memory_);
+    }
     if (this->buffer_ != VK_NULL_HANDLE) {
         vkDestroyBuffer(vulkan_.device, this->buffer_, nullptr);
     }

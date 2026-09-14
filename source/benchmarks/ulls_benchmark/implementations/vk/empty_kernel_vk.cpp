@@ -13,7 +13,6 @@
 #include "definitions/empty_kernel.h"
 
 #include <gtest/gtest.h>
-#include <limits>
 
 static TestResult run(const EmptyKernelArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
@@ -50,7 +49,6 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     vkCmdDispatch(commandBuffer, static_cast<uint32_t>(arguments.workgroupCount), 1u, 1u);
     ASSERT_VK_SUCCESS(vkEndCommandBuffer(commandBuffer));
 
-    VulkanFence fence(vulkan);
     VkSubmitInfo submitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
@@ -58,10 +56,9 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
-        ASSERT_VK_SUCCESS(vkQueueSubmit(vulkan.queue, 1, &submitInfo, fence));
-        ASSERT_VK_SUCCESS(vkWaitForFences(vulkan.device, 1, fence.address(), VK_TRUE, std::numeric_limits<uint64_t>::max()));
+        ASSERT_VK_SUCCESS(vkQueueSubmit(vulkan.queue, 1, &submitInfo, VK_NULL_HANDLE));
+        ASSERT_VK_SUCCESS(vkQueueWaitIdle(vulkan.queue));
         timer.measureEnd();
-        ASSERT_VK_SUCCESS(vkResetFences(vulkan.device, 1, fence.address()));
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
