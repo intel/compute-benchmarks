@@ -26,9 +26,10 @@ It is structured into two sections:
 - [2. Contributing to Compute Benchmarks](#benchmarks-contributing)
   - [2.1 Adding new benchmarks](#adding-new-benchmark)
   - [2.2 Test configurations and permutations](#test-permutations)
-  - [2.3 Generating documentation](#benchmarks-docs)
-  - [2.4 SPIR-V translation](#spirv-translation)
-  - [2.5 Vulkan shader translation](#vulkan-shader-translation)
+  - [2.3 Comments](#comments)
+  - [2.4 Generating documentation](#benchmarks-docs)
+  - [2.5 SPIR-V translation](#spirv-translation)
+  - [2.6 Vulkan shader translation](#vulkan-shader-translation)
 
 ## 1. Contribution process overview <a id="contribution-overview"></a>
 ### 1.1 Commit message <a id="commit-message"></a>
@@ -120,10 +121,21 @@ Keep the number of permutations per test case reasonable. A test case that gener
 
 You can review the current per-suite test case counts - including an outliers section that lists suites exceeding a configurable threshold (default 50) - by running [list_test_suites.sh](scripts/list_test_suites.sh) against a directory of built benchmark binaries.
 
-### 2.3 Generating documentation <a id="benchmarks-docs"></a>
+### 2.3 Comments <a id="comments"></a>
+The expected number of comments added by a change is zero; every comment has to earn its place on its own. That the file being modified already contains comments is not a reason to add another one.
+
+* A comment earns its place when it carries a fact that lives outside the source code and that a future edit would break silently, for example: a hardware, specification or driver behavior that the measurement depends on (name the document or the workaround identifier), an ordering, a warmup or an extra synchronization that reads as arbitrary but is required for the measured number to be valid, a constant whose origin cannot be derived from the code, a language or toolchain constraint that forces the shape of the code, or the reason why the obvious simpler form is wrong.
+* Do not restate what the code already says, i.e. `// synchronize the queue` above a `finish()` call.
+* Do not document why the change was made or what the bug was; that is the content of the commit message.
+* Do not pre-empt an expected review objection in the code; answer it in the pull request instead.
+* Do not add a comment describing a test case in its definition, registration or implementation file. The test case name and its arguments identify the scenario, and the user-facing description of what is measured belongs in `getHelp()` and in the argument help strings, which is what [TESTS.md](TESTS.md) is generated from.
+* When a comment is only needed because the code is hard to follow, fix the code instead: a named `constexpr`, a better function or variable name, or a helper whose name is the explanation. Those survive refactoring, a comment does not.
+* In C++ sources, use double slash instead of block comments, except for the copyright header, which stays in its required block form.
+
+### 2.4 Generating documentation <a id="benchmarks-docs"></a>
 Test documentation is generated from the code and stored in the [TESTS.md](TESTS.md) file. Contributors are required to regenerate the documentation by building the `run_docs_generator` target. [TESTS.md](TESTS.md) should be generated with *only* OpenCL and Level Zero enabled - otherwise, the generated file may contain incorrect contents. No further parameters are needed. After generating, include `TESTS.md` as part of the commit.
 
-### 2.4 SPIRV translation <a id="spirv-translation"></a>
+### 2.5 SPIRV translation <a id="spirv-translation"></a>
 OpenCL kernel files (\*.cl) can be translated into SPIR-V representation files (\*.spv) using `ocloc` (OpenCL Offline Compiler) tool developed and maintained in [compute-runtime](https://github.com/intel/compute-runtime/tree/master/shared/offline_compiler) repository. Compute Benchmarks provide [compile_to_spv.sh](https://github.com/intel/compute-benchmarks/blob/master/scripts/compile_to_spv.sh) utility script to help with the procedure. Script requires the `ocloc` binary to be present in your PATH. The `ocloc` binary can be acquired from [compute-runtime releases](https://github.com/intel/compute-runtime/releases/) (using the [latest](https://github.com/intel/compute-runtime/releases/latest) release is strongly recommended).
 
 *Note: At the time of writing this guide, latest release is `25.35.35096.9` and such version will be used in the following examples.*
@@ -149,7 +161,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 ```
 5. The generated .spv file will be written to your current directory.
 
-### 2.5 Vulkan shader translation <a id="vulkan-shader-translation"></a>
+### 2.6 Vulkan shader translation <a id="vulkan-shader-translation"></a>
 Vulkan compute shaders (\*.comp) live in [source/kernels/vk](source/kernels/vk) and are translated into SPIR-V using `glslc`, distributed with the [Vulkan SDK](https://vulkan.lunarg.com/) or as the `glslc` package on Debian/Ubuntu. Compute Benchmarks provide the [compile_to_spv_vk.sh](scripts/compile_to_spv_vk.sh) utility script to help with the procedure, and [compile_to_spv_vk.ps1](scripts/compile_to_spv_vk.ps1) as its Windows counterpart. Both take the same arguments. The bash script requires the `glslc` binary to be present in your PATH; the PowerShell one also falls back to `%VULKAN_SDK%\Bin\glslc.exe`.
 
 Vulkan SPIR-V and OpenCL SPIR-V are disjoint execution environments, so the two flavours can never be used interchangeably. All kernels are copied flat into the output directory, therefore the generated files must be prefixed with `vk_` to avoid colliding with their OpenCL counterparts. The script does this automatically.
