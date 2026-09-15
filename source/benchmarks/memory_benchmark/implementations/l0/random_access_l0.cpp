@@ -8,9 +8,9 @@
 #include "framework/enum/measurement_type.h"
 #include "framework/l0/levelzero.h"
 #include "framework/l0/utility/error.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/l0/utility/usable_memory_helper.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/memory_constants.h"
 #include "framework/utility/timer.h"
 
@@ -89,12 +89,6 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
         return TestResult::InvalidArgs;
     }
 
-    // Create kernel
-    const auto kernelBinary = FileHelper::loadBinaryFile("access_device_mem_random.spv");
-    if (kernelBinary.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
-
     // Create buffer
     const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
@@ -113,21 +107,12 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
     for (auto index = 0u; index < workItemCnt; index++) {
         randBuff[index] = distr(generator);
     }
-    ze_module_desc_t moduleDesc{
-        ZE_STRUCTURE_TYPE_MODULE_DESC,
-        nullptr,
-        ZE_MODULE_FORMAT_IL_SPIRV,
-        kernelBinary.size(),
-        kernelBinary.data()};
     ze_module_handle_t module{};
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-    ze_kernel_desc_t kernelDesc{
-        ZE_STRUCTURE_TYPE_KERNEL_DESC,
-        nullptr,
-        ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY,
-        "access_device_memory_random"};
     ze_kernel_handle_t kernel{};
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
+    auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "access_device_mem_random.cl", "access_device_memory_random", &kernel, &module, nullptr, ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY);
+    if (kernelLoadRes != TestResult::Success) {
+        return kernelLoadRes;
+    }
 
     // Configure dispatch parameters
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, computeProperties.maxGroupSizeX, 1, 1));

@@ -6,8 +6,8 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/memory_constants.h"
 
 #include "definitions/slm_switch_latency.h"
@@ -41,17 +41,10 @@ static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &st
     const size_t bufferSize = 1024 * kiloByte;
 
     // Create module
-    const char *kernelFile = "slm_benchmark.spv";
-    auto spirvModule = FileHelper::loadBinaryFile(kernelFile);
-    if (spirvModule.size() == 0) {
-        return TestResult::KernelNotFound;
+    ze_module_handle_t module{};
+    if (auto result = L0::KernelHelper::loadModule(levelzero, "slm_benchmark.cl", &module, nullptr); result != TestResult::Success) {
+        return result;
     }
-    ze_module_handle_t module;
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
 
     // Create buffer
     void *buffers[kernelCount];
@@ -73,7 +66,7 @@ static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &st
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.pKernelName = "eat_time";
     int operations = 1000;
-    ze_kernel_handle_t kernels[kernelCount];
+    ze_kernel_handle_t kernels[kernelCount] = {};
     for (auto i = 0u; i < kernelCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernels[i]));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernels[i], static_cast<uint32_t>(arguments.wgs), 1u, 1u));

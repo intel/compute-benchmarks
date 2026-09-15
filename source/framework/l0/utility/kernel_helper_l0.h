@@ -12,6 +12,7 @@
 
 #include <level_zero/ze_api.h>
 namespace L0::KernelHelper {
+TestResult loadModule(LevelZero &levelzero, const std::string &filePath, ze_module_handle_t *module, const char *pBuildFlags);
 TestResult loadKernel(LevelZero &levelzero, const std::string &filePath, const std::string &kernelName, ze_kernel_handle_t *kernel,
-                      ze_module_handle_t *module, const char *pBuildFlags);
-}
+                      ze_module_handle_t *module, const char *pBuildFlags, ze_kernel_flags_t kernelFlags = 0);
+} // namespace L0::KernelHelper

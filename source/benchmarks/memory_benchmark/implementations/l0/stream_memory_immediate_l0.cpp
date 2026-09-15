@@ -6,8 +6,9 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
+#include "framework/utility/compiler_options_builder.h"
 #include "framework/utility/memory_constants.h"
 #include "framework/utility/timer.h"
 
@@ -47,20 +48,6 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    // Create module
-    const char *kernelFile = useDoubles ? "memory_benchmark_stream_memory_fp64.spv" : "memory_benchmark_stream_memory.spv";
-    auto spirvModule = FileHelper::loadBinaryFile(kernelFile);
-    if (spirvModule.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
-    ze_module_handle_t module;
-    ze_kernel_handle_t kernel;
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-
     // Create buffers
     size_t bufferSize = arguments.size;
     void *buffers[3] = {};
@@ -68,25 +55,25 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     size_t bufferSizes[3] = {bufferSize, bufferSize, bufferSize};
 
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    const char *pKernelName = nullptr;
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        kernelDesc.pKernelName = "read";
+        pKernelName = "read";
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffers[buffersCount++]));
         bufferSizes[buffersCount] = 16u;
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, 16u, 0, levelzero.device, &buffers[buffersCount++]));
         break;
     case StreamMemoryType::Write:
-        kernelDesc.pKernelName = "write";
+        pKernelName = "write";
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffers[buffersCount++]));
         break;
     case StreamMemoryType::Scale:
-        kernelDesc.pKernelName = "scale";
+        pKernelName = "scale";
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffers[buffersCount++]));
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffers[buffersCount++]));
         break;
     case StreamMemoryType::Triad:
-        kernelDesc.pKernelName = "triad";
+        pKernelName = "triad";
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffers[buffersCount++]));
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffers[buffersCount++]));
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffers[buffersCount++]));
@@ -96,7 +83,14 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     }
 
     // Create kernel
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
+    ze_kernel_handle_t kernel{};
+    ze_module_handle_t module{};
+    CompilerOptionsBuilder compilerOptions;
+    compilerOptions.addDefinitionKeyValue("STREAM_TYPE", useDoubles ? "double" : "float");
+    auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "memory_benchmark_stream_memory.cl", pKernelName, &kernel, &module, compilerOptions.str().c_str());
+    if (kernelLoadRes != TestResult::Success) {
+        return kernelLoadRes;
+    }
 
     // Query maximum group size
     const uint32_t groupSizeX = std::min(levelzero.getDeviceComputeProperties().maxGroupSizeX, gws);
