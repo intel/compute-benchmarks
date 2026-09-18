@@ -74,6 +74,14 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.layout(), 0, 1, descriptorSets.address(0), 0, nullptr);
     vkCmdDispatch(commandBuffer, static_cast<uint32_t>(arguments.workgroupCount), 1u, 1u);
+    // Vulkan requires no visibility for the shader writes unless it is asked for, while the
+    // sibling implementations submit through zeCommandQueueExecuteCommandLists / clFinish /
+    // cuLaunchKernel, which make the writes visible device wide. Without this barrier the
+    // Vulkan measurement leaves out work that the other APIs include.
+    VkMemoryBarrier shaderWriteBarrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+    shaderWriteBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    shaderWriteBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1, &shaderWriteBarrier, 0, nullptr, 0, nullptr);
     ASSERT_VK_SUCCESS(vkEndCommandBuffer(commandBuffer));
 
     std::unique_ptr<VulkanBuffer> staging;

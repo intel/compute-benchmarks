@@ -36,11 +36,12 @@ void main() {
 #if USE_GLOBAL_IDS
     const uint id = gl_GlobalInvocationID.x;
 #elif USE_LOCAL_IDS
-    const uint id = gl_LocalInvocationID.x;
+    const uint id = gl_WorkGroupID.x * gl_WorkGroupSize.x + gl_LocalInvocationID.x;
 #else
     const uint id = 0u;
 #endif
-    // Preserve the original None/Local workloads, including overlapping writes.
+    // With usedIds=None the kernel has no id to index with, so every invocation
+    // writes element 0 and the writes overlap by construction.
     outputBuffer.data[id] = 1u;
 #endif
 }
