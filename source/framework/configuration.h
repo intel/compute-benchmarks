@@ -40,6 +40,8 @@ struct Configuration : ArgumentContainer {
     static void loadDefaultConfiguration();
     static Configuration &get();
 
+    void applyBenchmarkIterationDefaults();
+
     bool validateArgumentsExtra() const override;
 
     // Diagnostic params

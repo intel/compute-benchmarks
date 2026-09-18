@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,7 @@ struct Argument {
 
     void parse(CommandLineArgument &argument);
     void markAsParsed();
+    void markAsUnparsed();
 
     virtual bool validate() const {
         return true;

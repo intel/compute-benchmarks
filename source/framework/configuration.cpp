@@ -92,9 +92,9 @@ Configuration::Configuration()
     csv = false;
     verbose = false;
     interactivePrints = false;
-    warmupIterations = 3;
+    warmupIterations = 10;
     trimOutliers = 0;
-    iterations = 10;
+    iterations = 100;
     sleepFor = 20;
     cpuAffinityMask = 0;
     selectedApi = Api::All;
@@ -123,11 +123,16 @@ bool Configuration::parseArgumentsForConfiguration(CommandLineArguments &argumen
     loadDefaultConfiguration();
     auto configuration = Configuration::instance.get();
 
+    configuration->iterations.markAsUnparsed();
+    configuration->warmupIterations.markAsUnparsed();
+
     for (auto &argument : arguments) {
         if (!configuration->parseArgument(argument)) {
             return false;
         }
     }
+
+    configuration->applyBenchmarkIterationDefaults();
 
     if (!configuration->validateArguments()) {
         return false;
@@ -144,6 +149,20 @@ bool Configuration::parseArgumentsForConfiguration(CommandLineArguments &argumen
     }
 
     return true;
+}
+
+void Configuration::applyBenchmarkIterationDefaults() {
+    const auto &benchmarkInfo = BenchmarkInfo::get();
+    if (!iterations.wasParsed()) {
+        if (const auto benchmarkIterations = benchmarkInfo.getDefaultIterations(); benchmarkIterations.has_value()) {
+            iterations = benchmarkIterations.value();
+        }
+    }
+    if (!warmupIterations.wasParsed()) {
+        if (const auto benchmarkWarmup = benchmarkInfo.getDefaultWarmupIterations(); benchmarkWarmup.has_value()) {
+            warmupIterations = benchmarkWarmup.value();
+        }
+    }
 }
 
 void Configuration::loadDefaultConfiguration() {

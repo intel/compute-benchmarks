@@ -17,11 +17,19 @@ BenchmarkInfo &BenchmarkInfo::get() {
 }
 
 void BenchmarkInfo::initialize(const std::string &name, const std::string &description) {
+    initialize(name, description, std::nullopt, std::nullopt);
+}
+
+void BenchmarkInfo::initialize(const std::string &name, const std::string &description,
+                               std::optional<size_t> defaultIterations,
+                               std::optional<size_t> defaultWarmupIterations) {
     FATAL_ERROR_IF(instance != nullptr, "BenchmarkInfo::initialize() called multiple times");
 
     instance = std::make_unique<BenchmarkInfo>();
     instance->name = name;
     instance->description = description;
+    instance->defaultIterations = defaultIterations;
+    instance->defaultWarmupIterations = defaultWarmupIterations;
 }
 
 std::string BenchmarkInfo::getBenchmarkName() const {
@@ -38,4 +46,12 @@ std::string BenchmarkInfo::getBenchmarkFilename() const {
 
 std::string BenchmarkInfo::getBenchmarkDescription() const {
     return description;
+}
+
+std::optional<size_t> BenchmarkInfo::getDefaultIterations() const {
+    return defaultIterations;
+}
+
+std::optional<size_t> BenchmarkInfo::getDefaultWarmupIterations() const {
+    return defaultWarmupIterations;
 }

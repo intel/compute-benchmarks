@@ -227,7 +227,7 @@ void BenchmarkMain::printHelp() {
                  "Example invocations:\n"
                  "\t" << filename << "                                                runs all possible tests\n"
                  "\t" << filename << " --api=ocl                                      runs all possible OpenCL tests\n"
-                 "\t" << filename << " --iterations=100 --csv                         runs all possible tests with 100 iterations and dumps results as CSV\n"
+                 "\t" << filename << " --iterations=1000 --csv                        runs all possible tests with 1000 iterations and dumps results as CSV\n"
                  "\t" << filename << " --gtest_filter=<regex>                         runs all tests matching a regular expression\n"
                  "\t" << filename << " --gtest_filter=*TestName*                      runs a test named \"TestName\" in all predefined configurations\n"
                  "\t" << filename << " --test=TestName --someParam=1 --otherParam=30  runs a test named \"TestName\" with specified parameters\n"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,6 +50,10 @@ void Argument::parse(CommandLineArgument &argument) {
 
 void Argument::markAsParsed() {
     this->parsed = true;
+}
+
+void Argument::markAsUnparsed() {
+    this->parsed = false;
 }
 
 std::string Argument::getHelpEntry(const std::string &argumentKey) const {
