@@ -148,12 +148,9 @@ Vulkan implementations of benchmarks will be built if:
 
 `BUILD_VK` defaults to `OFF`, so machines without a Vulkan SDK are unaffected.
 
-A system SDK is *not* required to build. CMake first tries its `FindVulkan` module, and falls back to [third_party/vulkan-sdk](third_party/vulkan-sdk) when nothing is found, the same way OpenCL and Level Zero do. Set `USE_SYSTEM_VULKAN=OFF` to force the bundled SDK.
+A system SDK is *not* required to build. CMake first tries its `FindVulkan` module, and falls back to [third_party/vulkan-sdk](third_party/vulkan-sdk) when nothing is found, the same way OpenCL and Level Zero do. Set `USE_SYSTEM_VULKAN=OFF` to force the bundled SDK. The GLSL shaders in [source/kernels/vk](source/kernels/vk) are compiled to SPIR-V at run time by [glslang](https://github.com/KhronosGroup/glslang), which is the [third_party/glslang](third_party/glslang) submodule and is built and linked statically only when `BUILD_VK=ON`.
 
-To *run* the benchmarks you additionally need:
-
-* a Vulkan driver (ICD) for your device. Use `vulkaninfo --summary` to confirm which ICD the loader picks - a `deviceType` of `CPU` means a software rasterizer was selected instead of your GPU;
-* `glslc` is only needed to regenerate the shaders, the compiled `.spv` files are committed to the repository.
+To *run* the benchmarks you additionally need a Vulkan driver (ICD) for your device. Use `vulkaninfo --summary` to confirm which ICD the loader picks - a `deviceType` of `CPU` means a software rasterizer was selected instead of your GPU.
 
 ##### Example
 

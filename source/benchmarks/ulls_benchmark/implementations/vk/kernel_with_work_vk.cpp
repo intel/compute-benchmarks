@@ -6,8 +6,8 @@
  */
 
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
+#include "framework/vk/shader_compiler.h"
 #include "framework/vk/vulkan.h"
 
 #include "definitions/kernel_with_work.h"
@@ -15,6 +15,22 @@
 #include <cstring>
 #include <gtest/gtest.h>
 #include <memory>
+#include <vector>
+
+static std::vector<ShaderDefine> workItemIdUsageDefines(WorkItemIdUsage usedIds) {
+    switch (usedIds) {
+    case WorkItemIdUsage::None:
+        return {{"USE_GLOBAL_IDS", "0"}, {"USE_LOCAL_IDS", "0"}, {"ATOMIC_PER_WORKGROUP", "0"}};
+    case WorkItemIdUsage::Global:
+        return {{"USE_GLOBAL_IDS", "1"}, {"USE_LOCAL_IDS", "0"}, {"ATOMIC_PER_WORKGROUP", "0"}};
+    case WorkItemIdUsage::Local:
+        return {{"USE_GLOBAL_IDS", "0"}, {"USE_LOCAL_IDS", "1"}, {"ATOMIC_PER_WORKGROUP", "0"}};
+    case WorkItemIdUsage::AtomicPerWorkgroup:
+        return {{"USE_GLOBAL_IDS", "0"}, {"USE_LOCAL_IDS", "0"}, {"ATOMIC_PER_WORKGROUP", "1"}};
+    default:
+        FATAL_ERROR("Unknown work item id usage");
+    }
+}
 
 static TestResult run(const KernelWithWorkArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
@@ -50,11 +66,13 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     VulkanBuffer buffer(vulkan, bufferSize, bufferUsage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     // Create pipeline
-    const std::string spirvPath = "vk_" + selectKernel(arguments.usedIds, "spv");
-    if (FileHelper::loadBinaryFile(spirvPath).empty()) {
-        return TestResult::KernelNotFound;
+    std::vector<uint32_t> spirv;
+    if (const TestResult result = ShaderCompiler::compileComputeShaderToSpirv("ulls_benchmark_write_one.comp",
+                                                                              workItemIdUsageDefines(arguments.usedIds), spirv);
+        result != TestResult::Success) {
+        return result;
     }
-    VulkanShaderModule shaderModule(vulkan, spirvPath);
+    VulkanShaderModule shaderModule(vulkan, spirv);
     VulkanDescriptorSet descriptorSets(vulkan, 1);
     VulkanComputePipeline pipeline(vulkan, shaderModule, static_cast<uint32_t>(arguments.workgroupSize), descriptorSets.layout());
 

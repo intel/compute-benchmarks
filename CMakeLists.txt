@@ -51,10 +51,18 @@ if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
 endif()
 
-# Load dependencies
-if(NOT EXISTS third_party/googletest/CMakeLists.txt)
-    execute_process(COMMAND git submodule update --init --recursive
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+# Load dependencies.
+if(EXISTS ${CMAKE_SOURCE_DIR}/.git)
+    execute_process(COMMAND git submodule status
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                    OUTPUT_VARIABLE SUBMODULE_STATUS
+                    RESULT_VARIABLE SUBMODULE_STATUS_RESULT
+                    ERROR_QUIET)
+    if(SUBMODULE_STATUS_RESULT EQUAL 0 AND SUBMODULE_STATUS MATCHES "(^|\n)[-+]")
+        message(STATUS "Updating git submodules")
+        execute_process(COMMAND git submodule update --init --recursive
+                        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    endif()
 endif()
 
 # Produce version string

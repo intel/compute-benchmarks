@@ -9,7 +9,7 @@ set(KERNELS_OUTPUT_DIR "${OUTPUT_DIR}")
 
 include(${CMAKE_MODULE_PATH}/${BRANCH_TYPE}/CopyKernelsAdditional.cmake OPTIONAL)
 
-list(APPEND KERNEL_EXTENSIONS ".cl" ".spv")
+list(APPEND KERNEL_EXTENSIONS ".cl" ".spv" ".comp")
 
 set(KERNEL_FILES "")
 foreach(EXTENSION ${KERNEL_EXTENSIONS})

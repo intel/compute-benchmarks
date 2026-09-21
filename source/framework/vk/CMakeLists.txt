@@ -27,6 +27,23 @@ else()
     message(STATUS "Vulkan installation found")
 endif()
 
+if (MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
+# glslang 12.3.1 relies on <cstdint> being included implicitly, which GCC 15 no longer does
+if (NOT MSVC)
+    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:SHELL:-include cstdint>")
+endif()
+
+set(ENABLE_OPT OFF CACHE BOOL "" FORCE)
+set(ENABLE_HLSL OFF CACHE BOOL "" FORCE)
+set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)
+set(GLSLANG_TESTS OFF CACHE BOOL "" FORCE)
+set(GLSLANG_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+set(OVERRIDE_MSVCCRT OFF CACHE BOOL "" FORCE)
+add_subdirectory("${CMAKE_SOURCE_DIR}/third_party/glslang" "${CMAKE_BINARY_DIR}/third_party/glslang" EXCLUDE_FROM_ALL)
+
 # Get sources
 file(GLOB_RECURSE SOURCES *.cpp *.h)
 
@@ -37,6 +54,7 @@ add_library(${TARGET_NAME} STATIC ${SOURCES})
 target_link_libraries(${TARGET_NAME} PUBLIC ${Vulkan_LIBRARIES})
 target_link_libraries(${TARGET_NAME} PUBLIC compute_benchmarks_framework)
 target_include_directories(${TARGET_NAME} PUBLIC ${Vulkan_INCLUDE_DIRS})
+target_link_libraries(${TARGET_NAME} PRIVATE SPIRV glslang glslang-default-resource-limits)
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER framework)
 add_subdirectories()
 setup_vs_folders(${TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR})

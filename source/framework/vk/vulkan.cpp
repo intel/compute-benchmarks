@@ -8,9 +8,7 @@
 #include "framework/vk/vulkan.h"
 
 #include "framework/configuration.h"
-#include "framework/utility/file_helper.h"
 
-#include <cstring>
 #include <limits>
 #include <vector>
 
@@ -116,22 +114,12 @@ Vulkan::~Vulkan() {
     }
 }
 
-VkShaderModule Vulkan::createShaderModule(const std::string &spirvPath) {
-    const auto spirvBinary = FileHelper::loadBinaryFile(spirvPath);
-    if (spirvBinary.empty()) {
-        FATAL_ERROR("Could not load SPIR-V binary from ", spirvPath);
-    }
-    if (spirvBinary.size() % sizeof(uint32_t) != 0) {
-        FATAL_ERROR("SPIR-V binary size is not a multiple of 4, path=", spirvPath, " size=", spirvBinary.size());
-    }
-
-    // vkCreateShaderModule requires pCode to be 4-byte aligned, which std::vector<uint8_t> does not guarantee
-    std::vector<uint32_t> spirvCode(spirvBinary.size() / sizeof(uint32_t));
-    std::memcpy(spirvCode.data(), spirvBinary.data(), spirvBinary.size());
+VkShaderModule Vulkan::createShaderModule(std::span<const uint32_t> spirv) {
+    FATAL_ERROR_IF(spirv.empty(), "Cannot create a shader module from empty SPIR-V");
 
     VkShaderModuleCreateInfo shaderModuleCreateInfo{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
-    shaderModuleCreateInfo.codeSize = spirvBinary.size();
-    shaderModuleCreateInfo.pCode = spirvCode.data();
+    shaderModuleCreateInfo.codeSize = spirv.size_bytes();
+    shaderModuleCreateInfo.pCode = spirv.data();
 
     VkShaderModule shaderModule{};
     VK_RESULT_SUCCESS_OR_ERROR(vkCreateShaderModule(this->device, &shaderModuleCreateInfo, nullptr, &shaderModule));

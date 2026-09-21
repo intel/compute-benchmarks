@@ -6,8 +6,8 @@
  */
 
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
+#include "framework/vk/shader_compiler.h"
 #include "framework/vk/vulkan.h"
 
 #include "definitions/multi_argument_kernel.h"
@@ -48,12 +48,14 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
         return TestResult::DeviceNotCapable;
     }
 
-    const std::string idsSuffix = arguments.useGlobalIds ? "_ids" : "";
-    const std::string spirvPath = "vk_api_overhead_benchmark_multi_arg_kernel_" + std::to_string(argumentCount) + idsSuffix + ".spv";
-    if (FileHelper::loadBinaryFile(spirvPath).empty()) {
-        return TestResult::KernelNotFound;
+    const std::vector<ShaderDefine> defines{{"ARG_COUNT", std::to_string(argumentCount)},
+                                            {"USE_GLOBAL_IDS", arguments.useGlobalIds ? "1" : "0"}};
+    std::vector<uint32_t> spirv;
+    if (const TestResult result = ShaderCompiler::compileComputeShaderToSpirv("api_overhead_benchmark_multi_arg_kernel.comp", defines, spirv);
+        result != TestResult::Success) {
+        return result;
     }
-    VulkanShaderModule shaderModule(vulkan, spirvPath);
+    VulkanShaderModule shaderModule(vulkan, spirv);
     const auto kernelCount = static_cast<uint32_t>(arguments.count);
     VulkanDescriptorSet descriptorSets(vulkan, argumentCount, kernelCount);
     VulkanComputePipeline pipeline(vulkan, shaderModule, static_cast<uint32_t>(arguments.lws), descriptorSets.layout());

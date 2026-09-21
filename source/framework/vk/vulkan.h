@@ -10,7 +10,9 @@
 #include "framework/test_case/test_case.h"
 #include "framework/vk/utility/error.h"
 
+#include <cstdint>
 #include <limits>
+#include <span>
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -34,7 +36,7 @@ struct Vulkan {
     Vulkan &operator=(const Vulkan &) = delete;
     ~Vulkan();
 
-    VkShaderModule createShaderModule(const std::string &spirvPath);
+    VkShaderModule createShaderModule(std::span<const uint32_t> spirv);
 
     // Command buffers are freed together with the pool, so they need no RAII wrapper.
     VkCommandBuffer allocateCommandBuffer();
@@ -53,7 +55,7 @@ struct NoCopyOrMove {
 
 class VulkanShaderModule : NoCopyOrMove {
   public:
-    VulkanShaderModule(Vulkan &vulkan, const std::string &spirvPath) : vulkan_(vulkan), shaderModule_(vulkan.createShaderModule(spirvPath)) {}
+    VulkanShaderModule(Vulkan &vulkan, std::span<const uint32_t> spirv) : vulkan_(vulkan), shaderModule_(vulkan.createShaderModule(spirv)) {}
     ~VulkanShaderModule() noexcept {
         if (shaderModule_ != VK_NULL_HANDLE) {
             vkDestroyShaderModule(vulkan_.device, shaderModule_, nullptr);

@@ -6,13 +6,14 @@
  */
 
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
+#include "framework/vk/shader_compiler.h"
 #include "framework/vk/vulkan.h"
 
 #include "definitions/empty_kernel.h"
 
 #include <gtest/gtest.h>
+#include <vector>
 
 static TestResult run(const EmptyKernelArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
@@ -34,11 +35,12 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     }
 
     // Create pipeline
-    const std::string spirvPath = "vk_ulls_benchmark_empty_kernel.spv";
-    if (FileHelper::loadBinaryFile(spirvPath).empty()) {
-        return TestResult::KernelNotFound;
+    std::vector<uint32_t> spirv;
+    if (const TestResult result = ShaderCompiler::compileComputeShaderToSpirv("ulls_benchmark_empty_kernel.comp", {}, spirv);
+        result != TestResult::Success) {
+        return result;
     }
-    VulkanShaderModule shaderModule(vulkan, spirvPath);
+    VulkanShaderModule shaderModule(vulkan, spirv);
     VulkanComputePipeline pipeline(vulkan, shaderModule, static_cast<uint32_t>(arguments.workgroupSize));
 
     // Record the command buffer once, it is re-submitted in every iteration
