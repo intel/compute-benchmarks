@@ -70,6 +70,23 @@ ol_result_t allocate(UsmMemoryPlacement placement, ol_context_handle_t context,
     }
 }
 
+ol_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement,
+                     ol_context_handle_t context, ol_device_handle_t device,
+                     size_t size, void **ptr) {
+    switch (runtimePlacement) {
+    case UsmRuntimeMemoryPlacement::Device:
+        return allocate(UsmMemoryPlacement::Device, context, device, size,
+                        ptr);
+    case UsmRuntimeMemoryPlacement::Host:
+        return allocate(UsmMemoryPlacement::Host, context, device, size, ptr);
+    case UsmRuntimeMemoryPlacement::Shared:
+        return allocate(UsmMemoryPlacement::Shared, context, device, size,
+                        ptr);
+    default:
+        FATAL_ERROR("Unknown placement");
+    }
+}
+
 ol_result_t allocateAligned(UsmMemoryPlacement placement,
                             ol_context_handle_t context,
                             ol_device_handle_t device, size_t alignment,

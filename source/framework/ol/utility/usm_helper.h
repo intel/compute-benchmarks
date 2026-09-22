@@ -8,6 +8,7 @@
 #pragma once
 
 #include "framework/enum/usm_memory_placement.h"
+#include "framework/enum/usm_runtime_memory_placement.h"
 
 #include <OffloadAPI.h>
 
@@ -20,6 +21,10 @@ bool isPlacementSupported(UsmMemoryPlacement placement,
 
 ol_result_t allocate(UsmMemoryPlacement placement, ol_context_handle_t context,
                      ol_device_handle_t device, size_t size, void **ptr);
+
+ol_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement,
+                     ol_context_handle_t context, ol_device_handle_t device,
+                     size_t size, void **ptr);
 
 ol_result_t allocateAligned(UsmMemoryPlacement placement,
                             ol_context_handle_t context,
