@@ -8,6 +8,7 @@ additionally requires a Vulkan driver (ICD) installed on the system.
 |------|--------|
 | `include/vulkan`, `include/vk_video` | LunarG Vulkan SDK 1.3.290.0 (`VK_HEADER_VERSION 290`), C headers only |
 | `lib/x64/vulkan-1.lib` | LunarG Vulkan SDK 1.3.290.0, import library for `vulkan-1.dll` |
-| `lib/x64/libvulkan.so` | Vulkan loader 1.3.275, `SONAME libvulkan.so.1` |
+| `lib/x64/libvulkan.so.1.3.290` | LunarG Vulkan SDK 1.3.290.0, `x86_64/lib/libvulkan.so.1.3.290` stripped, `SONAME libvulkan.so.1` |
+| `lib/x64/libvulkan.so`, `lib/x64/libvulkan.so.1` | Symlinks to `libvulkan.so.1.3.290`, for linking and runtime lookup |
 
 The headers are Apache-2.0 / MIT, see [LICENSE.md](LICENSE.md).
