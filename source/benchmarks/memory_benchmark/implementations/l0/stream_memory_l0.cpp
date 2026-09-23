@@ -145,7 +145,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     // Enqueue filling of the buffers and set kernel arguments
     for (auto i = 0u; i < buffersCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffers[i], bufferSizes[i], arguments.contents, false));
+        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffers[i], bufferSizes[i], arguments.contents, true));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<int>(i), sizeof(buffers[i]), &buffers[i]));
     }
     if (setScalarArgument) {

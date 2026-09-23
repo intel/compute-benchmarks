@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,14 @@
 
 #include "buffer_contents_helper_l0.h"
 
+#include <level_zero/zer_api.h>
+
 ze_result_t BufferContentsHelperL0::fillBuffer(ze_device_handle_t device, ze_context_handle_t context, ze_command_queue_handle_t queue, uint32_t queueOrdinal, void *buffer, size_t bufferSize, BufferContents contents, bool useImmediate) {
     ze_command_list_handle_t cmdList{};
     void *stagingAllocation{};
 
     if (useImmediate) {
-        ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-        commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+        ze_command_queue_desc_t commandQueueDesc = zeDefaultGPUImmediateCommandQueueDesc;
         commandQueueDesc.ordinal = queueOrdinal;
         ZE_RESULT_SUCCESS_OR_RETURN(zeCommandListCreateImmediate(context, device, &commandQueueDesc, &cmdList));
     } else {
@@ -34,7 +35,9 @@ ze_result_t BufferContentsHelperL0::fillBuffer(ze_device_handle_t device, ze_con
         FATAL_ERROR("Unknown buffer contents");
     }
 
-    if (!useImmediate) {
+    if (useImmediate) {
+        ZE_RESULT_SUCCESS_OR_RETURN(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
+    } else {
         ZE_RESULT_SUCCESS_OR_RETURN(zeCommandListClose(cmdList));
         ZE_RESULT_SUCCESS_OR_RETURN(zeCommandQueueExecuteCommandLists(queue, 1, &cmdList, nullptr));
         ZE_RESULT_SUCCESS_OR_RETURN(zeCommandQueueSynchronize(queue, std::numeric_limits<uint64_t>::max()));
