@@ -353,6 +353,7 @@ UsmSharedFirstGpuAccess|allocates a unified shared memory buffer and measures ti
 WalkerCompletionLatency|enqueues a kernel writing to system memory and measures time between the moment when update is visible on CPU and the moment when synchronizing call returns|<ul><li>--inOrderQueue If set use IOQ, otherwise OOQ. Applicable only for OCL. (0 or 1)</li><li>--useFence Use fence during submission and for further completion. (0 or 1)</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
 WalkerSubmissionEvents|enqueues an empty kernel with GPU-side profiling and checks delta between queue time and start time.|<ul></ul>|:heavy_check_mark:|:heavy_check_mark:|
 WriteLatency|unblocks event on GPU, then waits for timestamp being written.|<ul></ul>|:heavy_check_mark:|:x:|
+ZMultiEngineSubmissionEvents|creates one immediate command list for each engine from ccsMask and bcsMask, submits one command to all lists, and measures the submit delta. The delta is the time from the host API call to engine start. The test reports the delta for each engine and the worst value. If useHpCopyEngine is set, the test adds one high-priority copy engine list.|<ul><li>--bcsMask A bit mask for selecting copy engines, rightmost bit is the first copy engine reported by the driver</li><li>--ccsMask A bit mask for selecting compute engines, rightmost bit is CCS0</li><li>--useHpCopyEngine Adds one more list for the first copy engine reported by the driver, created with high priority (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
 
 
 

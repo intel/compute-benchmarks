@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,9 @@ enum class EngineGroup {
 };
 
 struct EngineHelper {
+    static constexpr uint32_t maxNumberOfComputeEngines = 4;
+    static constexpr uint32_t maxNumberOfCopyEngines = 9;
+
     static EngineGroup parseEngineGroup(const std::string &name) {
         if (name == "rcs" || name == "cccs") {
             return EngineGroup::RenderCompute;
@@ -116,6 +119,15 @@ struct EngineHelper {
         default:
             FATAL_ERROR("Unknown engine");
         }
+    }
+
+    static Engine getComputeEngineFromIndex(size_t index) {
+        if (index < maxNumberOfComputeEngines) {
+            const size_t ccsBase = static_cast<size_t>(Engine::Ccs0);
+            return static_cast<Engine>(ccsBase + index);
+        }
+
+        FATAL_ERROR("Invalid compute engine index");
     }
 
     static Engine getBlitterEngineFromIndex(size_t index) {

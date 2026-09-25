@@ -17,6 +17,7 @@
 #include "framework/utility/error.h"
 #include "framework/utility/timer.h"
 
+#include <algorithm>
 #include <cmath>
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_stypes.h>
@@ -171,6 +172,17 @@ struct LevelZero {
         }
 
         return submissionTime;
+    }
+
+    std::chrono::nanoseconds getAbsoluteSubmissionTime(const ze_kernel_timestamp_data_t &timestampResult,
+                                                       const uint64_t deviceEnqueueTimestamp) {
+        const auto deviceProperties = getDeviceProperties(device);
+        const uint32_t sharedTimestampValidBits = std::min(deviceProperties.timestampValidBits, deviceProperties.kernelTimestampValidBits);
+
+        const auto truncatedKernelStartTimestamp = BitHelper::isolateLowerNBits(timestampResult.kernelStart, sharedTimestampValidBits);
+        const auto truncatedDeviceEnqueueTimestamp = BitHelper::isolateLowerNBits(deviceEnqueueTimestamp, sharedTimestampValidBits);
+
+        return getAbsoluteSubmissionTime(truncatedKernelStartTimestamp, truncatedDeviceEnqueueTimestamp, deviceProperties.timerResolution);
     }
 
     std::chrono::nanoseconds getAbsoluteTimestampTime(const uint64_t start, const uint64_t end, const uint64_t timerResolution, const uint64_t timestampValidBitMask) const {
