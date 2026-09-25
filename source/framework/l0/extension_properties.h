@@ -32,10 +32,16 @@ using L0CommandListAppendHostFunction = ze_result_t(ZE_APICALL *)(ze_command_lis
                                                                   uint32_t numWaitEvents,
                                                                   ze_event_handle_t *phWaitEvents);
 
+using L0MemMapDeviceMemToHost = ze_result_t(ZE_APICALL *)(ze_context_handle_t hContext,
+                                                          const void *ptr,
+                                                          void **pptr,
+                                                          void *pNext);
+
 struct ExtensionProperties {
     bool getImportHostPointerFunctions = false;
     bool getGraphFunctions = false;
     bool getHostFunctionFunctions = false;
+    bool getMemMapDeviceMemToHostFunctions = false;
 
     static ExtensionProperties create() {
         return ExtensionProperties();
@@ -53,6 +59,11 @@ struct ExtensionProperties {
 
     ExtensionProperties &setHostFunctionFunctions(bool value) {
         getHostFunctionFunctions = value;
+        return *this;
+    }
+
+    ExtensionProperties &setMemMapDeviceMemToHostFunctions(bool value) {
+        getMemMapDeviceMemToHostFunctions = value;
         return *this;
     }
 };

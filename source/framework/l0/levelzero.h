@@ -24,6 +24,7 @@
 #include <ratio>
 
 #define ZE_MODULE_FORMAT_OCLC (ze_module_format_t)3U
+#define ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE EXTENDED_ENUM(ze_result_t, 0x7fff0003)
 
 namespace L0 {
 struct ImportHostPointerExtension {
@@ -62,6 +63,7 @@ struct LevelZero {
     GraphExtension graphExtension{};
     ze_api_version_t apiVersion{};
     L0CommandListAppendHostFunction commandListAppendHostFunction = nullptr;
+    L0MemMapDeviceMemToHost memMapDeviceMemToHost = nullptr;
 
     bool isCounterBasedEventsSupported() const { return apiVersion >= ZE_API_VERSION_1_15; }
 

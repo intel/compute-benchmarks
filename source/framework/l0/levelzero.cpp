@@ -215,6 +215,14 @@ void LevelZero::initializeExtension(const ExtensionProperties &extensionProperti
                                                 reinterpret_cast<void **>(&this->commandListAppendHostFunction)));
         FATAL_ERROR_IF(this->commandListAppendHostFunction == nullptr, "zeCommandListAppendHostFunction retrieved nullptr");
     }
+
+    if (extensionProperties.getMemMapDeviceMemToHostFunctions) {
+        if (zeDriverGetExtensionFunctionAddress(this->driver,
+                                                "zeIntelMemMapDeviceMemToHost",
+                                                reinterpret_cast<void **>(&this->memMapDeviceMemToHost)) != ZE_RESULT_SUCCESS) {
+            this->memMapDeviceMemToHost = nullptr;
+        }
+    }
 }
 
 ze_mutable_command_list_exp_properties_t LevelZero::getDeviceMclProperties(ze_device_handle_t deviceHandle) const {
