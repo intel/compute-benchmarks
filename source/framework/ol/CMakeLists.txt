@@ -48,6 +48,8 @@ add_library(${TARGET_NAME} STATIC
     ol.h
     print_device_info.cpp
     print_device_info.h
+    utility/usm_helper.cpp
+    utility/usm_helper.h
 )
 
 target_include_directories(${TARGET_NAME} PUBLIC

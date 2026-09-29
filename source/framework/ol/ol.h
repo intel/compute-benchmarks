@@ -27,4 +27,7 @@ struct OlState {
     OlInitGuard olInitGuard;
     ol_context_handle_t context = nullptr;
     ol_device_handle_t device = nullptr;
+    // Device of the host platform. olMemcpy requires it for non-USM host
+    // pointers. Null if liboffload exposes no host device.
+    ol_device_handle_t hostDevice = nullptr;
 };

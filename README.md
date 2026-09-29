@@ -96,8 +96,8 @@ LLVM Offload implementations of the benchmarks will be built if:
 
 * the CMake option `BUILD_OL` is set to `ON`;
 * LLVM's `liboffload` has been built and installed from
-  [llvm-project revision cdd1900816f625eb1f38a6e755c49ccadec56209](https://github.com/llvm/llvm-project/commit/cdd1900816f625eb1f38a6e755c49ccadec56209)
-  with the Offload runtime enabled;
+  [llvm-project revision c12a0d255928c9376a6e1a6df36d4338b6cfedf8](https://github.com/llvm/llvm-project/commit/c12a0d255928c9376a6e1a6df36d4338b6cfedf8)
+  (main as of 2026-09-24) with the Offload runtime enabled;
 * `LIBOFFLOAD_INCLUDE_DIR` points to the LLVM installation's include directory;
 * `LIBOFFLOAD_LIBRARY_DIR` points to the LLVM installation's library directory.
 

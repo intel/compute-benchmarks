@@ -43,7 +43,7 @@ INSTANTIATE_TEST_SUITE_P(
     QueueInOrderMemcpyTest,
     QueueInOrderMemcpyTest,
     ::testing::Combine(
-        ::testing::Values(Api::SYCL, Api::L0),
+        ::testing::Values(Api::SYCL, Api::L0, Api::OL),
         ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Shared, UsmMemoryPlacement::Device),
         ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Shared, UsmMemoryPlacement::Device),
         ::testing::Values(1 * MemoryConstants::megaByte),

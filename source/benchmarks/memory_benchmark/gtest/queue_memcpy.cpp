@@ -15,14 +15,14 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<QueueMemcpy> registerTestCase{};
 
-class QueueMemcpyTest : public ::testing::TestWithParam<std::tuple<UsmMemoryPlacement, UsmMemoryPlacement, size_t>> {};
+class QueueMemcpyTest : public ::testing::TestWithParam<std::tuple<Api, UsmMemoryPlacement, UsmMemoryPlacement, size_t>> {};
 
 TEST_P(QueueMemcpyTest, Test) {
     QueueMemcpyArguments args{};
-    args.api = Api::SYCL;
-    args.sourcePlacement = std::get<0>(GetParam());
-    args.destinationPlacement = std::get<1>(GetParam());
-    args.size = std::get<2>(GetParam());
+    args.api = std::get<0>(GetParam());
+    args.sourcePlacement = std::get<1>(GetParam());
+    args.destinationPlacement = std::get<2>(GetParam());
+    args.size = std::get<3>(GetParam());
 
     if (shouldSkipCopyDirection(args.sourcePlacement, args.destinationPlacement)) {
         GTEST_SKIP();
@@ -36,6 +36,7 @@ INSTANTIATE_TEST_SUITE_P(
     QueueMemcpyTest,
     QueueMemcpyTest,
     ::testing::Combine(
+        ::testing::Values(Api::SYCL, Api::OL),
         ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Shared, UsmMemoryPlacement::Device),
         ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Shared, UsmMemoryPlacement::Device),
         ::testing::Values(128 * MemoryConstants::megaByte,

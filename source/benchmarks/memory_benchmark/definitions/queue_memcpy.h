@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,6 @@ struct QueueMemcpy : TestCase<QueueMemcpyArguments> {
     }
 
     std::string getHelp() const override {
-        return "measures time spent in SYCL queue memcpy on CPU.";
+        return "measures time spent in queue memcpy on CPU.";
     }
 };

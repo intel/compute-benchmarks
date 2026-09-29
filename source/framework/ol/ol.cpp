@@ -26,6 +26,21 @@ bool selectDevice(ol_device_handle_t device, void *userData) {
     ++selection.currentIndex;
     return true;
 }
+
+bool selectHostDevice(ol_device_handle_t device, void *userData) {
+    ol_device_type_t type{};
+    if (olGetDeviceInfo(device, OL_DEVICE_INFO_TYPE, sizeof(type), &type) !=
+        OL_SUCCESS) {
+        return true;
+    }
+    if (type == OL_DEVICE_TYPE_HOST) {
+        ol_device_handle_t *hostDevicePtr =
+            static_cast<ol_device_handle_t *>(userData);
+        *hostDevicePtr = device;
+        return false;
+    }
+    return true;
+}
 } // namespace
 
 OlInitGuard::OlInitGuard(ol_init_args_t *initArgs) {
@@ -46,6 +61,8 @@ OlState::OlState() : olInitGuard(nullptr) {
                     selection.currentIndex);
     }
     device = selection.device;
+
+    OL_RESULT_SUCCESS_OR_ERROR(olIterateDevices(selectHostDevice, &hostDevice));
 
     OL_RESULT_SUCCESS_OR_ERROR(olCreateContext(1, &device, &context));
 }
