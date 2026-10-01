@@ -29,7 +29,13 @@ static TestResult run(const UsmEUReduceCopyRingArguments &arguments, Statistics 
 
     constexpr size_t elementSize = 4 * sizeof(float);
     constexpr uint32_t workGroupSize = 64u;
-    if (arguments.numDevices < 2 || arguments.size % (elementSize * workGroupSize) != 0) {
+    const bool throttled = arguments.throttledWorkItems > 0;
+    if (arguments.numDevices < 2 || arguments.size % (elementSize * workGroupSize) != 0 ||
+        arguments.throttledWorkItems < 0 || arguments.throttledWorkItems % workGroupSize != 0) {
+        return TestResult::InvalidArgs;
+    }
+    const uint64_t workItems = throttled ? static_cast<uint64_t>(arguments.throttledWorkItems) : arguments.size / elementSize;
+    if (workItems / workGroupSize > std::numeric_limits<uint32_t>::max()) {
         return TestResult::InvalidArgs;
     }
 
@@ -61,6 +67,23 @@ static TestResult run(const UsmEUReduceCopyRingArguments &arguments, Statistics 
     };
     std::vector<PerDevice> perDevice(numDevices);
 
+    const char *kernelFile = throttled ? "p2p_benchmark_reduce_copy_throttled.cl" : "p2p_benchmark_reduce_copy.cl";
+    const char *kernelName = throttled ? "reduce_copy_throttled" : "reduce_copy";
+    for (size_t i = 0; i < numDevices; i++) {
+        auto &d = perDevice[i];
+        if (auto result = L0::KernelHelper::loadModule(levelzero, devices[i], kernelFile, &d.module, nullptr); result != TestResult::Success) {
+            for (size_t j = 0; j < i; j++) {
+                ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(perDevice[j].kernel));
+                ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(perDevice[j].module));
+            }
+            return result;
+        }
+        ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+        kernelDesc.pKernelName = kernelName;
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(d.module, &kernelDesc, &d.kernel));
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(d.kernel, workGroupSize, 1u, 1u));
+    }
+
     const float initialValue = 1.0f;
     for (size_t i = 0; i < numDevices; i++) {
         auto &d = perDevice[i];
@@ -74,14 +97,6 @@ static TestResult run(const UsmEUReduceCopyRingArguments &arguments, Statistics 
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(d.cmdList, *buffer, &initialValue, sizeof(initialValue), arguments.size, nullptr, 0, nullptr));
         }
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(d.cmdList, std::numeric_limits<uint64_t>::max()));
-
-        if (auto result = L0::KernelHelper::loadModule(levelzero, devices[i], "p2p_benchmark_reduce_copy.cl", &d.module, nullptr); result != TestResult::Success) {
-            return result;
-        }
-        ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-        kernelDesc.pKernelName = "reduce_copy";
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(d.module, &kernelDesc, &d.kernel));
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(d.kernel, workGroupSize, 1u, 1u));
     }
 
     for (size_t i = 0; i < numDevices; i++) {
@@ -91,6 +106,10 @@ static TestResult run(const UsmEUReduceCopyRingArguments &arguments, Statistics 
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(d.kernel, 1, sizeof(d.in2), &d.in2));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(d.kernel, 2, sizeof(d.out1), &d.out1));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(d.kernel, 3, sizeof(out2), &out2));
+        if (throttled) {
+            const uint64_t elementCount = arguments.size / elementSize;
+            ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(d.kernel, 4, sizeof(elementCount), &elementCount));
+        }
     }
 
     ze_event_pool_desc_t startEventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
@@ -104,26 +123,27 @@ static TestResult run(const UsmEUReduceCopyRingArguments &arguments, Statistics 
     ze_event_handle_t startEvent{};
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(startEventPool, &startEventDesc, &startEvent));
 
-    ze_event_pool_desc_t timestampEventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
-    timestampEventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    timestampEventPoolDesc.count = static_cast<uint32_t>(numDevices);
     ze_event_pool_handle_t timestampEventPool{};
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &timestampEventPoolDesc, static_cast<uint32_t>(numDevices), const_cast<ze_device_handle_t *>(devices.data()), &timestampEventPool));
-    std::vector<ze_event_handle_t> timestampEvents(numDevices);
-    for (size_t i = 0; i < numDevices; i++) {
-        ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
-        eventDesc.index = static_cast<uint32_t>(i);
-        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
-        eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-        ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(timestampEventPool, &eventDesc, &timestampEvents[i]));
+    std::vector<ze_event_handle_t> timestampEvents;
+    if (arguments.useEvents) {
+        ze_event_pool_desc_t timestampEventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+        timestampEventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+        timestampEventPoolDesc.count = static_cast<uint32_t>(numDevices);
+        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &timestampEventPoolDesc, static_cast<uint32_t>(numDevices), const_cast<ze_device_handle_t *>(devices.data()), &timestampEventPool));
+        timestampEvents.resize(numDevices);
+        for (size_t i = 0; i < numDevices; i++) {
+            ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
+            eventDesc.index = static_cast<uint32_t>(i);
+            eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+            eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+            ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(timestampEventPool, &eventDesc, &timestampEvents[i]));
+        }
     }
 
-    const ze_group_count_t groupCount{static_cast<uint32_t>(arguments.size / elementSize / workGroupSize), 1u, 1u};
+    const ze_group_count_t groupCount{static_cast<uint32_t>(workItems / workGroupSize), 1u, 1u};
     const size_t totalPeerBytes = numDevices * arguments.size;
     Timer timer;
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
-        // Every kernel waits for one host signaled event, so the peer writes of all devices overlap
-        // even when the kernel is shorter than the time needed to submit it to the next device.
         for (size_t i = 0; i < numDevices; i++) {
             ze_event_handle_t signalEvent = arguments.useEvents ? timestampEvents[i] : nullptr;
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(perDevice[i].cmdList, perDevice[i].kernel, &groupCount, signalEvent, 1, &startEvent));
@@ -159,7 +179,9 @@ static TestResult run(const UsmEUReduceCopyRingArguments &arguments, Statistics 
     for (auto event : timestampEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     }
-    ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(timestampEventPool));
+    if (timestampEventPool != nullptr) {
+        ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(timestampEventPool));
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(startEvent));
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(startEventPool));
     for (auto &d : perDevice) {

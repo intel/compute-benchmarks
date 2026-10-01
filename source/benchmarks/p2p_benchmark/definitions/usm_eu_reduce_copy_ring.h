@@ -15,11 +15,13 @@ struct UsmEUReduceCopyRingArguments : TestCaseArgumentContainer {
     IntegerArgument numDevices;
     ByteSizeArgument size;
     BooleanArgument useEvents;
+    IntegerArgument throttledWorkItems;
 
     UsmEUReduceCopyRingArguments()
         : numDevices(*this, "numDevices", "Number of root devices in the ring. Test is skipped when the system has fewer devices"),
           size(*this, "size", "Size of the message reduced and written to the peer by each device"),
-          useEvents(*this, "useEvents", "Report the longest kernel time across devices measured with GPU timestamps. Otherwise report the CPU time from releasing the kernels until all devices complete") {}
+          useEvents(*this, "useEvents", "Report the longest kernel time across devices measured with GPU timestamps. Otherwise report the CPU time from releasing the kernels until all devices complete"),
+          throttledWorkItems(*this, "throttledWorkItems", "If not 0, run the throttled kernel from p2p_benchmark_reduce_copy_throttled.cl with this many work-items per device. The work-items loop over the message and after every iteration one thread per work-group pauses while the work-group waits on a barrier, so this count sets the rate of peer writes. 0 runs the oneCCL kernel shape") {}
 };
 
 struct UsmEUReduceCopyRing : TestCase<UsmEUReduceCopyRingArguments> {
@@ -35,6 +37,8 @@ struct UsmEUReduceCopyRing : TestCase<UsmEUReduceCopyRingArguments> {
                "written by the EU to a buffer on the next device. The kernel is compiled at run time from "
                "p2p_benchmark_reduce_copy.cl, which can be modified next to the binary without rebuilding. All "
                "devices start together, so with 2 devices both directions of the link carry writes at the same time. "
-               "Reports aggregate peer write bandwidth, i.e. numDevices * size per iteration.";
+               "Reports aggregate peer write bandwidth, i.e. numDevices * size per iteration. With throttledWorkItems the peer "
+               "writes are rate limited, which avoids the collapse of two-way EU peer writes and shows the peak bandwidth "
+               "of the link. The best count is just below the collapse and depends on the system.";
     }
 };
