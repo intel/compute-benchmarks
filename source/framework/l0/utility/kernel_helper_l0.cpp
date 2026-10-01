@@ -30,22 +30,25 @@ TestResult loadModule(LevelZero &levelzero, ze_device_handle_t device, const std
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(sourceFile.data());
     moduleDesc.inputSize = sourceFile.size();
     moduleDesc.pBuildFlags = pBuildFlags;
-    auto status = zeModuleCreate(levelzero.context, device, &moduleDesc, module, nullptr);
+    ze_module_build_log_handle_t buildLog = nullptr;
+    auto status = zeModuleCreate(levelzero.context, device, &moduleDesc, module, &buildLog);
 
     if (status != ZE_RESULT_SUCCESS) {
-        ze_module_build_log_handle_t buildLog;
-        zeModuleCreate(levelzero.context, device, &moduleDesc, module, &buildLog);
+        std::string errorMessage = "zeModuleCreate failed with error code " + std::string(l0ErrorToString(status));
         size_t logSize = 0;
-        ASSERT_ZE_RESULT_SUCCESS(zeModuleBuildLogGetString(buildLog, &logSize, nullptr));
-        std::vector<char> buildLogString(logSize);
-        ASSERT_ZE_RESULT_SUCCESS(zeModuleBuildLogGetString(buildLog, &logSize, buildLogString.data()));
-        zeModuleBuildLogDestroy(buildLog);
-        std::string errorMessage = "zeModuleCreate failed with error code " + std::string(l0ErrorToString(status)) + ". Build log:\n" + std::string(buildLogString.data());
+        if (buildLog != nullptr && zeModuleBuildLogGetString(buildLog, &logSize, nullptr) == ZE_RESULT_SUCCESS) {
+            std::vector<char> buildLogString(logSize);
+            if (zeModuleBuildLogGetString(buildLog, &logSize, buildLogString.data()) == ZE_RESULT_SUCCESS) {
+                errorMessage += ". Build log:\n" + std::string(buildLogString.data());
+            }
+        }
         std::cout << errorMessage << std::endl;
-        return TestResult::KernelBuildError;
     }
 
-    return TestResult::Success;
+    if (buildLog != nullptr) {
+        ASSERT_ZE_RESULT_SUCCESS(zeModuleBuildLogDestroy(buildLog));
+    }
+    return status == ZE_RESULT_SUCCESS ? TestResult::Success : TestResult::KernelBuildError;
 }
 
 TestResult loadKernel(LevelZero &levelzero, const std::string &filePath, const std::string &kernelName, ze_kernel_handle_t *kernel,
