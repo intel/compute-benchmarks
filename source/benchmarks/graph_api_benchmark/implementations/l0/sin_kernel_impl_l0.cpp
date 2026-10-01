@@ -77,6 +77,7 @@ TestResult SinKernelGraphL0::init() {
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(kernelAssign, size, 1, 1, grpCnt,
                                                       grpCnt + 1, grpCnt + 2));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernelAssign, grpCnt[0], grpCnt[1], grpCnt[2]));
+    groupCount.groupCountX = size / grpCnt[0];
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(kernelSin, size, 1, 1, grpCnt,
                                                       grpCnt + 1, grpCnt + 2));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernelSin, grpCnt[0], grpCnt[1], grpCnt[2]));

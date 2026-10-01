@@ -123,6 +123,7 @@ TestResult initEnv(TestEnv &env, const MutateGraphArguments &arguments) {
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(env.kernelSum, env.size, 1, 1, grpCnt,
                                                       grpCnt + 1, grpCnt + 2));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(env.kernelSum, grpCnt[0], grpCnt[1], grpCnt[2]));
+    env.groupCount.groupCountX = env.size / grpCnt[0];
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(env.kernelMul, env.size, 1, 1, grpCnt,
                                                       grpCnt + 1, grpCnt + 2));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(env.kernelMul, grpCnt[0], grpCnt[1], grpCnt[2]));
@@ -259,6 +260,7 @@ TestResult mutateList(TestEnv &env,
     float *source = env.graphInputData.get();
 
     ze_group_count_t groupCount = env.groupCount;
+    groupCount.groupCountX = env.size / grpSize[0];
 
     if (iteration % 2 != 0) {
         // halve X group size and double X group count to preserve total thread count (groupCountX * grpSize[0] = env.size)
@@ -348,13 +350,15 @@ TestResult fillList(const MutateGraphArguments &arguments, TestEnv &env, ze_comm
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSuggestGroupSize(currentKernelHandle, env.size, 1, 1, grpSize,
                                                           grpSize + 1, grpSize + 2));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(currentKernelHandle, grpSize[0], grpSize[1], grpSize[2]));
+        ze_group_count_t groupCount = env.groupCount;
+        groupCount.groupCountX = env.size / grpSize[0];
 
         ASSERT_ZE_RESULT_SUCCESS(
             zeKernelSetArgumentValue(currentKernelHandle, 0, sizeof(float *), &dest));
         ASSERT_ZE_RESULT_SUCCESS(
             zeKernelSetArgumentValue(currentKernelHandle, 1, sizeof(float *), &source));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(
-            cmdList, currentKernelHandle, &env.groupCount, next, previous != nullptr ? 1 : 0, &previous));
+            cmdList, currentKernelHandle, &groupCount, next, previous != nullptr ? 1 : 0, &previous));
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
