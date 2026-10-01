@@ -11,6 +11,10 @@
 
 namespace L0::KernelHelper {
 TestResult loadModule(LevelZero &levelzero, const std::string &filePath, ze_module_handle_t *module, const char *pBuildFlags) {
+    return loadModule(levelzero, levelzero.device, filePath, module, pBuildFlags);
+}
+
+TestResult loadModule(LevelZero &levelzero, ze_device_handle_t device, const std::string &filePath, ze_module_handle_t *module, const char *pBuildFlags) {
     auto sourceFile = FileHelper::loadTextFile(filePath);
     if (sourceFile.size() == 0) {
         return TestResult::KernelNotFound;
@@ -26,11 +30,11 @@ TestResult loadModule(LevelZero &levelzero, const std::string &filePath, ze_modu
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(sourceFile.data());
     moduleDesc.inputSize = sourceFile.size();
     moduleDesc.pBuildFlags = pBuildFlags;
-    auto status = zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, module, nullptr);
+    auto status = zeModuleCreate(levelzero.context, device, &moduleDesc, module, nullptr);
 
     if (status != ZE_RESULT_SUCCESS) {
         ze_module_build_log_handle_t buildLog;
-        zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, module, &buildLog);
+        zeModuleCreate(levelzero.context, device, &moduleDesc, module, &buildLog);
         size_t logSize = 0;
         ASSERT_ZE_RESULT_SUCCESS(zeModuleBuildLogGetString(buildLog, &logSize, nullptr));
         std::vector<char> buildLogString(logSize);
