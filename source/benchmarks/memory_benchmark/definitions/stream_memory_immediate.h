@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ struct StreamMemoryImmediateArguments : TestCaseArgumentContainer {
 
     StreamMemoryImmediateArguments()
         : type(*this, "type", "Memory streaming type"),
-          size(*this, "size", "Size of the memory to stream. Must be divisible by datatype size."),
+          size(*this, "size", "Size of the memory to stream. Rounded down to a multiple of datatype size and work-group size."),
           useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
 };
 

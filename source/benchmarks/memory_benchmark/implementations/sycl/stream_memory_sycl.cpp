@@ -11,16 +11,34 @@
 #include "framework/utility/timer.h"
 
 #include "definitions/stream_memory.h"
+#include "stream_memory_verification.h"
 
+#include <algorithm>
 #include <gtest/gtest.h>
+#include <vector>
 
 using namespace MemoryConstants;
+
+template <typename T>
+TestResult verifyBuffer(sycl::queue &queue, sycl::buffer<T, 1> &buffer, T expected) {
+    std::vector<T> output(std::min(buffer.size(), VerificationHelper::chunkSize / sizeof(T)));
+    const auto readChunk = [&](size_t offset, size_t size) -> const void * {
+        queue.submit([&](sycl::handler &cgh) {
+                 auto source = buffer.template get_access<sycl::access_mode::read>(cgh, sycl::range<1>{size / sizeof(T)}, sycl::id<1>{offset / sizeof(T)});
+                 cgh.copy(source, output.data());
+             })
+            .wait();
+        return output.data();
+    };
+    return VerificationHelper::verifyUniformOutput(buffer.size() * sizeof(T), expected, readChunk);
+}
 
 class StreamMemoryBenchmark {
   public:
     virtual ~StreamMemoryBenchmark() = default;
     virtual sycl::event run(sycl::queue &) = 0;
     virtual size_t transferSize() const = 0;
+    virtual TestResult verify(sycl::queue &) = 0;
 };
 
 // Read benchmark
@@ -32,7 +50,7 @@ template <typename FloatingPointType>
 class ReadBenchmark : public StreamMemoryBenchmark {
   public:
     ReadBenchmark(size_t bufferSize, FloatingPointType fillValue)
-        : buffer(bufferSize, fillValue), deviceBuffer(this->buffer.data(), sycl::range<1>{bufferSize}), dummyOutputBuf(&dummyOutputVar, sycl::range<1>{1u}) {}
+        : buffer(bufferSize, fillValue), fillValue(fillValue), deviceBuffer(this->buffer.data(), sycl::range<1>{bufferSize}), dummyOutputBuf(&dummyOutputVar, sycl::range<1>{1u}) {}
 
     sycl::event run(sycl::queue &queue) override {
         auto commandList = [&](sycl::handler &cgh) {
@@ -59,9 +77,14 @@ class ReadBenchmark : public StreamMemoryBenchmark {
         return this->buffer.size() * sizeof(FloatingPointType);
     }
 
+    TestResult verify(sycl::queue &queue) override {
+        return verifyBuffer(queue, this->deviceBuffer, this->fillValue);
+    }
+
   private:
     FloatingPointType dummyOutputVar = {};
     std::vector<FloatingPointType> buffer;
+    const FloatingPointType fillValue;
     sycl::buffer<FloatingPointType, 1> deviceBuffer;
     sycl::buffer<FloatingPointType, 1> dummyOutputBuf;
 };
@@ -96,6 +119,10 @@ class WriteBenchmark : public StreamMemoryBenchmark {
         return this->buffer.size() * sizeof(FloatingPointType);
     }
 
+    TestResult verify(sycl::queue &queue) override {
+        return verifyBuffer(queue, this->deviceBuffer, this->scalarValue);
+    }
+
   private:
     std::vector<FloatingPointType> buffer;
     const FloatingPointType scalarValue;
@@ -111,7 +138,7 @@ template <typename FloatingPointType>
 class ScaleBenchmark : public StreamMemoryBenchmark {
   public:
     ScaleBenchmark(size_t bufferSize, FloatingPointType fillValue, FloatingPointType scalarValue)
-        : bufferX(bufferSize, fillValue), bufferY(bufferSize, fillValue), scalarValue(scalarValue), deviceBufferX(this->bufferX.data(), sycl::range<1>{bufferSize}), deviceBufferY(this->bufferY.data(), sycl::range<1>{bufferSize}) {}
+        : bufferX(bufferSize, fillValue), bufferY(bufferSize, fillValue), fillValue(fillValue), scalarValue(scalarValue), deviceBufferX(this->bufferX.data(), sycl::range<1>{bufferSize}), deviceBufferY(this->bufferY.data(), sycl::range<1>{bufferSize}) {}
 
     sycl::event run(sycl::queue &queue) override {
         auto commandList = [&](sycl::handler &cgh) {
@@ -133,9 +160,14 @@ class ScaleBenchmark : public StreamMemoryBenchmark {
         return this->bufferX.size() * sizeof(FloatingPointType) * 2;
     }
 
+    TestResult verify(sycl::queue &queue) override {
+        return verifyBuffer(queue, this->deviceBufferX, this->fillValue * this->scalarValue);
+    }
+
   private:
     std::vector<FloatingPointType> bufferX;
     std::vector<FloatingPointType> bufferY;
+    const FloatingPointType fillValue;
     const FloatingPointType scalarValue;
     sycl::buffer<FloatingPointType, 1> deviceBufferX;
     sycl::buffer<FloatingPointType, 1> deviceBufferY;
@@ -149,8 +181,8 @@ class TriadKernel;
 template <typename FloatingPointType>
 class TriadBenchmark : public StreamMemoryBenchmark {
   public:
-    TriadBenchmark(size_t bufferSize, FloatingPointType fillValue, FloatingPointType scalarValue)
-        : bufferX(bufferSize, fillValue), bufferY(bufferSize, fillValue), bufferZ(bufferSize, fillValue), scalarValue(scalarValue), deviceBufferX(this->bufferX.data(), sycl::range<1>{bufferSize}), deviceBufferY(this->bufferY.data(), sycl::range<1>{bufferSize}), deviceBufferZ(this->bufferZ.data(), sycl::range<1>{bufferSize}) {}
+    TriadBenchmark(size_t bufferSize, FloatingPointType fillValue, FloatingPointType secondFillValue, FloatingPointType scalarValue)
+        : bufferX(bufferSize, fillValue), bufferY(bufferSize, secondFillValue), bufferZ(bufferSize, fillValue), fillValue(fillValue), secondFillValue(secondFillValue), scalarValue(scalarValue), deviceBufferX(this->bufferX.data(), sycl::range<1>{bufferSize}), deviceBufferY(this->bufferY.data(), sycl::range<1>{bufferSize}), deviceBufferZ(this->bufferZ.data(), sycl::range<1>{bufferSize}) {}
 
     sycl::event run(sycl::queue &queue) override {
         auto commandList = [&](sycl::handler &cgh) {
@@ -173,10 +205,16 @@ class TriadBenchmark : public StreamMemoryBenchmark {
         return this->bufferX.size() * sizeof(FloatingPointType) * 3;
     }
 
+    TestResult verify(sycl::queue &queue) override {
+        return verifyBuffer(queue, this->deviceBufferZ, this->fillValue + this->secondFillValue * this->scalarValue);
+    }
+
   private:
     std::vector<FloatingPointType> bufferX;
     std::vector<FloatingPointType> bufferY;
     std::vector<FloatingPointType> bufferZ;
+    const FloatingPointType fillValue;
+    const FloatingPointType secondFillValue;
     const FloatingPointType scalarValue;
     sycl::buffer<FloatingPointType, 1> deviceBufferX;
     sycl::buffer<FloatingPointType, 1> deviceBufferY;
@@ -198,6 +236,8 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     const size_t elementSize = useDoubles ? sizeof(double) : sizeof(float);
     const size_t fillValue = 313u;
+    const bool verify = Configuration::get().verify;
+    const size_t secondFillValue = verify ? 17u : fillValue;
     const int32_t scalarValue = -999;
 
     std::unique_ptr<StreamMemoryBenchmark> benchmark = {};
@@ -225,9 +265,9 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         break;
     case StreamMemoryType::Triad:
         if (useDoubles) {
-            benchmark = std::make_unique<TriadBenchmark<double>>(arguments.size / elementSize, static_cast<double>(fillValue), static_cast<double>(scalarValue));
+            benchmark = std::make_unique<TriadBenchmark<double>>(arguments.size / elementSize, static_cast<double>(fillValue), static_cast<double>(secondFillValue), static_cast<double>(scalarValue));
         } else {
-            benchmark = std::make_unique<TriadBenchmark<float>>(arguments.size / elementSize, static_cast<float>(fillValue), static_cast<float>(scalarValue));
+            benchmark = std::make_unique<TriadBenchmark<float>>(arguments.size / elementSize, static_cast<float>(fillValue), static_cast<float>(secondFillValue), static_cast<float>(scalarValue));
         }
         break;
     default:
@@ -251,6 +291,12 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
             statistics.pushValue(std::chrono::nanoseconds(timeNs), benchmark->transferSize(), typeSelector.getUnit(), typeSelector.getType());
         } else {
             statistics.pushValue(timer.get(), benchmark->transferSize(), typeSelector.getUnit(), typeSelector.getType());
+        }
+
+        if (verify) {
+            if (const TestResult result = benchmark->verify(sycl.queue); result != TestResult::Success) {
+                return result;
+            }
         }
     }
     return TestResult::Success;

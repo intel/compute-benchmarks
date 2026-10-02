@@ -13,10 +13,28 @@
 #include "framework/utility/timer.h"
 
 #include "definitions/stream_memory_immediate.h"
+#include "stream_memory_verification.h"
 
+#include <algorithm>
 #include <gtest/gtest.h>
 
 using namespace MemoryConstants;
+
+template <typename T>
+static T getExpectedValue(StreamMemoryType type, const T *values) {
+    switch (type) {
+    case StreamMemoryType::Read:
+        return values[0];
+    case StreamMemoryType::Write:
+        return values[2];
+    case StreamMemoryType::Scale:
+        return values[0] * values[2];
+    case StreamMemoryType::Triad:
+        return values[0] + values[1] * values[2];
+    default:
+        FATAL_ERROR("Unknown StreamMemoryType");
+    }
+}
 
 static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
@@ -43,15 +61,20 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
 
     const bool useDoubles = moduleProperties.fp64flags != 0u;
     const size_t elementSize = useDoubles ? sizeof(double) : sizeof(float);
-    const float floatValues[] = {313.f, -999.f};
-    const double doubleValues[] = {313.0, -999.0};
+    const float floatValues[] = {313.f, 17.f, -999.f};
+    const double doubleValues[] = {313.0, 17.0, -999.0};
     const void *fillValue = useDoubles ? static_cast<const void *>(&doubleValues[0]) : &floatValues[0];
-    const void *scalarValue = useDoubles ? static_cast<const void *>(&doubleValues[1]) : &floatValues[1];
-    const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize);
+    const void *secondFillValue = useDoubles ? static_cast<const void *>(&doubleValues[1]) : &floatValues[1];
+    const void *scalarValue = useDoubles ? static_cast<const void *>(&doubleValues[2]) : &floatValues[2];
+    const uint32_t groupSizeX = static_cast<uint32_t>(std::min<size_t>(levelzero.getDeviceComputeProperties().maxGroupSizeX, arguments.size / elementSize));
+    if (groupSizeX == 0) {
+        return TestResult::InvalidArgs;
+    }
+    const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize / groupSizeX * groupSizeX);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
     // Create buffers
-    size_t bufferSize = arguments.size;
+    size_t bufferSize = static_cast<size_t>(gws) * elementSize;
     void *buffers[3] = {};
     size_t buffersCount = {};
     size_t bufferSizes[3] = {bufferSize, bufferSize, bufferSize};
@@ -95,7 +118,6 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     }
 
     // Query maximum group size
-    const uint32_t groupSizeX = std::min(levelzero.getDeviceComputeProperties().maxGroupSizeX, gws);
 
     // Configure kernel group size
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, 1u, 1u));
@@ -125,13 +147,29 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
     // Enqueue filling of the buffers and set kernel arguments
+    const bool verify = Configuration::get().verify;
     for (auto i = 0u; i < buffersCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffers[i], fillValue, elementSize, bufferSizes[i], event, 0, nullptr));
+        const void *pattern = verify && arguments.type == StreamMemoryType::Triad && i == 1 ? secondFillValue : fillValue;
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffers[i], pattern, elementSize, bufferSizes[i], event, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<int>(i), sizeof(buffers[i]), &buffers[i]));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), elementSize, scalarValue));
+
+    const size_t outputIndex = arguments.type == StreamMemoryType::Read ? 0u : buffersCount - 1;
+    void *staging{};
+    if (verify) {
+        ze_host_mem_alloc_desc_t hostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+        ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostDesc, std::min(bufferSize, VerificationHelper::chunkSize), 0, &staging));
+    }
+    const auto readChunk = [&](size_t offset, size_t size) -> const void * {
+        ZE_RESULT_SUCCESS_OR_RETURN_VALUE(zeCommandListAppendMemoryCopy(cmdList, staging, static_cast<uint8_t *>(buffers[outputIndex]) + offset, size, event, 0, nullptr), nullptr);
+        ZE_RESULT_SUCCESS_OR_RETURN_VALUE(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()), nullptr);
+        ZE_RESULT_SUCCESS_OR_RETURN_VALUE(zeEventHostReset(event), nullptr);
+        return staging;
+    };
+    TestResult result = TestResult::Success;
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -141,7 +179,7 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
 
-        size_t transferSize = arguments.size;
+        size_t transferSize = bufferSize;
         switch (arguments.type) {
         case StreamMemoryType::Scale:
             transferSize *= 2;
@@ -163,6 +201,14 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
             statistics.pushValue(timer.get(), transferSize, typeSelector.getUnit(), typeSelector.getType());
         }
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
+
+        if (verify) {
+            result = useDoubles ? VerificationHelper::verifyUniformOutput(bufferSize, getExpectedValue(arguments.type, doubleValues), readChunk)
+                                : VerificationHelper::verifyUniformOutput(bufferSize, getExpectedValue(arguments.type, floatValues), readChunk);
+            if (result != TestResult::Success) {
+                break;
+            }
+        }
     }
 
     // Cleanup
@@ -171,11 +217,14 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     for (size_t i = 0; i < buffersCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffers[i]));
     }
+    if (verify) {
+        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, staging));
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
 
-    return TestResult::Success;
+    return result;
 }
 
 static RegisterTestCaseImplementation<StreamMemoryImmediate> registerTestCase(run, Api::L0);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,10 @@ void BufferContentsHelper::fillWithZeros(uint8_t *buffer, size_t size) {
 }
 
 void BufferContentsHelper::fillWithRandomBytes(uint8_t *buffer, size_t size) {
+    std::memcpy(buffer, getRandomBytes(size), size);
+}
+
+const uint8_t *BufferContentsHelper::getRandomBytes(size_t size) {
     // We randomize OWORDS instead of BYTES, because it's faster. Size of the cachedRandomData must be
     // aligned to sizeof(OWORD), so we don't have to handle generation of the dangling bytes.
     const auto randomizationChunkSize = sizeof(uint64_t);
@@ -52,8 +56,7 @@ void BufferContentsHelper::fillWithRandomBytes(uint8_t *buffer, size_t size) {
         }
     }
 
-    // Copy cached data to desired buffer
-    std::memcpy(buffer, cachedRandomData.data(), size);
+    return cachedRandomData.data();
 }
 
 void BufferContentsHelper::fillWithIncreasingBytes(uint8_t *buffer, size_t size) {

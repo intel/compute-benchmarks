@@ -15,8 +15,11 @@
 #include "framework/utility/timer.h"
 
 #include "definitions/stream_memory.h"
+#include "stream_memory_verification.h"
 
+#include <algorithm>
 #include <gtest/gtest.h>
+#include <vector>
 
 using namespace MemoryConstants;
 
@@ -57,7 +60,12 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     // Create kernel-specific buffers
     const char *kernelName = {};
-    size_t bufferSize = arguments.size;
+    const size_t localWorkSize = std::min<size_t>(arguments.lws, arguments.size / elementSize);
+    if (localWorkSize == 0) {
+        return TestResult::InvalidArgs;
+    }
+    const size_t globalWorkSize = arguments.size / elementSize / localWorkSize * localWorkSize;
+    size_t bufferSize = globalWorkSize * elementSize;
     cl_mem buffers[3] = {};
     size_t buffersCount = {};
     size_t bufferSizes[3] = {bufferSize, bufferSize, bufferSize};
@@ -105,6 +113,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         streamType += std::to_string(arguments.vectorSize);
     }
     compilerOptions.addDefinitionKeyValue("STREAM_TYPE", streamType.c_str());
+    compilerOptions.addDefinitionKeyValue("WRITE_RANDOM_PATTERN", StreamMemoryVerification::getWriteRandomPatternDefinition());
     const char *programName = "memory_benchmark_stream_memory.cl";
     cl_program program{};
     if (auto result = ProgramHelperOcl::buildProgramFromSourceFile(opencl.context, opencl.device, programName, compilerOptions.str().c_str(), program); result != TestResult::Success) {
@@ -119,8 +128,23 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     }
     cl_kernel kernel = clCreateKernel(program, kernelName, &retVal);
     ASSERT_CL_SUCCESS(retVal);
+    const bool verify = Configuration::get().verify;
+    const size_t outputIndex = arguments.type == StreamMemoryType::Read ? 0u : buffersCount - 1;
+    const bool poisonOutput = verify && (arguments.type == StreamMemoryType::Scale || arguments.type == StreamMemoryType::Triad);
     for (auto i = 0u; i < buffersCount; i++) {
-        ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillBuffer(opencl.commandQueue, buffers[i], bufferSizes[i], arguments.contents));
+        if (poisonOutput && i == outputIndex) {
+            ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, buffers[i], &StreamMemoryVerification::outputPoison, 1u, 0, bufferSizes[i], 0, nullptr, nullptr));
+        } else if (verify && arguments.type == StreamMemoryType::Triad && i == 1 && arguments.contents == BufferContents::Random) {
+            const auto y = StreamMemoryVerification::getInput(arguments.contents, bufferSizes[i], 1);
+            std::vector<uint8_t> chunk(std::min(bufferSizes[i], VerificationHelper::chunkSize));
+            for (size_t offset = 0; offset < bufferSizes[i]; offset += chunk.size()) {
+                const size_t length = std::min(chunk.size(), bufferSizes[i] - offset);
+                y.copy(chunk.data(), offset, length);
+                ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, buffers[i], CL_BLOCKING, offset, length, chunk.data(), 0, nullptr, nullptr));
+            }
+        } else {
+            ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillBuffer(opencl.commandQueue, buffers[i], bufferSizes[i], arguments.contents));
+        }
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(i), sizeof(buffers[i]), &buffers[i]))
     }
     if (setScalarArgument) {
@@ -133,11 +157,16 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     }
 
     // Warm up
-    const size_t globalWorkSize = arguments.size / elementSize;
-    size_t localWorkSize = arguments.lws;
-    localWorkSize = std::min(localWorkSize, globalWorkSize);
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
+
+    std::vector<uint8_t> outputChunk(verify ? std::min(bufferSize, VerificationHelper::chunkSize) : 0u);
+    const auto readChunk = [&](size_t offset, size_t size) -> const uint8_t * {
+        CL_SUCCESS_OR_RETURN_VALUE(clEnqueueReadBuffer(opencl.commandQueue, buffers[outputIndex], CL_BLOCKING, offset, size, outputChunk.data(), 0, nullptr, nullptr), nullptr);
+        return outputChunk.data();
+    };
+    const auto expected = StreamMemoryVerification::getExpected(arguments.type, arguments.contents, bufferSize, elementSize, arguments.partialMultiplier, scalarValue[0]);
+    TestResult result = TestResult::Success;
 
     for (auto i = 0u; i < arguments.iterations; i++) {
         cl_event profilingEvent{};
@@ -148,7 +177,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
 
-        size_t transferSize = arguments.size;
+        size_t transferSize = bufferSize;
         switch (arguments.type) {
         case StreamMemoryType::Scale:
             transferSize *= 2;
@@ -173,6 +202,13 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         } else {
             statistics.pushValue(timer.get(), transferSize, typeSelector.getUnit(), typeSelector.getType());
         }
+
+        if (verify) {
+            result = StreamMemoryVerification::verifyOutput(expected, bufferSize, readChunk);
+            if (result != TestResult::Success) {
+                break;
+            }
+        }
     }
 
     // Cleanup
@@ -181,7 +217,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     }
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
-    return TestResult::Success;
+    return result;
 }
 
 static RegisterTestCaseImplementation<StreamMemory> registerTestCase(run, Api::OpenCL);

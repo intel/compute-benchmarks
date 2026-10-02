@@ -25,7 +25,7 @@ struct StreamMemoryArguments : TestCaseArgumentContainer {
 
     StreamMemoryArguments()
         : type(*this, "type", "Memory streaming type"),
-          size(*this, "size", "Size of the memory to stream. Must be divisible by datatype size."),
+          size(*this, "size", "Size of the memory to stream. Rounded down to a multiple of datatype size and work-group size."),
           useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
           contents(*this, "contents", "Buffer contents zeros/random"),
           memoryPlacement(*this, "memory", "Memory type used for stream"),

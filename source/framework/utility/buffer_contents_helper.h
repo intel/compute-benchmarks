@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,8 @@ class BufferContentsHelper {
     static void fillWithZeros(uint8_t *buffer, size_t size);
     static void fillWithRandomBytes(uint8_t *buffer, size_t size);
     static void fillWithIncreasingBytes(uint8_t *buffer, size_t size);
+
+    static const uint8_t *getRandomBytes(size_t size);
 
   private:
     static std::mt19937 generator;
