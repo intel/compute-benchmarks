@@ -17,6 +17,7 @@
 
 #include "definitions/non_usm_stream_memory.h"
 
+#include <algorithm>
 #include <gtest/gtest.h>
 
 using namespace MemoryConstants;
@@ -65,7 +66,8 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetModuleProperties(levelzero.device, &moduleProperties));
 
     size_t elementSize = arguments.vectorSize * sizeof(uint32_t);
-    const int32_t scalarValue = -999;
+    uint32_t scalarValue[16];
+    std::fill(std::begin(scalarValue), std::end(scalarValue), static_cast<uint32_t>(-999));
     bool setScalarArgument = true;
     const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
@@ -167,7 +169,7 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<int>(i), sizeof(buffers[i]), &buffers[i]));
     }
     if (setScalarArgument) {
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), sizeof(scalarValue), &scalarValue));
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), elementSize, scalarValue));
     }
 
     int multiplier = static_cast<int>(arguments.partialMultiplier);

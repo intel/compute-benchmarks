@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -158,7 +158,7 @@ class TriadBenchmark : public StreamMemoryBenchmark {
             const FloatingPointType scalarValue = this->scalarValue;
             auto x = this->deviceBufferX.template get_access<sycl::access_mode::read>(cgh);
             auto y = this->deviceBufferY.template get_access<sycl::access_mode::read>(cgh);
-            auto z = this->deviceBufferX.template get_access<sycl::access_mode::discard_write>(cgh);
+            auto z = this->deviceBufferZ.template get_access<sycl::access_mode::discard_write>(cgh);
 
             cgh.parallel_for<TriadKernel<FloatingPointType>>(
                 sycl::range<1>{bufferSize},

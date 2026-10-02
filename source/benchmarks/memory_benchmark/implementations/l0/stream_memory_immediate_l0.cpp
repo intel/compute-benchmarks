@@ -43,8 +43,10 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
 
     const bool useDoubles = moduleProperties.fp64flags != 0u;
     const size_t elementSize = useDoubles ? sizeof(double) : sizeof(float);
-    const size_t fillValue = 313u;
-    const int32_t scalarValue = -999;
+    const float floatValues[] = {313.f, -999.f};
+    const double doubleValues[] = {313.0, -999.0};
+    const void *fillValue = useDoubles ? static_cast<const void *>(&doubleValues[0]) : &floatValues[0];
+    const void *scalarValue = useDoubles ? static_cast<const void *>(&doubleValues[1]) : &floatValues[1];
     const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
@@ -124,12 +126,12 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
 
     // Enqueue filling of the buffers and set kernel arguments
     for (auto i = 0u; i < buffersCount; i++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffers[i], &fillValue, sizeof(fillValue), bufferSizes[i], event, 0, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffers[i], fillValue, elementSize, bufferSizes[i], event, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<int>(i), sizeof(buffers[i]), &buffers[i]));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), sizeof(scalarValue), &scalarValue));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), elementSize, scalarValue));
 
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
