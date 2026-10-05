@@ -6,8 +6,8 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/execute_command_list_immediate_multi_kernel.h"
@@ -28,32 +28,17 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
     Timer timer;
 
     // Create kernel
-    auto spirvModule0 = FileHelper::loadBinaryFile("api_overhead_benchmark_eat_time.spv");
-    if (spirvModule0.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
-    auto spirvModule1 = FileHelper::loadBinaryFile("api_overhead_benchmark_write_one.spv");
-    if (spirvModule1.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
     uint32_t moduleCount = 2u;
     std::vector<ze_module_handle_t> modules(moduleCount);
     std::vector<ze_kernel_handle_t> kernels(moduleCount);
-    std::vector<ze_module_desc_t> moduleDescs(moduleCount);
-    std::vector<ze_kernel_desc_t> kernelDescs(moduleCount);
-    moduleDescs[0].format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDescs[0].pInputModule = reinterpret_cast<const uint8_t *>(spirvModule0.data());
-    moduleDescs[0].inputSize = spirvModule0.size();
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDescs[0], &modules[0], nullptr));
-    kernelDescs[0].pKernelName = "eat_time";
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(modules[0], &kernelDescs[0], &kernels[0]));
-
-    moduleDescs[1].format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDescs[1].pInputModule = reinterpret_cast<const uint8_t *>(spirvModule1.data());
-    moduleDescs[1].inputSize = spirvModule1.size();
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDescs[1], &modules[1], nullptr));
-    kernelDescs[1].pKernelName = "write_one";
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(modules[1], &kernelDescs[1], &kernels[1]));
+    if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_eat_time.cl", "eat_time", &kernels[0], &modules[0], nullptr);
+        result != TestResult::Success) {
+        return result;
+    }
+    if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_write_one.cl", "write_one", &kernels[1], &modules[1], nullptr);
+        result != TestResult::Success) {
+        return result;
+    }
 
     // Create event
     uint32_t numEventsMultiplier = arguments.addBarrier ? static_cast<uint32_t>(arguments.numKernelsAfterBarrier + 1) : 2u;

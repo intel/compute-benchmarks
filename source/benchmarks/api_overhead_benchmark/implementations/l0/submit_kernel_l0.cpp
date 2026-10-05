@@ -6,9 +6,9 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/combo_profiler.h"
-#include "framework/utility/file_helper.h"
 
 #include "definitions/submit_kernel.h"
 
@@ -29,20 +29,12 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     const ze_group_count_t groupCount{1, 1, 1};
 
     // Create kernel
-    auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_eat_time.spv");
-    if (spirvModule.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "eat_time";
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
+    if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_eat_time.cl", "eat_time", &kernel, &module, nullptr);
+        result != TestResult::Success) {
+        return result;
+    }
 
     ze_event_counter_based_flags_t cbFlags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
     if (arguments.useProfiling) {

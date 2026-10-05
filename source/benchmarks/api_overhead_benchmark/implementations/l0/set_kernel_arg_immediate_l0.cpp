@@ -6,8 +6,8 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/set_kernel_arg_immediate.h"
@@ -58,20 +58,12 @@ static TestResult run(const KernelSetArgumentValueImmediateArguments &arguments,
     }
 
     // Create kernel
-    auto spirvModule = FileHelper::loadBinaryFile(std::string("api_overhead_benchmark_") + std::to_string(arguments.argumentSize) + "bytes_argument.spv");
-    if (spirvModule.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "arg_size";
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
+    if (auto result = L0::KernelHelper::loadKernel(levelzero, std::string("api_overhead_benchmark_") + std::to_string(arguments.argumentSize) + "bytes_argument.cl", "arg_size", &kernel, &module, nullptr);
+        result != TestResult::Success) {
+        return result;
+    }
 
     st_input_8 kernelArgument8{};
     st_input_64 kernelArgument64{};

@@ -6,9 +6,9 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/l0/utility/usm_helper.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/set_kernel_arg_svm_pointer.h"
@@ -35,16 +35,11 @@ static TestResult run(const SetKernelArgSvmPointerArguments &arguments, Statisti
     Timer timer;
 
     // Create kernels
-    const auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_indirect_access_kernel.spv");
-    if (spirvModule.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
     ze_module_handle_t module;
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
+    if (auto result = L0::KernelHelper::loadModule(levelzero, "api_overhead_benchmark_indirect_access_kernel.cl", &module, nullptr);
+        result != TestResult::Success) {
+        return result;
+    }
 
     std::vector<ze_kernel_handle_t> kernels(arguments.allocationsCount);
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};

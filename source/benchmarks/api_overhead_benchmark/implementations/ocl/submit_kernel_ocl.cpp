@@ -6,8 +6,8 @@
  */
 
 #include "framework/ocl/opencl.h"
+#include "framework/ocl/utility/program_helper_ocl.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/submit_kernel.h"
@@ -32,13 +32,11 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     const size_t lws = 1u;
 
     // Create kernel
-    auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_eat_time.spv");
-    if (spirvModule.size() == 0) {
-        return TestResult::KernelNotFound;
+    cl_program program = nullptr;
+    if (auto result = ProgramHelperOcl::buildProgramFromSourceFile(opencl.context, opencl.device, "api_overhead_benchmark_eat_time.cl", nullptr, program);
+        result != TestResult::Success) {
+        return result;
     }
-    cl_program program = clCreateProgramWithIL(opencl.context, spirvModule.data(), spirvModule.size(), &retVal);
-    ASSERT_CL_SUCCESS(retVal);
-    ASSERT_CL_SUCCESS(clBuildProgram(program, 1, &opencl.device, nullptr, nullptr, nullptr));
     cl_kernel kernel = clCreateKernel(program, "eat_time", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
