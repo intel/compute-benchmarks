@@ -15,7 +15,7 @@
 
 #include <gtest/gtest.h>
 
-class UsmCopyTest : public ::testing::TestWithParam<std::tuple<Api, UsmMemoryPlacement, UsmMemoryPlacement, size_t, BufferContents, bool, bool, bool>> {
+class UsmCopyTest : public ::testing::TestWithParam<std::tuple<Api, UsmMemoryPlacement, UsmMemoryPlacement, size_t, BufferContents, bool, bool, bool, bool>> {
 };
 
 TEST_P(UsmCopyTest, Test) {
@@ -28,9 +28,14 @@ TEST_P(UsmCopyTest, Test) {
     args.forceBlitter = std::get<5>(GetParam());
     args.useEvents = std::get<6>(GetParam());
     args.reuseCommandList = std::get<7>(GetParam());
+    args.withCopyOffload = std::get<8>(GetParam());
 
     if (shouldSkipCopyDirection(args.sourcePlacement, args.destinationPlacement)) {
         GTEST_SKIP();
+    }
+
+    if (args.withCopyOffload && (args.forceBlitter || args.api != Api::L0)) {
+        GTEST_SKIP(); // Copy offload is L0-only and not applicable when already executing on blitter
     }
 
     UsmCopy test;
@@ -49,6 +54,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(BufferContents::Zeros),
         ::testing::Values(false, true),
         ::testing::Values(true),
+        ::testing::Values(false, true),
         ::testing::Values(false, true)));
 
 INSTANTIATE_TEST_SUITE_P(
@@ -62,4 +68,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(BufferContents::Zeros),
         ::testing::Values(false),
         ::testing::Values(true),
-        ::testing::Values(false)));
+        ::testing::Values(false),
+        ::testing::Values(false, true)));

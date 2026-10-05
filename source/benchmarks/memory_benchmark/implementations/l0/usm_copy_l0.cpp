@@ -64,8 +64,12 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
     }
 
     // Create command list
-    ze_command_list_desc_t cmdListDesc{};
+    ze_command_list_desc_t cmdListDesc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
+    cmdListDesc.flags |= ZE_COMMAND_LIST_FLAG_IN_ORDER;
+    if (arguments.withCopyOffload) {
+        cmdListDesc.flags |= ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT;
+    }
     ze_command_list_handle_t cmdList{};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, arguments.size, event, 0, nullptr));

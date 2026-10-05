@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ struct UsmCopyArguments : TestCaseArgumentContainer {
     BooleanArgument forceBlitter;
     BooleanArgument useEvents;
     BooleanArgument reuseCommandList;
+    BooleanArgument withCopyOffload;
 
     UsmCopyArguments()
         : sourcePlacement(*this, "src", "Placement of the source buffer"),
@@ -29,7 +30,8 @@ struct UsmCopyArguments : TestCaseArgumentContainer {
           contents(*this, "contents", "Contents of the buffers"),
           forceBlitter(*this, "forceBlitter", CommonHelpMessage::forceBlitter()),
           useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
-          reuseCommandList(*this, "reuseCmdList", "Command list is reused between iterations") {}
+          reuseCommandList(*this, "reuseCmdList", "Command list is reused between iterations"),
+          withCopyOffload(*this, "withCopyOffload", "Enable driver copy offload (only valid for L0)") {}
 };
 
 struct UsmCopy : TestCase<UsmCopyArguments> {
