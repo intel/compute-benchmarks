@@ -6,9 +6,9 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/l0/utility/queue_families_helper.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/multiple_immediate_with_dependencies.h"
@@ -59,16 +59,11 @@ static TestResult run(const MultipleImmediateCmdListsWithDependenciesArguments &
         ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &defaultIntelCounterBasedEventDesc, &events[i]));
     }
 
-    const auto kernelBinary = FileHelper::loadBinaryFile("ulls_benchmark_eat_time.spv");
-    if (kernelBinary.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.inputSize = kernelBinary.size();
-    moduleDesc.pInputModule = kernelBinary.data();
     ze_module_handle_t module{};
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
+    if (auto result = L0::KernelHelper::loadModule(levelzero, "ulls_benchmark_eat_time.cl", &module, nullptr);
+        result != TestResult::Success) {
+        return result;
+    }
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;
     kernelDesc.pKernelName = "eat_time";

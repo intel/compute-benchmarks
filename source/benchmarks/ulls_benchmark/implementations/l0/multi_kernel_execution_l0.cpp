@@ -6,8 +6,8 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/multi_kernel_execution.h"
@@ -29,20 +29,12 @@ static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics
     const size_t gws = lws * arguments.workgroupCount;
 
     // Create kernel
-    auto spirvModule = FileHelper::loadBinaryFile("ulls_benchmark_multi_kernel_execution.spv");
-    if (spirvModule.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = arguments.inOrderOverOOO ? "emptyWithSynchro" : "empty";
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
+    if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_multi_kernel_execution.cl", arguments.inOrderOverOOO ? "emptyWithSynchro" : "empty", &kernel, &module, nullptr);
+        result != TestResult::Success) {
+        return result;
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(lws), 1u, 1u));
 
     // Create command list and append kernel
