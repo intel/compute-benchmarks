@@ -6,8 +6,8 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/barrier_between_kernels.h"
@@ -78,26 +78,13 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
     }
 
     // Create kernel
-    auto spirvModule = FileHelper::loadBinaryFile("gpu_cmds_benchmark_write_one_global_ids_with_check.spv");
-    if (spirvModule.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-
-    if (arguments.onlyReads) {
-        kernelDesc.pKernelName = "write_one";
-    } else {
-        kernelDesc.pKernelName = "only_write_one";
+    std::string kernelName = arguments.onlyReads ? "write_one" : "only_write_one";
+    if (auto result = L0::KernelHelper::loadKernel(levelzero, "gpu_cmds_benchmark_write_one_global_ids_with_check.cl", kernelName, &kernel, &module, nullptr);
+        result != TestResult::Success) {
+        return result;
     }
-
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
     auto sizeInDwords = outputBufferSize / sizeof(uint32_t);
 
     auto workgroupSize = sizeInDwords > 32 ? 32 : sizeInDwords;

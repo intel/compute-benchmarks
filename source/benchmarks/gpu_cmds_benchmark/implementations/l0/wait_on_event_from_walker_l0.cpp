@@ -6,8 +6,8 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/wait_on_event_from_walker.h"
@@ -15,7 +15,7 @@
 #include <gtest/gtest.h>
 
 struct TestResourcesForWaitOnWalker {
-    TestResourcesForWaitOnWalker(LevelZero &levelzero, size_t meassuredCommands, uint64_t *beginTimestamp, uint64_t *endTimestamp)
+    TestResourcesForWaitOnWalker(LevelZero &levelzero, ze_kernel_handle_t kernel, size_t meassuredCommands, uint64_t *beginTimestamp, uint64_t *endTimestamp)
         : events(1u) {
         // Create events and signal them
         const ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, static_cast<uint32_t>(1u)};
@@ -25,18 +25,6 @@ struct TestResourcesForWaitOnWalker {
             auto &event = this->events[eventIndex];
             ZE_RESULT_SUCCESS_OR_ERROR(zeEventCreate(this->eventPool, &eventDesc, &event));
         }
-
-        auto spirvModule = FileHelper::loadBinaryFile("gpu_cmds_benchmark_empty_kernel.spv");
-
-        ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-        moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-        moduleDesc.inputSize = spirvModule.size();
-        ZE_RESULT_SUCCESS_OR_ERROR(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-        ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-        kernelDesc.pKernelName = "empty";
-        ZE_RESULT_SUCCESS_OR_ERROR(zeKernelCreate(module, &kernelDesc, &kernel));
-        ZE_RESULT_SUCCESS_OR_ERROR(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
 
         // Create command list
         ze_command_list_desc_t cmdListDesc{};
@@ -55,8 +43,6 @@ struct TestResourcesForWaitOnWalker {
     }
 
     ~TestResourcesForWaitOnWalker() {
-        EXPECT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
-        EXPECT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
         EXPECT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
         for (auto &event : events) {
             EXPECT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
@@ -64,8 +50,6 @@ struct TestResourcesForWaitOnWalker {
         EXPECT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     }
 
-    ze_module_handle_t module;
-    ze_kernel_handle_t kernel;
     ze_event_pool_handle_t eventPool{};
     std::vector<ze_event_handle_t> events{};
     ze_command_list_handle_t cmdList{};
@@ -91,9 +75,18 @@ static TestResult run(const WaitOnEventFromWalkerArguments &arguments, Statistic
     uint64_t *beginTimestamp = static_cast<uint64_t *>(buffer);
     uint64_t *endTimestamp = beginTimestamp + 1;
 
+    // Create kernel
+    ze_module_handle_t module{};
+    ze_kernel_handle_t kernel{};
+    if (auto result = L0::KernelHelper::loadKernel(levelzero, "gpu_cmds_benchmark_empty_kernel.cl", "empty", &kernel, &module, nullptr);
+        result != TestResult::Success) {
+        return result;
+    }
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
+
     // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        auto testResources = std::make_unique<TestResourcesForWaitOnWalker>(levelzero, arguments.measuredCommands, beginTimestamp, endTimestamp);
+        auto testResources = std::make_unique<TestResourcesForWaitOnWalker>(levelzero, kernel, arguments.measuredCommands, beginTimestamp, endTimestamp);
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &testResources->cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
         testResources.reset();
@@ -104,6 +97,8 @@ static TestResult run(const WaitOnEventFromWalkerArguments &arguments, Statistic
         statistics.pushValue(commandTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
+    ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
     ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, buffer, bufferSize));
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffer));
     return TestResult::Success;
