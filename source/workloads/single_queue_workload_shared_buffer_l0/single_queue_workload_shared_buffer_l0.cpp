@@ -6,7 +6,7 @@
  */
 
 #include "framework/l0/levelzero.h"
-#include "framework/utility/file_helper.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/utility/timer.h"
 #include "framework/workload/register_workload.h"
 
@@ -57,21 +57,12 @@ TestResult run(const SingleQueueWorkloadSharedBufferArguments &arguments, Statis
     void *buffer = static_cast<uint8_t *>(bufferBase) + arguments.offsetWithinBuffer;
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeContextMakeMemoryResident(levelzero.context, levelzero.device, bufferBase, bufferSizeInBytes));
 
-    // Create kernel
-    auto spirvModule = FileHelper::loadBinaryFile("single_queue_workload_increment.spv");
-    if (spirvModule.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "increment";
-    ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeKernelCreate(module, &kernelDesc, &kernel));
+    if (auto result = L0::KernelHelper::loadKernel(levelzero, "single_queue_workload_increment.cl", "increment", &kernel, &module, nullptr);
+        result != TestResult::Success) {
+        return result;
+    }
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(arguments.workgroupSize), 1u, 1u));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeKernelSetArgumentValue(kernel, 1, sizeof(operationsCount), &operationsCount));
