@@ -6,8 +6,8 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/usm_shared_migrate_cpu.h"
@@ -25,12 +25,6 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
     LevelZero levelzero;
     Timer timer;
 
-    // Create kernel
-    const auto kernelBinary = FileHelper::loadBinaryFile("memory_benchmark_fill_with_ones.spv");
-    if (kernelBinary.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
-
     // Create buffers
     const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
@@ -38,17 +32,12 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocShared(levelzero.context, &deviceAllocationDesc, &hostAllocationDesc, arguments.bufferSize, 0, levelzero.device, &buffer));
     int32_t *bufferInt = static_cast<int32_t *>(buffer);
     const size_t elementsCount = arguments.bufferSize / sizeof(uint32_t);
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.inputSize = kernelBinary.size();
-    moduleDesc.pInputModule = kernelBinary.data();
     ze_module_handle_t module{};
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;
-    kernelDesc.pKernelName = "fill_with_ones";
     ze_kernel_handle_t kernel{};
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
+    if (auto result = L0::KernelHelper::loadKernel(levelzero, "memory_benchmark_fill_with_ones.cl", "fill_with_ones", &kernel, &module, nullptr, ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY);
+        result != TestResult::Success) {
+        return result;
+    }
 
     // Configure dispath parameters
     const uint32_t wgs = 256;
