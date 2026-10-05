@@ -7,9 +7,9 @@
 
 #include "framework/enum/engine.h"
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/l0/utility/usm_helper.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/immediate_cmdlist_submission.h"
@@ -111,16 +111,11 @@ static TestResult run(const ImmediateCommandListSubmissionArguments &arguments, 
     const size_t bufferSize = 4096u;
 
     // Create kernel
-    const auto kernelBinary = FileHelper::loadBinaryFile("ulls_benchmark_write_one.spv");
-    if (kernelBinary.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.inputSize = kernelBinary.size();
-    moduleDesc.pInputModule = kernelBinary.data();
     ze_module_handle_t module{};
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
+    if (auto result = L0::KernelHelper::loadModule(levelzero, "ulls_benchmark_write_one.cl", &module, nullptr);
+        result != TestResult::Success) {
+        return result;
+    }
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;
     kernelDesc.pKernelName = "write_one_uncached";
