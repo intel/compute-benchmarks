@@ -6,8 +6,8 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/l0/utility/usm_helper.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 #include "framework/workload/register_workload.h"
 
@@ -64,27 +64,18 @@ TestResult run(const ImmediateCmdListWalkerSubmissionArguments &arguments, Stati
     Timer timer{};
 
     // Create kernel
-    const auto kernelBinary = FileHelper::loadBinaryFile("ulls_benchmark_write_one.spv");
-    if (kernelBinary.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.inputSize = kernelBinary.size();
-    moduleDesc.pInputModule = kernelBinary.data();
     ze_module_handle_t module{};
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;
-    kernelDesc.pKernelName = "write_one_uncached";
-    void *hostMemory;
     ze_kernel_handle_t kernel{};
+    if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_write_one.cl", "write_one_uncached", &kernel, &module, nullptr, ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY);
+        result != TestResult::Success) {
+        return result;
+    }
+    void *hostMemory;
 
     const size_t bufferSize = 4096;
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(UsmHelper::allocate(UsmMemoryPlacement::Host, levelzero, bufferSize, &hostMemory));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeContextMakeMemoryResident(levelzero.context, levelzero.device, hostMemory, bufferSize));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
-    ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeKernelCreate(module, &kernelDesc, &kernel));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeKernelSetGroupSize(kernel, 1, 1, 1));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeKernelSetArgumentValue(kernel, 0, sizeof(hostMemory), &hostMemory));
     eventDesc.index = 0;
