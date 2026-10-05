@@ -15,7 +15,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<UsmEUReduceCopyRing> registerTestCase{};
 
-class UsmEUReduceCopyRingTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, bool, size_t>> {
+class UsmEUReduceCopyRingTest : public ::testing::TestWithParam<std::tuple<Api, size_t, size_t, bool, size_t, size_t>> {
 };
 
 TEST_P(UsmEUReduceCopyRingTest, Test) {
@@ -25,6 +25,7 @@ TEST_P(UsmEUReduceCopyRingTest, Test) {
     args.size = std::get<2>(GetParam());
     args.useEvents = std::get<3>(GetParam());
     args.throttledWorkItems = std::get<4>(GetParam());
+    args.tmpBufferSize = std::get<5>(GetParam());
 
     UsmEUReduceCopyRing test;
     test.run(args);
@@ -41,7 +42,8 @@ INSTANTIATE_TEST_SUITE_P(
                           1 * megaByte, 2 * megaByte, 4 * megaByte, 8 * megaByte, 16 * megaByte, 32 * megaByte,
                           64 * megaByte, 128 * megaByte, 256 * megaByte, 512 * megaByte, 1 * gigaByte),
         ::testing::Values(true),
-        ::testing::Values(0)));
+        ::testing::Values(0),
+        ::testing::Values(384 * megaByte)));
 
 INSTANTIATE_TEST_SUITE_P(
     UsmEUReduceCopyRingThrottledTest,
@@ -51,7 +53,8 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(2, 4, 8),
         ::testing::Values(64 * megaByte, 256 * megaByte, 1 * gigaByte),
         ::testing::Values(true),
-        ::testing::Values(3072)));
+        ::testing::Values(3072),
+        ::testing::Values(384 * megaByte)));
 
 INSTANTIATE_TEST_SUITE_P(
     UsmEUReduceCopyRingTestLIMITED,
@@ -61,4 +64,5 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(2),
         ::testing::Values(16 * megaByte),
         ::testing::Values(false, true),
-        ::testing::Values(0)));
+        ::testing::Values(0),
+        ::testing::Values(384 * megaByte)));
