@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "framework/l0/levelzero.h"
 #include "framework/l0/utility/error.h"
 #include "framework/l0/utility/error_codes.h"
-#include "framework/utility/file_helper.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/workload/register_workload.h"
 
 #include <algorithm>
@@ -380,27 +380,10 @@ TestResult testOverlap(const MpiArguments &arguments) {
         queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &queueDesc, &cmdListImmSync));
 
-        auto spirvModule = FileHelper::loadBinaryFile("mpi_workload_dummy_compute.spv");
-        if (spirvModule.size() == 0) {
-            return TestResult::KernelNotFound;
+        if (auto result = L0::KernelHelper::loadKernel(levelzero, "mpi_workload_dummy_compute.cl", "dummy_compute", &kernel, &module, nullptr);
+            result != TestResult::Success) {
+            return result;
         }
-
-        ze_module_desc_t moduleDesc{};
-        moduleDesc.stype = ZE_STRUCTURE_TYPE_MODULE_DESC;
-        moduleDesc.pNext = nullptr;
-        moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-        moduleDesc.inputSize = spirvModule.size();
-        moduleDesc.pConstants = nullptr;
-        moduleDesc.pBuildFlags = nullptr;
-        ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));
-
-        ze_kernel_desc_t kernelDesc{};
-        kernelDesc.stype = ZE_STRUCTURE_TYPE_KERNEL_DESC;
-        kernelDesc.pNext = nullptr;
-        kernelDesc.flags = 0;
-        kernelDesc.pKernelName = "dummy_compute";
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
 
         const int gpuComputeIters = std::min(100u, messageSize / 4096u);
         constexpr uint32_t gpuComputeBufSize = 1ul << 20;
