@@ -53,7 +53,12 @@ TestResult loadModule(LevelZero &levelzero, ze_device_handle_t device, const std
 
 TestResult loadKernel(LevelZero &levelzero, const std::string &filePath, const std::string &kernelName, ze_kernel_handle_t *kernel,
                       ze_module_handle_t *module, const char *pBuildFlags, ze_kernel_flags_t kernelFlags) {
-    if (auto result = loadModule(levelzero, filePath, module, pBuildFlags); result != TestResult::Success) {
+    return loadKernel(levelzero, levelzero.device, filePath, kernelName, kernel, module, pBuildFlags, kernelFlags);
+}
+
+TestResult loadKernel(LevelZero &levelzero, ze_device_handle_t device, const std::string &filePath, const std::string &kernelName, ze_kernel_handle_t *kernel,
+                      ze_module_handle_t *module, const char *pBuildFlags, ze_kernel_flags_t kernelFlags) {
+    if (auto result = loadModule(levelzero, device, filePath, module, pBuildFlags); result != TestResult::Success) {
         return result;
     }
 

@@ -6,9 +6,9 @@
  */
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/l0/utility/usm_helper.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/usm_copy_kernel.h"
@@ -32,27 +32,16 @@ static TestResult run(const UsmCopyKernelArguments &arguments, Statistics &stati
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(arguments.queuePlacement);
 
-    // Create kernel
-    const auto kernelBinary = FileHelper::loadBinaryFile("multitile_memory_benchmark_copy_buffer.spv");
-    if (kernelBinary.size() == 0) {
-        return TestResult::KernelNotFound;
-    }
-
     // Create buffers
     void *src{}, *dst{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.srcPlacement, levelzero, arguments.size, &src));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.dstPlacement, levelzero, arguments.size, &dst));
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.inputSize = kernelBinary.size();
-    moduleDesc.pInputModule = kernelBinary.data();
     ze_module_handle_t module{};
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.commandQueueDevice, &moduleDesc, &module, nullptr));
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.flags = ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY;
-    kernelDesc.pKernelName = "copy_buffer";
     ze_kernel_handle_t kernel{};
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(module, &kernelDesc, &kernel));
+    if (auto result = L0::KernelHelper::loadKernel(levelzero, levelzero.commandQueueDevice, "multitile_memory_benchmark_copy_buffer.cl", "copy_buffer", &kernel, &module, nullptr, ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY);
+        result != TestResult::Success) {
+        return result;
+    }
 
     // Configure dispath parameters
     uint32_t wgsX{}, wgsY{}, wgsZ{};
