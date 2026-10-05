@@ -9,7 +9,6 @@
 #include "framework/l0/utility/error.h"
 #include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/file_helper.h"
 #include "framework/utility/random_distribution.h"
 #include "framework/utility/timer.h"
 
@@ -277,19 +276,11 @@ struct RecordGraphConfig final {
         }
 
         // Create kernel
-        auto spirvModule = FileHelper::loadBinaryFile("graph_api_benchmark_kernel_assign.spv");
-        if (spirvModule.size() == 0) {
-            this->status = RecordGraphConfigStatus::KernelNotFound;
+        if (auto result = L0::KernelHelper::loadKernel(levelzero, "graph_api_benchmark_kernel_assign.cl", "kernel_assign", &this->kernel, &l0env.module, nullptr);
+            result != TestResult::Success) {
+            this->status = result;
             return;
         }
-        ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-        moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-        moduleDesc.inputSize = spirvModule.size();
-        EXPECT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &l0env.module, nullptr));
-        ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-        kernelDesc.pKernelName = "kernel_assign";
-        EXPECT_ZE_RESULT_SUCCESS(zeKernelCreate(l0env.module, &kernelDesc, &this->kernel));
 
         this->kernelGroupCount = {8, 8, 1};
         this->status = RecordGraphConfigStatus::Success;
