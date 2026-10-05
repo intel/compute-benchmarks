@@ -54,7 +54,7 @@
  */
 
 #include "framework/l0/levelzero.h"
-#include "framework/utility/file_helper.h"
+#include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/utility/timer.h"
 #include "framework/workload/register_workload.h"
 
@@ -534,15 +534,10 @@ static TestResult initParams(ParamsTy &params, const Heat3DArguments &arguments)
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(params.barrierEvPool, &barrierEventDesc, &params.barrierEvents[i]));
     }
 
-    auto spirvModule = FileHelper::loadBinaryFile("heat3d_workload.spv");
-    if (spirvModule.size() == 0) {
-        return TestResult::KernelNotFound;
+    if (auto result = L0::KernelHelper::loadModule(params.levelzero, "heat3d_workload.cl", &params.module, nullptr);
+        result != TestResult::Success) {
+        return result;
     }
-    ze_module_desc_t moduleDesc{ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(params.levelzero.context, params.levelzero.device, &moduleDesc, &params.module, nullptr));
 
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.pKernelName = "init_temperature";
