@@ -21,6 +21,7 @@
 #include <cmath>
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_stypes.h>
+#include <limits>
 #include <ratio>
 
 #define ZE_MODULE_FORMAT_OCLC (ze_module_format_t)3U
@@ -157,27 +158,18 @@ struct LevelZero {
     uint32_t getKernelTimestampValidBits(DeviceSelection deviceSelection) const { return getDeviceProperties(deviceSelection).kernelTimestampValidBits; }
     uint32_t getKernelTimestampValidBits(ze_device_handle_t deviceHandle) const { return getDeviceProperties(deviceHandle).kernelTimestampValidBits; }
     uint64_t getKernelTimestampValidBitsMask(ze_device_handle_t deviceHandle) const {
-        return static_cast<uint64_t>(((1ull << getDeviceProperties(deviceHandle).kernelTimestampValidBits) - 1ull));
+        const uint32_t validBits = this->getDeviceProperties(deviceHandle).kernelTimestampValidBits;
+        return validBits >= std::numeric_limits<uint64_t>::digits ? std::numeric_limits<uint64_t>::max() : (1ull << validBits) - 1ull;
     }
 
-    std::chrono::nanoseconds getAbsoluteSubmissionTime(uint64_t truncatedKernelStartTimestamp,
-                                                       uint64_t truncatedDeviceEnqueueTimestamp,
-                                                       const uint64_t timerResolution) {
-        const uint64_t kernelTimestampValidBitsMask = this->getKernelTimestampValidBitsMask(this->device);
-        std::chrono::nanoseconds submissionTime{};
-        if (truncatedKernelStartTimestamp > truncatedDeviceEnqueueTimestamp) {
-            submissionTime =
-                std::chrono::nanoseconds((truncatedKernelStartTimestamp - truncatedDeviceEnqueueTimestamp) * timerResolution);
-        } else {
-            submissionTime =
-                std::chrono::nanoseconds(((kernelTimestampValidBitsMask + 1ull) + truncatedKernelStartTimestamp - truncatedDeviceEnqueueTimestamp) * timerResolution);
-        }
-
-        return submissionTime;
+    std::chrono::nanoseconds getAbsoluteSubmissionTime(const uint64_t truncatedKernelStartTimestamp,
+                                                       const uint64_t truncatedDeviceEnqueueTimestamp,
+                                                       const uint64_t timerResolution) const {
+        return this->getAbsoluteTimestampTime(truncatedDeviceEnqueueTimestamp, truncatedKernelStartTimestamp, timerResolution, this->getKernelTimestampValidBitsMask(this->device));
     }
 
     std::chrono::nanoseconds getAbsoluteSubmissionTime(const ze_kernel_timestamp_data_t &timestampResult,
-                                                       const uint64_t deviceEnqueueTimestamp) {
+                                                       const uint64_t deviceEnqueueTimestamp) const {
         const auto deviceProperties = getDeviceProperties(device);
         const uint32_t sharedTimestampValidBits = std::min(deviceProperties.timestampValidBits, deviceProperties.kernelTimestampValidBits);
 
@@ -189,7 +181,7 @@ struct LevelZero {
 
     std::chrono::nanoseconds getAbsoluteTimestampTime(const uint64_t start, const uint64_t end, const uint64_t timerResolution, const uint64_t timestampValidBitMask) const {
         uint64_t result = 0;
-        if (end > start) {
+        if (end >= start) {
             result = (end - start) * timerResolution;
         } else {
             result = ((timestampValidBitMask + 1ull) + end - start) * timerResolution;
