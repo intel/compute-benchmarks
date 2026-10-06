@@ -45,9 +45,11 @@ Signed-off-by: Example Author example.author@example.com
 ```
 
 Where:
-* `Commit title` - should concisely describe the work introduced by the PR. The maximum title length is 50 characters.
+* `Commit title` - should concisely describe the work introduced by the PR and make sense without the body. The maximum title length is 50 characters.
 * `Commit body` - should provide justification of the work and, optionally, additional details. The maximum body line length is 80 characters.
 * `Signed-off-by` - should be put at the end of the commit message. See below.
+
+Do not use Unicode characters in the title and body, and do not include a "Test plan" section in the commit message.
 
 ### 1.2 Certificate of origin <a id="certificate"></a>
 
@@ -62,15 +64,18 @@ git commit -s
 
 ### 1.3 PR submission <a id="pr-submission"></a>
 
+We prefer small, self-contained incremental changes to large blocks of code.
+
 Before submitting a PR:
-1. Use `clang-format` to properly format the code. You can use:
+1. Make sure your code follows the [coding guidelines](GUIDELINES.md).
+2. Use `clang-format` to properly format the code. You can use:
     * [Visual Studio extension](https://marketplace.visualstudio.com/items?itemName=LLVMExtensions.ClangFormat)
     * [Visual Studio code extension](https://marketplace.visualstudio.com/items?itemName=xaver.clang-format)
     * Script for formatting all files - [Windows](scripts/run_clang-format_on_all_files.cmd)/[Linux](scripts/run_clang-format_on_all_files.sh)
-2. Make sure benchmarks build successfully with your change added. For details about building please read
+3. Make sure benchmarks build successfully with your change added. For details about building please read
 [building](https://github.com/intel/compute-benchmarks/blob/master/README.md#building).
-3. Remember to add a copyright header at the top of newly created files.
-4. Remember to update the date in the copyright headers of the files you are updating.
+4. Remember to add a copyright header at the top of newly created files.
+5. Remember to update the date in the copyright headers of the files you are updating.
 
 Once all of the above is done, PR can be submitted.
 
@@ -109,9 +114,9 @@ Your commit may be reverted if a major regression is identified post-merge.
 A good way to add new benchmarks is to mimic the existing ones and tweak them to your needs. The general process for adding a brand new test is as follows:
 1. Select a binary that suits your benchmark, for example `memory_benchmark`.
 2. Choose a name for your benchmark, for example `TwoWayTransfer`.
-3. Add a definition file of your benchmark as `source/benchmarks/memory_benchmark/definitions/TwoWayTransfer.h`. This file specifies general information about your test, including its name, description and parameters.
-4. Add a test registration file as `source/benchmarks/memory_benchmark/gtest/TwoWayTransfer.cpp`. This file registers your test, so the framework recognizes it and can execute it.
-5. Add an implementation file as `source/benchmarks/memory_benchmark/implementations/ocl/TwoWayTransfer_ocl.cpp`. This file contains the actual implementation of your test. Replace *ocl* with *l0* for LevelZero implementation. Each test *can* be implemented in more than one API.
+3. Add a definition file of your benchmark as `source/benchmarks/memory_benchmark/definitions/two_way_transfer.h`. This file specifies general information about your test, including its name, description and parameters.
+4. Add a test registration file as `source/benchmarks/memory_benchmark/gtest/two_way_transfer.cpp`. This file registers your test, so the framework recognizes it and can execute it.
+5. Add an implementation file as `source/benchmarks/memory_benchmark/implementations/ocl/two_way_transfer_ocl.cpp`. This file contains the actual implementation of your test. Replace *ocl* with *l0* for LevelZero implementation. Each test *can* be implemented in more than one API.
 6. Regenerate documentation (see below).
 
 ### 2.2 Test configurations and permutations <a id="test-permutations"></a>
@@ -122,15 +127,7 @@ Keep the number of permutations per test case reasonable. A test case that gener
 You can review the current per-suite test case counts - including an outliers section that lists suites exceeding a configurable threshold (default 50) - by running [list_test_suites.sh](scripts/list_test_suites.sh) against a directory of built benchmark binaries.
 
 ### 2.3 Comments <a id="comments"></a>
-The expected number of comments added by a change is zero; every comment has to earn its place on its own. That the file being modified already contains comments is not a reason to add another one.
-
-* A comment earns its place when it carries a fact that lives outside the source code and that a future edit would break silently, for example: a hardware, specification or driver behavior that the measurement depends on (name the document or the workaround identifier), an ordering, a warmup or an extra synchronization that reads as arbitrary but is required for the measured number to be valid, a constant whose origin cannot be derived from the code, a language or toolchain constraint that forces the shape of the code, or the reason why the obvious simpler form is wrong.
-* Do not restate what the code already says, i.e. `// synchronize the queue` above a `finish()` call.
-* Do not document why the change was made or what the bug was; that is the content of the commit message.
-* Do not pre-empt an expected review objection in the code; answer it in the pull request instead.
-* Do not add a comment describing a test case in its definition, registration or implementation file. The test case name and its arguments identify the scenario, and the user-facing description of what is measured belongs in `getHelp()` and in the argument help strings, which is what [TESTS.md](TESTS.md) is generated from.
-* When a comment is only needed because the code is hard to follow, fix the code instead: a named `constexpr`, a better function or variable name, or a helper whose name is the explanation. Those survive refactoring, a comment does not.
-* In C++ sources, use double slash instead of block comments, except for the copyright header, which stays in its required block form.
+The rules for comments are in the [Comments](GUIDELINES.md#comments) section of the coding guidelines.
 
 ### 2.4 Generating documentation <a id="benchmarks-docs"></a>
 Test documentation is generated from the code and stored in the [TESTS.md](TESTS.md) file. Contributors are required to regenerate the documentation by building the `run_docs_generator` target. [TESTS.md](TESTS.md) should be generated with *only* OpenCL and Level Zero enabled - otherwise, the generated file may contain incorrect contents. No further parameters are needed. After generating, include `TESTS.md` as part of the commit.
