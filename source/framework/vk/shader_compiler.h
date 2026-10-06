@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "framework/enum/work_item_id_usage.h"
 #include "framework/test_case/test_result.h"
 
 #include <cstdint>
@@ -32,5 +33,7 @@ struct ShaderCompiler {
                                                   std::span<const ShaderDefine> defines,
                                                   std::vector<uint32_t> &outSpirv);
 };
+
+std::vector<ShaderDefine> writeOneShaderDefines(const WorkItemIdUsage usedIds);
 
 } // namespace VK

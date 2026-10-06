@@ -95,4 +95,19 @@ TestResult ShaderCompiler::compileComputeShaderToSpirv(const std::string &shader
     return TestResult::Success;
 }
 
+std::vector<ShaderDefine> writeOneShaderDefines(const WorkItemIdUsage usedIds) {
+    switch (usedIds) {
+    case WorkItemIdUsage::None:
+        return {{"USE_GLOBAL_IDS", "0"}, {"USE_LOCAL_IDS", "0"}, {"ATOMIC_PER_WORKGROUP", "0"}};
+    case WorkItemIdUsage::Global:
+        return {{"USE_GLOBAL_IDS", "1"}, {"USE_LOCAL_IDS", "0"}, {"ATOMIC_PER_WORKGROUP", "0"}};
+    case WorkItemIdUsage::Local:
+        return {{"USE_GLOBAL_IDS", "0"}, {"USE_LOCAL_IDS", "1"}, {"ATOMIC_PER_WORKGROUP", "0"}};
+    case WorkItemIdUsage::AtomicPerWorkgroup:
+        return {{"USE_GLOBAL_IDS", "0"}, {"USE_LOCAL_IDS", "0"}, {"ATOMIC_PER_WORKGROUP", "1"}};
+    default:
+        FATAL_ERROR("Unknown work item id usage");
+    }
+}
+
 } // namespace VK

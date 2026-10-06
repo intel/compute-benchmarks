@@ -1,0 +1,36 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#version 450
+#extension GL_EXT_buffer_reference : require
+
+#ifndef ARG_COUNT
+#error "ARG_COUNT must be defined on the glslc command line, for example -DARG_COUNT=16"
+#endif
+
+layout(local_size_x_id = 0) in;
+
+layout(buffer_reference, std430, buffer_reference_align = 4) buffer UintBuffer {
+    uint data[];
+};
+
+layout(push_constant) uniform Arguments {
+    UintBuffer arguments[ARG_COUNT];
+};
+
+const uint neverDispatchedWorkgroupCount = 65535u;
+
+// Every element of arguments[] is referenced, so the compiler cannot treat the addresses as
+// unused. The branch never executes. Vulkan guarantees at least 65535 workgroups per dimension, so
+// the compiler cannot prove the condition false.
+void main() {
+    if (gl_NumWorkGroups.y == neverDispatchedWorkgroupCount) {
+        for (uint i = 0u; i < ARG_COUNT; i++) {
+            arguments[i].data[0] += 1u;
+        }
+    }
+}

@@ -8,10 +8,10 @@
 #pragma once
 
 #include "framework/argument/basic_argument.h"
-#include "framework/argument/enum/work_item_id_usage_argument.h"
 #include "framework/test_case/test_case.h"
 
-#include <sstream>
+#include <algorithm>
+#include <array>
 
 struct MultiArgumentKernelSwitchLatencyArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument kernelCount;
@@ -26,6 +26,11 @@ struct MultiArgumentKernelSwitchLatencyArguments : TestCaseArgumentContainer {
           workgroupCount(*this, "workgroupCount", "Count of workgroups"),
           argumentCount(*this, "argumentCount", "Argument count in a kernel - supported values: 1, 4, 8, 16, 32, 64"),
           profiling(*this, "profiling", "Use profiling on the gpu to collect score") {}
+
+    bool validateArgumentsExtra() const override {
+        constexpr std::array<size_t, 6> supportedArgumentCounts{1, 4, 8, 16, 32, 64};
+        return std::find(supportedArgumentCounts.begin(), supportedArgumentCounts.end(), this->argumentCount) != supportedArgumentCounts.end();
+    }
 };
 
 struct MultiArgumentKernelSwitchLatency : TestCase<MultiArgumentKernelSwitchLatencyArguments> {

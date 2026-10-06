@@ -33,7 +33,7 @@ INSTANTIATE_TEST_SUITE_P(
     UniqueKernelSwitchLatencyTest,
     UniqueKernelSwitchLatencyTest,
     ::testing::Combine(
-        ::testing::Values(Api::L0),
+        ::testing::Values(Api::L0, Api::Vulkan),
         ::testing::Values(2, 4, 6),
         ::testing::Values(8),
         ::testing::Values(256),

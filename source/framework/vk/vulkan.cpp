@@ -47,6 +47,13 @@ Vulkan::Vulkan() {
     vkGetPhysicalDeviceProperties(this->physicalDevice, &this->physicalDeviceProperties);
     vkGetPhysicalDeviceMemoryProperties(this->physicalDevice, &this->physicalDeviceMemoryProperties);
     vkGetPhysicalDeviceFeatures(this->physicalDevice, &this->physicalDeviceFeatures);
+    if (this->physicalDeviceProperties.apiVersion >= VK_API_VERSION_1_2) {
+        VkPhysicalDeviceBufferDeviceAddressFeatures supportedBufferDeviceAddressFeatures{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES};
+        VkPhysicalDeviceFeatures2 supportedFeatures{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+        supportedFeatures.pNext = &supportedBufferDeviceAddressFeatures;
+        vkGetPhysicalDeviceFeatures2(this->physicalDevice, &supportedFeatures);
+        this->bufferDeviceAddressSupported = supportedBufferDeviceAddressFeatures.bufferDeviceAddress == VK_TRUE;
+    }
 
     // Queue families have to be selected before the device is created, because Vulkan requests queues
     // at vkCreateDevice time and only retrieves their handles afterwards.
@@ -87,7 +94,13 @@ Vulkan::Vulkan() {
     VkPhysicalDeviceFeatures enabledFeatures{};
     enabledFeatures.shaderStorageBufferArrayDynamicIndexing = this->physicalDeviceFeatures.shaderStorageBufferArrayDynamicIndexing;
 
+    VkPhysicalDeviceBufferDeviceAddressFeatures enabledBufferDeviceAddressFeatures{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES};
+    enabledBufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+
     VkDeviceCreateInfo deviceCreateInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+    if (this->bufferDeviceAddressSupported) {
+        deviceCreateInfo.pNext = &enabledBufferDeviceAddressFeatures;
+    }
     deviceCreateInfo.queueCreateInfoCount = 1;
     deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
     deviceCreateInfo.pEnabledFeatures = &enabledFeatures;
@@ -150,6 +163,40 @@ uint32_t Vulkan::findMemoryType(uint32_t memoryTypeBits, VkMemoryPropertyFlags r
     return invalidMemoryTypeIndex;
 }
 
+bool Vulkan::supportsDispatch1D(const size_t workgroupSize, const size_t workgroupCount) const {
+    const VkPhysicalDeviceLimits &limits = this->physicalDeviceProperties.limits;
+    return workgroupSize <= limits.maxComputeWorkGroupInvocations &&
+           workgroupSize <= limits.maxComputeWorkGroupSize[0] &&
+           workgroupCount <= limits.maxComputeWorkGroupCount[0];
+}
+
+bool Vulkan::supportsStorageBuffersInOneSet(const size_t storageBufferCount) const {
+    const VkPhysicalDeviceLimits &limits = this->physicalDeviceProperties.limits;
+    return storageBufferCount <= limits.maxPerStageDescriptorStorageBuffers &&
+           storageBufferCount <= limits.maxDescriptorSetStorageBuffers;
+}
+
+bool Vulkan::supportsStorageBufferArrayDynamicIndexing() const {
+    return this->physicalDeviceFeatures.shaderStorageBufferArrayDynamicIndexing == VK_TRUE;
+}
+
+bool Vulkan::supportsPushConstantsSize(const size_t pushConstantsSize) const {
+    return pushConstantsSize <= this->physicalDeviceProperties.limits.maxPushConstantsSize;
+}
+
+void recordInOrderExecutionBarrier(const VkCommandBuffer commandBuffer) {
+    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 0, nullptr);
+}
+
+void recordShaderWriteToHostBarrier(const VkCommandBuffer commandBuffer) {
+    const VkMemoryBarrier shaderWriteBarrier{
+        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
+        .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_HOST_READ_BIT,
+    };
+    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1, &shaderWriteBarrier, 0, nullptr, 0, nullptr);
+}
+
 VulkanDescriptorSet::VulkanDescriptorSet(Vulkan &vulkan, uint32_t storageBufferCount, uint32_t setCount) : vulkan_(vulkan) {
     VkDescriptorSetLayoutBinding binding{};
     binding.binding = 0;
@@ -187,11 +234,38 @@ VulkanDescriptorSet::~VulkanDescriptorSet() noexcept {
     }
 }
 
-VulkanComputePipeline::VulkanComputePipeline(Vulkan &vulkan, VkShaderModule shaderModule, uint32_t workgroupSize, VkDescriptorSetLayout descriptorSetLayout) : vulkan_(vulkan) {
+VkWriteDescriptorSet VulkanDescriptorSet::storageBufferWrite(const uint32_t setIndex, const uint32_t firstElement, const std::span<const VkDescriptorBufferInfo> bufferInfos) const {
+    return VkWriteDescriptorSet{
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = this->descriptorSets_[setIndex],
+        .dstBinding = 0,
+        .dstArrayElement = firstElement,
+        .descriptorCount = static_cast<uint32_t>(bufferInfos.size()),
+        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        .pBufferInfo = bufferInfos.data(),
+    };
+}
+
+void VulkanDescriptorSet::writeWholeBuffers(const uint32_t setIndex, const std::span<const VkBuffer> buffers) const {
+    std::vector<VkDescriptorBufferInfo> bufferInfos;
+    bufferInfos.reserve(buffers.size());
+    for (const VkBuffer buffer : buffers) {
+        bufferInfos.push_back(VkDescriptorBufferInfo{buffer, 0u, VK_WHOLE_SIZE});
+    }
+    const VkWriteDescriptorSet write = this->storageBufferWrite(setIndex, 0u, bufferInfos);
+    vkUpdateDescriptorSets(this->vulkan_.device, 1, &write, 0, nullptr);
+}
+
+VulkanComputePipeline::VulkanComputePipeline(Vulkan &vulkan, VkShaderModule shaderModule, uint32_t workgroupSize, VkDescriptorSetLayout descriptorSetLayout, uint32_t pushConstantsSize) : vulkan_(vulkan) {
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
     if (descriptorSetLayout != VK_NULL_HANDLE) {
         pipelineLayoutCreateInfo.setLayoutCount = 1;
         pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayout;
+    }
+    const VkPushConstantRange pushConstantRange{VK_SHADER_STAGE_COMPUTE_BIT, 0u, pushConstantsSize};
+    if (pushConstantsSize > 0) {
+        pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+        pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
     }
     VK_RESULT_SUCCESS_OR_ERROR(vkCreatePipelineLayout(vulkan_.device, &pipelineLayoutCreateInfo, nullptr, &this->pipelineLayout_));
 
@@ -253,7 +327,13 @@ VulkanBuffer::VulkanBuffer(Vulkan &vulkan, VkDeviceSize size, VkBufferUsageFlags
         FATAL_ERROR("No compatible memory type available for the requested buffer properties.");
     }
 
+    VkMemoryAllocateFlagsInfo allocateFlagsInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO};
+    allocateFlagsInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+
     VkMemoryAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+    if (usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) {
+        allocateInfo.pNext = &allocateFlagsInfo;
+    }
     allocateInfo.allocationSize = memoryRequirements.size;
     allocateInfo.memoryTypeIndex = memoryTypeIndex;
     VK_RESULT_SUCCESS_OR_ERROR(vkAllocateMemory(vulkan_.device, &allocateInfo, nullptr, &this->memory_));
@@ -264,6 +344,11 @@ VulkanBuffer::VulkanBuffer(Vulkan &vulkan, VkDeviceSize size, VkBufferUsageFlags
         this->hostCoherent_ = (flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) != 0;
         VK_RESULT_SUCCESS_OR_ERROR(vkMapMemory(vulkan_.device, this->memory_, 0, VK_WHOLE_SIZE, 0, &this->mappedPtr_));
     }
+}
+
+VkDeviceAddress VulkanBuffer::deviceAddress() const {
+    const VkBufferDeviceAddressInfo addressInfo{VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO, nullptr, this->buffer_};
+    return vkGetBufferDeviceAddress(vulkan_.device, &addressInfo);
 }
 
 void VulkanBuffer::flush() const {

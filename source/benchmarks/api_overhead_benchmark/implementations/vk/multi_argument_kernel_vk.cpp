@@ -36,17 +36,9 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
     Timer timer;
 
     const auto argumentCount = static_cast<uint32_t>(arguments.argumentCount);
-    const VkPhysicalDeviceLimits &limits = vulkan.physicalDeviceProperties.limits;
-    if (arguments.lws > limits.maxComputeWorkGroupInvocations ||
-        arguments.lws > limits.maxComputeWorkGroupSize[0] ||
-        arguments.groupCount > limits.maxComputeWorkGroupCount[0] ||
-        argumentCount > limits.maxPerStageDescriptorStorageBuffers ||
-        argumentCount > limits.maxDescriptorSetStorageBuffers) {
-        return TestResult::DeviceNotCapable;
-    }
-    // The shader walks arguments[] in a loop that glslc does not unroll, so the index is dynamic
-    // for every ARG_COUNT, including 1.
-    if (vulkan.physicalDeviceFeatures.shaderStorageBufferArrayDynamicIndexing == VK_FALSE) {
+    if (!vulkan.supportsDispatch1D(arguments.lws, arguments.groupCount) ||
+        !vulkan.supportsStorageBuffersInOneSet(argumentCount) ||
+        !vulkan.supportsStorageBufferArrayDynamicIndexing()) {
         return TestResult::DeviceNotCapable;
     }
 
@@ -79,18 +71,9 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
     std::vector<VkWriteDescriptorSet> reversedKernelArguments(kernelCount * argumentCount);
     for (auto kernelId = 0u; kernelId < kernelCount; kernelId++) {
         for (auto argumentId = 0u; argumentId < argumentCount; argumentId++) {
-            VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-            write.dstSet = descriptorSets[kernelId];
-            write.dstBinding = 0;
-            write.dstArrayElement = argumentId;
-            write.descriptorCount = 1;
-            write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-
             const auto writeId = kernelId * argumentCount + argumentId;
-            kernelArguments[writeId] = write;
-            kernelArguments[writeId].pBufferInfo = &bufferInfos[argumentId];
-            reversedKernelArguments[writeId] = write;
-            reversedKernelArguments[writeId].pBufferInfo = &reversedBufferInfos[argumentId];
+            kernelArguments[writeId] = descriptorSets.storageBufferWrite(kernelId, argumentId, {&bufferInfos[argumentId], 1});
+            reversedKernelArguments[writeId] = descriptorSets.storageBufferWrite(kernelId, argumentId, {&reversedBufferInfos[argumentId], 1});
         }
     }
 

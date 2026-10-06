@@ -1,0 +1,31 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#version 450
+
+#ifndef KERNEL_ID
+#error "KERNEL_ID must be defined on the glslc command line, for example -DKERNEL_ID=0"
+#endif
+
+layout(local_size_x_id = 0) in;
+
+layout(std430, set = 0, binding = 0) buffer UintBuffer {
+    uint data[];
+} arg;
+
+const uint neverDispatchedWorkgroupCount = 65535u;
+
+// Every kernel must compile to its own binary. When the driver compiles the pipeline, it may
+// reuse a binary that it already compiled from the same SPIR-V and specialization data, even
+// without a pipeline cache. KERNEL_ID makes the SPIR-V of each kernel different. It is used in a
+// branch that never executes. Vulkan guarantees at least 65535 workgroups per dimension, so the
+// compiler cannot prove the condition false.
+void main() {
+    if (gl_NumWorkGroups.y == neverDispatchedWorkgroupCount) {
+        arg.data[0] = KERNEL_ID;
+    }
+}

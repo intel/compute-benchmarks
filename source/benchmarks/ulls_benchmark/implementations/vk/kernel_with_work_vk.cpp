@@ -19,21 +19,6 @@
 
 using namespace VK;
 
-static std::vector<ShaderDefine> workItemIdUsageDefines(WorkItemIdUsage usedIds) {
-    switch (usedIds) {
-    case WorkItemIdUsage::None:
-        return {{"USE_GLOBAL_IDS", "0"}, {"USE_LOCAL_IDS", "0"}, {"ATOMIC_PER_WORKGROUP", "0"}};
-    case WorkItemIdUsage::Global:
-        return {{"USE_GLOBAL_IDS", "1"}, {"USE_LOCAL_IDS", "0"}, {"ATOMIC_PER_WORKGROUP", "0"}};
-    case WorkItemIdUsage::Local:
-        return {{"USE_GLOBAL_IDS", "0"}, {"USE_LOCAL_IDS", "1"}, {"ATOMIC_PER_WORKGROUP", "0"}};
-    case WorkItemIdUsage::AtomicPerWorkgroup:
-        return {{"USE_GLOBAL_IDS", "0"}, {"USE_LOCAL_IDS", "0"}, {"ATOMIC_PER_WORKGROUP", "1"}};
-    default:
-        FATAL_ERROR("Unknown work item id usage");
-    }
-}
-
 static TestResult run(const KernelWithWorkArguments &arguments, Statistics &statistics) {
     const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
@@ -45,10 +30,7 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     Vulkan vulkan;
     Timer timer;
 
-    const VkPhysicalDeviceLimits &limits = vulkan.physicalDeviceProperties.limits;
-    if (arguments.workgroupSize > limits.maxComputeWorkGroupInvocations ||
-        arguments.workgroupSize > limits.maxComputeWorkGroupSize[0] ||
-        arguments.workgroupCount > limits.maxComputeWorkGroupCount[0]) {
+    if (!vulkan.supportsDispatch1D(arguments.workgroupSize, arguments.workgroupCount)) {
         return TestResult::DeviceNotCapable;
     }
 
@@ -56,7 +38,7 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
 
     const auto elementCount = static_cast<VkDeviceSize>(arguments.workgroupCount) * arguments.workgroupSize;
     const VkDeviceSize bufferSize = atomicPerWorkgroup ? 2 * sizeof(uint32_t) : elementCount * sizeof(uint32_t);
-    if (bufferSize > limits.maxStorageBufferRange) {
+    if (bufferSize > vulkan.physicalDeviceProperties.limits.maxStorageBufferRange) {
         return TestResult::DeviceNotCapable;
     }
     VkBufferUsageFlags bufferUsage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
@@ -67,37 +49,23 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
 
     std::vector<uint32_t> spirv;
     if (const TestResult result = ShaderCompiler::compileComputeShaderToSpirv("ulls_benchmark_write_one.comp",
-                                                                              workItemIdUsageDefines(arguments.usedIds), spirv);
+                                                                              writeOneShaderDefines(arguments.usedIds), spirv);
         result != TestResult::Success) {
         return result;
     }
-    VulkanShaderModule shaderModule(vulkan, spirv);
-    VulkanDescriptorSet descriptorSets(vulkan, 1, 1);
-    VulkanComputePipeline pipeline(vulkan, shaderModule, static_cast<uint32_t>(arguments.workgroupSize), descriptorSets.layout());
+    const VulkanShaderModule shaderModule(vulkan, spirv);
+    const VulkanDescriptorSet descriptorSets(vulkan, 1, 1);
+    const VulkanComputePipeline pipeline(vulkan, shaderModule, static_cast<uint32_t>(arguments.workgroupSize), descriptorSets.layout());
 
-    const VkDescriptorBufferInfo bufferInfo{buffer, 0u, bufferSize};
-    VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-    write.dstSet = descriptorSets[0];
-    write.dstBinding = 0;
-    write.descriptorCount = 1;
-    write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    write.pBufferInfo = &bufferInfo;
-    vkUpdateDescriptorSets(vulkan.device, 1, &write, 0, nullptr);
+    descriptorSets.writeWholeBuffer(0, buffer);
 
-    VkCommandBuffer commandBuffer = vulkan.allocateCommandBuffer();
-    VkCommandBufferBeginInfo commandBufferBeginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+    const VkCommandBuffer commandBuffer = vulkan.allocateCommandBuffer();
+    const VkCommandBufferBeginInfo commandBufferBeginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     ASSERT_VK_SUCCESS(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.layout(), 0, 1, descriptorSets.address(0), 0, nullptr);
     vkCmdDispatch(commandBuffer, static_cast<uint32_t>(arguments.workgroupCount), 1u, 1u);
-    // Vulkan requires no visibility for the shader writes unless it is asked for, while the
-    // sibling implementations submit through zeCommandQueueExecuteCommandLists / clFinish /
-    // cuLaunchKernel, which make the writes visible device wide. Without this barrier the
-    // Vulkan measurement leaves out work that the other APIs include.
-    VkMemoryBarrier shaderWriteBarrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
-    shaderWriteBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-    shaderWriteBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1, &shaderWriteBarrier, 0, nullptr, 0, nullptr);
+    recordShaderWriteToHostBarrier(commandBuffer);
     ASSERT_VK_SUCCESS(vkEndCommandBuffer(commandBuffer));
 
     std::unique_ptr<VulkanBuffer> staging;

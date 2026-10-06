@@ -28,10 +28,7 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     Vulkan vulkan;
     Timer timer;
 
-    const VkPhysicalDeviceLimits &limits = vulkan.physicalDeviceProperties.limits;
-    if (arguments.workgroupSize > limits.maxComputeWorkGroupInvocations ||
-        arguments.workgroupSize > limits.maxComputeWorkGroupSize[0] ||
-        arguments.workgroupCount > limits.maxComputeWorkGroupCount[0]) {
+    if (!vulkan.supportsDispatch1D(arguments.workgroupSize, arguments.workgroupCount)) {
         return TestResult::DeviceNotCapable;
     }
 
