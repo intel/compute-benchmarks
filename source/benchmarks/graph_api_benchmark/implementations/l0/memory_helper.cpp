@@ -7,7 +7,7 @@
 
 #include "implementations/l0/memory_helper.h"
 
-namespace mem_helper {
+namespace MemHelper {
 DataFloatPtr alloc(UsmMemoryPlacement placement, std::shared_ptr<LevelZero> levelzero, uint32_t count) {
     void *deviceptr = nullptr;
     EXPECT_ZE_RESULT_SUCCESS(L0::UsmHelper::allocate(placement, *levelzero, count * sizeof(float), &deviceptr));
@@ -16,4 +16,4 @@ DataFloatPtr alloc(UsmMemoryPlacement placement, std::shared_ptr<LevelZero> leve
         EXPECT_ZE_RESULT_SUCCESS(L0::UsmHelper::deallocate(placement, *levelzero, ptr));
     });
 }
-} // namespace mem_helper
+} // namespace MemHelper

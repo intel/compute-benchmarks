@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include <array>
 #include <vector>
 
-namespace graph_import {
+namespace GraphImport {
 enum class NodeType {
     Kernel,
     Barrier
@@ -1082,4 +1082,4 @@ const std::array<node, 929> llama{{{NodeType::Kernel, {1}},
                                    {NodeType::Kernel, {928}},
                                    {NodeType::Kernel, {}}}};
 
-} // namespace graph_import
+} // namespace GraphImport

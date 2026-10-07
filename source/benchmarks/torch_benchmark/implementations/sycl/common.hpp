@@ -15,7 +15,7 @@
 
 constexpr float epsilon = 1e-5f;
 
-namespace detail {
+namespace Detail {
 template <typename data_type>
 auto make_sycl_deleter(sycl::queue queue) {
     return [queue](data_type *ptr) {
@@ -23,11 +23,11 @@ auto make_sycl_deleter(sycl::queue queue) {
             sycl::free(ptr, queue);
     };
 }
-} // namespace detail
+} // namespace Detail
 
 template <typename data_type>
 auto make_device_ptr(Sycl &sycl, size_t size) {
-    auto deleter = detail::make_sycl_deleter<data_type>(sycl.queue);
+    auto deleter = Detail::make_sycl_deleter<data_type>(sycl.queue);
     using unique_ptr_type = std::unique_ptr<data_type, decltype(deleter)>;
     auto ptr = sycl::malloc_device<data_type>(size, sycl.queue);
     if (!ptr) {
@@ -38,7 +38,7 @@ auto make_device_ptr(Sycl &sycl, size_t size) {
 
 template <typename data_type>
 auto make_host_ptr(Sycl &sycl, size_t size) {
-    auto deleter = detail::make_sycl_deleter<data_type>(sycl.queue);
+    auto deleter = Detail::make_sycl_deleter<data_type>(sycl.queue);
     using unique_ptr_type = std::unique_ptr<data_type, decltype(deleter)>;
     auto ptr = sycl::malloc_host<data_type>(size, sycl.queue);
     if (!ptr) {

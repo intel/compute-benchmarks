@@ -34,13 +34,13 @@ struct TestEnv {
     std::vector<ze_event_handle_t> zeEvents;
     ze_event_pool_handle_t zePool = nullptr;
     std::unique_ptr<RandomDistribution> distribution;
-    mem_helper::DataFloatPtr inputData;
-    mem_helper::DataFloatPtr refResult;
-    mem_helper::DataFloatPtr outputData;
-    mem_helper::DataFloatPtr resData;
+    MemHelper::DataFloatPtr inputData;
+    MemHelper::DataFloatPtr refResult;
+    MemHelper::DataFloatPtr outputData;
+    MemHelper::DataFloatPtr resData;
 
-    mem_helper::DataFloatPtr graphInputData;
-    mem_helper::DataFloatPtr graphOutputData;
+    MemHelper::DataFloatPtr graphInputData;
+    MemHelper::DataFloatPtr graphOutputData;
 };
 TestResult createCommandList(TestEnv &env, bool useInOrder, bool isMutable, ze_command_list_handle_t *graphCmdList) {
 
@@ -139,13 +139,13 @@ TestResult initEnv(TestEnv &env, const MutateGraphArguments &arguments) {
         zeCommandListCreateImmediate(env.levelzero->context, env.levelzero->device,
                                      &cmdQueueDesc, &env.immCmdList));
 
-    env.inputData = mem_helper::alloc(UsmMemoryPlacement::Host, env.levelzero, env.size);
-    env.refResult = mem_helper::alloc(UsmMemoryPlacement::Host, env.levelzero, env.size);
-    env.outputData = mem_helper::alloc(UsmMemoryPlacement::Host, env.levelzero, env.size);
-    env.resData = mem_helper::alloc(UsmMemoryPlacement::Host, env.levelzero, env.size);
+    env.inputData = MemHelper::alloc(UsmMemoryPlacement::Host, env.levelzero, env.size);
+    env.refResult = MemHelper::alloc(UsmMemoryPlacement::Host, env.levelzero, env.size);
+    env.outputData = MemHelper::alloc(UsmMemoryPlacement::Host, env.levelzero, env.size);
+    env.resData = MemHelper::alloc(UsmMemoryPlacement::Host, env.levelzero, env.size);
 
-    env.graphInputData = mem_helper::alloc(UsmMemoryPlacement::Device, env.levelzero, env.size);
-    env.graphOutputData = mem_helper::alloc(UsmMemoryPlacement::Device, env.levelzero, env.size);
+    env.graphInputData = MemHelper::alloc(UsmMemoryPlacement::Device, env.levelzero, env.size);
+    env.graphOutputData = MemHelper::alloc(UsmMemoryPlacement::Device, env.levelzero, env.size);
 
     env.distribution = makeRandomDistribution(DistributionKind::Uniform, 0, 1);
 

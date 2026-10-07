@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,14 +40,14 @@ static TestResult run([[maybe_unused]] const FinalizeGraphArguments &arguments, 
 
         auto graphStructure = arguments.graphStructure;
         // Building the graph
-        sycl_ext::command_graph graph = graph_helpers::constructGraph(graphStructure, queue.get_context(), queue.get_device());
+        sycl_ext::command_graph graph = GraphHelpers::constructGraph(graphStructure, queue.get_context(), queue.get_device());
 
         // Do warmup to eliminate kernel compilation or other noise from graph finalize
         graph.finalize();
 
         // Benchmarking finalize time
         for (size_t iteration = 0; iteration < arguments.iterations; iteration++) {
-            auto LocalGraph = arguments.rebuildGraphEveryIter ? graph_helpers::constructGraph(graphStructure, queue.get_context(), queue.get_device()) : graph;
+            auto LocalGraph = arguments.rebuildGraphEveryIter ? GraphHelpers::constructGraph(graphStructure, queue.get_context(), queue.get_device()) : graph;
             timer.measureStart();
             // Finalize the graph
             auto executable_graph = graph.finalize();

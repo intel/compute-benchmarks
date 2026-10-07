@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 #include <level_zero/ze_api.h>
 
-namespace mem_helper {
+namespace MemHelper {
 using DataFloatPtr = SinKernelGraphBase::DataFloatPtr;
 DataFloatPtr alloc(UsmMemoryPlacement placement, std::shared_ptr<LevelZero> levelzero, uint32_t count);
-} // namespace mem_helper
+} // namespace MemHelper

@@ -20,11 +20,11 @@
 #include <math.h>
 
 SinKernelGraphL0::DataFloatPtr SinKernelGraphL0::allocDevice(uint32_t count) {
-    return mem_helper::alloc(UsmMemoryPlacement::Device, levelzero, count);
+    return MemHelper::alloc(UsmMemoryPlacement::Device, levelzero, count);
 }
 
 SinKernelGraphL0::DataFloatPtr SinKernelGraphL0::allocHost(uint32_t count) {
-    return mem_helper::alloc(UsmMemoryPlacement::Host, levelzero, count);
+    return MemHelper::alloc(UsmMemoryPlacement::Host, levelzero, count);
 }
 
 TestResult SinKernelGraphL0::runKernels(ze_command_list_handle_t cmdList) {

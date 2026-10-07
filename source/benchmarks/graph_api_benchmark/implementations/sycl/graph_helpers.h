@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,11 +15,11 @@
 #include <sycl/ext/oneapi/experimental/graph.hpp>
 #include <sycl/sycl.hpp>
 
-namespace graph_helpers {
+namespace GraphHelpers {
 namespace sycl_ext = sycl::ext::oneapi::experimental;
 
 template <size_t NumNodes>
-void buildGraphFromNodes(const std::array<graph_import::node, NumNodes> &NodeList, sycl_ext::command_graph<sycl_ext::graph_state::modifiable> &Graph) {
+void buildGraphFromNodes(const std::array<GraphImport::node, NumNodes> &NodeList, sycl_ext::command_graph<sycl_ext::graph_state::modifiable> &Graph) {
     // Storage for all the SYCL nodes
     std::vector<sycl_ext::node> SyclNodes;
     SyclNodes.reserve(NumNodes);
@@ -39,16 +39,16 @@ void buildGraphFromNodes(const std::array<graph_import::node, NumNodes> &NodeLis
     };
     // Create nodes in order using the explicit API so that we can later use successor indices to match SYCL node dependencies
     for (size_t i = 0; i < NumNodes; i++) {
-        const graph_import::node &N = NodeList[i];
+        const GraphImport::node &N = NodeList[i];
         switch (N.Type) {
-        case graph_import::NodeType::Kernel: {
+        case GraphImport::NodeType::Kernel: {
             auto KernelNode = Graph.add([&](sycl::handler &CGH) {
                 CGH.single_task(DummyKernel);
             });
             SyclNodes.push_back(KernelNode);
             break;
         }
-        case graph_import::NodeType::Barrier: {
+        case GraphImport::NodeType::Barrier: {
             // Barriers are equivalent to empty nodes in the explicit API
             auto BarrierNode = Graph.add();
             SyclNodes.push_back(BarrierNode);
@@ -61,7 +61,7 @@ void buildGraphFromNodes(const std::array<graph_import::node, NumNodes> &NodeLis
     // Make edges between all nodes based on provided successors
     for (size_t i = 0; i < NumNodes; i++) {
 
-        const graph_import::node &N = NodeList[i];
+        const GraphImport::node &N = NodeList[i];
         for (size_t Index : N.Successors) {
             Graph.make_edge(SyclNodes[i], SyclNodes[Index]);
         }
@@ -71,15 +71,15 @@ sycl_ext::command_graph<sycl_ext::graph_state::modifiable> constructGraph(GraphS
     sycl_ext::command_graph<sycl_ext::graph_state::modifiable> Graph{Context, Device};
     switch (Structure) {
     case GraphStructure::Gromacs: {
-        buildGraphFromNodes(graph_import::gromacs, Graph);
+        buildGraphFromNodes(GraphImport::gromacs, Graph);
         break;
     }
     case GraphStructure::LLama: {
-        buildGraphFromNodes(graph_import::llama, Graph);
+        buildGraphFromNodes(GraphImport::llama, Graph);
         break;
     }
     case GraphStructure::Amr: {
-        buildGraphFromNodes(graph_import::amr, Graph);
+        buildGraphFromNodes(GraphImport::amr, Graph);
         break;
     }
     default:
@@ -87,4 +87,4 @@ sycl_ext::command_graph<sycl_ext::graph_state::modifiable> constructGraph(GraphS
     }
     return Graph;
 }
-} // namespace graph_helpers
+} // namespace GraphHelpers

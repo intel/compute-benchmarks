@@ -99,7 +99,7 @@ Graph was taken from the 100th finalized graph as the first graphs are smaller a
 
 This tool could easily be extended with other node types if required:
 
-- Extend the `graph_import::NodeType` enum with new types.
+- Extend the `GraphImport::NodeType` enum with new types.
 - Modify the python script to match these new types from the dot node label.
 - Extend the graph construction helpers in
   `source/benchmarks/graph_api_benchmark/implementations/sycl/helpers.h`
