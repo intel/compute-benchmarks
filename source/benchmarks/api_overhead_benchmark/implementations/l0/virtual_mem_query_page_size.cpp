@@ -18,7 +18,7 @@
 static TestResult run(const VirtualMemQueryPageSizeArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
-    (void)arguments;
+    static_cast<void>(arguments);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

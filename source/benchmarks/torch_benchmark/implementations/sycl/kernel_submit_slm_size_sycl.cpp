@@ -32,7 +32,7 @@ static void submit_kernel_slm(sycl::queue &q, data_type *out, const std::size_t 
                       syclex::launch_config(sycl::nd_range<1>{wgc * wgs, wgs},
                                             syclex::properties{syclex::work_group_scratch_size(slm_num * sizeof(data_type))}),
                       [=](sycl::nd_item<1> item) {
-                          data_type *slm = (data_type *)syclex::get_work_group_scratch_memory();
+                          data_type *slm = static_cast<data_type *>(syclex::get_work_group_scratch_memory());
                           const size_t local_id = item.get_local_id(0);
                           const size_t local_size = item.get_local_range(0);
                           for (size_t i = local_id; i < slm_num; i += local_size) {

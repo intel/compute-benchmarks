@@ -111,8 +111,8 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
 
         auto &queue = queues[thread_id];
         for (size_t i = 0; i < numOpsPerThread; i++) {
-            int *usm_ptr = (int *)usm[thread_id][i];
-            auto host_dst = ((char *)dst_buffers[thread_id]) + i * allocSize;
+            int *usm_ptr = static_cast<int *>(usm[thread_id][i]);
+            auto host_dst = static_cast<char *>(dst_buffers[thread_id]) + i * allocSize;
 
             if (useEvents) {
                 queue.memcpy(usm_ptr, src_buffer, allocSize);

@@ -29,7 +29,7 @@ static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics
     QueueProperties queueProperties = QueueProperties::create().disable();
     Opencl opencl(queueProperties);
     Timer timer;
-    auto clEnqueueMemFillINTEL = (pfn_clEnqueueMemFillINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemFillINTEL");
+    auto clEnqueueMemFillINTEL = reinterpret_cast<pfn_clEnqueueMemFillINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemFillINTEL"));
     if (!opencl.getExtensions().isUsmSupported()) {
         return TestResult::DriverFunctionNotFound;
     }

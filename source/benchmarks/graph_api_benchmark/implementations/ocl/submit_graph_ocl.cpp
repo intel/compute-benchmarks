@@ -103,11 +103,11 @@ static TestResult run(const SubmitGraphArguments &arguments, Statistics &statist
         return TestResult::DeviceNotCapable;
     }
 
-    auto clCreateCommandBufferKHR = (clCreateCommandBufferKHR_fn)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clCreateCommandBufferKHR");
-    auto clCommandNDRangeKernelKHR = (clCommandNDRangeKernelKHR_fn)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clCommandNDRangeKernelKHR");
-    auto clFinalizeCommandBufferKHR = (clFinalizeCommandBufferKHR_fn)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clFinalizeCommandBufferKHR");
-    auto clReleaseCommandBufferKHR = (clReleaseCommandBufferKHR_fn)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clReleaseCommandBufferKHR");
-    auto clEnqueueCommandBufferKHR = (clEnqueueCommandBufferKHR_fn)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueCommandBufferKHR");
+    auto clCreateCommandBufferKHR = reinterpret_cast<clCreateCommandBufferKHR_fn>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clCreateCommandBufferKHR"));
+    auto clCommandNDRangeKernelKHR = reinterpret_cast<clCommandNDRangeKernelKHR_fn>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clCommandNDRangeKernelKHR"));
+    auto clFinalizeCommandBufferKHR = reinterpret_cast<clFinalizeCommandBufferKHR_fn>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clFinalizeCommandBufferKHR"));
+    auto clReleaseCommandBufferKHR = reinterpret_cast<clReleaseCommandBufferKHR_fn>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clReleaseCommandBufferKHR"));
+    auto clEnqueueCommandBufferKHR = reinterpret_cast<clEnqueueCommandBufferKHR_fn>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueCommandBufferKHR"));
 
     Timer timer;
     const size_t gws = 1u;

@@ -57,8 +57,8 @@ static TestResult run(const SinglePrecisionPerformanceArguments &arguments, Stat
     const float initialValue = 0.0f;
     const float expectedValue = static_cast<float>(loopIterations * opsPerLoop);
 
-    auto clEnqueueMemFillINTEL = (pfn_clEnqueueMemFillINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemFillINTEL");
-    auto clEnqueueMemcpyINTEL = (pfn_clEnqueueMemcpyINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemcpyINTEL");
+    auto clEnqueueMemFillINTEL = reinterpret_cast<pfn_clEnqueueMemFillINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemFillINTEL"));
+    auto clEnqueueMemcpyINTEL = reinterpret_cast<pfn_clEnqueueMemcpyINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemcpyINTEL"));
     if (!clEnqueueMemFillINTEL || !clEnqueueMemcpyINTEL) {
         return TestResult::DriverFunctionNotFound;
     }

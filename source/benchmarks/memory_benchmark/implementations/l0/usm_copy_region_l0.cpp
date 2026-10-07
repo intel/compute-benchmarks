@@ -45,7 +45,7 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
 
     // Create buffers
     void *source{}, *destination{};
-    const ze_copy_region_t reg = {(uint32_t)arguments.origin[0], (uint32_t)arguments.origin[1], (uint32_t)arguments.origin[2], (uint32_t)arguments.region[0], (uint32_t)arguments.region[1], (uint32_t)arguments.region[2]};
+    const ze_copy_region_t reg = {static_cast<uint32_t>(arguments.origin[0]), static_cast<uint32_t>(arguments.origin[1]), static_cast<uint32_t>(arguments.origin[2]), static_cast<uint32_t>(arguments.region[0]), static_cast<uint32_t>(arguments.region[1]), static_cast<uint32_t>(arguments.region[2])};
     auto copySize = arguments.region[0] * arguments.region[1] * arguments.region[2];
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &source));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.destinationPlacement, levelzero, arguments.size, &destination));

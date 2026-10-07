@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,10 +57,10 @@ class ExtensionsHelper {
     UsmFunctions queryUsmFunctions() const {
         UsmFunctions result{};
         if (isUsmSupported()) {
-            result.clMemFreeINTEL = (pfn_clMemFreeINTEL)clGetExtensionFunctionAddressForPlatform(platform, "clMemFreeINTEL");
-            result.clHostMemAllocINTEL = (pfn_clHostMemAllocINTEL)clGetExtensionFunctionAddressForPlatform(platform, "clHostMemAllocINTEL");
-            result.clDeviceMemAllocINTEL = (pfn_clDeviceMemAllocINTEL)clGetExtensionFunctionAddressForPlatform(platform, "clDeviceMemAllocINTEL");
-            result.clSharedMemAllocINTEL = (pfn_clSharedMemAllocINTEL)clGetExtensionFunctionAddressForPlatform(platform, "clSharedMemAllocINTEL");
+            result.clMemFreeINTEL = reinterpret_cast<pfn_clMemFreeINTEL>(clGetExtensionFunctionAddressForPlatform(platform, "clMemFreeINTEL"));
+            result.clHostMemAllocINTEL = reinterpret_cast<pfn_clHostMemAllocINTEL>(clGetExtensionFunctionAddressForPlatform(platform, "clHostMemAllocINTEL"));
+            result.clDeviceMemAllocINTEL = reinterpret_cast<pfn_clDeviceMemAllocINTEL>(clGetExtensionFunctionAddressForPlatform(platform, "clDeviceMemAllocINTEL"));
+            result.clSharedMemAllocINTEL = reinterpret_cast<pfn_clSharedMemAllocINTEL>(clGetExtensionFunctionAddressForPlatform(platform, "clSharedMemAllocINTEL"));
         }
         return result;
     }

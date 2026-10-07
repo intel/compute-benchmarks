@@ -41,7 +41,7 @@ class TestCase : public TestCaseBase {
         Function function = {};
         bool requiresIntelExtensions = false;
     };
-    static inline BenchmarkImplementation implementations[(int)Api::COUNT];
+    static inline BenchmarkImplementation implementations[static_cast<int>(Api::COUNT)];
 
     std::unique_ptr<ArgumentContainer> getArguments() const override { return std::make_unique<ArgumentContainerT>(); }
     std::string getHelpParameters() const override { return ArgumentContainerT{}.getHelp(2u); }

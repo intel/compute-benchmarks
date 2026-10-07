@@ -52,7 +52,7 @@ static TestResult run(const ExecuteCommandListWithIndirectAccessArguments &argum
         const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
         void *ptr = nullptr;
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostAllocationDesc, sizeof(int32_t), 4u, &ptr));
-        indirectAllocations.push_back((int32_t *)ptr);
+        indirectAllocations.push_back(static_cast<int32_t *>(ptr));
     }
 
     std::vector<st_container *> wrappedIndirectAllocations;
@@ -62,7 +62,7 @@ static TestResult run(const ExecuteCommandListWithIndirectAccessArguments &argum
         const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
         void *ptr = nullptr;
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostAllocationDesc, sizeof(st_container), 4u, &ptr));
-        st_container *wrappedIndirectAllocation = (st_container *)ptr;
+        st_container *wrappedIndirectAllocation = static_cast<st_container *>(ptr);
         wrappedIndirectAllocation->next = lastContainer;
         wrappedIndirectAllocation->value = allocation;
         wrappedIndirectAllocations.push_back(wrappedIndirectAllocation);

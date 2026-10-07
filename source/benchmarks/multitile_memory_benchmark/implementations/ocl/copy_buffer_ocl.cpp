@@ -35,7 +35,7 @@ static TestResult run(const CopyBufferArguments &arguments, Statistics &statisti
     if (opencl.context == nullptr) {
         return TestResult::DeviceNotCapable;
     }
-    auto clCreateBufferWithPropertiesINTEL = (pfn_clCreateBufferWithPropertiesINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clCreateBufferWithPropertiesINTEL");
+    auto clCreateBufferWithPropertiesINTEL = reinterpret_cast<pfn_clCreateBufferWithPropertiesINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clCreateBufferWithPropertiesINTEL"));
     if (!clCreateBufferWithPropertiesINTEL) {
         return TestResult::DriverFunctionNotFound;
     }
@@ -46,14 +46,14 @@ static TestResult run(const CopyBufferArguments &arguments, Statistics &statisti
         CL_MEM_FLAGS,
         CL_MEM_READ_WRITE | CompressionHelper::getCompressionFlags(arguments.srcCompressed, arguments.noIntelExtensions),
         CL_MEM_DEVICE_ID_INTEL,
-        (cl_mem_properties_intel)opencl.getDevice(arguments.srcPlacement),
+        reinterpret_cast<cl_mem_properties_intel>(opencl.getDevice(arguments.srcPlacement)),
         0,
     };
     const cl_mem_properties_intel memPropertiesDst[] = {
         CL_MEM_FLAGS,
         CL_MEM_READ_WRITE | CompressionHelper::getCompressionFlags(arguments.dstCompressed, arguments.noIntelExtensions),
         CL_MEM_DEVICE_ID_INTEL,
-        (cl_mem_properties_intel)opencl.getDevice(arguments.dstPlacement),
+        reinterpret_cast<cl_mem_properties_intel>(opencl.getDevice(arguments.dstPlacement)),
         0,
     };
     const cl_mem source = clCreateBufferWithPropertiesINTEL(opencl.context, memPropertiesSrc, 0, arguments.size, nullptr, &retVal);

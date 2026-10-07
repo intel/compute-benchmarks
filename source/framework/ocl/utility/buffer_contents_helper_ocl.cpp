@@ -98,9 +98,9 @@ cl_int BufferContentsHelperOcl::fillUsmBufferWithRandomBytes(cl_command_queue qu
     CL_SUCCESS_OR_RETURN(clGetCommandQueueInfo(queue, CL_QUEUE_CONTEXT, sizeof(context), &context, nullptr));
     cl_platform_id platform = {};
     CL_SUCCESS_OR_RETURN(clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(platform), &platform, nullptr));
-    auto clHostMemAllocINTEL = (pfn_clHostMemAllocINTEL)clGetExtensionFunctionAddressForPlatform(platform, "clHostMemAllocINTEL");
-    auto clMemFreeINTEL = (pfn_clMemFreeINTEL)clGetExtensionFunctionAddressForPlatform(platform, "clMemFreeINTEL");
-    auto clEnqueueMemcpyINTEL = (pfn_clEnqueueMemcpyINTEL)clGetExtensionFunctionAddressForPlatform(platform, "clEnqueueMemcpyINTEL");
+    auto clHostMemAllocINTEL = reinterpret_cast<pfn_clHostMemAllocINTEL>(clGetExtensionFunctionAddressForPlatform(platform, "clHostMemAllocINTEL"));
+    auto clMemFreeINTEL = reinterpret_cast<pfn_clMemFreeINTEL>(clGetExtensionFunctionAddressForPlatform(platform, "clMemFreeINTEL"));
+    auto clEnqueueMemcpyINTEL = reinterpret_cast<pfn_clEnqueueMemcpyINTEL>(clGetExtensionFunctionAddressForPlatform(platform, "clEnqueueMemcpyINTEL"));
 
     // Create staging allocation
     cl_int retVal = {};
@@ -122,7 +122,7 @@ cl_int BufferContentsHelperOcl::fillUsmBufferWithZeros(cl_command_queue queue, v
     CL_SUCCESS_OR_RETURN(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(device), &device, nullptr));
     cl_platform_id platform = {};
     CL_SUCCESS_OR_RETURN(clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(platform), &platform, nullptr));
-    auto clEnqueueMemFillINTEL = (pfn_clEnqueueMemFillINTEL)clGetExtensionFunctionAddressForPlatform(platform, "clEnqueueMemFillINTEL");
+    auto clEnqueueMemFillINTEL = reinterpret_cast<pfn_clEnqueueMemFillINTEL>(clGetExtensionFunctionAddressForPlatform(platform, "clEnqueueMemFillINTEL"));
 
     // Fill with zeros
     const cl_uint pattern[] = {0};

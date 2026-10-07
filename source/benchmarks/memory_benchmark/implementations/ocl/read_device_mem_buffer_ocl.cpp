@@ -77,7 +77,7 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
     float floatVal1 = 0.0f;
     for (size_t i = 0; i < arguments.size / sizeof(float);) {
         for (size_t j = 0; j < 8; j++) {
-            *(pBuff++) = floatVal1 + (float)j;
+            *(pBuff++) = floatVal1 + static_cast<float>(j);
         }
         floatVal1 += 10.0f;
         i += 8;

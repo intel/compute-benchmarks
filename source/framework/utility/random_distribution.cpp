@@ -17,10 +17,10 @@ size_t UniformDistribution::get(std::mt19937 &gen) {
 
 LogUniformDistribution::LogUniformDistribution(size_t min, size_t max) {
     assert(min < max && min != 0);
-    double quotient = (double)max / (double)min;
+    double quotient = static_cast<double>(max) / static_cast<double>(min);
     minValue = min;
     maxValue = max;
-    multiplier = (double)min;
+    multiplier = static_cast<double>(min);
     expotent = std::uniform_real_distribution<double>{0, std::log(quotient)};
 }
 

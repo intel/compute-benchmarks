@@ -31,8 +31,8 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
     cl_int retVal{};
     cl_event profilingEvent{};
 
-    auto clHostMemAllocINTEL = (pfn_clHostMemAllocINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clHostMemAllocINTEL");
-    auto clMemFreeINTEL = (pfn_clMemFreeINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clMemFreeINTEL");
+    auto clHostMemAllocINTEL = reinterpret_cast<pfn_clHostMemAllocINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clHostMemAllocINTEL"));
+    auto clMemFreeINTEL = reinterpret_cast<pfn_clMemFreeINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clMemFreeINTEL"));
     if (!clHostMemAllocINTEL || !clMemFreeINTEL) {
         return TestResult::DriverFunctionNotFound;
     }

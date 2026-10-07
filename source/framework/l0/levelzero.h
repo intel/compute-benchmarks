@@ -24,7 +24,7 @@
 #include <limits>
 #include <ratio>
 
-#define ZE_MODULE_FORMAT_OCLC (ze_module_format_t)3U
+#define ZE_MODULE_FORMAT_OCLC static_cast<ze_module_format_t>(3U)
 #define ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE EXTENDED_ENUM(ze_result_t, 0x7fff0003)
 
 namespace L0 {

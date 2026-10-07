@@ -113,7 +113,7 @@ static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics
 
         uint64_t eventAddress = 0llu;
         uint64_t completionValue = 0llu;
-        uint32_t delayValue = (uint32_t)arguments.delay;
+        uint32_t delayValue = static_cast<uint32_t>(arguments.delay);
 
         for (auto i = 0u; i < arguments.kernelCount; i++) {
             ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(eventAddress), &eventAddress));

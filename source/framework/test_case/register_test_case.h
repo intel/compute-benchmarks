@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 template <typename TestCase>
 struct RegisterTestCaseImplementation {
     explicit RegisterTestCaseImplementation(typename TestCase::BenchmarkImplementation::Function function, Api api, bool requiresIntelExtensions = false) {
-        auto &implementation = TestCase::implementations[(int)api];
+        auto &implementation = TestCase::implementations[static_cast<int>(api)];
         implementation.function = function;
         implementation.requiresIntelExtensions = requiresIntelExtensions;
     }

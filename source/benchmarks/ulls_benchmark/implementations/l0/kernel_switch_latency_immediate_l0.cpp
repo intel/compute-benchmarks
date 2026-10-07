@@ -165,7 +165,7 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
                 switchTime += std::chrono::nanoseconds((laterKernelTimestamp.global.kernelStart - earlierKernelTimestamp.global.kernelEnd) * timerResolution);
             }
         } else {
-            auto totalTime = (std::chrono::nanoseconds)timer.get().count();
+            auto totalTime = static_cast<std::chrono::nanoseconds>(timer.get().count());
             if (totalTime < kernelsTime) {
                 continue;
             }

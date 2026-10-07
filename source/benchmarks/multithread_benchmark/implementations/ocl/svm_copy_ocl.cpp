@@ -35,7 +35,7 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
     // Setup
     Opencl opencl;
     Timer timer{};
-    auto clEnqueueMemcpyINTEL = (pfn_clEnqueueMemcpyINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemcpyINTEL");
+    auto clEnqueueMemcpyINTEL = reinterpret_cast<pfn_clEnqueueMemcpyINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemcpyINTEL"));
     if (!opencl.getExtensions().isUsmSupported()) {
         return TestResult::DriverFunctionNotFound;
     }

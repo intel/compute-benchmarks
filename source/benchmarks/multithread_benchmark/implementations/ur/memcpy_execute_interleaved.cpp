@@ -145,7 +145,7 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         for (size_t i = 0; i < numOpsPerThread; i++) {
             auto kernel = kernels[thread_id][i];
             auto usm_ptr = usm[thread_id][i];
-            auto host_dst = ((char *)dst_buffers[thread_id]) + i * allocSize;
+            auto host_dst = static_cast<char *>(dst_buffers[thread_id]) + i * allocSize;
 
             ur_event_handle_t *memcpySignalEventPtr = useEvents ? &events[i][0] : nullptr;
             ur_event_handle_t *kernelSignalEventPtr = useEvents ? &events[i][1] : nullptr;

@@ -52,7 +52,7 @@ class DeviceMemory {
     DeviceMemory(LevelZero &l0, size_t length) : context(l0.context), ptr(nullptr) {
         if (zeMemAllocDevice(l0.context, &zeDefaultGPUDeviceMemAllocDesc,
                              length * sizeof(T), alignof(T), l0.device,
-                             (void **)&ptr) != ZE_RESULT_SUCCESS) {
+                             reinterpret_cast<void **>(&ptr)) != ZE_RESULT_SUCCESS) {
             throw std::bad_alloc();
         }
     }
@@ -96,7 +96,7 @@ class HostMemory {
     HostMemory(LevelZero &l0, size_t length) : context(l0.context), ptr(nullptr) {
         if (zeMemAllocHost(l0.context, &zeDefaultGPUHostMemAllocDesc,
                            length * sizeof(T), alignof(T),
-                           (void **)&ptr) != ZE_RESULT_SUCCESS) {
+                           reinterpret_cast<void **>(&ptr)) != ZE_RESULT_SUCCESS) {
             throw std::bad_alloc();
         }
     }

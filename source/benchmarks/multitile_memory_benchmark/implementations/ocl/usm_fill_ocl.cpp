@@ -35,9 +35,9 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
     if (!QueueFamiliesHelper::validateCapability(opencl.commandQueue, CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL)) {
         return TestResult::DeviceNotCapable;
     }
-    auto clCreateBufferWithPropertiesINTEL = (pfn_clCreateBufferWithPropertiesINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clCreateBufferWithPropertiesINTEL");
-    auto clMemFreeINTEL = (pfn_clMemFreeINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clMemFreeINTEL");
-    auto clEnqueueMemFillINTEL = (pfn_clEnqueueMemFillINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemFillINTEL");
+    auto clCreateBufferWithPropertiesINTEL = reinterpret_cast<pfn_clCreateBufferWithPropertiesINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clCreateBufferWithPropertiesINTEL"));
+    auto clMemFreeINTEL = reinterpret_cast<pfn_clMemFreeINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clMemFreeINTEL"));
+    auto clEnqueueMemFillINTEL = reinterpret_cast<pfn_clEnqueueMemFillINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemFillINTEL"));
     if (!clCreateBufferWithPropertiesINTEL || !opencl.getExtensions().isUsmSupported()) {
         return TestResult::DriverFunctionNotFound;
     }

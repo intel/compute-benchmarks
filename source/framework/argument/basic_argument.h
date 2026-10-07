@@ -121,7 +121,7 @@ struct FractionBaseArgument : IntegerArgumentBase {
 
   protected:
     std::string toStringValue() const override {
-        float percentValue = this->value > 0 ? 100 / (float)this->value : 0;
+        float percentValue = this->value > 0 ? 100 / static_cast<float>(this->value) : 0;
         std::string stringValue = std::to_string(percentValue);
         return stringValue.substr(0, stringValue.find(".") + 3) + "%";
     }

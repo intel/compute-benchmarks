@@ -24,8 +24,8 @@ static TestResult run(const UsmSharedMigrateCpuArguments &arguments, Statistics 
     // Setup
     Opencl opencl;
     Timer timer;
-    auto clSharedMemAllocINTEL = (pfn_clSharedMemAllocINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clSharedMemAllocINTEL");
-    auto clMemFreeINTEL = (pfn_clMemFreeINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clMemFreeINTEL");
+    auto clSharedMemAllocINTEL = reinterpret_cast<pfn_clSharedMemAllocINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clSharedMemAllocINTEL"));
+    auto clMemFreeINTEL = reinterpret_cast<pfn_clMemFreeINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clMemFreeINTEL"));
     if (!clSharedMemAllocINTEL || !clMemFreeINTEL) {
         return TestResult::DriverFunctionNotFound;
     }

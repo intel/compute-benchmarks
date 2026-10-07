@@ -52,7 +52,7 @@ static TestResult run(const CopyImageToBufferArguments &arguments, Statistics &s
     ASSERT_ZE_RESULT_SUCCESS(zeImageCreate(levelzero.context, levelzero.device, &imageDesc, &srcImage));
     void *destination{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.destinationPlacement, levelzero, arguments.size, &destination));
-    const ze_image_region_t reg = {0u, 0u, 0u, (uint32_t)arguments.region[0], (uint32_t)arguments.region[1], (uint32_t)arguments.region[2]};
+    const ze_image_region_t reg = {0u, 0u, 0u, static_cast<uint32_t>(arguments.region[0]), static_cast<uint32_t>(arguments.region[1]), static_cast<uint32_t>(arguments.region[2])};
     const size_t imageSizeInBytes = ImageHelperL0::getImageSizeInBytes(channelOrder, channelFormat, arguments.region);
 
     // Create event

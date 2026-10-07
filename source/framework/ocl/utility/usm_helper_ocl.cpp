@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,17 +102,17 @@ void *UsmHelperOcl::allocate(DeviceSelection placement, Opencl &opencl, size_t b
     const bool hasHost = DeviceSelectionHelper::hasDevice(placement, DeviceSelection::Host);
 
     if (hasDevice && hasHost) {
-        auto clSharedMemAllocINTEL = (pfn_clDeviceMemAllocINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clSharedMemAllocINTEL");
+        auto clSharedMemAllocINTEL = reinterpret_cast<pfn_clDeviceMemAllocINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clSharedMemAllocINTEL"));
         return clSharedMemAllocINTEL(opencl.context, opencl.getDevice(gpuDevice), nullptr, bufferSize, 0, retVal);
     }
 
     if (hasDevice) {
-        auto clDeviceMemAllocINTEL = (pfn_clDeviceMemAllocINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clDeviceMemAllocINTEL");
+        auto clDeviceMemAllocINTEL = reinterpret_cast<pfn_clDeviceMemAllocINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clDeviceMemAllocINTEL"));
         return clDeviceMemAllocINTEL(opencl.context, opencl.getDevice(gpuDevice), nullptr, bufferSize, 0, retVal);
     }
 
     if (hasHost) {
-        auto clHostMemAllocINTEL = (pfn_clHostMemAllocINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clHostMemAllocINTEL");
+        auto clHostMemAllocINTEL = reinterpret_cast<pfn_clHostMemAllocINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clHostMemAllocINTEL"));
         return clHostMemAllocINTEL(opencl.context, nullptr, bufferSize, 0, retVal);
     }
 

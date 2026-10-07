@@ -34,7 +34,7 @@ static TestResult run(const UsmMemsetArguments &arguments, Statistics &statistic
         return TestResult::DeviceNotCapable;
     }
     Timer timer;
-    auto clEnqueueMemsetINTEL = (pfn_clEnqueueMemsetINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemsetINTEL");
+    auto clEnqueueMemsetINTEL = reinterpret_cast<pfn_clEnqueueMemsetINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemsetINTEL"));
     if (!opencl.getExtensions().isUsmSupported()) {
         return TestResult::DriverFunctionNotFound;
     }

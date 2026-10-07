@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,9 +52,9 @@ static inline TestResult verifyResults(size_t numThreads, size_t numOpsPerThread
     for (size_t t = 0; t < numThreads; t++) {
         for (size_t i = 0; i < numOpsPerThread; i++) {
             for (size_t j = 0; j < allocSize / sizeof(int); j++) {
-                auto v = *(((char *)dst_buffers[t]) + i * allocSize + j * sizeof(int));
+                auto v = *(static_cast<char *>(dst_buffers[t]) + i * allocSize + j * sizeof(int));
                 if (v != value) {
-                    std::cerr << "dst_buffers at: " << t << " " << i << " " << j << " , is: " << (int)v << std::endl;
+                    std::cerr << "dst_buffers at: " << t << " " << i << " " << j << " , is: " << static_cast<int>(v) << std::endl;
                     return TestResult::Error;
                 }
             }

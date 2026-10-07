@@ -81,7 +81,7 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
     auto hostInBuffer = std::make_unique<int[]>(inOutBuffSize / sizeof(int));
     int *pBuff = hostInBuffer.get();
     for (size_t i = 0; i < inOutBuffSize / sizeof(int); i++) {
-        *(pBuff++) = (int)i;
+        *(pBuff++) = static_cast<int>(i);
     }
     const cl_mem source = clCreateBuffer(opencl.context, memFlagsIn, inOutBuffSize, hostInBuffer.get(), &retVal);
     ASSERT_CL_SUCCESS(retVal);
@@ -91,11 +91,11 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
 
     const size_t sharedDataSize = 256UL;
 
-    const size_t slmInitData = (size_t)(sharedDataSize * numDataGroups * sizeof(float));
+    const size_t slmInitData = static_cast<size_t>(sharedDataSize * numDataGroups * sizeof(float));
     auto hostBuffTable = std::make_unique<int[]>(slmInitData);
     int *pBuffI = hostBuffTable.get();
     for (size_t i = 0; i < sharedDataSize; i++) {
-        *(pBuffI++) = (int)i;
+        *(pBuffI++) = static_cast<int>(i);
     }
 
     const cl_mem slmInitBuff = clCreateBuffer(opencl.context, memFlagsIn, slmInitData, hostBuffTable.get(), &retVal);
@@ -216,7 +216,7 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
             size_t avgInThread = static_cast<size_t>(slmClocksBuffer.get()[(item * vectorSize)]);
             size_t minInThread = static_cast<size_t>(slmClocksBuffer.get()[(item * vectorSize) + 1]);
             size_t maxInThread = static_cast<size_t>(slmClocksBuffer.get()[(item * vectorSize) + 2]);
-            bool isOverflow = (bool)slmClocksBuffer.get()[(item * vectorSize) + 3];
+            bool isOverflow = static_cast<bool>(slmClocksBuffer.get()[(item * vectorSize) + 3]);
             if (isOverflow) {
                 if (printToConsole == false) {
                     std::cout << "BW overflow happens in gws " << gws << std::endl;
@@ -229,12 +229,12 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
             vecPerThreadMax.push_back(maxInThread);
         }
 
-        std::chrono::steady_clock::duration averageLatency = static_cast<std::chrono::steady_clock::duration>(std::accumulate(vecPerThreadAverages.begin(), vecPerThreadAverages.end(), (size_t)0) / vecPerThreadAverages.size());
+        std::chrono::steady_clock::duration averageLatency = static_cast<std::chrono::steady_clock::duration>(std::accumulate(vecPerThreadAverages.begin(), vecPerThreadAverages.end(), static_cast<size_t>(0)) / vecPerThreadAverages.size());
 
         if (printPerEnqueueStats) {
             size_t minInAllThreads = *std::min_element(vecPerThreadMins.begin(), vecPerThreadMins.end());
             size_t maxInAllThreads = *std::max_element(vecPerThreadMax.begin(), vecPerThreadMax.end());
-            std::cout << "[" << i << "] Average Latency " << static_cast<size_t>(std::accumulate(vecPerThreadAverages.begin(), vecPerThreadAverages.end(), (size_t)0) / vecPerThreadAverages.size()) << " [clk]  min: " << minInAllThreads << " [clk]  max: " << maxInAllThreads << " [clk] (SLM uint4 load.slm.d32)" << std::endl;
+            std::cout << "[" << i << "] Average Latency " << static_cast<size_t>(std::accumulate(vecPerThreadAverages.begin(), vecPerThreadAverages.end(), static_cast<size_t>(0)) / vecPerThreadAverages.size()) << " [clk]  min: " << minInAllThreads << " [clk]  max: " << maxInAllThreads << " [clk] (SLM uint4 load.slm.d32)" << std::endl;
         }
         statistics.pushValue(averageLatency, typeSelector.getUnit(), typeSelector.getType());
 

@@ -29,8 +29,8 @@
 // Extension functions
 
 ZE_APIEXPORT ze_result_t ZE_APICALL null_zeGraphCreateExp(ze_context_handle_t hContext, ze_graph_handle_t *phGraph, void *pNext) {
-    (void)hContext;
-    (void)pNext;
+    static_cast<void>(hContext);
+    static_cast<void>(pNext);
     if (phGraph) {
         *phGraph = reinterpret_cast<ze_graph_handle_t>(0x10);
     }
@@ -41,8 +41,8 @@ ZE_MOCK_SUCCESS(null_zeCommandListBeginGraphCaptureExp, ze_command_list_handle_t
 ZE_MOCK_SUCCESS(null_zeCommandListBeginCaptureIntoGraphExp, ze_command_list_handle_t, ze_graph_handle_t, void *)
 
 ZE_APIEXPORT ze_result_t ZE_APICALL null_zeCommandListEndGraphCaptureExp(ze_command_list_handle_t hCommandList, ze_graph_handle_t *phGraph, void *pNext) {
-    (void)hCommandList;
-    (void)pNext;
+    static_cast<void>(hCommandList);
+    static_cast<void>(pNext);
     if (phGraph) {
         *phGraph = reinterpret_cast<ze_graph_handle_t>(0x11);
     }
@@ -50,8 +50,8 @@ ZE_APIEXPORT ze_result_t ZE_APICALL null_zeCommandListEndGraphCaptureExp(ze_comm
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL null_zeCommandListInstantiateGraphExp(ze_graph_handle_t hGraph, ze_executable_graph_handle_t *phExecutableGraph, void *pNext) {
-    (void)hGraph;
-    (void)pNext;
+    static_cast<void>(hGraph);
+    static_cast<void>(pNext);
     if (phExecutableGraph) {
         *phExecutableGraph = reinterpret_cast<ze_executable_graph_handle_t>(0x12);
     }
@@ -72,7 +72,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGet(uint32_t *pCount,
     if (*pCount == 0) {
         *pCount = 1;
     } else if (phDrivers != nullptr) {
-        phDrivers[0] = (ze_driver_handle_t)0x1;
+        phDrivers[0] = reinterpret_cast<ze_driver_handle_t>(0x1);
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -80,7 +80,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGet(uint32_t *pCount,
 ZE_MOCK_SUCCESS(zeInitDrivers, uint32_t *, ze_driver_handle_t *, ze_init_driver_type_desc_t *)
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetApiVersion(ze_driver_handle_t hDriver, ze_api_version_t *version) {
-    (void)hDriver;
+    static_cast<void>(hDriver);
     if (version) {
         *version = ZE_API_VERSION_1_15;
     }
@@ -88,7 +88,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetApiVersion(ze_driver_handle_t hDr
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetProperties(ze_driver_handle_t hDriver, ze_driver_properties_t *pDriverProperties) {
-    (void)hDriver;
+    static_cast<void>(hDriver);
     pDriverProperties->driverVersion = 0x00010000;
     pDriverProperties->stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
     pDriverProperties->uuid = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
@@ -104,7 +104,7 @@ ZE_MOCK_SUCCESS(zeDriverGetLastErrorDescription, ze_driver_handle_t, const char 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGet(ze_driver_handle_t hDriver,
                                                 uint32_t *pCount,
                                                 ze_device_handle_t *phDevices) {
-    (void)hDriver;
+    static_cast<void>(hDriver);
     if (*pCount == 0) {
         *pCount = 1;
     } else if (phDevices != nullptr) {
@@ -120,8 +120,8 @@ zeDeviceGetSubDevices(
     ze_device_handle_t hDevice,
     uint32_t *pCount,
     ze_device_handle_t *phSubdevices) {
-    (void)hDevice;
-    (void)phSubdevices;
+    static_cast<void>(hDevice);
+    static_cast<void>(phSubdevices);
     *pCount = 0;
     return ZE_RESULT_SUCCESS;
 }
@@ -130,7 +130,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetProperties(
     ze_device_handle_t hDevice,
     ze_device_properties_t *pDeviceProperties) {
-    (void)hDevice;
+    static_cast<void>(hDevice);
     pDeviceProperties->stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
     pDeviceProperties->pNext = nullptr;
 
@@ -169,7 +169,7 @@ zeDeviceGetCommandQueueGroupProperties(
     ze_device_handle_t hDevice,
     uint32_t *pCount,
     ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
-    (void)hDevice;
+    static_cast<void>(hDevice);
     if (*pCount == 0) {
         *pCount = 1;
         return ZE_RESULT_SUCCESS;
@@ -268,11 +268,11 @@ zeMemAllocDevice(
     size_t alignment,
     ze_device_handle_t hDevice,
     void **pptr) {
-    (void)hContext;
-    (void)device_desc;
-    (void)size;
-    (void)alignment;
-    (void)hDevice;
+    static_cast<void>(hContext);
+    static_cast<void>(device_desc);
+    static_cast<void>(size);
+    static_cast<void>(alignment);
+    static_cast<void>(hDevice);
     *pptr = reinterpret_cast<void *>(0x1000);
     return ZE_RESULT_SUCCESS;
 }
@@ -329,9 +329,9 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeVirtualMemQueryPageSize(
     ze_device_handle_t hDevice,
     size_t size,
     size_t *pPageSize) {
-    (void)hContext;
-    (void)hDevice;
-    (void)size;
+    static_cast<void>(hContext);
+    static_cast<void>(hDevice);
+    static_cast<void>(size);
     if (pPageSize) {
         *pPageSize = 4096;
     }
@@ -349,9 +349,9 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeVirtualMemGetAccessAttribute(
     const void *ptr,
     size_t size,
     ze_memory_access_attribute_t *pAccess) {
-    (void)hContext;
-    (void)ptr;
-    (void)size;
+    static_cast<void>(hContext);
+    static_cast<void>(ptr);
+    static_cast<void>(size);
     if (pAccess) {
         *pAccess = ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE;
     }
@@ -565,7 +565,7 @@ ZE_MOCK_FAILURE(zeIntelMemGetFormatModifiersSupportedExp, ze_context_handle_t, c
 ZE_MOCK_SUCCESS(zeDeviceGetPriorityLevels, ze_device_handle_t, int *, int *)
 
 ze_context_handle_t zeDriverGetDefaultContext(ze_driver_handle_t hDriver) {
-    (void)hDriver;
+    static_cast<void>(hDriver);
     return reinterpret_cast<ze_context_handle_t>(0x19);
 }
 
@@ -574,7 +574,7 @@ ze_context_handle_t zerGetDefaultContext() {
 }
 
 uint32_t zerTranslateDeviceHandleToIdentifier(ze_device_handle_t hDevice) {
-    (void)hDevice;
+    static_cast<void>(hDevice);
     return 42;
 }
 
@@ -591,7 +591,7 @@ ZE_MOCK_SUCCESS(zeEventCounterBasedCreate, ze_context_handle_t, ze_device_handle
 ZE_MOCK_SUCCESS(zeEventCounterBasedGetDeviceAddress, ze_event_handle_t, uint64_t *, uint64_t *)
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeEventCounterBasedGetIpcHandle(ze_event_handle_t hEvent, ze_ipc_event_counter_based_handle_t *phIpc) {
-    (void)hEvent;
+    static_cast<void>(hEvent);
     memset(phIpc->data, '*', sizeof(phIpc->data));
     return ZE_RESULT_SUCCESS;
 }
@@ -618,7 +618,7 @@ zeDriverGetExtensionFunctionAddress(
     ze_driver_handle_t hDriver,
     const char *name,
     void **ppFunctionAddress) {
-    (void)hDriver;
+    static_cast<void>(hDriver);
     if (!name || !ppFunctionAddress) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -628,21 +628,21 @@ zeDriverGetExtensionFunctionAddress(
         void *fptr;
     };
     static const NameAddr table[] = {
-        {"zeGraphCreateExp", (void *)&null_zeGraphCreateExp},
-        {"zeCommandListBeginGraphCaptureExp", (void *)&null_zeCommandListBeginGraphCaptureExp},
-        {"zeCommandListBeginCaptureIntoGraphExp", (void *)&null_zeCommandListBeginCaptureIntoGraphExp},
-        {"zeCommandListEndGraphCaptureExp", (void *)&null_zeCommandListEndGraphCaptureExp},
-        {"zeCommandListInstantiateGraphExp", (void *)&null_zeCommandListInstantiateGraphExp},
-        {"zeCommandListAppendGraphExp", (void *)&null_zeCommandListAppendGraphExp},
-        {"zeDriverGetDefaultContext", (void *)&zeDriverGetDefaultContext},
-        {"zeGraphDestroyExp", (void *)&null_zeGraphDestroyExp},
-        {"zeExecutableGraphDestroyExp", (void *)&null_zeExecutableGraphDestroyExp},
-        {"zeCommandListIsGraphCaptureEnabledExp", (void *)&null_zeCommandListIsGraphCaptureEnabledExp},
-        {"zeGraphIsEmptyExp", (void *)&null_zeGraphIsEmptyExp},
-        {"zeGraphDumpContentsExp", (void *)&null_zeGraphDumpContentsExp},
-        {"zeDriverGetDefaultContext", (void *)&zeDriverGetDefaultContext},
-        {"zexIntelAllocateNetworkInterrupt", (void *)(&null_zexIntelAllocateNetworkInterrupt)},
-        {"zexIntelReleaseNetworkInterrupt", (void *)&null_zexIntelReleaseNetworkInterrupt},
+        {"zeGraphCreateExp", reinterpret_cast<void *>(&null_zeGraphCreateExp)},
+        {"zeCommandListBeginGraphCaptureExp", reinterpret_cast<void *>(&null_zeCommandListBeginGraphCaptureExp)},
+        {"zeCommandListBeginCaptureIntoGraphExp", reinterpret_cast<void *>(&null_zeCommandListBeginCaptureIntoGraphExp)},
+        {"zeCommandListEndGraphCaptureExp", reinterpret_cast<void *>(&null_zeCommandListEndGraphCaptureExp)},
+        {"zeCommandListInstantiateGraphExp", reinterpret_cast<void *>(&null_zeCommandListInstantiateGraphExp)},
+        {"zeCommandListAppendGraphExp", reinterpret_cast<void *>(&null_zeCommandListAppendGraphExp)},
+        {"zeDriverGetDefaultContext", reinterpret_cast<void *>(&zeDriverGetDefaultContext)},
+        {"zeGraphDestroyExp", reinterpret_cast<void *>(&null_zeGraphDestroyExp)},
+        {"zeExecutableGraphDestroyExp", reinterpret_cast<void *>(&null_zeExecutableGraphDestroyExp)},
+        {"zeCommandListIsGraphCaptureEnabledExp", reinterpret_cast<void *>(&null_zeCommandListIsGraphCaptureEnabledExp)},
+        {"zeGraphIsEmptyExp", reinterpret_cast<void *>(&null_zeGraphIsEmptyExp)},
+        {"zeGraphDumpContentsExp", reinterpret_cast<void *>(&null_zeGraphDumpContentsExp)},
+        {"zeDriverGetDefaultContext", reinterpret_cast<void *>(&zeDriverGetDefaultContext)},
+        {"zexIntelAllocateNetworkInterrupt", reinterpret_cast<void *>(&null_zexIntelAllocateNetworkInterrupt)},
+        {"zexIntelReleaseNetworkInterrupt", reinterpret_cast<void *>(&null_zexIntelReleaseNetworkInterrupt)},
     };
 
     for (const auto &entry : table) {

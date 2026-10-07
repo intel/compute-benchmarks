@@ -26,8 +26,8 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     // Setup
     Opencl opencl;
     Timer timer;
-    auto clHostMemAllocINTEL = (pfn_clHostMemAllocINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clHostMemAllocINTEL");
-    auto clMemFreeINTEL = (pfn_clMemFreeINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clMemFreeINTEL");
+    auto clHostMemAllocINTEL = reinterpret_cast<pfn_clHostMemAllocINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clHostMemAllocINTEL"));
+    auto clMemFreeINTEL = reinterpret_cast<pfn_clMemFreeINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clMemFreeINTEL"));
     if (!clHostMemAllocINTEL || !clMemFreeINTEL) {
         return TestResult::DriverFunctionNotFound;
     }

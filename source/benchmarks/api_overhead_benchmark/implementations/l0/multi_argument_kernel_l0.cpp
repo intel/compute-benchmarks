@@ -52,7 +52,7 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
 
     for (auto allocationId = 0u; allocationId < arguments.argumentCount; allocationId++) {
         ASSERT_ZE_RESULT_SUCCESS(L0::UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, 4096u, &allocations[allocationId]));
-        kernelArguments.push_back((void *)&allocations[allocationId]);
+        kernelArguments.push_back(static_cast<void *>(&allocations[allocationId]));
     }
 
     for (auto index = 0llu; index < arguments.argumentCount; index++) {

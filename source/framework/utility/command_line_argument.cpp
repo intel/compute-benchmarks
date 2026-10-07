@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ bool CommandLineArgument::parseArguments(int argc, char **argv, CommandLineArgum
 
         // Check for duplicates
         const auto [iterator, inserted] = allKeys.insert(arg.getKey());
-        (void)iterator;
+        static_cast<void>(iterator);
         if (!inserted) {
             outErrorMessage = std::string("Argument with a key \"") + arg.getKey() + "\" is provided more than once";
             outArguments.clear();

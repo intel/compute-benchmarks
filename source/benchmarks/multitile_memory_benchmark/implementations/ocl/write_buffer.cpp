@@ -35,7 +35,7 @@ static TestResult run(const WriteBufferArguments &arguments, Statistics &statist
     if (opencl.context == nullptr) {
         return TestResult::DeviceNotCapable;
     }
-    auto clCreateBufferWithPropertiesINTEL = (pfn_clCreateBufferWithPropertiesINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clCreateBufferWithPropertiesINTEL");
+    auto clCreateBufferWithPropertiesINTEL = reinterpret_cast<pfn_clCreateBufferWithPropertiesINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clCreateBufferWithPropertiesINTEL"));
     if (!clCreateBufferWithPropertiesINTEL) {
         return TestResult::DriverFunctionNotFound;
     }
@@ -46,7 +46,7 @@ static TestResult run(const WriteBufferArguments &arguments, Statistics &statist
         CL_MEM_FLAGS,
         CL_MEM_READ_WRITE | CompressionHelper::getCompressionFlags(arguments.compressed, arguments.noIntelExtensions),
         CL_MEM_DEVICE_ID_INTEL,
-        (cl_mem_properties_intel)opencl.getDevice(arguments.bufferPlacement),
+        reinterpret_cast<cl_mem_properties_intel>(opencl.getDevice(arguments.bufferPlacement)),
         0,
     };
     const cl_mem buffer = clCreateBufferWithPropertiesINTEL(opencl.context, memPropertiesDst, 0, arguments.size, nullptr, &retVal);

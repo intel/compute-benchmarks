@@ -32,8 +32,8 @@ static TestResult run(const UsmCopyKernelArguments &arguments, Statistics &stati
     if (opencl.context == nullptr || opencl.commandQueue == nullptr) {
         return TestResult::DeviceNotCapable;
     }
-    auto clCreateBufferWithPropertiesINTEL = (pfn_clCreateBufferWithPropertiesINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clCreateBufferWithPropertiesINTEL");
-    auto clMemFreeINTEL = (pfn_clMemFreeINTEL)clGetExtensionFunctionAddressForPlatform(opencl.platform, "clMemFreeINTEL");
+    auto clCreateBufferWithPropertiesINTEL = reinterpret_cast<pfn_clCreateBufferWithPropertiesINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clCreateBufferWithPropertiesINTEL"));
+    auto clMemFreeINTEL = reinterpret_cast<pfn_clMemFreeINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clMemFreeINTEL"));
     if (!clCreateBufferWithPropertiesINTEL || !opencl.getExtensions().isUsmSupported()) {
         return TestResult::DriverFunctionNotFound;
     }
