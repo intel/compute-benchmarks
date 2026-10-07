@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "framework/configuration.h"
 #include "framework/vk/vulkan.h"
 

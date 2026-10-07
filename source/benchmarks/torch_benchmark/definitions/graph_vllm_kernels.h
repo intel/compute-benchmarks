@@ -5,8 +5,7 @@
  *
  */
 
-#ifndef VLLM_MOCK_KERNELS_H
-#define VLLM_MOCK_KERNELS_H
+#pragma once
 
 #include <sycl/sycl.hpp>
 
@@ -475,5 +474,3 @@ void submit_kernel_mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_2_last_
         });
     }
 }
-
-#endif

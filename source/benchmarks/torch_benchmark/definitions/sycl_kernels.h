@@ -5,8 +5,7 @@
  *
  */
 
-#ifndef TORCH_KERNELS_H
-#define TORCH_KERNELS_H
+#pragma once
 
 #include "framework/sycl/sycl.h"
 
@@ -187,4 +186,3 @@ void submit_kernel_write(sycl::queue &q, bool useEvents, data_type *p1, int offs
         });
     }
 }
-#endif

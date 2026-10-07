@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "framework/l0/intel_product/get_intel_product_l0.h"
 #include "framework/l0/levelzero.h"
 

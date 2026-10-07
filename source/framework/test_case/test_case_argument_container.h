@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "framework/argument/argument_container.h"
 
 struct TestCaseArgumentContainer : ArgumentContainer {

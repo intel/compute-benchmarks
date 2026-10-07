@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "framework/ocl/intel_product/get_intel_product_ocl.h"
 #include "framework/ocl/opencl.h"
 #include "framework/ocl/utility/error_codes.h"

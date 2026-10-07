@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "framework/sycl/sycl.h"
 
 #include <iomanip>

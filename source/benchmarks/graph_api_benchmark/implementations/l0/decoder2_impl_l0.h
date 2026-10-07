@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "framework/l0/levelzero.h"
 #include "framework/utility/file_helper.h"
 

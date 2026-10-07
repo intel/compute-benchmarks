@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include <sycl/sycl.hpp>
 
 namespace syclexp = sycl::ext::oneapi::experimental;
