@@ -208,7 +208,6 @@ static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) 
     for (auto ev : barrierEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(ev));
     }
-    // TODO: this fails
     zeEventPoolPutIpcHandle(levelzero.context, barrierEvPoolIpcHandle);
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(barrierEvPool));
     ASSERT_ZE_RESULT_SUCCESS(zeMemPutIpcHandle(levelzero.context, initBufferIpcHandle));

@@ -175,7 +175,6 @@ class Decoder2GraphBase {
 
   protected:
     ~Decoder2GraphBase() = default;
-    // TODO: In the future we may wish to parameterize these for simulating different LLM workloads
     static constexpr uint32_t LAYER_NUM = 95;
     static constexpr uint32_t KERNELS_PER_LAYER = 59;
     // The original decoder2 benchmark uses a timeout of 700 us. This change to 1 us saves benchmark runtime with the

@@ -34,7 +34,6 @@ INSTANTIATE_TEST_SUITE_P(
     SinKernelGraphTestSycl, SinKernelGraphTest,
     ::testing::Combine(::testing::Values(Api::SYCL),
                        ::testing::Values(3, 10, 50, 100),
-                       // FIXME: immediateAppendCmdList is currently broken, add 'true' to enable it once the driver is fixed.
                        ::testing::Values(false),
                        ::testing::Values(false, true),
                        ::testing::Values(false, true),
@@ -44,7 +43,6 @@ INSTANTIATE_TEST_SUITE_P(
     SinKernelGraphTestUr, SinKernelGraphTest,
     ::testing::Combine(::testing::Values(Api::UR),
                        ::testing::Values(3, 10, 50, 100),
-                       // FIXME: immediateAppendCmdList is currently broken, add 'true' to enable it once the driver is fixed.
                        ::testing::Values(false),
                        ::testing::Values(false, true),
                        ::testing::Values(false, true),
@@ -54,7 +52,6 @@ INSTANTIATE_TEST_SUITE_P(
     SinKernelGraphTestL0, SinKernelGraphTest,
     ::testing::Combine(::testing::Values(Api::L0),
                        ::testing::Values(3, 10, 50, 100),
-                       // FIXME: immediateAppendCmdList is currently broken, add 'true' to enable it once the driver is fixed.
                        ::testing::Values(false),
                        ::testing::Values(false, true),
                        ::testing::Values(false, true),
