@@ -61,8 +61,9 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
 
     // benchmark
     for (size_t i = 0; i < args.iterations; i++) {
-        if (args.measureCompletionTime)
+        if (args.measureCompletionTime) {
             profiler.measureStart();
+        }
 
         // submit several kernels into cmd_list_1
         for (size_t j = 0; j < args.kernelsPerQueue; j++) {
@@ -74,8 +75,9 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
         }
         ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmd_list_2.get(), kernel_args_1, q2_last_event.get(), nullptr));
         // mark the last kernel in cmd_list_2
-        if (!args.measureCompletionTime)
+        if (!args.measureCompletionTime) {
             profiler.measureStart();
+        }
         ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmd_list_1.get(), kernel_args_0, nullptr, q2_last_event.get()));
         if (!args.measureCompletionTime) {
             profiler.measureEnd();

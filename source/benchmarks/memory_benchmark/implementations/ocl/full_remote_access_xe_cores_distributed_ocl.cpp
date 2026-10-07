@@ -86,16 +86,17 @@ static TestResult run(const FullRemoteAccessMemoryXeCoresDistributedArguments &a
     // we have to set LWS to 32 and the max number of workitems is 64 * 32 = 2048
     // If we want to use more threads per XeCore we have to reduce SLM usage and increase LWS
     compilerOptions.addDefinitionKeyValue("USED_SLM", workItems < 2048 ? 128 * 1024 : 128 * 1024 / (workItems / 2048));
-    if (elementSize == 1)
+    if (elementSize == 1) {
         compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "char");
-    else if (elementSize == 2)
+    } else if (elementSize == 2) {
         compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "short");
-    else if (elementSize == 4)
+    } else if (elementSize == 4) {
         compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "int");
-    else if (elementSize == 8)
+    } else if (elementSize == 8) {
         compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "long");
-    else
+    } else {
         return TestResult::InvalidArgs;
+    }
 
     const char *programName = "memory_benchmark_stream_memory.cl";
     cl_program program{};

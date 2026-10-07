@@ -57,8 +57,9 @@ static TestResult run(const InOrderWaitAppendArguments &arguments, Statistics &s
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t kernel = nullptr;
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_eat_time.cl", "eat_time", &kernel, &module, nullptr);
-    if (kernelLoadRes != TestResult::Success)
+    if (kernelLoadRes != TestResult::Success) {
         return kernelLoadRes;
+    }
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
     int kernelOperationsCount = static_cast<int>(arguments.isCompleted ? 0 : arguments.kernelExecutionTime * 4);

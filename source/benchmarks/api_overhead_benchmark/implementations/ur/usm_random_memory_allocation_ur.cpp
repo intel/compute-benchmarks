@@ -36,8 +36,9 @@ static TestResult run(const UsmRandomMemoryAllocationArguments &arguments, Stati
     std::mt19937 gen{0};
     ptrs.reserve(arguments.operationCount * arguments.iterations);
     ptrs.resize(arguments.operationCount);
-    for (auto &ptr : ptrs)
+    for (auto &ptr : ptrs) {
         ASSERT_UR_RESULT_SUCCESS(UR::UsmHelper::allocate(arguments.usmMemoryPlacement, ur.context, ur.device, size->get(gen), &ptr));
+    }
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
@@ -58,8 +59,9 @@ static TestResult run(const UsmRandomMemoryAllocationArguments &arguments, Stati
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    for (auto ptr : ptrs)
+    for (auto ptr : ptrs) {
         ASSERT_UR_RESULT_SUCCESS(urUSMFree(ur.context, ptr));
+    }
 
     return TestResult::Success;
 }

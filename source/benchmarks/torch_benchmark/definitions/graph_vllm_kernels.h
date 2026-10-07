@@ -27,15 +27,19 @@ void mock_triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_0(
     size_t id = item.get_global_id(0);
     id = id % r0_numel; // to avoid out of bound access in this mock kernel
     data_type v = 0;
-    if (in_ptr0)
+    if (in_ptr0) {
         v += static_cast<data_type>(in_ptr0[0]);
-    if (in_ptr1)
+    }
+    if (in_ptr1) {
         v += in_ptr1[id];
-    if (in_ptr2)
+    }
+    if (in_ptr2) {
         v += in_ptr2[id];
+    }
 
-    if (out_ptr2)
+    if (out_ptr2) {
         out_ptr2[id] = v;
+    }
 
     if (out_ptr0) {
         int use_params = xnumel + r0_numel + XBLOCK + R0_BLOCK;
@@ -80,15 +84,19 @@ void mock_triton_poi_fused_1_3(
     size_t id = item.get_global_id(0);
     id = id % xnumel_1;
     data_type v = 0;
-    if (in_ptr0)
+    if (in_ptr0) {
         v += in_ptr0[id];
-    if (in_ptr1)
+    }
+    if (in_ptr1) {
         v += static_cast<data_type>(in_ptr1[0]);
-    if (in_ptr2)
+    }
+    if (in_ptr2) {
         v += in_ptr2[id];
+    }
 
-    if (out_ptr1)
+    if (out_ptr1) {
         out_ptr1[id] = v;
+    }
 
     if (out_ptr0) {
         int use_params = xnumel_0 + xnumel_1 + XBLOCK;
@@ -131,21 +139,28 @@ void mock_reshape_and_cache(
     size_t id = item.get_global_id(0);
     id = id % 64; // to avoid out of bound access in this mock kernel
     data_type v = 0;
-    if (in_ptr0)
+    if (in_ptr0) {
         v += in_ptr0[id];
-    if (in_ptr1)
+    }
+    if (in_ptr1) {
         v += in_ptr1[id];
-    if (in_ptr2)
+    }
+    if (in_ptr2) {
         v += static_cast<data_type>(in_ptr2[0]);
-    if (in_ptr3)
+    }
+    if (in_ptr3) {
         v += static_cast<data_type>(in_ptr3[0]);
-    if (in_ptr4)
+    }
+    if (in_ptr4) {
         v += static_cast<data_type>(in_ptr4[0]);
+    }
 
-    if (out_ptr0)
+    if (out_ptr0) {
         out_ptr0[id] = v;
-    if (out_ptr1)
+    }
+    if (out_ptr1) {
         out_ptr1[id] = v;
+    }
 }
 
 template <typename data_type>
@@ -193,20 +208,27 @@ void mock_flash_attn(
     size_t id = item.get_global_id(0);
     id = id % scalar0;
     data_type v = 0;
-    if (in_ptr0)
+    if (in_ptr0) {
         v += in_ptr0[id];
-    if (in_ptr1)
+    }
+    if (in_ptr1) {
         v += in_ptr1[id];
-    if (in_ptr2)
+    }
+    if (in_ptr2) {
         v += in_ptr2[id];
-    if (in_ptr3)
+    }
+    if (in_ptr3) {
         v += static_cast<data_type>(in_ptr3[0]);
-    if (in_ptr4)
+    }
+    if (in_ptr4) {
         v += static_cast<data_type>(in_ptr4[0]);
-    if (in_ptr5)
+    }
+    if (in_ptr5) {
         v += static_cast<data_type>(in_ptr5[0]);
-    if (in_ptr6)
+    }
+    if (in_ptr6) {
         v += static_cast<data_type>(in_ptr6[0]);
+    }
 
     if (out_ptr0) {
         int use_params = scalar0 + scalar1 + static_cast<int>(scalar2) + static_cast<int>(scalar3) + static_cast<int>(scalar4) +
@@ -261,12 +283,15 @@ void mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0(
     size_t id = item.get_global_id(0);
     id = id % xnumel;
     data_type v = 0;
-    if (in_ptr0)
+    if (in_ptr0) {
         v += in_ptr0[id];
-    if (in_ptr1)
+    }
+    if (in_ptr1) {
         v += in_ptr1[id];
-    if (in_ptr2)
+    }
+    if (in_ptr2) {
         v += in_ptr2[id];
+    }
 
     if (out_ptr0) {
         int use_params = r0_numel + XBLOCK + R0_BLOCK;
@@ -305,8 +330,9 @@ void mock_triton_poi_fused_mul_silu_slice_1(
     int XBLOCK) {
     size_t id = item.get_global_id(0);
     data_type v = 0;
-    if (in_ptr0)
+    if (in_ptr0) {
         v += in_ptr0[id];
+    }
 
     if (out_ptr0) {
         int use_params = xnumel + XBLOCK;
@@ -348,17 +374,22 @@ void mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_2(
     size_t id = item.get_global_id(0);
     id = id % xnumel;
     data_type v = 0;
-    if (in_ptr0)
+    if (in_ptr0) {
         v += in_ptr0[id];
-    if (in_ptr1)
+    }
+    if (in_ptr1) {
         v += in_ptr1[id];
-    if (in_ptr2)
+    }
+    if (in_ptr2) {
         v += in_ptr2[id];
-    if (in_ptr3)
+    }
+    if (in_ptr3) {
         v += in_ptr3[id];
+    }
 
-    if (out_ptr1)
+    if (out_ptr1) {
         out_ptr1[id] = v;
+    }
 
     if (out_ptr0) {
         int use_params = r0_numel + XBLOCK + R0_BLOCK;
@@ -404,14 +435,18 @@ void mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_2_last_layer(
     size_t id = item.get_global_id(0);
     id = id % xnumel;
     data_type v = 0;
-    if (in_out_ptr0)
+    if (in_out_ptr0) {
         v += in_out_ptr0[id];
-    if (in_ptr1)
+    }
+    if (in_ptr1) {
         v += in_ptr1[id];
-    if (in_ptr2)
+    }
+    if (in_ptr2) {
         v += in_ptr2[id];
-    if (in_ptr3)
+    }
+    if (in_ptr3) {
         v += in_ptr3[id];
+    }
 
     if (in_out_ptr0) {
         int use_params = r0_numel + XBLOCK + R0_BLOCK;

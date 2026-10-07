@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,10 +27,12 @@ LogUniformDistribution::LogUniformDistribution(size_t min, size_t max) {
 size_t LogUniformDistribution::get(std::mt19937 &gen) {
     size_t result = static_cast<size_t>(multiplier * std::exp(expotent(gen)));
     // Check for numerical errors.
-    if (result < minValue)
+    if (result < minValue) {
         return minValue;
-    if (result > maxValue)
+    }
+    if (result > maxValue) {
         return maxValue;
+    }
     return result;
 }
 

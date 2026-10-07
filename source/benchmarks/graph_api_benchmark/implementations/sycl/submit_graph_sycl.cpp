@@ -59,8 +59,9 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         [[maybe_unused]] const auto eat_time = [=]([[maybe_unused]] auto u) {
             if (kernelOperationsCount > 4) {
                 volatile int value = kernelOperationsCount;
-                while (value > 1)
+                while (value > 1) {
                     value -= 1;
+                }
             }
         };
 
@@ -112,8 +113,9 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
                         const int operations = *static_cast<int *>(userData);
                         if (operations > 4) {
                             volatile int value = operations;
-                            while (value > 1)
+                            while (value > 1) {
                                 value -= 1;
+                            }
                         }
                     };
                     zeCommandListAppendHostFunction(zeCommandList, reinterpret_cast<void *>(+hostFunction),

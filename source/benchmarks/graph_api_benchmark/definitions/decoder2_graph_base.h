@@ -113,8 +113,9 @@ class Decoder2GraphBase {
                         waitCompletion();
                     }
                 }
-                if (useHostTasks)
+                if (useHostTasks) {
                     com.notify();
+                }
             }
             // We only need to wait on the queue once between tokens outside the loop with the host task case and in non
             // emulation modes.

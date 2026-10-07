@@ -139,13 +139,15 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
             }
         }
 
-        if (!measureCompletionTime)
+        if (!measureCompletionTime) {
             timer.measureEnd();
+        }
 
         queue.wait();
 
-        if (measureCompletionTime)
+        if (measureCompletionTime) {
             timer.measureEnd();
+        }
     };
 
     // Benchmark
@@ -172,8 +174,9 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
 
 #ifndef NDEBUG
         auto res = verifyResults(numThreads, numOpsPerThread, allocSize, dst_buffers, 1);
-        if (res != TestResult::Success)
+        if (res != TestResult::Success) {
             return res;
+        }
 #endif
 
         statistics.pushValue(avgTime, typeSelector.getUnit(), typeSelector.getType());

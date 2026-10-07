@@ -79,8 +79,9 @@ TestResult Decoder2GraphSYCL::runLayer() {
     for (uint32_t k = 0; k < KERNELS_PER_LAYER; ++k) {
         sycl_ext::submit(*queue, [&](sycl::handler &cgh) {
             sycl_ext::single_task<class decoder2>(cgh, [=]() {
-                for (uint32_t j = 0; j < numIncrements; ++j)
+                for (uint32_t j = 0; j < numIncrements; ++j) {
                     *data = *data + 1;
+                }
             });
         });
     }
@@ -119,10 +120,11 @@ TestResult Decoder2GraphSYCL::recordGraph() {
 
         graph->begin_recording(*queue);
         if (useHostTasks) {
-            if (useNativeRecording)
+            if (useNativeRecording) {
                 runAllLayersNative(); // zeCommandListAppendHostFunction instead of host_task
-            else
+            } else {
                 runAllLayers(); // SYCL host_task
+            }
         } else {
             runLayer();
         }
@@ -144,10 +146,11 @@ TestResult Decoder2GraphSYCL::runGraph() {
     if (useGraphs) {
         sycl_ext::execute_graph(*queue, *execGraph);
     } else {
-        if (useHostTasks)
+        if (useHostTasks) {
             runAllLayers();
-        else
+        } else {
             runLayer();
+        }
     }
 
     return TestResult::Success;

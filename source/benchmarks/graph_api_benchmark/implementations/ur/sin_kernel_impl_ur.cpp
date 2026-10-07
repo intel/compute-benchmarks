@@ -67,8 +67,9 @@ TestResult SinKernelGraphUR::init() {
     auto spirvModuleS =
         FileHelper::loadBinaryFile("graph_api_benchmark_kernel_sin.spv");
 
-    if (spirvModuleA.size() == 0 || spirvModuleS.size() == 0)
+    if (spirvModuleA.size() == 0 || spirvModuleS.size() == 0) {
         return TestResult::KernelNotFound;
+    }
 
     char opts[] = "-ze-intel-enable-auto-large-GRF-mode -ze-opt-level=2";
     ur_exp_program_flags_t programFlags{};
@@ -86,8 +87,9 @@ TestResult SinKernelGraphUR::init() {
 }
 
 TestResult SinKernelGraphUR::destroy() {
-    if (cmdBuffer != nullptr)
+    if (cmdBuffer != nullptr) {
         EXPECT_UR_RESULT_SUCCESS(urCommandBufferReleaseExp(cmdBuffer));
+    }
     EXPECT_UR_RESULT_SUCCESS(urKernelRelease(kernelAssign));
     EXPECT_UR_RESULT_SUCCESS(urKernelRelease(kernelSin));
     EXPECT_UR_RESULT_SUCCESS(urProgramRelease(programA));

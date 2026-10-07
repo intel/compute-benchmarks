@@ -34,8 +34,9 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_eat_time.spv");
-    if (spirvModule.size() == 0)
+    if (spirvModule.size() == 0) {
         return TestResult::KernelNotFound;
+    }
 
     ur_program_handle_t program;
     EXPECT_UR_RESULT_SUCCESS(urProgramCreateWithIL(ur.context, spirvModule.data(),
@@ -92,8 +93,9 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         profiler.pushStats(statistics);
 
         for (auto &event : events) {
-            if (event)
+            if (event) {
                 urEventRelease(event);
+            }
             event = nullptr;
         }
     }

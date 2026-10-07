@@ -31,8 +31,9 @@
 ZE_APIEXPORT ze_result_t ZE_APICALL null_zeGraphCreateExp(ze_context_handle_t hContext, ze_graph_handle_t *phGraph, void *pNext) {
     (void)hContext;
     (void)pNext;
-    if (phGraph)
+    if (phGraph) {
         *phGraph = reinterpret_cast<ze_graph_handle_t>(0x10);
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -42,16 +43,18 @@ ZE_MOCK_SUCCESS(null_zeCommandListBeginCaptureIntoGraphExp, ze_command_list_hand
 ZE_APIEXPORT ze_result_t ZE_APICALL null_zeCommandListEndGraphCaptureExp(ze_command_list_handle_t hCommandList, ze_graph_handle_t *phGraph, void *pNext) {
     (void)hCommandList;
     (void)pNext;
-    if (phGraph)
+    if (phGraph) {
         *phGraph = reinterpret_cast<ze_graph_handle_t>(0x11);
+    }
     return ZE_RESULT_SUCCESS;
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL null_zeCommandListInstantiateGraphExp(ze_graph_handle_t hGraph, ze_executable_graph_handle_t *phExecutableGraph, void *pNext) {
     (void)hGraph;
     (void)pNext;
-    if (phExecutableGraph)
+    if (phExecutableGraph) {
         *phExecutableGraph = reinterpret_cast<ze_executable_graph_handle_t>(0x12);
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -66,10 +69,11 @@ ZE_MOCK_SUCCESS(zeInit, ze_init_flags_t)
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGet(uint32_t *pCount,
                                                 ze_driver_handle_t *phDrivers) {
-    if (*pCount == 0)
+    if (*pCount == 0) {
         *pCount = 1;
-    else if (phDrivers != nullptr)
+    } else if (phDrivers != nullptr) {
         phDrivers[0] = (ze_driver_handle_t)0x1;
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -77,8 +81,9 @@ ZE_MOCK_SUCCESS(zeInitDrivers, uint32_t *, ze_driver_handle_t *, ze_init_driver_
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetApiVersion(ze_driver_handle_t hDriver, ze_api_version_t *version) {
     (void)hDriver;
-    if (version)
+    if (version) {
         *version = ZE_API_VERSION_1_15;
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -100,10 +105,11 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGet(ze_driver_handle_t hDriver,
                                                 uint32_t *pCount,
                                                 ze_device_handle_t *phDevices) {
     (void)hDriver;
-    if (*pCount == 0)
+    if (*pCount == 0) {
         *pCount = 1;
-    else if (phDevices != nullptr)
+    } else if (phDevices != nullptr) {
         phDevices[0] = reinterpret_cast<ze_device_handle_t>(0x1);
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -326,8 +332,9 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeVirtualMemQueryPageSize(
     (void)hContext;
     (void)hDevice;
     (void)size;
-    if (pPageSize)
+    if (pPageSize) {
         *pPageSize = 4096;
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -345,8 +352,9 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeVirtualMemGetAccessAttribute(
     (void)hContext;
     (void)ptr;
     (void)size;
-    if (pAccess)
+    if (pAccess) {
         *pAccess = ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE;
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -611,8 +619,9 @@ zeDriverGetExtensionFunctionAddress(
     const char *name,
     void **ppFunctionAddress) {
     (void)hDriver;
-    if (!name || !ppFunctionAddress)
+    if (!name || !ppFunctionAddress) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     struct NameAddr {
         const char *fname;

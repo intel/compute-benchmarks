@@ -89,8 +89,9 @@ static TestResult run(const TmpBufferFixedSizeArguments &arguments, Statistics &
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_fill_with_ones.spv");
-    if (spirvModule.size() == 0)
+    if (spirvModule.size() == 0) {
         return TestResult::KernelNotFound;
+    }
 
     ur_program_handle_t program;
     EXPECT_UR_RESULT_SUCCESS(urProgramCreateWithIL(ur.context, spirvModule.data(),
@@ -105,8 +106,9 @@ static TestResult run(const TmpBufferFixedSizeArguments &arguments, Statistics &
     ASSERT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device, &queueProperties, &queue));
 
     // Buffer size in bytes must be multiple of sizeof(int)
-    if (arguments.size % sizeof(int) != 0)
+    if (arguments.size % sizeof(int) != 0) {
         return TestResult::InvalidArgs;
+    }
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {

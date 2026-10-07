@@ -43,21 +43,25 @@ class SinKernelGraphBase {
         std::vector<float> buffer1(size);
 
         // assign action
-        for (uint32_t i = 0; i < size; ++i)
+        for (uint32_t i = 0; i < size; ++i) {
             buffer0[i] = input_h[i];
+        }
 
         // repeat sin action
         for (size_t k = 0; k < numKernels; ++k) {
             std::swap(buffer0, buffer1);
-            for (uint32_t i = 0; i < size; ++i)
+            for (uint32_t i = 0; i < size; ++i) {
                 buffer0[i] = sin(buffer1[i]);
+            }
         }
 
-        if (numKernels % 2 != 0)
+        if (numKernels % 2 != 0) {
             std::swap(buffer0, buffer1);
+        }
 
-        for (uint32_t i = 0; i < size; ++i)
+        for (uint32_t i = 0; i < size; ++i) {
             golden_h[i] = buffer0[i];
+        }
 
         return TestResult::Success;
     }
@@ -110,8 +114,9 @@ class SinKernelGraphBase {
         // reference results
         ASSERT_TEST_RESULT_SUCCESS(calcRefResults(inputData.get(), refResult.get()));
 
-        if (withGraphs)
+        if (withGraphs) {
             ASSERT_TEST_RESULT_SUCCESS(recordGraph());
+        }
 
         // warm-up & results verification
         {

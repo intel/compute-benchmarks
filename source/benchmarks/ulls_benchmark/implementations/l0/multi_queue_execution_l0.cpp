@@ -33,8 +33,9 @@ static TestResult run(const MultiQueueExecutionArguments &arguments, Statistics 
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_multi_kernel_execution.cl", "empty", &kernel, &module, nullptr);
-    if (kernelLoadRes != TestResult::Success)
+    if (kernelLoadRes != TestResult::Success) {
         return kernelLoadRes;
+    }
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(lws), 1u, 1u));
 

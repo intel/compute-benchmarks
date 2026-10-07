@@ -36,8 +36,9 @@ static TestResult run(const KernelSwitchLatencyFillArguments &arguments, Statist
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_fill_with_ones.cl", "fill_with_ones", &kernel, &module, nullptr);
-    if (kernelLoadRes != TestResult::Success)
+    if (kernelLoadRes != TestResult::Success) {
         return kernelLoadRes;
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(lws), 1u, 1u));
 
     void *buffer;

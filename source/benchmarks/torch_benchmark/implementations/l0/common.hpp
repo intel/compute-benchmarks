@@ -73,8 +73,9 @@ class DeviceMemory {
 
     DeviceMemory &operator=(DeviceMemory &&other) noexcept {
         if (this != &other) {
-            if (ptr)
+            if (ptr) {
                 zeMemFree(context, ptr);
+            }
             context = other.context;
             ptr = other.ptr;
             other.ptr = nullptr;
@@ -116,8 +117,9 @@ class HostMemory {
 
     HostMemory &operator=(HostMemory &&other) noexcept {
         if (this != &other) {
-            if (ptr)
+            if (ptr) {
                 zeMemFree(context, ptr);
+            }
             context = other.context;
             ptr = other.ptr;
             other.ptr = nullptr;

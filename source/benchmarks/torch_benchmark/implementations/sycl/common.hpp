@@ -19,8 +19,9 @@ namespace Detail {
 template <typename data_type>
 auto make_sycl_deleter(sycl::queue queue) {
     return [queue](data_type *ptr) {
-        if (ptr)
+        if (ptr) {
             sycl::free(ptr, queue);
+        }
     };
 }
 } // namespace Detail

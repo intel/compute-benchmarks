@@ -40,8 +40,9 @@ TestResult Decoder2GraphL0::init() {
                                                   .setGraphFunctions(!emulateGraphs);
     levelzero = std::make_shared<LevelZero>(extensionProperties);
     TestResult kernelDecoder2Res = L0::KernelHelper::loadKernel(*levelzero, "graph_api_benchmark_kernel_increment.cl", "kernel_increment", &kernelDecoder2, &moduleDecoder2, nullptr);
-    if (kernelDecoder2Res != TestResult::Success)
+    if (kernelDecoder2Res != TestResult::Success) {
         return kernelDecoder2Res;
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernelDecoder2, 1u, 1u, 1u));
 
     ASSERT_ZE_RESULT_SUCCESS(
@@ -69,8 +70,9 @@ TestResult Decoder2GraphL0::readResults(int *actualSum, int *actualSignalCount) 
 }
 
 TestResult Decoder2GraphL0::destroy() {
-    if (cmdList != nullptr)
+    if (cmdList != nullptr) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
+    }
     if (useGraphs && !emulateGraphs) {
         ASSERT_ZE_RESULT_SUCCESS(levelzero->graphExtension.executableGraphDestroy(execGraph));
         ASSERT_ZE_RESULT_SUCCESS(levelzero->graphExtension.graphDestroy(graph));
@@ -95,8 +97,9 @@ TestResult Decoder2GraphL0::runLayer() {
                                                                      nullptr, 0, nullptr));
         }
     }
-    if (useGraphs && emulateGraphs)
+    if (useGraphs && emulateGraphs) {
         zeCommandListClose(cmdList);
+    }
     return TestResult::Success;
 }
 

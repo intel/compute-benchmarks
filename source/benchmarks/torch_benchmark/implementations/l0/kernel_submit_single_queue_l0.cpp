@@ -35,8 +35,9 @@ TestResult create_and_copy_host_arrays(LevelZero &l0,
     host_array.reserve(num_params);
     for (uint32_t i = 0; i < num_params; ++i) {
         host_array.emplace_back(l0, length);
-        if (data_type == DataType::CopyableObject)
+        if (data_type == DataType::CopyableObject) {
             init_copyable_object_host(reinterpret_cast<CopyableObject *>(host_array[i].getPtr()), length, p2_block, p3_block, i);
+        }
     }
     return TestResult::Success;
 }

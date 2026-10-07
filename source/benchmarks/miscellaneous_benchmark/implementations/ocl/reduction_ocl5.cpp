@@ -88,8 +88,9 @@ TestResult run(const ReductionArguments5 &arguments, Statistics &statistics) {
     int32_t value = 0u;
     for (auto i = 0u; i < arguments.numberOfElements; i++) {
         value++;
-        if (value > 4)
+        if (value > 4) {
             value = 0;
+        }
         data[i] = static_cast<int32_t>(value);
         expectedSum += value;
     }

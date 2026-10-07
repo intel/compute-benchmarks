@@ -109,8 +109,9 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     compilerOptions.addDefinitionKeyValue("STREAM_TYPE", streamType.c_str());
 
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "memory_benchmark_stream_memory.cl", pKernelName, &kernel, &module, compilerOptions.str().c_str());
-    if (kernelLoadRes != TestResult::Success)
+    if (kernelLoadRes != TestResult::Success) {
         return kernelLoadRes;
+    }
 
     // Query maximum group size
     uint32_t groupSizeX = static_cast<uint32_t>(arguments.lws);

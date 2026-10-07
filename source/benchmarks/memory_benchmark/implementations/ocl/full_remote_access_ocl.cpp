@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,16 +78,17 @@ static TestResult run(const FullRemoteAccessMemoryArguments &arguments, Statisti
     // Create kernel
     CompilerOptionsBuilder compilerOptions;
     compilerOptions.addDefinitionKeyValue("ELEMENT_SIZE", elementSize);
-    if (elementSize == 1)
+    if (elementSize == 1) {
         compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "char");
-    else if (elementSize == 2)
+    } else if (elementSize == 2) {
         compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "short");
-    else if (elementSize == 4)
+    } else if (elementSize == 4) {
         compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "int");
-    else if (elementSize == 8)
+    } else if (elementSize == 8) {
         compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "long");
-    else
+    } else {
         return TestResult::InvalidArgs;
+    }
 
     const char *programName = "memory_benchmark_stream_memory.cl";
     cl_program program{};

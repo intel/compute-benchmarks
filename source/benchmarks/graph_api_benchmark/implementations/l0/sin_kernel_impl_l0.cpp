@@ -116,8 +116,9 @@ TestResult SinKernelGraphL0::init() {
 }
 
 TestResult SinKernelGraphL0::destroy() {
-    if (graphCmdList != nullptr)
+    if (graphCmdList != nullptr) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(graphCmdList));
+    }
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernelAssign));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernelSin));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(moduleAssign));

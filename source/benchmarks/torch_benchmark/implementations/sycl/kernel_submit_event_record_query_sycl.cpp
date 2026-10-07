@@ -37,8 +37,9 @@ static TestResult run(const KernelSubmitEventRecordQueryArguments &args, Statist
         event.wait();
         // Ensure the event is completed before querying
         status = event.get_info<sycl::info::event::command_execution_status>();
-        if (status != sycl::info::event_command_status::complete)
+        if (status != sycl::info::event_command_status::complete) {
             return TestResult::Error;
+        }
 
         profiler.measureStart();
         for (uint32_t query = 0; query < args.eventQueryIterations; ++query) {
@@ -47,8 +48,9 @@ static TestResult run(const KernelSubmitEventRecordQueryArguments &args, Statist
         profiler.measureEnd();
         profiler.pushStats(statistics);
 
-        if (status != sycl::info::event_command_status::complete)
+        if (status != sycl::info::event_command_status::complete) {
             return TestResult::Error;
+        }
     }
 
     return TestResult::Success;

@@ -66,25 +66,34 @@ std::string parseCaps(ze_memory_access_cap_flags_t flags) {
 }
 
 std::string parseFpFlags(ze_device_fp_flags_t flags) {
-    if (flags == 0u)
+    if (flags == 0u) {
         return "NONE";
+    }
     std::string s;
-    if (flags & ZE_DEVICE_FP_FLAG_DENORM)
+    if (flags & ZE_DEVICE_FP_FLAG_DENORM) {
         s += "DENORM ";
-    if (flags & ZE_DEVICE_FP_FLAG_INF_NAN)
+    }
+    if (flags & ZE_DEVICE_FP_FLAG_INF_NAN) {
         s += "INF_NAN ";
-    if (flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST)
+    }
+    if (flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) {
         s += "ROUND_TO_NEAREST ";
-    if (flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO)
+    }
+    if (flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) {
         s += "ROUND_TO_ZERO ";
-    if (flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF)
+    }
+    if (flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) {
         s += "ROUND_TO_INF ";
-    if (flags & ZE_DEVICE_FP_FLAG_FMA)
+    }
+    if (flags & ZE_DEVICE_FP_FLAG_FMA) {
         s += "FMA ";
-    if (flags & ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT)
+    }
+    if (flags & ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT) {
         s += "ROUNDED_DIVIDE_SQRT ";
-    if (flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT)
+    }
+    if (flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) {
         s += "SOFT_FLOAT ";
+    }
     return s;
 }
 
@@ -105,8 +114,9 @@ int printComputeProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
               << tab << "\tsubGroupSizes:       ";
     for (uint32_t i = 0; i < computeProps.numSubGroupSizes; i++) {
         std::cout << computeProps.subGroupSizes[i];
-        if (i + 1 < computeProps.numSubGroupSizes)
+        if (i + 1 < computeProps.numSubGroupSizes) {
             std::cout << ", ";
+        }
     }
     std::cout << "\n";
     return 0;
@@ -123,14 +133,18 @@ int printModuleProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
     if (moduleProps.flags == 0) {
         modFlags = "NONE";
     } else {
-        if (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_FP16)
+        if (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_FP16) {
             modFlags += "FP16 ";
-        if (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_FP64)
+        }
+        if (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_FP64) {
             modFlags += "FP64 ";
-        if (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS)
+        }
+        if (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) {
             modFlags += "INT64_ATOMICS ";
-        if (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_DP4A)
+        }
+        if (moduleProps.flags & ZE_DEVICE_MODULE_FLAG_DP4A) {
             modFlags += "DP4A ";
+        }
     }
     std::cout << tab << "Module properties:\n"
               << tab << "\tspirv version:    " << ZE_MAJOR_VERSION(moduleProps.spirvVersionSupported)
@@ -199,19 +213,23 @@ int printPeakThroughput(ze_device_handle_t device, uint32_t numberOfTabs) {
     };
 
     printRow("FP32", "vector", 2.0 * simd, "TFLOPS");
-    if (hasFp16)
+    if (hasFp16) {
         printRow("FP16", "vector", 2.0 * simd * 2, "TFLOPS");
-    if (hasFp64)
+    }
+    if (hasFp64) {
         printRow("FP64", "vector", 2.0 * simd, "TFLOPS*");
-    if (hasDp4a)
+    }
+    if (hasDp4a) {
         printRow("INT8", "dp4a", 2.0 * simd * 4, "TOPS");
+    }
 
     if (hasDpas) {
         printRow("BF16", "xmx", 2.0 * simd * systolicDepth * 2, "TFLOPS");
         printRow("FP16", "xmx", 2.0 * simd * systolicDepth * 2, "TFLOPS");
         printRow("INT8", "xmx", 2.0 * simd * systolicDepth * 2, "TOPS");
-        if (simd >= 16)
+        if (simd >= 16) {
             printRow("TF32", "xmx", 2.0 * simd * systolicDepth * 1, "TFLOPS*");
+        }
     }
     std::cout << tab << "\t(* rate/support not exposed by Level Zero; treat as upper bound)\n";
 
@@ -254,10 +272,12 @@ int printCacheProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
     std::cout << tab << "Cache properties (" << count << "):\n";
     for (uint32_t i = 0; i < count; i++) {
         std::string cacheFlags;
-        if (cacheProps[i].flags & ZE_DEVICE_CACHE_PROPERTY_FLAG_USER_CONTROL)
+        if (cacheProps[i].flags & ZE_DEVICE_CACHE_PROPERTY_FLAG_USER_CONTROL) {
             cacheFlags += "USER_CONTROL ";
-        if (cacheFlags.empty())
+        }
+        if (cacheFlags.empty()) {
             cacheFlags = "NONE";
+        }
         std::cout << tab << "\t[" << i << "] size: " << cacheProps[i].cacheSize
                   << "  flags: " << cacheFlags << "\n";
     }
@@ -301,14 +321,18 @@ int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
     if (flags == 0) {
         flagStr += " NONE";
     } else {
-        if (flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE)
+        if (flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
             flagStr += " ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE";
-        if (flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED)
+        }
+        if (flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED) {
             flagStr += " ZE_DEVICE_PROPERTY_FLAG_INTEGRATED";
-        if (flags & ZE_DEVICE_PROPERTY_FLAG_ECC)
+        }
+        if (flags & ZE_DEVICE_PROPERTY_FLAG_ECC) {
             flagStr += " ZE_DEVICE_PROPERTY_FLAG_ECC";
-        if (flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING)
+        }
+        if (flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING) {
             flagStr += " ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING";
+        }
     }
     std::cout << tabDelimiter << "\tflags: [" << flagStr << " ]\n";
 

@@ -45,12 +45,13 @@ class AllTestsGtestListener : public ::testing::EmptyTestEventListener {
         std::ostringstream line;
         line << '[';
         for (int i = 0; i < barWidth; i++) {
-            if (i < filled)
+            if (i < filled) {
                 line << '=';
-            else if (i == filled && completedTests < totalTests)
+            } else if (i == filled && completedTests < totalTests) {
                 line << '>';
-            else
+            } else {
                 line << ' ';
+            }
         }
         line << "] " << completedTests << '/' << totalTests;
         if (!currentTestName.empty()) {

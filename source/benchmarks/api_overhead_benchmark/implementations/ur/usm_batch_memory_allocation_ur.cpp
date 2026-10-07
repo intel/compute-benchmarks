@@ -36,8 +36,9 @@ static TestResult run(const UsmBatchMemoryAllocationArguments &arguments, Statis
             timer.measureStart();
         }
 
-        for (auto i = 0u; i < arguments.allocationCount; i++)
+        for (auto i = 0u; i < arguments.allocationCount; i++) {
             ASSERT_UR_RESULT_SUCCESS(UR::UsmHelper::allocate(arguments.usmMemoryPlacement, ur.context, ur.device, arguments.size, &ptrs[i]));
+        }
 
         if (arguments.measureMode == AllocationMeasureMode::Allocate) {
             timer.measureEnd();
@@ -45,8 +46,9 @@ static TestResult run(const UsmBatchMemoryAllocationArguments &arguments, Statis
             timer.measureStart();
         }
 
-        for (auto i = 0u; i < arguments.allocationCount; i++)
+        for (auto i = 0u; i < arguments.allocationCount; i++) {
             ASSERT_UR_RESULT_SUCCESS(urUSMFree(ur.context, ptrs[i]));
+        }
 
         if (arguments.measureMode == AllocationMeasureMode::Free ||
             arguments.measureMode == AllocationMeasureMode::Both) {

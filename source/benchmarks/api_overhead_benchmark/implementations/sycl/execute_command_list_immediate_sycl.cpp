@@ -32,8 +32,9 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
     const auto eat_time = [=]([[maybe_unused]] auto i) {
         if (kernelOperationsCount > 4) {
             volatile int value = kernelOperationsCount;
-            while (value > 1)
+            while (value > 1) {
                 value -= 1;
+            }
         }
     };
 

@@ -67,11 +67,13 @@ TestResult scenario(UrState &ur, ur_kernel_handle_t kernel, QueueData queueDataA
     }
 
     ASSERT_TEST_RESULT_SUCCESS(execKernel(ur, kernel, queueDataA, arguments, SizeVariant::Big));
-    for (auto i = 0u; i < arguments.numKernelsSmall; i++)
+    for (auto i = 0u; i < arguments.numKernelsSmall; i++) {
         ASSERT_TEST_RESULT_SUCCESS(execKernel(ur, kernel, queueDataA, arguments, SizeVariant::Small));
+    }
 
-    for (auto i = 0u; i < arguments.numKernelsSmall; i++)
+    for (auto i = 0u; i < arguments.numKernelsSmall; i++) {
         ASSERT_TEST_RESULT_SUCCESS(execKernel(ur, kernel, queueDataB, arguments, SizeVariant::Small));
+    }
     ASSERT_TEST_RESULT_SUCCESS(execKernel(ur, kernel, queueDataB, arguments, SizeVariant::Big));
 
     ASSERT_UR_RESULT_SUCCESS(urQueueFinish(queueDataA.queue));
@@ -110,8 +112,9 @@ static TestResult run(const TmpBufferMixedSizeArguments &arguments, Statistics &
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_fill_with_ones.spv");
-    if (spirvModule.size() == 0)
+    if (spirvModule.size() == 0) {
         return TestResult::KernelNotFound;
+    }
 
     ur_program_handle_t program;
     EXPECT_UR_RESULT_SUCCESS(urProgramCreateWithIL(ur.context, spirvModule.data(),
@@ -127,8 +130,9 @@ static TestResult run(const TmpBufferMixedSizeArguments &arguments, Statistics &
     ASSERT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device, &queueProperties, &queueDataB.queue));
 
     // Buffer size in bytes must be multiple of sizeof(int)
-    if (arguments.sizeSmall % sizeof(int) != 0)
+    if (arguments.sizeSmall % sizeof(int) != 0) {
         return TestResult::InvalidArgs;
+    }
 
     // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
