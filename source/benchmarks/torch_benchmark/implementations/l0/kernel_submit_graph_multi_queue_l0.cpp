@@ -23,7 +23,6 @@ TestResult verify_result(ze_command_list_handle_t cmd_list, size_t length, data_
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmd_list, h_result.data(), d_result, length * sizeof(data_type), nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list, UINT64_MAX));
 
-    // compute expected result
     std::vector<data_type> expected_result(length);
     for (size_t i = 0; i < length; ++i) {
         h_b[i] = h_a[i] + 1.0f;               // first kernel: kernel_add_const
@@ -31,7 +30,6 @@ TestResult verify_result(ze_command_list_handle_t cmd_list, size_t length, data_
         expected_result[i] = h_b[i] + h_c[i]; // third kernel: kernel_add_arrays
     }
 
-    // verify
     for (size_t i = 0; i < length; ++i) {
         if (std::abs(h_result[i] - expected_result[i]) > static_cast<data_type>(epsilon)) {
             std::cerr << "Verification failed at index " << i << ": expected " << expected_result[i]
@@ -51,7 +49,6 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
         return TestResult::Nooped;
     }
 
-    // setup
     ExtensionProperties extensionProperties = ExtensionProperties::create()
                                                   .setGraphFunctions(true);
     LevelZero l0{extensionProperties};
@@ -67,20 +64,16 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
     DeviceMemory<data_type> d_c{l0, length};
     DeviceMemory<data_type> d_d{l0, length};
 
-    // initialize d_a for the verification phase
     const data_type init_value = 1.0f;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmd_list_1.get(), d_a.getPtr(), &init_value, sizeof(data_type), length * sizeof(data_type), nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list_1.get(), UINT64_MAX));
 
-    // create kernels
     Kernel kernel_add_const{l0, "torch_benchmark_add_element_constant.cl", "add_element_constant"};
     Kernel kernel_add_arrays{l0, "torch_benchmark_elementwise_sum_2.cl", "elementwise_sum_2_float"};
 
-    // create events for synchronization between queues
     CounterBasedEvent event_1{l0, args.useProfiling};
     CounterBasedEvent event_2{l0, args.useProfiling};
 
-    // submit kernels
     ze_group_count_t dispatch{wgc, 1, 1};
     ze_group_size_t groupSizes{wgs, 1, 1};
     data_type add_element = 1.0f;
@@ -97,7 +90,6 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
         return TestResult::Success;
     };
 
-    // capture graph
     Graph graph{l0};
     ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListBeginCaptureIntoGraph(cmd_list_1.get(), graph.get(), nullptr));
     for (size_t i = 0; i < args.kernelsPerQueue; ++i) {
@@ -105,10 +97,8 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
     }
     ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListEndGraphCapture(cmd_list_1.get(), graph.getAddress(), nullptr));
 
-    // instantiate graph
     ASSERT_TEST_RESULT_SUCCESS(graph.instantiate());
 
-    // benchmark: run captured graph
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
 
@@ -123,7 +113,6 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list_3.get(), UINT64_MAX));
 
-    // verify result
     ASSERT_TEST_RESULT_SUCCESS(verify_result<data_type>(cmd_list_3.get(), length, d_a.getPtr(), d_d.getPtr()));
 
     return TestResult::Success;

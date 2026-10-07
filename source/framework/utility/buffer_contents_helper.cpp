@@ -41,7 +41,6 @@ const uint8_t *BufferContentsHelper::getRandomBytes(size_t size) {
     const auto randomizationChunkSize = sizeof(uint64_t);
     const auto alignedSize = (size + (randomizationChunkSize - 1)) / randomizationChunkSize * randomizationChunkSize;
 
-    // If requested size is greater than what we've cached, generate more data
     const auto oldSize = cachedRandomData.size();
     if (alignedSize > oldSize) {
         cachedRandomData.resize(alignedSize);

@@ -27,7 +27,6 @@ TestResult run(const SingleQueueWorkloadArguments &arguments, Statistics &statis
     LevelZero levelzero{};
     Timer timer{};
 
-    // Ensure we're running on a single tile
     uint32_t tilesCount = {};
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeDeviceGetSubDevices(levelzero.device, &tilesCount, nullptr));
     if (tilesCount > 1) {
@@ -35,13 +34,11 @@ TestResult run(const SingleQueueWorkloadArguments &arguments, Statistics &statis
         return TestResult::DeviceNotCapable;
     }
 
-    // Compute work size
     const auto totalThreadsCount = arguments.workgroupSize * arguments.workgroupCount;
     const ze_group_count_t groupCount{static_cast<uint32_t>(arguments.workgroupCount), 1, 1};
     const auto operationsCount = static_cast<uint32_t>(arguments.operationsCount);
     const auto bufferSizeInBytes = totalThreadsCount * sizeof(uint32_t);
 
-    // Create buffer
     void *buffer = nullptr;
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSizeInBytes, 0, levelzero.device, &buffer));
@@ -57,7 +54,6 @@ TestResult run(const SingleQueueWorkloadArguments &arguments, Statistics &statis
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeKernelSetArgumentValue(kernel, 1, sizeof(operationsCount), &operationsCount));
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList{};
@@ -65,7 +61,6 @@ TestResult run(const SingleQueueWorkloadArguments &arguments, Statistics &statis
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         synchronization.synchronize(io);
 
@@ -77,7 +72,6 @@ TestResult run(const SingleQueueWorkloadArguments &arguments, Statistics &statis
         statistics.pushValue(timer.get(), MeasurementUnit::Unknown, MeasurementType::Unknown);
     }
 
-    // Evict buffer
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeContextEvictMemory(levelzero.context, levelzero.device, buffer, bufferSizeInBytes));
 
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeCommandListDestroy(cmdList));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,10 +24,8 @@ void WorkloadSynchronization::synchronize(WorkloadIo &workloadIo) {
         return;
     }
 
-    // Signal that we're ready
     workloadIo.writeSynchronizationChar(ProcessSynchronizationHelper::synchronizationChar);
 
-    // Wait for signal from master
     char character = {};
     do {
         character = workloadIo.readSynchronizationChar();

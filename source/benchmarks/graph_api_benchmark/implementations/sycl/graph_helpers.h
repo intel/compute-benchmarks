@@ -20,7 +20,6 @@ namespace sycl_ext = sycl::ext::oneapi::experimental;
 
 template <size_t NumNodes>
 void buildGraphFromNodes(const std::array<GraphImport::node, NumNodes> &NodeList, sycl_ext::command_graph<sycl_ext::graph_state::modifiable> &Graph) {
-    // Storage for all the SYCL nodes
     std::vector<sycl_ext::node> SyclNodes;
     SyclNodes.reserve(NumNodes);
     // Dummy ptr parameters to trigger multiple set arg calls
@@ -58,7 +57,6 @@ void buildGraphFromNodes(const std::array<GraphImport::node, NumNodes> &NodeList
             FATAL_ERROR("Unknown node type for graph import.");
         }
     }
-    // Make edges between all nodes based on provided successors
     for (size_t i = 0; i < NumNodes; i++) {
 
         const GraphImport::node &N = NodeList[i];

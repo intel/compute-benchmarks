@@ -25,7 +25,6 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     LevelZero levelzero;
     Timer timer;
 
-    // Create buffers
     const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     void *buffer{};
@@ -39,14 +38,12 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
         return result;
     }
 
-    // Configure dispath parameters
     const uint32_t wgs = 256;
     const uint32_t wgc = static_cast<uint32_t>(elementsCount) / wgs;
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, wgs, 1, 1));
     const ze_group_count_t dispatchTraits{wgc, 1, 1};
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
@@ -63,7 +60,6 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         for (auto elementIndex = 0u; elementIndex < elementsCount; elementIndex++) {
             bufferInt[elementIndex] = 0;

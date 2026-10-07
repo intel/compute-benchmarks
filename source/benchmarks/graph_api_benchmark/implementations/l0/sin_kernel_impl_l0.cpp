@@ -163,12 +163,10 @@ TestResult SinKernelGraphL0::readResults(float *output_h) {
 
 TestResult SinKernelGraphL0::runGraph(float *input_h) {
     ze_event_handle_t event = immediateAppendCmdList ? nullptr : zeEvent;
-    // memcpy
     ASSERT_ZE_RESULT_SUCCESS(
         zeCommandListAppendMemoryCopy(immCmdList, graphInputData.get(), input_h,
                                       size * sizeof(float), event, 0, nullptr));
 
-    // run graph
     if (immediateAppendCmdList) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListImmediateAppendCommandListsExp(
             immCmdList, 1, &graphCmdList, nullptr, 0, nullptr));
@@ -180,12 +178,10 @@ TestResult SinKernelGraphL0::runGraph(float *input_h) {
 }
 
 TestResult SinKernelGraphL0::runEager(float *input_h) {
-    // memcpy
     ASSERT_ZE_RESULT_SUCCESS(
         zeCommandListAppendMemoryCopy(immCmdList, graphInputData.get(), input_h,
                                       size * sizeof(float), nullptr, 0, nullptr));
 
-    // run kernels directly
     ASSERT_TEST_RESULT_SUCCESS(runKernels(immCmdList));
 
     return TestResult::Success;

@@ -315,7 +315,6 @@ int printDeviceProperties(ze_device_handle_t device, uint32_t numberOfTabs) {
         std::cout << static_cast<uint32_t>(deviceProperties.uuid.id[i]) << " ";
     }
     std::cout << "\n";
-    // Print each flag as a string
     std::string flagStr;
     ze_device_property_flags_t flags = deviceProperties.flags;
     if (flags == 0) {

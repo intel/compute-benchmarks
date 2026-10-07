@@ -27,7 +27,6 @@ static TestResult run(const AggregatedEventWaitArguments &arguments, Statistics 
     }
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    // Create buffers
     const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     void *timestampBuffer = nullptr;
     const auto timestampBufferSize = sizeof(uint64_t) * 2;
@@ -41,7 +40,6 @@ static TestResult run(const AggregatedEventWaitArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, aggregateStorageSize, alignof(uint64_t), levelzero.device, &aggregateStorage));
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, aggregateStorage, aggregateStorageSize));
 
-    // Create event
     ze_event_handle_t event = nullptr;
     uint32_t incrementValue = 0;
     ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetAggregatedCopyOffloadIncrementValue(levelzero.device, &incrementValue));
@@ -60,7 +58,6 @@ static TestResult run(const AggregatedEventWaitArguments &arguments, Statistics 
 
     ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &eventDesc, &event));
 
-    // Create command list
     ze_command_list_handle_t cmdList = nullptr;
     ze_command_list_desc_t cmdListDesc{
         .stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC,
@@ -68,7 +65,6 @@ static TestResult run(const AggregatedEventWaitArguments &arguments, Statistics 
         .flags = ZE_COMMAND_LIST_FLAG_IN_ORDER};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
-    // Record commands
     const uint64_t zero = 0;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, aggregateStorage, &zero, sizeof(zero), aggregateStorageSize, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendSignalEvent(cmdList, event));
@@ -79,7 +75,6 @@ static TestResult run(const AggregatedEventWaitArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, endTimestamp, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (size_t i = 0; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));

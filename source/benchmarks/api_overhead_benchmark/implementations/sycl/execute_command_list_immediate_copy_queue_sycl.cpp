@@ -22,14 +22,11 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
         return TestResult::Nooped;
     }
 
-    // Setup
     Sycl sycl{sycl::device{sycl::gpu_selector_v}};
 
-    // Create buffers
     auto srcBuffer = UsmHelper::allocate(arguments.sourcePlacement, sycl, arguments.size);
     auto dstBuffer = UsmHelper::allocate(arguments.destinationPlacement, sycl, arguments.size);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         prof.measureStart();
         sycl.queue.memcpy(dstBuffer, srcBuffer, arguments.size);
@@ -47,7 +44,6 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
         prof.pushStats(statistics);
     }
 
-    // Cleanup
     UsmHelper::deallocate(arguments.sourcePlacement, sycl, srcBuffer);
     UsmHelper::deallocate(arguments.destinationPlacement, sycl, dstBuffer);
 

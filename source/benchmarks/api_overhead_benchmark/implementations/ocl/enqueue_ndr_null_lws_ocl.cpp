@@ -21,18 +21,15 @@ static TestResult run(const EnqueueNdrNullLwsArguments &arguments, Statistics &s
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useProfiling).setOoq(arguments.useOoq);
     Opencl opencl(queueProperties);
     cl_int retVal{};
     Timer timer;
 
-    // Get parameters for the enqueue call
     cl_event event{};
     cl_event *eventForNdr = arguments.useEvent ? &event : nullptr;
     const size_t gws = arguments.gws;
 
-    // Create kernel
     const char *source = "__kernel void empty() {}";
     const auto sourceLength = strlen(source);
     cl_program program = clCreateProgramWithSource(opencl.context, 1, &source, &sourceLength, &retVal);
@@ -41,7 +38,6 @@ static TestResult run(const EnqueueNdrNullLwsArguments &arguments, Statistics &s
     cl_kernel kernel = clCreateKernel(program, "empty", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, nullptr, 0, nullptr, eventForNdr));
@@ -53,7 +49,6 @@ static TestResult run(const EnqueueNdrNullLwsArguments &arguments, Statistics &s
         }
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     return TestResult::Success;

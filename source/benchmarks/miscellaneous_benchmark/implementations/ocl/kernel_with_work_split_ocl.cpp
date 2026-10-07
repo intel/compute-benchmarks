@@ -23,7 +23,6 @@ static TestResult run(const KernelWithWorkArgumentsSplit &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents);
     std::vector<cl_event> profilingEvents(arguments.splitSize);
     Opencl opencl(queueProperties);
@@ -53,7 +52,6 @@ static TestResult run(const KernelWithWorkArgumentsSplit &arguments, Statistics 
 
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         for (uint32_t splitId = 0u; splitId < arguments.splitSize; splitId++) {
@@ -78,7 +76,6 @@ static TestResult run(const KernelWithWorkArgumentsSplit &arguments, Statistics 
         }
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));

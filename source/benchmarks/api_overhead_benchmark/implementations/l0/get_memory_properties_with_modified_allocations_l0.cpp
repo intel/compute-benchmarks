@@ -22,7 +22,6 @@ static TestResult run(const GetMemoryPropertiesWithModifiedAllocationsArguments 
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
@@ -38,7 +37,6 @@ static TestResult run(const GetMemoryPropertiesWithModifiedAllocationsArguments 
 
     auto modifyAllocations = [&]() {
         for (int64_t index = 0; index < arguments.AllocationsCount; index++) {
-            // Modify alternate allocations
             if (index & 1) {
                 ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, allocations[index]));
                 const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
@@ -50,7 +48,6 @@ static TestResult run(const GetMemoryPropertiesWithModifiedAllocationsArguments 
         return TestResult::Success;
     };
 
-    // Benchmark
     ze_memory_allocation_properties_t properties{};
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
@@ -67,7 +64,6 @@ static TestResult run(const GetMemoryPropertiesWithModifiedAllocationsArguments 
         statistics.pushValue(timer.get() / arguments.AllocationsCount, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, allocations[i]));
     }

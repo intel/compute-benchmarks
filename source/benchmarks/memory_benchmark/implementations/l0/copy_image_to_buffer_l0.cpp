@@ -23,7 +23,6 @@ static TestResult run(const CopyImageToBufferArguments &arguments, Statistics &s
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).allowCreationFail();
     LevelZero levelzero(queueProperties);
     if (levelzero.commandQueue == nullptr) {
@@ -40,7 +39,6 @@ static TestResult run(const CopyImageToBufferArguments &arguments, Statistics &s
     const auto channelOrder = ImageHelperL0::ChannelOrder::RGBA;
     const auto channelFormat = ImageHelperL0::ChannelFormat::Float;
 
-    // Create image and buffer
     ze_image_desc_t imageDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
     imageDesc.type = ImageHelperL0::getL0ImageTypeFromDimensions(arguments.region);
     imageDesc.format = ImageHelperL0::getImageFormat(channelOrder, channelFormat);
@@ -55,7 +53,6 @@ static TestResult run(const CopyImageToBufferArguments &arguments, Statistics &s
     const ze_image_region_t reg = {0u, 0u, 0u, static_cast<uint32_t>(arguments.region[0]), static_cast<uint32_t>(arguments.region[1]), static_cast<uint32_t>(arguments.region[2])};
     const size_t imageSizeInBytes = ImageHelperL0::getImageSizeInBytes(channelOrder, channelFormat, arguments.region);
 
-    // Create event
     ze_event_handle_t event{};
     ze_event_counter_based_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
     eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
@@ -66,7 +63,6 @@ static TestResult run(const CopyImageToBufferArguments &arguments, Statistics &s
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &eventDesc, &event));
 
-    // Create an immediate command list
     ze_command_list_handle_t cmdList{};
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, queueProperties.selectedEngine);
     commandQueueDesc->desc.flags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
@@ -75,7 +71,6 @@ static TestResult run(const CopyImageToBufferArguments &arguments, Statistics &s
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendImageCopyToMemory(cmdList, destination, srcImage, &reg, event, 0, nullptr));
@@ -93,7 +88,6 @@ static TestResult run(const CopyImageToBufferArguments &arguments, Statistics &s
         }
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
 

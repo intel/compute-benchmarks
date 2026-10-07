@@ -64,14 +64,12 @@ static TestResult getEngineInfo(std::vector<EngineInfo> &supportedEngineInfo, Le
                 insertToEngineInfoList(queueGroupProperties[i].numQueues, i);
             }
         } else {
-            // Use all Copy Engines (main and link)
             if (queueGroupProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) {
                 insertToEngineInfoList(queueGroupProperties[i].numQueues, i);
             }
         }
     }
 
-    // Apply the mask
     std::vector<EngineInfo>::iterator it = supportedEngineInfo.begin();
     std::bitset<maxNumberOfEngines> engineBitset = arguments.engineMask;
     uint32_t engineMaskPosition = 0;
@@ -93,7 +91,6 @@ static TestResult run(const ImmediateCommandListCompletionArguments &arguments, 
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
     }
-    // Setup
     LevelZero levelzero;
 
     std::vector<EngineInfo> supportedEngineInfo{};
@@ -142,7 +139,6 @@ static TestResult run(const ImmediateCommandListCompletionArguments &arguments, 
 
     std::shared_mutex barrier;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         std::unique_lock lock(barrier);
         std::vector<std::unique_ptr<std::thread>> threads;
@@ -164,7 +160,6 @@ static TestResult run(const ImmediateCommandListCompletionArguments &arguments, 
         statistics.pushValue(averageThreadDuration, MeasurementUnit::Microseconds, MeasurementType::Cpu, "Average Thread Duration");
     }
 
-    // Cleanup
     for (auto i = 0u; i < arguments.numberOfThreads; i++) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(UsmMemoryPlacement::Host, levelzero, threadData[i].hostSrcMemory));
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(UsmMemoryPlacement::Device, levelzero, threadData[i].deviceDstMemory));

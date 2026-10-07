@@ -33,18 +33,15 @@ static TestResult run(const MapBufferArguments &arguments, Statistics &statistic
         return TestResult::DeviceNotCapable;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents);
     Opencl opencl(queueProperties);
     Timer timer;
     cl_int retVal;
 
-    // Create buffer
     const cl_mem_flags compressionHint = CompressionHelper::getCompressionFlags(arguments.compressed, arguments.noIntelExtensions);
     const cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | compressionHint, arguments.size, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Check buffer compression
     const auto compressionStatus = CompressionHelper::verifyCompression(buffer, arguments.compressed, arguments.noIntelExtensions);
     if (compressionStatus != TestResult::Success) {
         ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
@@ -54,7 +51,6 @@ static TestResult run(const MapBufferArguments &arguments, Statistics &statistic
     const auto mapFlags = convertMapFlags(arguments.mapFlags);
     void *ptr = nullptr;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillBuffer(opencl.commandQueue, buffer, arguments.size, arguments.contents));
 

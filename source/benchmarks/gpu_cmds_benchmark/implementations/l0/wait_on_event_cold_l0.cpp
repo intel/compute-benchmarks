@@ -17,7 +17,6 @@
 struct TestResources {
     TestResources(LevelZero &levelzero, size_t eventsCount, uint64_t *beginTimestamp, uint64_t *endTimestamp)
         : events(eventsCount) {
-        // Create events and signal them
         const ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, static_cast<uint32_t>(eventsCount)};
         const ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_DEVICE};
         ZE_RESULT_SUCCESS_OR_ERROR(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 0, nullptr, &this->eventPool));
@@ -27,7 +26,6 @@ struct TestResources {
             ZE_RESULT_SUCCESS_OR_ERROR(zeEventHostSignal(event));
         }
 
-        // Create command list
         ze_command_list_desc_t cmdListDesc{};
         cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
         ZE_RESULT_SUCCESS_OR_ERROR(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &this->cmdList));
@@ -63,7 +61,6 @@ static TestResult run(const WaitOnEventColdArguments &arguments, Statistics &sta
     LevelZero levelzero;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    // Create buffer
     const ze_host_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     void *buffer = nullptr;
     const auto bufferSize = sizeof(uint64_t) * 2;
@@ -72,7 +69,6 @@ static TestResult run(const WaitOnEventColdArguments &arguments, Statistics &sta
     uint64_t *beginTimestamp = static_cast<uint64_t *>(buffer);
     uint64_t *endTimestamp = beginTimestamp + 1;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         auto testResources = std::make_unique<TestResources>(levelzero, arguments.measuredCommands, beginTimestamp, endTimestamp);
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &testResources->cmdList, nullptr));

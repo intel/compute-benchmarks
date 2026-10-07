@@ -22,14 +22,12 @@ static TestResult run(const MultiQueueExecutionArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
 
     const size_t lws = 32u;
     const size_t gws = 32u;
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_multi_kernel_execution.cl", "empty", &kernel, &module, nullptr);
@@ -39,7 +37,6 @@ static TestResult run(const MultiQueueExecutionArguments &arguments, Statistics 
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(lws), 1u, 1u));
 
-    // Create command lists
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     if (arguments.useIoq) {

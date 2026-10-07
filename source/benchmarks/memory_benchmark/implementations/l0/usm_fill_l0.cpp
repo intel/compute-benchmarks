@@ -39,11 +39,9 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    // Create buffer
     void *buffer{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.usmMemoryPlacement, levelzero, arguments.bufferSize, &buffer));
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     if (arguments.useEvents) {
@@ -58,7 +56,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
     }
 
-    // Create pattern
     const auto pattern = std::make_unique<uint8_t[]>(arguments.patternSize);
     if (arguments.patternContents == BufferContents::Random) {
         BufferContentsHelperL0::fillWithRandomBytes(pattern.get(), arguments.patternSize);
@@ -68,7 +65,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
             levelzero.driver, pattern.get(), arguments.patternSize));
     }
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList{};
@@ -76,7 +72,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffer, pattern.get(), arguments.patternSize, arguments.bufferSize, event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffer, arguments.bufferSize, arguments.contents, false));
 
@@ -96,7 +91,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
         }
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     if (arguments.useEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));

@@ -28,7 +28,6 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create();
     ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(
@@ -43,14 +42,12 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    // Create buffers
     void *source{}, *destination{};
     const ze_copy_region_t reg = {static_cast<uint32_t>(arguments.origin[0]), static_cast<uint32_t>(arguments.origin[1]), static_cast<uint32_t>(arguments.origin[2]), static_cast<uint32_t>(arguments.region[0]), static_cast<uint32_t>(arguments.region[1]), static_cast<uint32_t>(arguments.region[2])};
     auto copySize = arguments.region[0] * arguments.region[1] * arguments.region[2];
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &source));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.destinationPlacement, levelzero, arguments.size, &destination));
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     ze_event_pool_flags_t eventPoolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -67,12 +64,10 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
-    // Create an immediate command list
     ze_command_list_handle_t cmdList{};
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, queueProperties.selectedEngine);
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         timer.measureStart();
@@ -95,7 +90,6 @@ static TestResult run(const UsmCopyRegionArguments &arguments, Statistics &stati
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));

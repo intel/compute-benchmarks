@@ -38,7 +38,6 @@ static TestResult run(const UsmImmediateCopyCopyMultipleBlitsArguments &argument
         return TestResult::DeviceNotCapable;
     }
 
-    // Create selected blitter lists
     struct PerListData {
         ze_command_list_handle_t list;
         std::string name;
@@ -52,7 +51,6 @@ static TestResult run(const UsmImmediateCopyCopyMultipleBlitsArguments &argument
 
     BlitSizeAssigner blitSizeAssigner{arguments.size};
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -91,7 +89,6 @@ static TestResult run(const UsmImmediateCopyCopyMultipleBlitsArguments &argument
         lists.push_back(PerListData{list, queueName, isMainCopyEngine, event});
     }
 
-    // Create buffers
     void *srcBuffer{}, *dstBuffer{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement,
                                                  levelzero,
@@ -102,7 +99,6 @@ static TestResult run(const UsmImmediateCopyCopyMultipleBlitsArguments &argument
                                                  arguments.size,
                                                  &dstBuffer));
 
-    // Calculate copyOffset and copySize for each copy engine
     for (auto i = 0u; i < lists.size(); i++) {
         const auto [offset, size] = blitSizeAssigner.getSpaceForBlit(lists[i].isMainCopyEngine);
         lists[i].copySrc = static_cast<char *>(srcBuffer) + offset;
@@ -112,7 +108,6 @@ static TestResult run(const UsmImmediateCopyCopyMultipleBlitsArguments &argument
 
     blitSizeAssigner.validate();
 
-    // Benchmark
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -130,7 +125,6 @@ static TestResult run(const UsmImmediateCopyCopyMultipleBlitsArguments &argument
         }
         timer.measureEnd();
 
-        // Report individual engines results and get time delta
         std::chrono::nanoseconds endGpuTime{};
         std::chrono::nanoseconds startGpuTime = std::chrono::nanoseconds::duration::max();
 
@@ -145,7 +139,6 @@ static TestResult run(const UsmImmediateCopyCopyMultipleBlitsArguments &argument
             statistics.pushValue(commandTime, list.copySize, typeSelector.getUnit(), typeSelector.getType(), list.name);
         }
 
-        // Report total results
         statistics.pushValue(endGpuTime - startGpuTime, arguments.size, typeSelector.getUnit(), typeSelector.getType(), "Total (Gpu)");
         statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), MeasurementType::Cpu, "Total (Cpu)");
 

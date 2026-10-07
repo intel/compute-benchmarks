@@ -46,18 +46,15 @@ static TestResult run(const KernelSetArgumentValueImmediateArguments &arguments,
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Check max argument size
     ze_device_module_properties_t moduleProperties{};
     ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetModuleProperties(levelzero.device, &moduleProperties));
     if (arguments.argumentSize > moduleProperties.maxArgumentsSize) {
         return TestResult::DeviceNotCapable;
     }
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, std::string("api_overhead_benchmark_") + std::to_string(arguments.argumentSize) + "bytes_argument.cl", "arg_size", &kernel, &module, nullptr);
@@ -72,7 +69,6 @@ static TestResult run(const KernelSetArgumentValueImmediateArguments &arguments,
     st_input_1024 kernelArgument1024{};
     st_input_2048 kernelArgument2048{};
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (arguments.differentValues) {
             ++kernelArgument8.values[1];

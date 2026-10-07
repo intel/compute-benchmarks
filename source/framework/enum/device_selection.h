@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 enum class DeviceSelection : int {
     Unknown = 0,
-    Host = 1 << 0, // For USM
+    Host = 1 << 0,
     Root = 1 << 1,
     Tile0 = 1 << 2,
     Tile1 = 1 << 3,

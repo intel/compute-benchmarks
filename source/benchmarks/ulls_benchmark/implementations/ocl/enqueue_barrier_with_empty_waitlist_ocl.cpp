@@ -23,13 +23,11 @@ static TestResult run(const EnqueueBarrierWithEmptyWaitlistArguments &arguments,
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setOoq(arguments.outOfOrderQueue);
     Opencl opencl(queueProperties);
     Timer timer{};
     cl_int retVal{};
 
-    // Prepare data
     const size_t workgroupCount = 128;
     const size_t lws = 128;
     const size_t gws = lws * workgroupCount;
@@ -38,7 +36,6 @@ static TestResult run(const EnqueueBarrierWithEmptyWaitlistArguments &arguments,
         return TestResult::InvalidArgs;
     }
 
-    // Create kernel
     cl_program program = nullptr;
     const char *programName = "ulls_benchmark_eat_time.cl";
     const char *kernelName = "eat_time";
@@ -50,7 +47,6 @@ static TestResult run(const EnqueueBarrierWithEmptyWaitlistArguments &arguments,
     const cl_int operationsCount = 1;
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(cl_int), &operationsCount));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         {
@@ -69,7 +65,6 @@ static TestResult run(const EnqueueBarrierWithEmptyWaitlistArguments &arguments,
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     return TestResult::Success;

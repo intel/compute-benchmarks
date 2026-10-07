@@ -25,7 +25,6 @@ static TestResult run(const ReadImageArguments &arguments, Statistics &statistic
         return TestResult::Nooped;
     }
 
-    // Setup
     cl_int retVal{};
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents).setForceBlitter(arguments.forceBlitter).allowCreationFail();
     Opencl opencl(queueProperties);
@@ -42,7 +41,6 @@ static TestResult run(const ReadImageArguments &arguments, Statistics &statistic
     const auto channelOrder = ImageHelperOcl::ChannelOrder::RGBA;
     const auto channelFormat = ImageHelperOcl::ChannelFormat::Float;
 
-    // Create image
     const cl_image_format imageFormat = ImageHelperOcl::getImageFormat(channelOrder, channelFormat);
     cl_image_desc imageDescription = {};
     imageDescription.image_type = ImageHelperOcl::getOclImageTypeFromDimensions(arguments.size);
@@ -57,14 +55,12 @@ static TestResult run(const ReadImageArguments &arguments, Statistics &statistic
     cl_mem image = clCreateImage(opencl.context, 0, &imageFormat, &imageDescription, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     const auto imageSizeInBytes = ImageHelperOcl::getImageSizeInBytes(channelOrder, channelFormat, arguments.size, arguments.hostPtrAlignment);
-    // Create hostptr
     HostptrReuseHelper::Alloc hostptrAlloc{};
     ASSERT_CL_SUCCESS(HostptrReuseHelper::allocateBufferHostptr(opencl, arguments.hostPtrPlacement, imageSizeInBytes, hostptrAlloc));
 
     const size_t origin[] = {0, 0, 0};
     const size_t *region = arguments.size;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         cl_event profilingEvent{};
         cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;

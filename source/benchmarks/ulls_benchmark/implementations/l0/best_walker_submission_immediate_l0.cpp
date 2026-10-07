@@ -27,7 +27,6 @@ static TestResult run(const BestWalkerSubmissionImmediateArguments &arguments, S
     constexpr static auto bufferSize = 4096u;
     Timer timer;
 
-    // Create event
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 1;
@@ -40,13 +39,11 @@ static TestResult run(const BestWalkerSubmissionImmediateArguments &arguments, S
     ze_event_handle_t event{};
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
-    // Create buffer
     ze_host_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     void *buffer = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &allocationDesc, bufferSize, 0, &buffer));
     volatile uint64_t *volatileBuffer = static_cast<uint64_t *>(buffer);
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_write_one.cl", "write_one_uncached", &kernel, &module, nullptr, ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY);
@@ -54,18 +51,15 @@ static TestResult run(const BestWalkerSubmissionImmediateArguments &arguments, S
         return result;
     }
 
-    // Configure kernel
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1, 1, 1));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
 
-    // Create an immediate command list
     const ze_group_count_t groupCount{1, 1, 1};
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         *volatileBuffer = 0;
         _mm_clflush(buffer);

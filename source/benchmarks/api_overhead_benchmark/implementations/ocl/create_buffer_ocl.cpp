@@ -22,7 +22,6 @@ static TestResult run(const CreateBufferArguments &arguments, Statistics &statis
         return TestResult::Nooped;
     }
 
-    // Setup
     Opencl opencl;
     Timer timer;
     cl_int retVal{};
@@ -47,7 +46,6 @@ static TestResult run(const CreateBufferArguments &arguments, Statistics &statis
         memFlags |= CL_MEM_READ_ONLY;
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (arguments.copyHostPtr) {
             hostPtr = srcCpuBuffers[i].get();
@@ -64,7 +62,6 @@ static TestResult run(const CreateBufferArguments &arguments, Statistics &statis
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     for (auto bufferToRelease : buffersToRelease) {
         ASSERT_CL_SUCCESS(clReleaseMemObject(bufferToRelease));
     }

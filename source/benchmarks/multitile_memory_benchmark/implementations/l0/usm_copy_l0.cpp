@@ -31,12 +31,10 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(arguments.queuePlacement);
 
-    // Create buffers
     void *src{}, *dst{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.srcPlacement, levelzero, arguments.size, &src));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.dstPlacement, levelzero, arguments.size, &dst));
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     if (arguments.useEvents) {
@@ -51,7 +49,6 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
     }
 
-    // Make the buffers resident
     for (DeviceSelection device : DeviceSelectionHelper::split(DeviceSelectionHelper::withoutHost(arguments.queuePlacement | arguments.srcPlacement))) {
         ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.getDevice(device), src, arguments.size));
     }
@@ -59,7 +56,6 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
         ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.getDevice(device), dst, arguments.size));
     }
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList{};
@@ -67,7 +63,6 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, dst, src, arguments.size, event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
@@ -85,7 +80,6 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
         }
     }
 
-    // Evict buffers
     for (DeviceSelection device : DeviceSelectionHelper::split(DeviceSelectionHelper::withoutHost(arguments.queuePlacement | arguments.srcPlacement))) {
         ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.getDevice(device), src, arguments.size));
     }
@@ -93,7 +87,6 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
         ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.getDevice(device), dst, arguments.size));
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     if (arguments.useEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));

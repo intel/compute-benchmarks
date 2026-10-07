@@ -22,11 +22,9 @@ static TestResult run(const AppendKernelWithMappedTimestampEventArguments &argum
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_empty_kernel.cl", "empty", &kernel, &module, nullptr);
@@ -36,14 +34,13 @@ static TestResult run(const AppendKernelWithMappedTimestampEventArguments &argum
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
     const ze_group_count_t dispatchTraits{1u, 1u, 1u};
 
-    // Create event pool with benchmarked flag
     ze_event_pool_flags_t poolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     poolFlags |= arguments.useMappedTimestampEvent
                      ? ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP
                      : ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = poolFlags;
-    eventPoolDesc.count = 1; // one slot reused across iterations (destroy before next create)
+    eventPoolDesc.count = 1;
     ze_event_pool_handle_t eventPool{};
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
 
@@ -52,13 +49,11 @@ static TestResult run(const AppendKernelWithMappedTimestampEventArguments &argum
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
-    // Create immediate command list
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_command_list_handle_t cmdList{};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; ++i) {
         ze_event_handle_t event{};
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
@@ -72,7 +67,6 @@ static TestResult run(const AppendKernelWithMappedTimestampEventArguments &argum
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));

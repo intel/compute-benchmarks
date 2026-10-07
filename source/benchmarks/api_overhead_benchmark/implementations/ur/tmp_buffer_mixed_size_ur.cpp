@@ -57,8 +57,6 @@ TestResult execKernel(UrState &ur, ur_kernel_handle_t kernel, QueueData queueDat
     return TestResult::Success;
 }
 
-// In this scenario, we use two queues to execute kernels on small and large buffers.
-// Async allocation API enables buffers to be reused between the queues.
 TestResult scenario(UrState &ur, ur_kernel_handle_t kernel, QueueData queueDataA, QueueData queueDataB, const TmpBufferMixedSizeArguments &arguments) {
     size_t sizeLarge = arguments.sizeSmall * arguments.sizeLargeRatio;
     if (arguments.strategy == MemoryStrategy::Static) {
@@ -96,7 +94,6 @@ static TestResult run(const TmpBufferMixedSizeArguments &arguments, Statistics &
         return TestResult::Nooped;
     }
 
-    // Setup
     UrState ur;
     Timer timer;
 
@@ -110,7 +107,6 @@ static TestResult run(const TmpBufferMixedSizeArguments &arguments, Statistics &
         }
     }
 
-    // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_fill_with_ones.spv");
     if (spirvModule.size() == 0) {
         return TestResult::KernelNotFound;
@@ -129,12 +125,10 @@ static TestResult run(const TmpBufferMixedSizeArguments &arguments, Statistics &
     ASSERT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device, &queueProperties, &queueDataA.queue));
     ASSERT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device, &queueProperties, &queueDataB.queue));
 
-    // Buffer size in bytes must be multiple of sizeof(int)
     if (arguments.sizeSmall % sizeof(int) != 0) {
         return TestResult::InvalidArgs;
     }
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         timer.measureStart();
         ASSERT_TEST_RESULT_SUCCESS(scenario(ur, kernel, queueDataA, queueDataB, arguments));

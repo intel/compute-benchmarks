@@ -83,7 +83,6 @@ static TestResult run(const BestWalkerNthSubmissionImmediateArguments &arguments
 
     const ze_group_count_t groupCount{1, 1, 1};
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         *volatileBuffer = 0;
         _mm_clflush(buffer);

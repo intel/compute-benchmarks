@@ -24,7 +24,6 @@ static TestResult run(const GetMemoryPropertiesWithOffsetedPointerArguments &arg
 
     constexpr uint32_t offset = 2u;
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
@@ -38,7 +37,6 @@ static TestResult run(const GetMemoryPropertiesWithOffsetedPointerArguments &arg
         allocations.push_back(ptr);
     }
 
-    // Benchmark
     ze_memory_allocation_properties_t properties{};
     for (auto i = 0u; i < arguments.iterations; i++) {
 
@@ -51,7 +49,6 @@ static TestResult run(const GetMemoryPropertiesWithOffsetedPointerArguments &arg
         statistics.pushValue(timer.get() / arguments.AllocationsCount, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, allocations[i]));
     }

@@ -32,11 +32,9 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer{};
 
-    // Create queues
     std::vector<ze_command_queue_handle_t> queues;
     std::vector<ze_command_queue_desc_t> queueDescriptors;
 
@@ -49,13 +47,11 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
         }
     }
 
-    // If no copy engines available, use default queue
     if (queues.empty()) {
         queues.push_back(levelzero.commandQueue);
         queueDescriptors.push_back(levelzero.commandQueueDesc);
     }
 
-    // Create buffers
     const size_t bufferForCopySize = 1024 * 1024;
     std::vector<void *> srcAllocs;
     std::vector<void *> dstAllocs;
@@ -67,7 +63,6 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
         dstAllocs.push_back(destination);
     }
 
-    // Create cmdlists
     std::vector<ze_command_list_handle_t> cmdLists;
     for (auto i = 0u; i < arguments.numberOfThreads; i++) {
         ze_command_list_desc_t cmdListDesc{};
@@ -81,7 +76,6 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
 
     std::shared_mutex barrier;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         std::unique_lock lock(barrier);
         std::vector<std::unique_ptr<std::thread>> threads;
@@ -98,7 +92,6 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     for (auto i = 0u; i < arguments.numberOfThreads; i++) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(UsmMemoryPlacement::Host, levelzero, srcAllocs[i]));
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(UsmMemoryPlacement::Device, levelzero, dstAllocs[i]));

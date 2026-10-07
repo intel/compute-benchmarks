@@ -24,7 +24,6 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
         return TestResult::Nooped;
     }
 
-    // Setup
     cl_int retVal;
     QueueProperties queueProperties = QueueProperties::create().setDeviceSelection(arguments.queuePlacement).setForceBlitter(arguments.forceBlitter).setProfiling(arguments.useEvents).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create().setDeviceSelection(arguments.contextPlacement).allowCreationFail();
@@ -43,13 +42,11 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
     }
     Timer timer;
 
-    // Create buffer
     void *src = UsmHelperOcl::allocate(arguments.srcPlacement, opencl, arguments.size, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     void *dst = UsmHelperOcl::allocate(arguments.dstPlacement, opencl, arguments.size, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         cl_event profilingEvent{};
         cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;

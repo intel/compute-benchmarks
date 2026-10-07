@@ -26,19 +26,16 @@ static TestResult run(const ReadBufferMisalignedArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents);
     Opencl opencl(queueProperties);
     Timer timer;
     cl_int retVal;
 
-    // Create buffer
     const cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, arguments.size, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillBuffer(opencl.commandQueue, buffer, arguments.size, BufferContents::IncreasingBytes));
     auto cpuBuffer = CpuAllocationHelper::allocateMisalignedAllocation(arguments.size, MemoryConstants::cachelineSize, arguments.misalignmentFromCacheline);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         cl_event profilingEvent{};
         cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;
@@ -58,7 +55,6 @@ static TestResult run(const ReadBufferMisalignedArguments &arguments, Statistics
         }
     }
 
-    // Verify
     for (auto index = 0u; index < arguments.size; index++) {
         const uint8_t expected = static_cast<uint8_t>(index);
         const uint8_t actual = static_cast<uint8_t>(cpuBuffer.get()[index]);

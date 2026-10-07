@@ -22,11 +22,9 @@ static TestResult run(const AppendWaitOnEventsImmediateArguments &arguments, Sta
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // create command list
     ze_command_queue_desc_t commandQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     if (arguments.useIoq) {
         commandQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
@@ -34,7 +32,6 @@ static TestResult run(const AppendWaitOnEventsImmediateArguments &arguments, Sta
     ze_command_list_handle_t commandList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &commandList));
 
-    // Create event
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 2u};
     auto eventPoolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.flags = eventPoolFlags;
@@ -51,7 +48,6 @@ static TestResult run(const AppendWaitOnEventsImmediateArguments &arguments, Sta
         ASSERT_ZE_RESULT_SUCCESS(zeEventQueryStatus(event));
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWaitOnEvents(commandList, 1, &event));

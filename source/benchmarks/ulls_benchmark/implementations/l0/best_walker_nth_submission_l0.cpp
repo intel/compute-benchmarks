@@ -71,7 +71,6 @@ static TestResult run(const BestWalkerNthSubmissionArguments &arguments, Statist
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         *volatileBuffer = 0;
         _mm_clflush(buffer);

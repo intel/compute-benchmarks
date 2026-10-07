@@ -23,7 +23,6 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).allowCreationFail();
     LevelZero levelzero(queueProperties);
     if (levelzero.commandQueue == nullptr) {
@@ -47,7 +46,6 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
         return TestResult::DeviceNotCapable;
     }
 
-    // Create image
     ze_image_desc_t imageDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
     imageDesc.type = ImageHelperL0::getL0ImageTypeFromDimensions(arguments.size);
     imageDesc.format = ImageHelperL0::getImageFormat(channelOrder, channelFormat);
@@ -61,7 +59,6 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
     ASSERT_ZE_RESULT_SUCCESS(zeImageCreate(levelzero.context, levelzero.device, &imageDesc, &dstImage));
     const ze_image_region_t reg = {0u, 0u, 0u, static_cast<uint32_t>(arguments.size[0]), static_cast<uint32_t>(arguments.size[1]), static_cast<uint32_t>(arguments.size[2])};
 
-    // Create event
     ze_event_handle_t event{};
     ze_event_counter_based_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
     eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
@@ -72,7 +69,6 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &eventDesc, &event));
 
-    // Create an immediate command list
     ze_command_list_handle_t cmdList{};
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, queueProperties.selectedEngine);
     commandQueueDesc->desc.flags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
@@ -81,7 +77,6 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendImageCopyRegion(cmdList, dstImage, srcImage, &reg, &reg, event, 0, nullptr));
@@ -99,7 +94,6 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
         }
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
 

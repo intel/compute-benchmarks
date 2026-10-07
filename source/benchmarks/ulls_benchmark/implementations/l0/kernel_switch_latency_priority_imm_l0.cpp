@@ -22,7 +22,6 @@ static TestResult run(const KernelSwitchPriorityImmArguments &arguments, Statist
         return TestResult::Nooped;
     }
 
-    // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
 
@@ -31,7 +30,6 @@ static TestResult run(const KernelSwitchPriorityImmArguments &arguments, Statist
     const size_t lws = 1024u;
     const size_t gws = lws * 64;
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_eat_time.cl", "eat_time", &kernel, &module, nullptr);
@@ -41,7 +39,6 @@ static TestResult run(const KernelSwitchPriorityImmArguments &arguments, Statist
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(lws), 1u, 1u));
 
-    // Create command lists
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     commandQueueDesc.priority = QueueProperties::create().setPriority(arguments.measuredQueuePriority).priority;
@@ -56,7 +53,6 @@ static TestResult run(const KernelSwitchPriorityImmArguments &arguments, Statist
     ze_command_list_handle_t secondCmdList{};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &secondCmdList));
 
-    // Create events for profiling
     const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, static_cast<uint32_t>(arguments.kernelCount)};
     uint32_t numDevices = 1;
     ze_event_pool_handle_t hEventPool = nullptr;
@@ -97,7 +93,6 @@ static TestResult run(const KernelSwitchPriorityImmArguments &arguments, Statist
     };
 
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
-        // Benchmark
         auto ret = launchIteration();
         if (ret != TestResult::Success) {
             return ret;

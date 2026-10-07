@@ -21,7 +21,6 @@ static TestResult run(const CreateCommandListImmediateArguments &arguments, Stat
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     LevelZero levelzero(queueProperties);
     Timer timer;
@@ -33,7 +32,6 @@ static TestResult run(const CreateCommandListImmediateArguments &arguments, Stat
     }
     ze_command_list_handle_t commandList;
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         timer.measureStart();
         for (auto i = 0u; i < arguments.cmdListCount; i++) {

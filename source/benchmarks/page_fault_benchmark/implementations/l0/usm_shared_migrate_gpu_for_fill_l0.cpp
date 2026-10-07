@@ -30,7 +30,6 @@ static TestResult run(const UsmSharedMigrateGpuForFillArguments &arguments, Stat
 
     Timer timer;
 
-    // Create buffers
     const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     void *buffer{};
@@ -39,7 +38,6 @@ static TestResult run(const UsmSharedMigrateGpuForFillArguments &arguments, Stat
     const size_t elementsCount = arguments.bufferSize / sizeof(int32_t);
     const uint8_t pattern = 1;
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
@@ -57,14 +55,12 @@ static TestResult run(const UsmSharedMigrateGpuForFillArguments &arguments, Stat
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffer, &pattern, 1, arguments.bufferSize, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         // Migrate whole resource to CPU
         for (auto elementIndex = 0u; elementIndex < elementsCount; elementIndex++) {
             bufferInt[elementIndex] = 0;
         }
 
-        // Measure memory fill operation which must migrate the resource to GPU
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));

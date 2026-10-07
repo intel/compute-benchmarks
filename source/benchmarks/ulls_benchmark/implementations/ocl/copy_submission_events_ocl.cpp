@@ -22,7 +22,6 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true).setForceEngine(arguments.engine).allowCreationFail();
     Opencl opencl(queueProperties);
     if (nullptr == opencl.commandQueue) {
@@ -42,7 +41,6 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
     void *hostMemory = clHostMemAllocINTEL(opencl.context, nullptr, transferSize, 0, &retVal);
     const cl_mem destination = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, transferSize, nullptr, &retVal);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         cl_ulong queued{}, start{};
         ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, destination, CL_NON_BLOCKING, 0, transferSize, hostMemory, 0, nullptr, &profilingEvent));
@@ -55,7 +53,6 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
         statistics.pushValue(submissionTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, hostMemory));
     ASSERT_CL_SUCCESS(clReleaseMemObject(destination));
     return TestResult::Success;

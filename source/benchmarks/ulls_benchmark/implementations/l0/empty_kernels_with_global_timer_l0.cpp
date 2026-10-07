@@ -22,13 +22,11 @@ static TestResult run(const EmptyKernelsWithGlobalTimerArguments &arguments, Sta
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     const size_t gws = 1u;
     const size_t lws = 1u;
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_empty_kernel.cl", "empty", &kernel, &module, nullptr);
@@ -41,7 +39,6 @@ static TestResult run(const EmptyKernelsWithGlobalTimerArguments &arguments, Sta
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
 
-    // Create signal events
     ze_event_pool_flags_t flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, flags, static_cast<uint32_t>(arguments.kernelCount)};
     uint32_t numDevices = 1;
@@ -57,7 +54,6 @@ static TestResult run(const EmptyKernelsWithGlobalTimerArguments &arguments, Sta
     ze_command_list_handle_t cmdList{};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
-    // Setup global timestamps
     const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     const auto timestampBufferSize = sizeof(uint64_t) * 2;
     void *timestampBuffer = nullptr;
@@ -68,7 +64,6 @@ static TestResult run(const EmptyKernelsWithGlobalTimerArguments &arguments, Sta
     beginTimestamp = static_cast<uint64_t *>(timestampBuffer);
     endTimestamp = beginTimestamp + 1;
 
-    // Setup command list
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, beginTimestamp, nullptr, 0, nullptr));
     for (auto i = 0u; i < arguments.kernelCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, events[i], 0, nullptr));
@@ -78,7 +73,6 @@ static TestResult run(const EmptyKernelsWithGlobalTimerArguments &arguments, Sta
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
     for (auto i = 0u; i < arguments.iterations; i++) {
-        // Benchmark
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
         auto totalTime = std::chrono::nanoseconds(*endTimestamp - *beginTimestamp);
@@ -89,7 +83,6 @@ static TestResult run(const EmptyKernelsWithGlobalTimerArguments &arguments, Sta
         }
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, timestampBuffer, timestampBufferSize))
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, timestampBuffer));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));

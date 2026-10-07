@@ -22,14 +22,12 @@ bool CommandLineArgument::parseArguments(int argc, char **argv, CommandLineArgum
     for (int argIndex = 1; argIndex < argc; argIndex++) {
         CommandLineArgument arg{argv[argIndex]};
 
-        // Validate syntax
         if (!arg.isValid()) {
             outErrorMessage = std::string("Argument \"") + argv[argIndex] + "\" is ill-formed. All arguments have to follow syntax: --<key>[=value]";
             outArguments.clear();
             return false;
         }
 
-        // Check for duplicates
         const auto [iterator, inserted] = allKeys.insert(arg.getKey());
         static_cast<void>(iterator);
         if (!inserted) {

@@ -23,7 +23,6 @@ static TestResult run(const MemPutIpcHandleArguments &arguments, Statistics &sta
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
     if (levelzero.commandQueue == nullptr) {
@@ -34,7 +33,6 @@ static TestResult run(const MemPutIpcHandleArguments &arguments, Statistics &sta
         return TestResult::DeviceNotCapable;
     }
 
-    // Create buffer
     std::vector<void *> allocations;
     allocations.reserve(arguments.AllocationsCount);
 
@@ -47,7 +45,6 @@ static TestResult run(const MemPutIpcHandleArguments &arguments, Statistics &sta
 
     auto modifyAllocations = [&]() {
         for (int64_t index = 0; index < arguments.AllocationsCount; index++) {
-            // Modify alternate allocations
             if (index & 1) {
                 ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.sourcePlacement, levelzero, allocations[index]));
                 auto bufferSize = sizeof(uint64_t);
@@ -61,7 +58,6 @@ static TestResult run(const MemPutIpcHandleArguments &arguments, Statistics &sta
 
     std::vector<ze_ipc_mem_handle_t> ipcHandles(arguments.AllocationsCount);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         for (int64_t j = 0; j < arguments.AllocationsCount; ++j) {
             std::fill_n(ipcHandles[j].data, ZE_MAX_IPC_HANDLE_SIZE, static_cast<char>(0));
@@ -82,7 +78,6 @@ static TestResult run(const MemPutIpcHandleArguments &arguments, Statistics &sta
         statistics.pushValue(timer.get() / arguments.AllocationsCount, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.sourcePlacement, levelzero, allocations[i]));
     }

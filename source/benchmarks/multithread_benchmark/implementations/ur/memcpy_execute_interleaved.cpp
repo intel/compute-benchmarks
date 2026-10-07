@@ -46,11 +46,9 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         return TestResult::Error;
     }
 
-    // Setup
     UrState ur;
     Timer timer;
 
-    // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("memory_benchmark_fill_with_ones.spv");
     if (spirvModule.size() == 0) {
         return TestResult::KernelNotFound;
@@ -76,7 +74,6 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         queueProperties.flags = UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     }
 
-    // Setup queues (or a single queue if !useQueuePerThread)
     if (!useQueuePerThread) {
         EXPECT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device,
                                                &queueProperties, &singleQueue));
@@ -107,7 +104,6 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
 
     memset(src_buffer, 99, allocSize);
 
-    // Setup kernels and USM allocations
     for (size_t i = 0; i < numThreads; i++) {
         for (size_t j = 0; j < numOpsPerThread; j++) {
             void *ptr;
@@ -192,7 +188,6 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         }
     };
 
-    // Benchmark
     for (size_t i = 0u; i < arguments.iterations; i++) {
         std::shared_mutex barrier;
         std::vector<std::thread> threads;

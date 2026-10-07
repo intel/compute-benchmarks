@@ -23,7 +23,6 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.isCopyOnly).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create();
     ExtensionProperties extensionProperties = ExtensionProperties::create().setImportHostPointerFunctions(
@@ -36,14 +35,12 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
     }
     Timer timer;
 
-    // Create buffers
     void *source{}, *destination{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &source));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.destinationPlacement, levelzero, arguments.size, &destination));
     ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, source, arguments.size, BufferContents::Random, true));
     ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, destination, arguments.size, BufferContents::Random, true));
 
-    // Create events
     ze_event_pool_handle_t eventPool{};
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -67,7 +64,6 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &levelzero.commandQueueDesc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         for (auto &event : events) {
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
@@ -87,7 +83,6 @@ static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &
         statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     for (auto &event : events) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));

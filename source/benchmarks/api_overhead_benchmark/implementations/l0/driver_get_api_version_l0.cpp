@@ -21,7 +21,6 @@ static TestResult run(const DriverGetApiVersionArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     LevelZero levelzero(queueProperties);
     Timer timer;
@@ -33,7 +32,6 @@ static TestResult run(const DriverGetApiVersionArguments &arguments, Statistics 
     std::vector<ze_driver_handle_t> drivers(driverCount);
     ASSERT_ZE_RESULT_SUCCESS(zeDriverGet(&driverCount, drivers.data()));
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         ze_api_version_t driverApiVersion;
 

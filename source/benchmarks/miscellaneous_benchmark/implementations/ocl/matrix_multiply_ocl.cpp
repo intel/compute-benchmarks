@@ -24,7 +24,6 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
     Opencl opencl(queueProperties);
     cl_int retVal;
 
-    // Create kernel
     std::string kernelSource = R"(
        __kernel void sum(__global uint *results , __global uint * vectorA , __global uint* vectorB) {
             const int index = get_global_id(2) * get_global_size(0)  * get_global_size(1) + get_global_id(1) * get_global_size(0) + get_global_id(0);
@@ -40,7 +39,6 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
     cl_kernel kernel = clCreateKernel(program, "sum", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Prepare data
     const size_t sizeInElements = arguments.numberOfElementsX * arguments.numberOfElementsY * arguments.numberOfElementsZ;
     const size_t sizeInBytes = sizeInElements * sizeof(int);
 
@@ -63,7 +61,6 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
         }
     }
 
-    // Create buffer
     cl_mem bufferX = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeInBytes, dataX.get(), &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
@@ -73,11 +70,9 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
     cl_mem bufferResults = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, sizeInBytes, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Validate results
     cl_event profilingEvent{};
     cl_ulong timeNs{};
 
-    // Warmup kernel
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(bufferResults), &bufferResults));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, sizeof(bufferX), &bufferX));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(bufferY), &bufferY));
@@ -101,7 +96,6 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
     ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
     ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 3, nullptr, gws, nullptr, 0, nullptr, &profilingEvent));
         ASSERT_CL_SUCCESS(clWaitForEvents(1, &profilingEvent));

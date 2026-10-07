@@ -23,13 +23,11 @@ static TestResult run(const UsmBatchMemoryAllocationArguments &arguments, Statis
         return TestResult::Nooped;
     }
 
-    // Setup
     UrState ur;
     Timer timer;
 
     std::vector<void *> ptrs(arguments.allocationCount);
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         if (arguments.measureMode == AllocationMeasureMode::Allocate ||
             arguments.measureMode == AllocationMeasureMode::Both) {

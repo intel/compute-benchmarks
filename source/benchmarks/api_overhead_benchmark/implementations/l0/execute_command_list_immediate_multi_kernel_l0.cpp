@@ -22,12 +22,10 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
         return TestResult::Nooped;
     }
 
-    // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
     Timer timer;
 
-    // Create kernel
     uint32_t moduleCount = 2u;
     std::vector<ze_module_handle_t> modules(moduleCount);
     std::vector<ze_kernel_handle_t> kernels(moduleCount);
@@ -40,7 +38,6 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
         return result;
     }
 
-    // Create event
     uint32_t numEventsMultiplier = arguments.addBarrier ? static_cast<uint32_t>(arguments.numKernelsAfterBarrier + 1) : 2u;
     uint32_t eventsCount = static_cast<uint32_t>(arguments.amountOfCalls) * numEventsMultiplier;
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -66,13 +63,11 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
         }
     }
 
-    // Create output buffer
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     void *outputBuffer = nullptr;
     const auto outputBufferSize = sizeof(uint32_t) * 1000 * 256;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, outputBufferSize, 0, levelzero.device, &outputBuffer));
 
-    // Configure kernel
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernels[0], 1u, 1u, 1u));
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime * 4);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[0], 0, sizeof(int), &kernelOperationsCount));
@@ -81,7 +76,6 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernels[1], 256u, 1u, 1u));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[1], 0, sizeof(outputBuffer), &outputBuffer));
 
-    // Create an immediate command list
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     if (arguments.useIoq) {
@@ -90,7 +84,6 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         uint32_t eventId = 0u;
         timer.measureStart();
@@ -125,7 +118,6 @@ static TestResult run(const ExecuteCommandListImmediateMultiKernelArguments &arg
         }
     }
 
-    // Teardown
     for (auto &event : events) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     }

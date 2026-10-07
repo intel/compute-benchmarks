@@ -40,7 +40,6 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
         return TestResult::Nooped;
     }
 
-    // Setup
     Vulkan vulkan;
     Timer timer;
 
@@ -53,7 +52,6 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
 
     const bool atomicPerWorkgroup = arguments.usedIds == WorkItemIdUsage::AtomicPerWorkgroup;
 
-    // Create output buffer
     const auto elementCount = static_cast<VkDeviceSize>(arguments.workgroupCount) * arguments.workgroupSize;
     const VkDeviceSize bufferSize = atomicPerWorkgroup ? 2 * sizeof(uint32_t) : elementCount * sizeof(uint32_t);
     if (bufferSize > limits.maxStorageBufferRange) {
@@ -65,7 +63,6 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     }
     VulkanBuffer buffer(vulkan, bufferSize, bufferUsage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    // Create pipeline
     std::vector<uint32_t> spirv;
     if (const TestResult result = ShaderCompiler::compileComputeShaderToSpirv("ulls_benchmark_write_one.comp",
                                                                               workItemIdUsageDefines(arguments.usedIds), spirv);
@@ -85,7 +82,6 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     write.pBufferInfo = &bufferInfo;
     vkUpdateDescriptorSets(vulkan.device, 1, &write, 0, nullptr);
 
-    // Record the command buffer
     VkCommandBuffer commandBuffer = vulkan.allocateCommandBuffer();
     VkCommandBufferBeginInfo commandBufferBeginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     ASSERT_VK_SUCCESS(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
@@ -137,7 +133,6 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (atomicPerWorkgroup) {
             const uint32_t initialValues[2]{static_cast<uint32_t>(arguments.workgroupCount), 0u};

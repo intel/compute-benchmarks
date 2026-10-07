@@ -23,11 +23,9 @@ static TestResult run(const ExecuteCommandListWithFenceCreateArguments &argument
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
@@ -36,7 +34,6 @@ static TestResult run(const ExecuteCommandListWithFenceCreateArguments &argument
     const ze_fence_desc_t fenceDesc{ZE_STRUCTURE_TYPE_FENCE_DESC, nullptr, 0};
     ze_fence_handle_t fence = nullptr;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeFenceCreate(levelzero.commandQueue, &fenceDesc, &fence));
@@ -50,7 +47,6 @@ static TestResult run(const ExecuteCommandListWithFenceCreateArguments &argument
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     return TestResult::Success;
 }

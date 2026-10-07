@@ -31,11 +31,9 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(arguments.queuePlacement);
 
-    // Create buffer
     void *buffer{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.bufferPlacement, levelzero, arguments.size, &buffer));
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     if (arguments.useEvents) {
@@ -50,15 +48,12 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
     }
 
-    // Make the buffer resident
     for (DeviceSelection device : DeviceSelectionHelper::split(arguments.contextPlacement)) {
         ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.getDevice(device), buffer, arguments.size));
     }
 
-    // Create pattern
     const auto pattern = std::make_unique<uint8_t[]>(arguments.patternSize);
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList{};
@@ -66,7 +61,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffer, pattern.get(), arguments.patternSize, arguments.size, event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
@@ -84,12 +78,10 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
         }
     }
 
-    // Evict buffer
     for (DeviceSelection device : DeviceSelectionHelper::split(arguments.contextPlacement)) {
         ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.getDevice(device), buffer, arguments.size));
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     if (arguments.useEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));

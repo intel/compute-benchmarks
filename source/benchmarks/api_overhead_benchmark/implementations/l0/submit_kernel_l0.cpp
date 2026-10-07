@@ -22,13 +22,11 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         return TestResult::Nooped;
     }
 
-    // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
 
     const ze_group_count_t groupCount{1, 1, 1};
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_eat_time.cl", "eat_time", &kernel, &module, nullptr);
@@ -43,11 +41,10 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
     const bool counterBasedEvents = arguments.inOrderQueue;
 
-    // Create event pool
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.flags |= arguments.useProfiling ? ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP : 0;
-    eventPoolDesc.count = static_cast<uint32_t>(arguments.numKernels); // ensures one unique event per kernel
+    eventPoolDesc.count = static_cast<uint32_t>(arguments.numKernels);
 
     ze_event_pool_handle_t eventPool = nullptr;
     if (!counterBasedEvents) {
@@ -61,7 +58,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime);
 
-    // Create an immediate command list
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     if (arguments.inOrderQueue) {
@@ -70,14 +66,12 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         profiler.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
             // Note: this test calls zeKernelSetArgumentValue and zeKernelSetGroupSize each time to be closer to the SYCL behavior!
             ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
             ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
-            // This isn't exactly what SYCL does, but it is a reasonable approximation.
             ze_event_handle_t signalEvent = nullptr;
             if (arguments.useEvents) {
                 if (counterBasedEvents) {
@@ -111,7 +105,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
 
-    // Clean up
     if (!counterBasedEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     }

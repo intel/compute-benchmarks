@@ -38,7 +38,6 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     LevelZero levelzero;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    // Create timestamp buffer
     const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     void *timestampBuffer = nullptr;
@@ -48,13 +47,11 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     uint64_t *beginTimestamp = static_cast<uint64_t *>(timestampBuffer);
     uint64_t *endTimestamp = beginTimestamp + 1;
 
-    // Create output buffer
     void *outputBuffer = nullptr;
     const auto outputBufferSize = sizeof(uint32_t) * arguments.workgroupCount * arguments.workgroupSize;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, outputBufferSize, 0, levelzero.device, &outputBuffer));
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, outputBuffer, outputBufferSize))
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     if (auto result = L0::KernelHelper::loadKernel(levelzero, selectKernel(arguments.usedIds), "write_one", &kernel, &module, nullptr);
@@ -64,7 +61,6 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(arguments.workgroupSize), 1u, 1u));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(outputBuffer), &outputBuffer));
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList{};
@@ -77,7 +73,6 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, endTimestamp, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));

@@ -21,7 +21,6 @@ static TestResult run(const CreateCommandListArguments &arguments, Statistics &s
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.copyOnly).allowCreationFail();
     LevelZero levelzero(queueProperties);
     if (nullptr == levelzero.commandQueue) {
@@ -34,7 +33,6 @@ static TestResult run(const CreateCommandListArguments &arguments, Statistics &s
     commandListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t commandList;
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         timer.measureStart();
         for (auto i = 0u; i < arguments.cmdListCount; i++) {

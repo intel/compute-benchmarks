@@ -183,11 +183,9 @@ void TestCaseStatistics::pushValue(Value value, std::string_view description, Me
     }
     auto &samples = it->second;
 
-    // We expect a precise amount of measurements requested by the user.
     FATAL_ERROR_IF(samples.vector.size() == maxSamplesCount, "Too many values pushed by the test");
     samples.vector.reserve(maxSamplesCount);
 
-    // Set unit and type for the samples
     if (samples.unit != unit) {
         FATAL_ERROR_IF(samples.unit != MeasurementUnit::Unknown, "Different units used for the same measurement");
         samples.unit = unit;
@@ -721,7 +719,6 @@ void TestCaseStatistics::flushBufferedResults(Configuration::PrintType printType
         return;
     }
 
-    // Find the longest test case name across all buffered entries, but at least as wide as the header label
     const auto columns = ColumnInfo::getColumns();
     int maxNameWidth = static_cast<int>(std::strlen(columns[0].label));
     for (const auto &line : testResults) {

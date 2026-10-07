@@ -22,7 +22,6 @@ static TestResult run(const IoqKernelSwitchLatencyArguments &arguments, Statisti
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     queueProperties.setOoq(false);
 
@@ -33,12 +32,10 @@ static TestResult run(const IoqKernelSwitchLatencyArguments &arguments, Statisti
     const size_t gws = 64 * 1024u;
     const size_t lws = 64u;
 
-    // Create buffer
     const auto bufferSize = sizeof(cl_int) * gws;
     cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Create kernel
     const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile("benchmark_write_multiple.cl");
     if (kernelSource.size() == 0) {
         return TestResult::KernelNotFound;
@@ -58,7 +55,6 @@ static TestResult run(const IoqKernelSwitchLatencyArguments &arguments, Statisti
 
     profilingEvents.resize(arguments.kernelCount);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; ++i) {
         timer.measureStart();
         for (auto j = 0u; j < arguments.kernelCount; ++j) {
@@ -95,7 +91,6 @@ static TestResult run(const IoqKernelSwitchLatencyArguments &arguments, Statisti
         }
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));

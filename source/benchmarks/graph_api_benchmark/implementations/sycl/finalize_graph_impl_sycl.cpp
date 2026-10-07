@@ -33,23 +33,19 @@ static TestResult run([[maybe_unused]] const FinalizeGraphArguments &arguments, 
 #if defined(HAS_SYCL_GRAPH)
         namespace sycl_ext = sycl::ext::oneapi::experimental;
 
-        // Setup
         sycl::queue queue{};
 
         Timer timer;
 
         auto graphStructure = arguments.graphStructure;
-        // Building the graph
         sycl_ext::command_graph graph = GraphHelpers::constructGraph(graphStructure, queue.get_context(), queue.get_device());
 
         // Do warmup to eliminate kernel compilation or other noise from graph finalize
         graph.finalize();
 
-        // Benchmarking finalize time
         for (size_t iteration = 0; iteration < arguments.iterations; iteration++) {
             auto LocalGraph = arguments.rebuildGraphEveryIter ? GraphHelpers::constructGraph(graphStructure, queue.get_context(), queue.get_device()) : graph;
             timer.measureStart();
-            // Finalize the graph
             auto executable_graph = graph.finalize();
             timer.measureEnd();
             statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());

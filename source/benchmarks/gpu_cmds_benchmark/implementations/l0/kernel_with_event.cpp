@@ -30,7 +30,6 @@ static TestResult run(const KernelWithEventArguments &arguments, Statistics &sta
     LevelZero levelzero{extensionProperties};
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    // Create buffer
     void *buffer = nullptr;
     const auto bufferSize = sizeof(uint64_t) * 3;
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmRuntimeMemoryPlacement::Host, levelzero, bufferSize, &buffer));
@@ -38,7 +37,6 @@ static TestResult run(const KernelWithEventArguments &arguments, Statistics &sta
     uint64_t *beginTimestamp = static_cast<uint64_t *>(buffer);
     uint64_t *endTimestamp = beginTimestamp + 1;
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "gpu_cmds_benchmark_empty_kernel.cl", "empty", &kernel, &module, nullptr);
@@ -47,7 +45,6 @@ static TestResult run(const KernelWithEventArguments &arguments, Statistics &sta
     }
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(arguments.workgroupSize), 1u, 1u));
 
-    // Create event
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 1};
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
     ze_event_counter_based_flags_t counterBasedFlags = 0;
@@ -79,7 +76,6 @@ static TestResult run(const KernelWithEventArguments &arguments, Statistics &sta
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
     }
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     if (arguments.useInOrderCommandList) {
@@ -96,7 +92,6 @@ static TestResult run(const KernelWithEventArguments &arguments, Statistics &sta
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, endTimestamp, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));

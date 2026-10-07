@@ -25,7 +25,6 @@ static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &sta
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     Opencl opencl(queueProperties);
     Timer timer{};
@@ -50,7 +49,6 @@ static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &sta
     cl_kernel highPriorityKernel = clCreateKernel(program, "eat_time", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // setup kernel time
     cl_uint kernelTime = static_cast<cl_uint>(arguments.lowPriorityKernelTime) * 7u;
     ASSERT_CL_SUCCESS(clSetKernelArg(lowPriorityKernel, 0, sizeof(kernelTime), &kernelTime));
     kernelTime = static_cast<cl_uint>(arguments.highPriorityKernelTime) * 7u;
@@ -95,17 +93,14 @@ static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &sta
     size_t lws = 64u;
     sleep(std::chrono::milliseconds(arguments.sleepTime));
 
-    // benchmark
     size_t gwsLowPriority = 64 * 1024 * 1024;
     size_t gwsHighPriority = arguments.workgroupCount * 64u;
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(lowPriorityQueue, lowPriorityKernel, 1, nullptr, &gwsLowPriority, &lws, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFlush(lowPriorityQueue));
 
         sleep(std::chrono::milliseconds(arguments.sleepTime));
 
-        // now submit high priority kernel
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(highPriorityQueue, highPriorityKernel, 1, nullptr, &gwsHighPriority, &lws, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFinish(highPriorityQueue));
@@ -116,7 +111,6 @@ static TestResult run(const QueuePrioritiesArguments &arguments, Statistics &sta
         sleep(std::chrono::milliseconds(arguments.sleepTime));
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseCommandQueue(lowPriorityQueue));
     ASSERT_CL_SUCCESS(clReleaseCommandQueue(highPriorityQueue));
 

@@ -38,8 +38,6 @@ namespace syclexp = sycl::ext::oneapi::experimental;
         out[0] = sum;                                                \
     }
 
-// This file contains multiple kernel definitions with different array sizes.
-
 LINEAR_KERNEL(32)
 LINEAR_KERNEL(128)
 LINEAR_KERNEL(512)

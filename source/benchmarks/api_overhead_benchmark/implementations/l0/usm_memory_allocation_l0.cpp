@@ -22,7 +22,6 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
@@ -39,7 +38,6 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
         return TestResult::InvalidArgs;
     }
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         if (arguments.measureMode == AllocationMeasureMode::Allocate ||
             arguments.measureMode == AllocationMeasureMode::Both) {

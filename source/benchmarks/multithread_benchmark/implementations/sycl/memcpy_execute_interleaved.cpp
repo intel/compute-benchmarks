@@ -45,7 +45,6 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         return TestResult::Error;
     }
 
-    // Setup
     Timer timer;
 
     const size_t gws = arraySize;
@@ -58,7 +57,6 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
     std::vector<std::vector<void *>> usm(numThreads);
     std::vector<sycl::queue> queues;
 
-    // Setup queues (or a single queue if !useQueuePerThread)
     if (!useQueuePerThread) {
         sycl::queue singleQueue{queueProps[queuePropsIndex]};
         for (size_t i = 0; i < numThreads; i++) {
@@ -86,7 +84,6 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
 
     memset(src_buffer, 99, allocSize);
 
-    // Setup USM allocations
     for (size_t i = 0; i < numThreads; i++) {
         for (size_t j = 0; j < numOpsPerThread; j++) {
             usm[i].push_back(sycl::malloc_device(allocSize, queues[i].get_device(), queues[i].get_context()));
@@ -150,7 +147,6 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         }
     };
 
-    // Benchmark
     for (size_t i = 0u; i < arguments.iterations; i++) {
         std::shared_mutex barrier;
         std::vector<std::thread> threads;

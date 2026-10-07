@@ -25,7 +25,6 @@ static TestResult run(const KernelSubmitEventRecordWaitArguments &args, Statisti
         return TestResult::Nooped;
     }
 
-    // setup
     sycl::device dev = sycl::device(sycl::gpu_selector_v);
     sycl::queue q[NUM_OF_QUEUES];
     for (int i = 0; i < NUM_OF_QUEUES; i++) {
@@ -35,7 +34,6 @@ static TestResult run(const KernelSubmitEventRecordWaitArguments &args, Statisti
     const uint32_t wgc = args.kernelWGCount;
     const uint32_t wgs = args.kernelWGSize;
 
-    // benchmark
     bool useEvents = false;
     for (size_t i = 0; i < args.iterations; ++i) {
         submit_kernel_empty(wgc, wgs, q[0], useEvents);

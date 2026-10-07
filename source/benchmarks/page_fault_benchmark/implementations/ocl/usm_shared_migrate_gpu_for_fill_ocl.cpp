@@ -21,7 +21,6 @@ static TestResult run(const UsmSharedMigrateGpuForFillArguments &arguments, Stat
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).allowCreationFail();
     Opencl opencl(queueProperties);
     Timer timer;
@@ -37,20 +36,17 @@ static TestResult run(const UsmSharedMigrateGpuForFillArguments &arguments, Stat
     }
     cl_int retVal{};
 
-    // Create buffer
     auto buffer = static_cast<cl_int *>(clSharedMemAllocINTEL(opencl.context, opencl.device, nullptr, arguments.bufferSize, 0u, &retVal));
     ASSERT_CL_SUCCESS(retVal);
     const size_t elementsCount = arguments.bufferSize / sizeof(cl_int);
     const uint8_t pattern = 1;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         // Migrate whole resource to CPU
         for (auto elementIndex = 0u; elementIndex < elementsCount; elementIndex++) {
             buffer[elementIndex] = 0;
         }
 
-        // Measure memory fill operation which must migrate the resource to GPU
         timer.measureStart();
 
         if (arguments.prefetchMemory) {

@@ -38,7 +38,6 @@ static TestResult run(const UsmCopyMultipleBlitsArguments &arguments, Statistics
         return TestResult::DeviceNotCapable;
     }
 
-    // Create selected blitter queues
     struct PerQueueData {
         ze_command_queue_handle_t queue;
         ze_command_list_handle_t list;
@@ -53,7 +52,6 @@ static TestResult run(const UsmCopyMultipleBlitsArguments &arguments, Statistics
 
     BlitSizeAssigner blitSizeAssigner{arguments.size};
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -101,7 +99,6 @@ static TestResult run(const UsmCopyMultipleBlitsArguments &arguments, Statistics
         queues.push_back(PerQueueData{queue, list, queueName, isMainCopyEngine, event});
     }
 
-    // Create buffers
     void *srcBuffer{}, *dstBuffer{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement,
                                                  levelzero,
@@ -112,7 +109,6 @@ static TestResult run(const UsmCopyMultipleBlitsArguments &arguments, Statistics
                                                  arguments.size,
                                                  &dstBuffer));
 
-    // Calculate copyOffset and copySize for each copy engine
     for (auto i = 0u; i < queues.size(); i++) {
         const auto [offset, size] = blitSizeAssigner.getSpaceForBlit(queues[i].isMainCopyEngine);
         queues[i].copySrc = static_cast<char *>(srcBuffer) + offset;
@@ -122,7 +118,6 @@ static TestResult run(const UsmCopyMultipleBlitsArguments &arguments, Statistics
 
     blitSizeAssigner.validate();
 
-    // Append commands
     for (PerQueueData &queue : queues) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(queue.list,
                                                                queue.copyDst,
@@ -132,7 +127,6 @@ static TestResult run(const UsmCopyMultipleBlitsArguments &arguments, Statistics
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(queue.list));
     }
 
-    // Benchmark
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -149,7 +143,6 @@ static TestResult run(const UsmCopyMultipleBlitsArguments &arguments, Statistics
         }
         timer.measureEnd();
 
-        // Report individual engines results and get time delta
         std::chrono::nanoseconds endGpuTime{};
         std::chrono::nanoseconds startGpuTime = std::chrono::nanoseconds::duration::max();
 
@@ -164,7 +157,6 @@ static TestResult run(const UsmCopyMultipleBlitsArguments &arguments, Statistics
             statistics.pushValue(commandTime, queue.copySize, typeSelector.getUnit(), typeSelector.getType(), queue.name);
         }
 
-        // Report total results
         statistics.pushValue(endGpuTime - startGpuTime, arguments.size, typeSelector.getUnit(), typeSelector.getType(), "Total (Gpu)");
         statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), MeasurementType::Cpu, "Total (Cpu)");
     }

@@ -21,14 +21,12 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
         return TestResult::Nooped;
     }
 
-    // Setup
     Opencl opencl;
     Timer timer;
     cl_int retVal;
     const size_t gws = arguments.workgroupCount * arguments.workgroupSize;
     const size_t lws = arguments.workgroupSize;
 
-    // Create kernel
     const char *source = "__kernel void empty() {}";
     const auto sourceLength = strlen(source);
     cl_program program = clCreateProgramWithSource(opencl.context, 1, &source, &sourceLength, &retVal);
@@ -37,9 +35,7 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     cl_kernel kernel = clCreateKernel(program, "empty", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        // Enqueue empty kernel and measure it
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
@@ -48,7 +44,6 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     return TestResult::Success;

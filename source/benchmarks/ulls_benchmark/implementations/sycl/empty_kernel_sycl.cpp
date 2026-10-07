@@ -21,16 +21,13 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
         return TestResult::Nooped;
     }
 
-    // Setup
     Sycl sycl{sycl::device{sycl::gpu_selector_v}};
     const size_t gws = arguments.workgroupCount * arguments.workgroupSize;
     const size_t lws = arguments.workgroupSize;
     sycl::nd_range<1> range(gws, lws);
 
-    // Create kernel
     const auto empty = [=]([[maybe_unused]] auto i) {};
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         prof.measureStart();
 

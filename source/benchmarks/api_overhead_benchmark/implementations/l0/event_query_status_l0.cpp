@@ -22,11 +22,9 @@ static TestResult run(const EventQueryStatusArguments &arguments, Statistics &st
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Create event if necessary
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 2u};
     auto eventPoolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.flags = eventPoolFlags;
@@ -45,7 +43,6 @@ static TestResult run(const EventQueryStatusArguments &arguments, Statistics &st
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(event));
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         zeEventQueryStatus(event);

@@ -41,7 +41,6 @@ constexpr uint64_t barrierTimeoutNs = 120ull * 1000 * 1000 * 1000;
 static TestResult ipcBarrierMaster(std::vector<ze_event_handle_t> &barrierEvents) {
     const uint32_t nRanks = barrierEvents.size() / 2;
 
-    // Wait for worker processes
     for (uint32_t i = 0; i < nRanks; i++) {
         if (const ze_result_t waitResult = zeEventHostSynchronize(barrierEvents[i], barrierTimeoutNs);
             waitResult == ZE_RESULT_NOT_READY) {
@@ -54,7 +53,6 @@ static TestResult ipcBarrierMaster(std::vector<ze_event_handle_t> &barrierEvents
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(barrierEvents[i]));
     }
 
-    // Release worker processes
     for (uint32_t i = 0; i < nRanks; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(barrierEvents[i + nRanks]));
     }
@@ -80,7 +78,6 @@ static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) 
         return TestResult::DeviceNotCapable;
     }
 
-    // Both memory and event pool handles are exported below, so both capabilities are required.
     const ze_ipc_property_flags_t requiredIpcFlags = ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL;
     if ((levelzero.getIpcProperties().flags & requiredIpcFlags) != requiredIpcFlags) {
         return TestResult::DeviceNotCapable;
@@ -146,7 +143,6 @@ static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) 
 
     processes.runAll();
 
-    // For initParams
 #ifdef USE_PIDFD
     // Wait for IPC handles to be written into the initBuffer
     ASSERT_TEST_RESULT_SUCCESS(ipcBarrierMaster(barrierEvents));
@@ -169,7 +165,6 @@ static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) 
     }
     EXPECT_EQ(0, close(socketMaster));
 
-    // Synchronize all the ranks when they exchange IPC handles through socket
     for (uint32_t r = 0; r < nRanks; r++) {
         if (nRanks == 1) {
             break;
@@ -180,7 +175,6 @@ static TestResult run(const Heat3DArguments &arguments, Statistics &statistics) 
 #endif // USE_PIDFD
 
     for (auto i = 0u; i < arguments.iterations; i++) {
-        // Init unpacking the receive buffers
         ASSERT_TEST_RESULT_SUCCESS(ipcBarrierMaster(barrierEvents));
 
         processes.synchronizeAll(1);

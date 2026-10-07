@@ -25,7 +25,6 @@ static TestResult run(const ReadAfterAtomicWriteArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents);
     cl_event profilingEvent{};
     cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;
@@ -33,7 +32,6 @@ static TestResult run(const ReadAfterAtomicWriteArguments &arguments, Statistics
     Timer timer{};
     cl_int retVal{};
 
-    // Prepare data
     const size_t workgroupCount = 128;
     const size_t lws = arguments.workgroupSize;
     const size_t gws = arguments.workgroupSize * workgroupCount;
@@ -42,12 +40,10 @@ static TestResult run(const ReadAfterAtomicWriteArguments &arguments, Statistics
     const cl_int useAtomic = static_cast<bool>(arguments.atomic);
     const cl_int shuffleRead = static_cast<bool>(arguments.shuffleRead);
 
-    // Create and initialize the buffer with test data
     cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, gws * sizeof(cl_int), nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, buffer, &initialValue, sizeof(initialValue), 0, gws * sizeof(cl_int), 0, nullptr, nullptr));
 
-    // Create kernel
     cl_program program = nullptr;
     const char *programName = "eu_benchmark_read_after_atomic_write.cl";
     const char *kernelName = "read_after_atomic_write";
@@ -62,7 +58,6 @@ static TestResult run(const ReadAfterAtomicWriteArguments &arguments, Statistics
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(shuffleRead), &shuffleRead));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 3, sizeof(loopIterations), &loopIterations));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
@@ -78,7 +73,6 @@ static TestResult run(const ReadAfterAtomicWriteArguments &arguments, Statistics
         }
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));

@@ -44,34 +44,27 @@ struct Configuration : ArgumentContainer {
 
     bool validateArgumentsExtra() const override;
 
-    // Diagnostic params
     BooleanFlagArgument help;
     BooleanFlagArgument version;
     BooleanFlagArgument hwInfo;
     BooleanFlagArgument generateDocs;
     BooleanFlagArgument listTestSuites;
 
-    // OCL params
     IntegerArgument oclPlatformIndex;
     NonNegativeIntegerArgument oclDeviceIndex;
     BooleanArgument useOOQ;
 
-    // L0 params
     NonNegativeIntegerArgument l0DriverIndex;
     NonNegativeIntegerArgument l0DeviceIndex;
 
-    // UR params
     NonNegativeIntegerArgument urPlatformIndex;
     NonNegativeIntegerArgument urDeviceIndex;
 
-    // VK params
     NonNegativeIntegerArgument vkDeviceIndex;
     BooleanFlagArgument vkEnableValidation;
 
-    // OL params
     NonNegativeIntegerArgument olDeviceIndex;
 
-    // Api agnostic params
     StringArgument test;
     DeviceSelectionArgument subDeviceSelection;
     BooleanFlagArgument csv;
@@ -104,11 +97,9 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument printHistogram;
     ProfilerTypeArgument profilerType;
 
-    // Test specific params
     BooleanFlagArgument extended;
     BooleanFlagArgument reducedSizeCAL;
 
-    // Additional configuration
     AdditionalConfiguration additionalConfiguration;
 };
 

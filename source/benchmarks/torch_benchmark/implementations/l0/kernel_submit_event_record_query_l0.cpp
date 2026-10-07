@@ -16,12 +16,10 @@ static TestResult run(const KernelSubmitEventRecordQueryArguments &args, Statist
         return TestResult::Nooped;
     }
 
-    // setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero l0{extensionProperties};
     CommandList cmdListImmediate{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
 
-    // create kernel
     std::string kernelFileName = "torch_benchmark_elementwise_sum_0.cl";
     std::string kernelName = "elementwise_sum_0";
     Kernel kernelEmpty{l0, kernelFileName, kernelName};
@@ -31,7 +29,6 @@ static TestResult run(const KernelSubmitEventRecordQueryArguments &args, Statist
     ze_group_count_t dispatch{wgc, 1, 1};
     ze_group_size_t groupSizes{wgs, 1, 1};
 
-    // benchmark
     for (size_t i = 0; i < args.iterations; ++i) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernelWithArguments(cmdListImmediate.get(), kernelEmpty.get(), dispatch, groupSizes, nullptr, nullptr, nullptr, 0, nullptr));
 
@@ -40,7 +37,6 @@ static TestResult run(const KernelSubmitEventRecordQueryArguments &args, Statist
 
         ze_result_t status = zeEventHostSynchronize(event.get(), UINT64_MAX);
         ASSERT_ZE_RESULT_SUCCESS(status);
-        // Ensure the event is completed before querying
         status = zeEventQueryStatus(event.get());
         ASSERT_ZE_RESULT_SUCCESS(status);
 

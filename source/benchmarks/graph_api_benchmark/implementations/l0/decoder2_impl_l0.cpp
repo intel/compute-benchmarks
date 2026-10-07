@@ -116,7 +116,7 @@ TestResult Decoder2GraphL0::recordGraph() {
         runLayer();
         ASSERT_ZE_RESULT_SUCCESS(levelzero->graphExtension.commandListEndGraphCapture(immCmdList, &graph, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(levelzero->graphExtension.commandListInstantiateGraph(graph, &execGraph, nullptr));
-    } else if (useGraphs) { // Emulation mode
+    } else if (useGraphs) {
         runLayer();
     }
     return TestResult::Success;
@@ -134,7 +134,7 @@ TestResult Decoder2GraphL0::runGraph() {
                                                                                   nullptr, 0, nullptr));
     } else if (useGraphs && emulateGraphs) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListImmediateAppendCommandListsExp(immCmdList, 1, &cmdList, nullptr, 0, nullptr));
-    } else { // Eager execution
+    } else {
         runLayer();
     }
     return TestResult::Success;

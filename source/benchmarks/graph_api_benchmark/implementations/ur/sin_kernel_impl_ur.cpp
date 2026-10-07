@@ -51,8 +51,6 @@ TestResult SinKernelGraphUR::init() {
     EXPECT_UR_RESULT_SUCCESS(
         urQueueCreate(urstate->context, urstate->device, &queueProperties, &queue));
 
-    // check if the device supports command buffers
-
     ur_bool_t command_buffer_support = false;
     EXPECT_UR_RESULT_SUCCESS(urDeviceGetInfo(
         urstate->device, UR_DEVICE_INFO_COMMAND_BUFFER_SUPPORT_EXP,
@@ -61,7 +59,6 @@ TestResult SinKernelGraphUR::init() {
         return TestResult::DeviceNotCapable;
     }
 
-    // Create kernels
     auto spirvModuleA =
         FileHelper::loadBinaryFile("graph_api_benchmark_kernel_assign.spv");
     auto spirvModuleS =
@@ -189,11 +186,9 @@ TestResult SinKernelGraphUR::readResults(float *output_h) {
 }
 
 TestResult SinKernelGraphUR::runGraph(float *input_h) {
-    // memcpy
     EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, graphInputData.get(),
                                                 input_h, size * sizeof(float), 0,
                                                 nullptr, nullptr));
-    // run graph
     EXPECT_UR_RESULT_SUCCESS(
         urEnqueueCommandBufferExp(queue, cmdBuffer, 0, nullptr, nullptr));
 
@@ -204,7 +199,6 @@ TestResult SinKernelGraphUR::runEager(float *input_h) {
     EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, graphInputData.get(),
                                                 input_h, size * sizeof(float), 0,
                                                 nullptr, nullptr));
-    // run kernels directly
     ASSERT_TEST_RESULT_SUCCESS(runKernels());
 
     return TestResult::Success;

@@ -75,7 +75,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(true),
         // non-USM memory migrates to device (page-fault or explicit prefetch) and can be compressed there
         ::testing::Values(BufferContents::Zeros, BufferContents::Random),
-        // alignment extremes
         ::testing::Values(UsmMemoryPlacement::NonUsmMisaligned, UsmMemoryPlacement::NonUsm2MBAligned),
         ::testing::Values(1u),
         ::testing::Values(1),

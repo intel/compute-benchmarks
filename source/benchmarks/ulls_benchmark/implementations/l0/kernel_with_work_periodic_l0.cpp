@@ -24,12 +24,10 @@ static TestResult run(const KernelWithWorkPeriodicArguments &arguments, Statisti
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
     PowerMeter powerMeter;
 
-    // Create output buffer
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     void *buffer = nullptr;
     size_t workgroupCount = 1000;
@@ -38,7 +36,6 @@ static TestResult run(const KernelWithWorkPeriodicArguments &arguments, Statisti
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffer));
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, buffer, bufferSize))
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_write_one_global_ids.cl", "write_one", &kernel, &module, nullptr);
@@ -48,7 +45,6 @@ static TestResult run(const KernelWithWorkPeriodicArguments &arguments, Statisti
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(workgroupSize), 1u, 1u));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
 
-    // Create command list and append empty kernel
     const ze_group_count_t groupCount{static_cast<uint32_t>(workgroupCount), 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
@@ -57,7 +53,6 @@ static TestResult run(const KernelWithWorkPeriodicArguments &arguments, Statisti
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     const auto submissionDelay = std::chrono::microseconds(arguments.timeBetweenSubmissions);
     for (auto i = 0u; i < arguments.iterations; ++i) {
         const auto sleepToTimeoutUllsController = std::chrono::microseconds(10000);

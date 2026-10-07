@@ -48,7 +48,6 @@ static TestResult run(const MultiProcessImmediateCmdlistSubmissionArguments &arg
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
     }
-    // Setup
     LevelZero levelzero;
     std::vector<EngineInfo> supportedEngineInfo{};
     const auto status = getComputeEngineInfo(supportedEngineInfo, levelzero);
@@ -58,7 +57,6 @@ static TestResult run(const MultiProcessImmediateCmdlistSubmissionArguments &arg
 
     const auto numberOfSupportedEngines = supportedEngineInfo.size();
 
-    // Prepare processes
     ProcessGroup processes{"immediate_cmdlist_walker_submission_workload_l0", arguments.numberOfProcesses};
     processes.addArgumentAll("iterations", std::to_string(arguments.iterations));
     processes.addArgumentAll("synchronize", std::string("1"));
@@ -69,7 +67,6 @@ static TestResult run(const MultiProcessImmediateCmdlistSubmissionArguments &arg
         processes[i].addArgument("ordinal", std::to_string(ordinal));
         processes[i].addArgument("engineIndex", std::to_string(engineIndex));
     }
-    // Run processes
     processes.runAll();
     processes.synchronizeAll(arguments.iterations);
     processes.waitForFinishAll();

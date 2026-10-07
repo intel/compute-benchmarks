@@ -61,23 +61,18 @@ Configuration::Configuration()
       extended(*this, "extended", "Run the benchmark with extended parameters"),
       reducedSizeCAL(*this, "reducedSizeCAL", "Run benchmark with lower buffer size"),
       additionalConfiguration(*this) {
-
-    // Diagnostic params
     help = false;
     version = false;
     hwInfo = false;
     generateDocs = false;
     listTestSuites = false;
 
-    // OCL params
     oclPlatformIndex = -1;
     oclDeviceIndex = 0;
 
-    // L0 params
     l0DriverIndex = 0;
     l0DeviceIndex = 0;
 
-    // VK params
     vkDeviceIndex = 0;
 
     urPlatformIndex = 0;
@@ -85,10 +80,8 @@ Configuration::Configuration()
 
     olDeviceIndex = 0;
 
-    // OCL & SYCL params
     useOOQ = true;
 
-    // Api agnostic params
     test = "";
     csv = false;
     verbose = false;
@@ -117,7 +110,6 @@ Configuration::Configuration()
     profilerType = ProfilerType::Timer;
     verify = false;
 
-    // Test specific params
     extended = false;
 }
 

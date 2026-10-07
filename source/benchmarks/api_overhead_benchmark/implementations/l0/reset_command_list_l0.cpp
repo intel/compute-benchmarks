@@ -23,7 +23,6 @@ static TestResult run(const ResetCommandListArguments &arguments, Statistics &st
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.copyOnly).allowCreationFail();
     LevelZero levelzero(queueProperties);
     if (nullptr == levelzero.commandQueue) {
@@ -31,7 +30,6 @@ static TestResult run(const ResetCommandListArguments &arguments, Statistics &st
     }
     Timer timer;
 
-    // Create buffers
     void *source{}, *destination{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &source));
     if (isUsmMemoryType(arguments.sourcePlacement)) {
@@ -39,13 +37,11 @@ static TestResult run(const ResetCommandListArguments &arguments, Statistics &st
     }
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.size, &destination));
 
-    // Create command list
     ze_command_list_desc_t commandListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     commandListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t commandList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &commandListDesc, &commandList));
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(commandList, destination, source, arguments.size, nullptr, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(commandList));
@@ -59,7 +55,6 @@ static TestResult run(const ResetCommandListArguments &arguments, Statistics &st
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(commandList));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.sourcePlacement, levelzero, source));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(UsmMemoryPlacement::Device, levelzero, destination));

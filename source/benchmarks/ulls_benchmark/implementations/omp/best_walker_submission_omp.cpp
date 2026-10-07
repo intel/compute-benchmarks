@@ -28,17 +28,14 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     SetEnvRAII("OMP_TARGET_OFFLOAD", "MANDATORY");
     SetEnvRAII("LIBOMPTARGET_LEVEL_ZERO_COMMAND_MODE", "async");
     auto deviceId = omp_get_default_device();
     Timer timer;
 
-    // Create buffer
     auto buffer = static_cast<uint32_t *>(omp_target_alloc_host(sizeof(uint32_t), deviceId));
     volatile auto volatileBuffer = buffer;
 
-    // Benchmark
 #pragma omp parallel num_threads(2)
     {
         const auto threadId = omp_get_thread_num();
@@ -64,7 +61,6 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
         }
     }
 
-    // Cleanup
     omp_target_free(buffer, deviceId);
 
     return TestResult::Success;

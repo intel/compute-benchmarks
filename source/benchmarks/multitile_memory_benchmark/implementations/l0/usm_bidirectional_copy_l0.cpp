@@ -30,7 +30,6 @@ static TestResult run(const UsmBidirectionalCopyArguments &arguments, Statistics
 
     Timer timer;
 
-    // Create buffers
     void *tile0Src{}, *tile0Dst{};
     void *tile1Src{}, *tile1Dst{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(DeviceSelection::Tile0, levelzero, arguments.size, &tile0Src));
@@ -39,14 +38,12 @@ static TestResult run(const UsmBidirectionalCopyArguments &arguments, Statistics
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(DeviceSelection::Tile1, levelzero, arguments.size, &tile1Src));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(DeviceSelection::Tile1, levelzero, arguments.size, &tile1Dst));
 
-    // Make the buffers resident
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.getDevice(DeviceSelection::Tile0), tile0Src, arguments.size));
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.getDevice(DeviceSelection::Tile0), tile0Dst, arguments.size));
 
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.getDevice(DeviceSelection::Tile1), tile1Src, arguments.size));
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.getDevice(DeviceSelection::Tile1), tile1Dst, arguments.size));
 
-    // Create command lists and queues
     QueueProperties tile0QueueProperties = QueueProperties::create().setDeviceSelection(DeviceSelection::Tile0).setForceBlitter(arguments.forceBlitter).allowCreationFail();
     QueueFamiliesHelper::QueueDesc tile0QueueDesc = levelzero.createQueue(tile0QueueProperties);
     ze_command_list_desc_t tile0CmdListDesc{};
@@ -63,7 +60,6 @@ static TestResult run(const UsmBidirectionalCopyArguments &arguments, Statistics
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.commandQueueDevice, &tile1CmdListDesc, &tile1CmdList));
     ze_command_queue_handle_t tile1CmdQueue = tile1QueueDesc.queue;
 
-    // append copies on both directions
     if (arguments.write) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(tile0CmdList, tile1Dst, tile0Src, arguments.size, nullptr, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(tile1CmdList, tile0Dst, tile1Src, arguments.size, nullptr, 0, nullptr));
@@ -75,7 +71,6 @@ static TestResult run(const UsmBidirectionalCopyArguments &arguments, Statistics
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(tile0CmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(tile1CmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(tile0CmdQueue, 1, &tile0CmdList, nullptr));
@@ -88,14 +83,12 @@ static TestResult run(const UsmBidirectionalCopyArguments &arguments, Statistics
         statistics.pushValue(timer.get(), arguments.size * 2, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Evict buffers
     ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.getDevice(DeviceSelection::Tile0), tile0Src, arguments.size));
     ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.getDevice(DeviceSelection::Tile0), tile0Dst, arguments.size));
 
     ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.getDevice(DeviceSelection::Tile1), tile1Src, arguments.size));
     ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.getDevice(DeviceSelection::Tile1), tile1Dst, arguments.size));
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(tile0CmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(tile1CmdList));
 

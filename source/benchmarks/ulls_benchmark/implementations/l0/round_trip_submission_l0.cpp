@@ -26,13 +26,11 @@ static TestResult run(const RoundTripSubmissionArguments &arguments, Statistics 
     constexpr static auto bufferSize = 4096u;
     Timer timer;
 
-    // Create buffer
     const ze_device_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     void *buffer = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &allocationDesc, bufferSize, 0, levelzero.device, &buffer));
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, buffer, bufferSize));
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_write_one.cl", "write_one", &kernel, &module, nullptr, ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY);
@@ -40,11 +38,9 @@ static TestResult run(const RoundTripSubmissionArguments &arguments, Statistics 
         return result;
     }
 
-    // Configure kernel
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1, 1, 1));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
 
-    // Create command lists and append kernel to write one
     const ze_group_count_t groupCount{1u, 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;

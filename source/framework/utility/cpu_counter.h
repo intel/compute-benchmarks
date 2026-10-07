@@ -32,10 +32,10 @@ inline PerfLib &Perf() {
 #else
 #include <assert.h>
 #include <dlfcn.h>
-#include <linux/hw_breakpoint.h> /* Definition of HW_* constants */
-#include <linux/perf_event.h>    /* Definition of PERF_* constants */
+#include <linux/hw_breakpoint.h>
+#include <linux/perf_event.h>
 #include <sys/ioctl.h>
-#include <sys/syscall.h> /* Definition of SYS_* constants */
+#include <sys/syscall.h>
 #include <unistd.h>
 
 static long
@@ -64,7 +64,6 @@ struct PerfLib {
         performanceEvent.config = PERF_COUNT_HW_INSTRUCTIONS;
         performanceEvent.disabled = 1;
         performanceEvent.exclude_kernel = excludeKernelEvents;
-        // Don't count hypervisor events.
         performanceEvent.exclude_hv = 1;
         fd = perf_event_open(&performanceEvent, 0, -1, -1, 0);
         if (fd == -1) {

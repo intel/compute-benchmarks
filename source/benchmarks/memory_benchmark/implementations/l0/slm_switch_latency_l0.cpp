@@ -24,7 +24,6 @@ static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &st
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create();
     ContextProperties contextProperties = ContextProperties::create();
     ExtensionProperties extensionProperties = ExtensionProperties::create();
@@ -40,20 +39,17 @@ static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &st
 
     const size_t bufferSize = 1024 * kiloByte;
 
-    // Create module
     ze_module_handle_t module{};
     if (auto result = L0::KernelHelper::loadModule(levelzero, "slm_benchmark.cl", &module, nullptr); result != TestResult::Success) {
         return result;
     }
 
-    // Create buffer
     void *buffers[kernelCount];
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     for (auto i = 0u; i < kernelCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffers[i]));
     }
 
-    // Configure kernel group size
     const ze_group_count_t dispatchTraits{1, 1u, 1u};
 
     ze_command_list_handle_t cmdList;
@@ -61,7 +57,6 @@ static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &st
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
-    // Create kernel
     size_t slmSizes[2] = {arguments.slmPerWkgKernel1, arguments.slmPerWkgKernel2};
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.pKernelName = "eat_time";
@@ -75,7 +70,6 @@ static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &st
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[i], 2, slmSizes[i], nullptr));
     }
 
-    // Create events for profiling
     ze_event_pool_flags_t flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
     const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, flags, static_cast<uint32_t>(kernelCount)};
@@ -96,9 +90,7 @@ static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &st
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        // Launch kernel
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, 0));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
 
@@ -115,7 +107,6 @@ static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &st
         }
     }
 
-    // Cleanup
     for (auto i = 0u; i < kernelCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffers[i]));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernels[i]));

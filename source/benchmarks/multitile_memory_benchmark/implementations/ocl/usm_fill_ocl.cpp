@@ -24,7 +24,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
         return TestResult::Nooped;
     }
 
-    // Setup
     cl_int retVal;
     QueueProperties queueProperties = QueueProperties::create().setDeviceSelection(arguments.queuePlacement).setForceBlitter(arguments.forceBlitter).setProfiling(arguments.useEvents).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create().setDeviceSelection(arguments.contextPlacement).allowCreationFail();
@@ -43,14 +42,11 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
     }
     Timer timer;
 
-    // Create buffer
     void *buffer = UsmHelperOcl::allocate(arguments.bufferPlacement, opencl, arguments.size, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Create pattern
     const auto pattern = std::make_unique<uint8_t[]>(arguments.patternSize);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         cl_event profilingEvent{};
         cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;

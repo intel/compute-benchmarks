@@ -1,44 +1,40 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-/**************************************************************************************************
-This is an example workload written to help benchmark creators add their own test cases and
-understand what needs to be done. Its is meant to serve merely as a code sample and should not be
-used to any serious performance analysis.
-
-This file is a step by step guide on what needs to be done to create a workload. The
-hello_world_template_workload_ocl.cpp file contains the same code, but without the verbose
-comments. It may be used as a template for creating new tests.
-
-If you run this application without parameters, it will tell you which ones you're missing. Example
-valid invocation is:
-    ./hello_world_workload_ocl --numberOfElements=10000 --useEvents=1
-***************************************************************************************************/
+// This is an example workload written to help benchmark creators add their own test cases and
+// understand what needs to be done. Its is meant to serve merely as a code sample and should not be
+// used to any serious performance analysis.
+//
+// This file is a step by step guide on what needs to be done to create a workload. The
+// hello_world_template_workload_ocl.cpp file contains the same code, but without the verbose
+// comments. It may be used as a template for creating new tests.
+//
+// If you run this application without parameters, it will tell you which ones you're missing. Example
+// valid invocation is:
+//     ./hello_world_workload_ocl --numberOfElements=10000 --useEvents=1
 #include "framework/ocl/opencl.h"
 #include "framework/ocl/utility/profiling_helper.h"
 #include "framework/utility/file_helper.h"
 #include "framework/utility/timer.h"
 #include "framework/workload/register_workload.h"
 
-/**************************************************************************************************
-First thing, that needs to be done is the definition of parameters taken by our workload. Class
-which defines this must derive from WorkloadArgumentContainer base class. It is recommended that
-this class be named as "<WorkloadName>Arguments" for consistency.
-
-Each parameter is represented by a member variable deriving from the Argument class. A few examples
-of common datatypes are provided in the example below. For others, feel free to explore
-source/framework/argument directory. Each Argument constructor will take its name and an example
-description. The former will be used in command line parsing and the latter will be printed upon
-running with --help parameter.
-
-Every argument has to be specified by user in the command-line. The format is '--key=value'. It is
-possible to provide default values, though we do not recommend it, because users may not know
-it and get different results when default values are changed.
-***************************************************************************************************/
+// First thing, that needs to be done is the definition of parameters taken by our workload. Class
+// which defines this must derive from WorkloadArgumentContainer base class. It is recommended that
+// this class be named as "<WorkloadName>Arguments" for consistency.
+//
+// Each parameter is represented by a member variable deriving from the Argument class. A few examples
+// of common datatypes are provided in the example below. For others, feel free to explore
+// source/framework/argument directory. Each Argument constructor will take its name and an example
+// description. The former will be used in command line parsing and the latter will be printed upon
+// running with --help parameter.
+//
+// Every argument has to be specified by user in the command-line. The format is '--key=value'. It is
+// possible to provide default values, though we do not recommend it, because users may not know
+// it and get different results when default values are changed.
 struct HelloWorldArguments : WorkloadArgumentContainer {
     PositiveIntegerArgument numberOfElements;
     BooleanArgument useEvents;
@@ -52,30 +48,26 @@ struct HelloWorldArguments : WorkloadArgumentContainer {
     }
 };
 
-/**************************************************************************************************
-Second thing, we have to do is to define our workload. This definition has to inherit from the
-Workload class with its template argument set to our arguments class, which we've defined above.
-***************************************************************************************************/
+// Second thing, we have to do is to define our workload. This definition has to inherit from the
+// Workload class with its template argument set to our arguments class, which we've defined above.
 struct HelloWorld : Workload<HelloWorldArguments> {};
 
-/**************************************************************************************************
-Third and probably the most important thing is the implementation of our workload. It is a function
-taking a couple of arguments described below:
-1. arguments - an instance to our arguments class we've defined
-2. statistics - a container for performance results produced by our implementation
-3. synchronization - an object encapsulating synchronization. For workloads meant to be run from
-        the command line this is unused. This object is used by multiprocess benchmarks, which run
-        several workloads as child processes and insert synchronization points inside of them.
-        Synchronization should be called at the beginning of each test iteration.
-4. io - an object encapsulating printing and reading during execution. Just like synchronization,
-        for workloads meant to be run from the command line this is unused. It is required for
-        workloads that are run by other processes, because different communication channels are
-        used for different purposes (e.g. results are written to a different pipe than debug
-        messages). For normal, human-run workloads, everything goes to the console.
-
-Every API call should be checked for error with ASSERT_CL_SUCCESS (or ASSERT_ZE_RESULT_SUCCESS in
-LevelZero). If an error is found, the test will be stopped and reported as failed.
-***************************************************************************************************/
+// Third and probably the most important thing is the implementation of our workload. It is a function
+// taking a couple of arguments described below:
+// 1. arguments - an instance to our arguments class we've defined
+// 2. statistics - a container for performance results produced by our implementation
+// 3. synchronization - an object encapsulating synchronization. For workloads meant to be run from
+//         the command line this is unused. This object is used by multiprocess benchmarks, which run
+//         several workloads as child processes and insert synchronization points inside of them.
+//         Synchronization should be called at the beginning of each test iteration.
+// 4. io - an object encapsulating printing and reading during execution. Just like synchronization,
+//         for workloads meant to be run from the command line this is unused. It is required for
+//         workloads that are run by other processes, because different communication channels are
+//         used for different purposes (e.g. results are written to a different pipe than debug
+//         messages). For normal, human-run workloads, everything goes to the console.
+//
+// Every API call should be checked for error with ASSERT_CL_SUCCESS (or ASSERT_ZE_RESULT_SUCCESS in
+// LevelZero). If an error is found, the test will be stopped and reported as failed.
 TestResult run(const HelloWorldArguments &arguments, Statistics &statistics, WorkloadSynchronization &synchronization, WorkloadIo &io) {
     // The OpenCL class is a fundamental class encapsulating cl_platform and cl_device_id selection
     // and creation of cl_context and cl_command_queue. QueueProperties and ContextProperties are
@@ -172,11 +164,9 @@ TestResult run(const HelloWorldArguments &arguments, Statistics &statistics, Wor
     return TestResult::Success;
 }
 
-/**************************************************************************************************
-Fourth and the last step is the main() function. Here we make use of everything we defined above.
-Command line will be parsed inside the runFromCommandLine and provided implementation function will
-be run with parsed parameters.
-***************************************************************************************************/
+// Fourth and the last step is the main() function. Here we make use of everything we defined above.
+// Command line will be parsed inside the runFromCommandLine and provided implementation function will
+// be run with parsed parameters.
 int main(int argc, char **argv) {
     HelloWorld workload;
     HelloWorld::implementation = run;

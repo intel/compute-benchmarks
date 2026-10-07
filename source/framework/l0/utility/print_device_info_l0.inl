@@ -48,7 +48,6 @@ void printDeviceInfo(std::ostream &output) {
 static void printAvailableDevices() {
     ZE_RESULT_SUCCESS_OR_ERROR(zeInit(ZE_INIT_FLAG_GPU_ONLY));
 
-    // Get drivers count
     uint32_t driverCount = 0;
     ZE_RESULT_SUCCESS_OR_ERROR(zeDriverGet(&driverCount, nullptr));
     if (driverCount == 0) {
@@ -57,11 +56,9 @@ static void printAvailableDevices() {
     }
     std::cout << "LevelZero drivers: " << driverCount << '\n';
 
-    // Iterate over drivers
     auto drivers = std::make_unique<ze_driver_handle_t[]>(driverCount);
     ZE_RESULT_SUCCESS_OR_ERROR(zeDriverGet(&driverCount, drivers.get()));
     for (uint32_t driverIndex = 0; driverIndex < driverCount; driverIndex++) {
-        // Print info about current driver
         ze_driver_handle_t driver = drivers[driverIndex];
         ze_driver_properties_t driverProperties{};
         ZE_RESULT_SUCCESS_OR_ERROR(zeDriverGetProperties(driver, &driverProperties));
@@ -75,7 +72,6 @@ static void printAvailableDevices() {
             std::cout << "(" << deviceCount << " GPU devices)\n";
         }
 
-        // Iterate over devices
         auto devices = std::make_unique<ze_device_handle_t[]>(deviceCount);
         ZE_RESULT_SUCCESS_OR_ERROR(zeDeviceGet(driver, &deviceCount, devices.get()));
         for (uint32_t deviceIndex = 0; deviceIndex < deviceCount; deviceIndex++) {

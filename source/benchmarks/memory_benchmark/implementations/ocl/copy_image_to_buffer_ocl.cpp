@@ -23,7 +23,6 @@ static TestResult run(const CopyImageToBufferArguments &arguments, Statistics &s
         return TestResult::Nooped;
     }
 
-    // Setup
     cl_int retVal{};
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents).setForceBlitter(arguments.forceBlitter).allowCreationFail();
     Opencl opencl(queueProperties);
@@ -42,7 +41,6 @@ static TestResult run(const CopyImageToBufferArguments &arguments, Statistics &s
     const auto channelOrder = ImageHelperOcl::ChannelOrder::RGBA;
     const auto channelFormat = ImageHelperOcl::ChannelFormat::Float;
 
-    // Create image and buffer
     const cl_image_format imageFormat = ImageHelperOcl::getImageFormat(channelOrder, channelFormat);
     cl_image_desc imageDescription = {};
     imageDescription.image_type = ImageHelperOcl::getOclImageTypeFromDimensions(arguments.region);
@@ -63,7 +61,6 @@ static TestResult run(const CopyImageToBufferArguments &arguments, Statistics &s
     const size_t origin[] = {0, 0, 0};
     const size_t region[] = {arguments.region[0], arguments.region[1], arguments.region[2]};
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueCopyImageToBuffer(opencl.commandQueue, srcImage, dstBuffer, origin, region, 0, 0, nullptr, eventForEnqueue));

@@ -25,7 +25,6 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
         return TestResult::Nooped;
     }
 
-    // setup
     sycl::device dev = sycl::device(sycl::gpu_selector_v);
     Sycl sycl[NUM_OF_QUEUES];
     for (int i = 0; i < NUM_OF_QUEUES; i++) {
@@ -45,7 +44,6 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
     auto d_c = make_device_ptr<data_type>(sycl[0], length);
     auto d_d = make_device_ptr<data_type>(sycl[0], length);
 
-    // submit kernels
     auto submit_kernels = [&]() {
         data_type add_element = 1.0f;
 
@@ -58,7 +56,6 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
         submit_kernel_add<data_type>(wgc, wgs, sycl[0].queue, args.useEvents, event2, d_d.get(), d_b.get(), d_c.get());
     };
 
-    // capture graph
     auto graph = syclex::command_graph<syclex::graph_state::modifiable>(sycl[0].queue.get_context(), sycl[0].queue.get_device());
 
     graph.begin_recording(sycl[0].queue);
@@ -68,7 +65,6 @@ static TestResult run(const KernelSubmitGraphMultiQueueArguments &args, Statisti
     graph.end_recording();
     auto graph_exec = graph.finalize();
 
-    // benchmark
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
 

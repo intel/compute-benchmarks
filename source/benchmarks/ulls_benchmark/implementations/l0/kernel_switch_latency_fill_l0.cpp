@@ -23,7 +23,6 @@ static TestResult run(const KernelSwitchLatencyFillArguments &arguments, Statist
         return TestResult::Nooped;
     }
 
-    // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
 
@@ -32,7 +31,6 @@ static TestResult run(const KernelSwitchLatencyFillArguments &arguments, Statist
     const size_t gws = arguments.fillSize / sizeof(uint32_t);
     const size_t lws = 256u;
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_fill_with_ones.cl", "fill_with_ones", &kernel, &module, nullptr);
@@ -45,7 +43,6 @@ static TestResult run(const KernelSwitchLatencyFillArguments &arguments, Statist
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.fillSize * sizeof(uint32_t), &buffer));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
 
-    // Create events for profiling
     ze_event_pool_handle_t eventPool{};
     std::vector<ze_event_handle_t> profilingEvents(arguments.kernelCount);
     if (arguments.inOrder) {
@@ -69,7 +66,6 @@ static TestResult run(const KernelSwitchLatencyFillArguments &arguments, Statist
         }
     }
 
-    // Create command list and append kernel
     const ze_group_count_t groupCount{static_cast<uint32_t>(gws / lws), 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
@@ -88,7 +84,6 @@ static TestResult run(const KernelSwitchLatencyFillArguments &arguments, Statist
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
-        // Benchmark
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
 

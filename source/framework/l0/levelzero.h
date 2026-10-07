@@ -50,7 +50,6 @@ struct GraphExtension {
 //
 // LevelZero performs it's own cleanup.
 struct LevelZero {
-    // Public fields, accessible in benchmarks
     const size_t driverIndex;
     const size_t rootDeviceIndex;
     ze_driver_handle_t driver{};              // Driver instance, always present
@@ -68,7 +67,6 @@ struct LevelZero {
 
     bool isCounterBasedEventsSupported() const { return apiVersion >= ZE_API_VERSION_1_15; }
 
-    // Constructors, destructor
     LevelZero() : LevelZero(QueueProperties::create()) {}
     LevelZero(const QueueProperties &queueProperties) : LevelZero(queueProperties, ContextProperties::create()) {}
     LevelZero(const ContextProperties &contextProperties) : LevelZero(QueueProperties::create(), contextProperties) {}
@@ -82,11 +80,8 @@ struct LevelZero {
     LevelZero &operator=(const LevelZero &) = delete;
     ~LevelZero() noexcept(false);
 
-    // Returns how many subDevices has been created. Will return 0, if no subDevices were specified in ContextProperties or
-    // QueueProperties.
     size_t getSubDevicesCount() const { return subDevices.size(); }
 
-    // Create LevelZero context
     ze_context_handle_t createContext(const ContextProperties &contextProperties);
 
     // Creates queue with given properties. These methods aren't needed to be called by the user in scenarios with only one queue.
@@ -98,7 +93,6 @@ struct LevelZero {
     // Returns device for given DeviceSelection. Getting multiple devices at once, e.g. Tile0|Tile1 is forbidden.
     ze_device_handle_t getDevice(DeviceSelection deviceSelection) const;
 
-    // Utility methods for L0 getter functions
     ze_driver_ipc_properties_t getIpcProperties() const {
         ze_driver_ipc_properties_t ipcProperties{ZE_STRUCTURE_TYPE_DRIVER_IPC_PROPERTIES};
         EXPECT_ZE_RESULT_SUCCESS(zeDriverGetIpcProperties(driver, &ipcProperties));
@@ -243,14 +237,11 @@ struct LevelZero {
 
     void initializeExtension(const ExtensionProperties &extensionProperties);
 
-    // Queriers subDevices of the root device and creates them if any. This method is only called when it's necessary, i.e. user
-    // specified some subDevices in ContextProperties
     void createSubDevices(bool requireSuccess, bool fakeSubDeviceAllowed);
 
     std::vector<ze_device_handle_t> rootDevices{};
 
   private:
-    // Internal fields managed by the LevelZero class
     ze_device_handle_t rootDevice{};
     std::vector<ze_device_handle_t> subDevices{};
     std::vector<ze_command_queue_handle_t> commandQueues{};

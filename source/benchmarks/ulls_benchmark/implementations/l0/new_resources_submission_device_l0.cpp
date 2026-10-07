@@ -25,7 +25,6 @@ static TestResult run(const NewResourcesSubmissionDeviceArguments &arguments, St
     LevelZero levelzero;
     Timer timer;
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_write_one.cl", "write_one", &kernel, &module, nullptr, ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY);
@@ -33,7 +32,6 @@ static TestResult run(const NewResourcesSubmissionDeviceArguments &arguments, St
         return result;
     }
 
-    // Configure kernel
     uint32_t groupSizeX = 1u;
     uint32_t groupSizeY = 1u;
     uint32_t groupSizeZ = 1u;
@@ -49,28 +47,23 @@ static TestResult run(const NewResourcesSubmissionDeviceArguments &arguments, St
     // Keep the previous allocation alive while creating the next one so the driver hands out a fresh VA
     void *previousBuffer = nullptr;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
 
-        // Create buffer
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &allocationDesc, bufferSize, 0, levelzero.device, &buffer));
         ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, buffer, bufferSize));
 
-        // Create command list to write 1
         ze_command_list_handle_t cmdList;
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-        // Dispatch kernel and wait for completion
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
 
         timer.measureEnd();
 
-        // Cleanup after iteration
         ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, buffer, bufferSize));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
         if (previousBuffer != nullptr) {

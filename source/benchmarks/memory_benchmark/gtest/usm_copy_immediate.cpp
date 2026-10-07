@@ -34,7 +34,7 @@ TEST_P(UsmCopyImmediateTest, Test) {
     }
 
     if (args.forceBlitter && args.withCopyOffload) {
-        GTEST_SKIP(); // If copy offload were to be executed on blitter
+        GTEST_SKIP();
     }
 
     UsmCopyImmediate test;

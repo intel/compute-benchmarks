@@ -44,7 +44,6 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create();
     ContextProperties contextProperties = ContextProperties::create();
     ExtensionProperties extensionProperties = ExtensionProperties::create();
@@ -55,7 +54,6 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     }
     Timer timer;
 
-    // Query double support
     ze_device_module_properties_t moduleProperties{};
     ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetModuleProperties(levelzero.device, &moduleProperties));
 
@@ -73,7 +71,6 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize / groupSizeX * groupSizeX);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    // Create buffers
     size_t bufferSize = static_cast<size_t>(gws) * elementSize;
     void *buffers[3] = {};
     size_t buffersCount = {};
@@ -107,7 +104,6 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
         FATAL_ERROR("Unknown StreamMemoryType");
     }
 
-    // Create kernel
     ze_kernel_handle_t kernel{};
     ze_module_handle_t module{};
     CompilerOptionsBuilder compilerOptions;
@@ -117,19 +113,14 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
         return kernelLoadRes;
     }
 
-    // Query maximum group size
-
-    // Configure kernel group size
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, 1u, 1u));
     const ze_group_count_t dispatchTraits{gws / groupSizeX, 1u, 1u};
 
-    // Create an immediate command list
     ze_command_list_handle_t cmdList;
     ze_command_queue_desc_t commandQueueDesc = levelzero.commandQueueDesc;
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
-    // Create event
     ze_event_pool_flags_t eventPoolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     if (arguments.useEvents) {
         eventPoolFlags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -146,7 +137,6 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
-    // Enqueue filling of the buffers and set kernel arguments
     const bool verify = Configuration::get().verify;
     for (auto i = 0u; i < buffersCount; i++) {
         const void *pattern = verify && arguments.type == StreamMemoryType::Triad && i == 1 ? secondFillValue : fillValue;
@@ -171,9 +161,7 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     };
     TestResult result = TestResult::Success;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        // Launch kernel
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
@@ -211,7 +199,6 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
         }
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     for (size_t i = 0; i < buffersCount; i++) {

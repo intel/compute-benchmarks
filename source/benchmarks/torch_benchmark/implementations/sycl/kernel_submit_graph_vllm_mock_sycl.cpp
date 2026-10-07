@@ -28,13 +28,11 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
         return TestResult::Nooped;
     }
 
-    // validate arguments
     if (args.graphScenario > 3) {
         std::cerr << "Invalid graph scenario: " << args.graphScenario << std::endl;
         return TestResult::InvalidArgs;
     }
 
-    // setup
     // Note: Only in-order queues are supported in this benchmark
     bool useOOQ = false;
     Sycl sycl = args.useProfiling
@@ -56,12 +54,10 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
     // envs created from vllm config
     const int num_blocks = 65507;
     const int block_size = 16;
-    // other envs
     const int block_table_size = 8192;
     int xnumel_0 = input_len * num_attention_heads * head_dim;
     int xnumel_1 = input_len * num_key_value_heads * head_dim;
 
-    // variables used for graph 1
     auto input_token_id = make_device_ptr<int>(sycl, input_len);
     auto embedding_table = make_device_ptr<data_type>(sycl, vocab_size * hidden_size);
     auto input_layernorm = make_device_ptr<data_type>(sycl, hidden_size);
@@ -75,7 +71,6 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
     auto q_rope_output = make_device_ptr<data_type>(sycl, xnumel_0);
     auto k_rope_output = make_device_ptr<data_type>(sycl, xnumel_1);
 
-    // variables used for kernel reshape_and_cache
     // value is splitted from linear_qkv_output(llama.py LlamaAttention)
     auto v = make_device_ptr<data_type>(sycl, xnumel_1);
     auto key_cache = make_device_ptr<data_type>(sycl, num_blocks * block_size * num_key_value_heads * head_dim);
@@ -84,14 +79,12 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
     auto k_scale = make_device_ptr<data_type>(sycl, 1);
     auto v_scale = make_device_ptr<data_type>(sycl, 1);
 
-    // variables used for kernel flash_attn
     auto flash_attn_output = make_device_ptr<data_type>(sycl, xnumel_0);
     auto cu_seqlens_q = make_device_ptr<int>(sycl, BATCH_SIZE + 1);
     auto cu_seqlens_k = make_device_ptr<int>(sycl, BATCH_SIZE + 1);
     auto seqused_k = make_device_ptr<int>(sycl, BATCH_SIZE);
     auto block_table = make_device_ptr<int>(sycl, BATCH_SIZE * block_table_size);
 
-    // variables used for graph 2
     auto o_proj_output = make_device_ptr<data_type>(sycl, input_len * hidden_size);
     auto post_attention_layernorm = make_device_ptr<data_type>(sycl, hidden_size);
     auto layernorm_output = make_device_ptr<data_type>(sycl, input_len * hidden_size);
@@ -99,7 +92,6 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
     auto fused_silu_slice_output = make_device_ptr<data_type>(sycl, input_len * intermediate_size);
     auto down_project_output = make_device_ptr<data_type>(sycl, input_len * hidden_size);
 
-    // input_layernorm: reuse the variables from graph 1
     auto fused_embedding_layernorm_output_2 = make_device_ptr<data_type>(sycl, input_len * hidden_size);
     auto residual_2 = make_device_ptr<data_type>(sycl, input_len * hidden_size);
 
@@ -113,7 +105,6 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
     int R0_BLOCK = 2048;
 
     if (args.graphScenario == 0 || args.graphScenario == 1) {
-        // capture graph 1
         graph_1.begin_recording(sycl.queue);
         submit_kernel_fused_embedding_layernorm<data_type>(wgc, wgs, sycl.queue, args.useEvents,
                                                            input_token_id.get(), embedding_table.get(), input_layernorm.get(), fused_embedding_layernorm_output.get(), residual.get(), input_len, hidden_size, XBLOCK_1, R0_BLOCK);
@@ -124,7 +115,6 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
         graph_exec_1 = std::make_unique<graph_exec>(graph_1.finalize());
     }
     if (args.graphScenario == 0 || args.graphScenario == 2) {
-        // capture graph 2
         graph_2.begin_recording(sycl.queue);
         submit_kernel_mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0<data_type>(wgc, wgs, sycl.queue, args.useEvents,
                                                                                          o_proj_output.get(), residual.get(), post_attention_layernorm.get(), layernorm_output.get(), input_len, hidden_size, XBLOCK_1, R0_BLOCK);
@@ -140,7 +130,6 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
         graph_exec_2 = std::make_unique<graph_exec>(graph_2.finalize());
     }
     if (args.graphScenario == 0 || args.graphScenario == 3) {
-        // capture graph 3
         graph_3.begin_recording(sycl.queue);
         submit_kernel_mock_triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0<data_type>(wgc, wgs, sycl.queue, args.useEvents,
                                                                                          o_proj_output.get(), residual.get(), post_attention_layernorm.get(), layernorm_output.get(), input_len, hidden_size, XBLOCK_1, R0_BLOCK);
@@ -152,28 +141,12 @@ static TestResult run(const KernelSubmitGraphVllmMockArguments &args, Statistics
         graph_exec_3 = std::make_unique<graph_exec>(graph_3.finalize());
     }
 
-    // benchmark
     // Currently there is an implicit sync inside execute_graph call
     // so only measuring exec + sync is meaningful in terms of comparing
     // perf with L0
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
 
-        /* graph scenario 0 is a combined graph execution of all graphs of Llama-3.2-1B without the gemm kernel
-         * graph_1
-         * for i in 1...num_hidden_layers:
-         *      launch_kernel_reshape_and_cache
-         *      launch_kernel_flash_attn
-         *      graph 2
-         * launch_kernel_reshape_and_cache
-         * launch_kernel_flash_attn
-         * graph 3
-         *
-         * graph scenarios 1-3 are executing graph 1-3 separately:
-         *      graph 1 (layer normalization): fused_embedding_layernorm + triton_poi_fused_1_3
-         *      graph 2 (self-attention layer): fused_between_attn_mlp + fused_silu_slice + fused_between_mlp_qkvlinear + triton_poi_fused_1_3
-         *      graph 3 (post attention layer normalization): fused_between_attn_mlp + fused_silu_slice + fused_layernorm_last
-         */
         if (args.graphScenario == 0) {
             syclex::execute_graph(sycl.queue, *graph_exec_1);
             for (int j = 0; j < num_hidden_layers - 1; ++j) {

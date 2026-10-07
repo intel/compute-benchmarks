@@ -21,13 +21,11 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
         return TestResult::Nooped;
     }
 
-    // Setup
     Sycl sycl{sycl::device{sycl::gpu_selector_v}};
     const size_t gws = 1u;
     const size_t lws = 1u;
     sycl::nd_range<1> range(gws, lws);
 
-    // Create kernel
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime * 4);
     const auto eat_time = [=]([[maybe_unused]] auto i) {
         if (kernelOperationsCount > 4) {
@@ -38,7 +36,6 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
         }
     };
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         prof.measureStart();
         sycl::event event{};

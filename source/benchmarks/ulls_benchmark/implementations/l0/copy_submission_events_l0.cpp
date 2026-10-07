@@ -26,7 +26,6 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties;
     queueProperties.disable();
     LevelZero levelzero(queueProperties);
@@ -52,7 +51,6 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
     void *destination = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &allocationDescDevice, bufferSize, 0, levelzero.device, &destination));
 
-    // Create event for profiling
     const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1};
     uint32_t numDevices = 1;
     ze_event_pool_handle_t hEventPool;
@@ -62,7 +60,6 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
     ze_event_handle_t hEvent;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(hEventPool, &eventDesc, &hEvent));
 
-    // Create command list
     ze_command_list_handle_t cmdList;
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
@@ -70,7 +67,6 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, hostMemory, bufferSize, hEvent, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     uint64_t hostEnqueueTimestamp = 0;
     uint64_t deviceEnqueueTimestamp = 0;
     ze_kernel_timestamp_result_t deviceStartTimestamp;
@@ -93,7 +89,6 @@ static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics
         statistics.pushValue(submissionTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, hostMemory));
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, destination));
 

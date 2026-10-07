@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,5 +29,5 @@ struct ArgumentContainer {
 
   protected:
     std::vector<Argument *> arguments;
-    virtual bool validateArgumentsExtra() const { return true; } // This is optional. Use this for validating dependencies between arguments if any.
+    virtual bool validateArgumentsExtra() const { return true; }
 };

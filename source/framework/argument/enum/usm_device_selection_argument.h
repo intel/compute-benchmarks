@@ -29,7 +29,6 @@ struct UsmDeviceSelectionArgumentBase : BitfieldEnumArgument<DeviceSelectionArgu
     }
 
     bool validateExtra() const override {
-        // Usm can have only one GPU device
         const auto gpuDevices = DeviceSelectionHelper::withoutHost(this->value);
         const auto gpuDevicesCount = DeviceSelectionHelper::getDevicesCount(gpuDevices);
         if (gpuDevicesCount > 1) {

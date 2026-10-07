@@ -30,7 +30,6 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents).setForceBlitter(arguments.forceBlitter).allowCreationFail();
     Opencl opencl(queueProperties);
     if (opencl.commandQueue == nullptr) {
@@ -45,7 +44,6 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
         return TestResult::DriverFunctionNotFound;
     }
 
-    // Create buffers
     UsmHelperOcl::Alloc srcAlloc{};
     UsmHelperOcl::Alloc dstAlloc{};
     ASSERT_CL_SUCCESS(UsmHelperOcl::allocate(opencl, arguments.sourcePlacement, arguments.size, srcAlloc));
@@ -54,7 +52,6 @@ static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics)
     ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillUsmBufferOrHostPtr(opencl.commandQueue, srcAlloc.ptr, arguments.size, srcAlloc.placement, arguments.contents));
     ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillUsmBufferOrHostPtr(opencl.commandQueue, dstAlloc.ptr, arguments.size, dstAlloc.placement, arguments.contents));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         cl_event profilingEvent{};

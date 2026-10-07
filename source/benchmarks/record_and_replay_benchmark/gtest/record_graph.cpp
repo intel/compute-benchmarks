@@ -35,12 +35,6 @@ TEST_P(RecordGraphTest, Test) {
     test.run(args);
 }
 
-// Each suite below, except RecordGraphLargeTest, sweeps exactly one
-// graph-shape dimension while holding the other five
-// (fork/lvl/cmdSet/instantiation/appendKern/appendCopy) at a baseline of 1
-// -- except nLvls in the forks suite, which is 2, since forks require at
-// least one nesting level to have any effect. RecordGraphLargeTest instead
-// sets all six dimensions to their prior maximum values.
 INSTANTIATE_TEST_SUITE_P(
     RecordGraphForksTest,
     RecordGraphTest,

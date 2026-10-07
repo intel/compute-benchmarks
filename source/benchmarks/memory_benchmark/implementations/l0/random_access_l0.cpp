@@ -89,7 +89,6 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
         return TestResult::InvalidArgs;
     }
 
-    // Create buffer
     const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
 
@@ -100,7 +99,6 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
 
     const double maxPossibleAccessIndex = static_cast<double>((allocationSize / srcBufferAccessElementSize) - 1);
 
-    // Prepare Offset bufffer
     uint32_t *randBuff = reinterpret_cast<uint32_t *>(offsetBuffer);
     std::mt19937 generator(static_cast<uint32_t>(arguments.randomAccessSeed));
     std::uniform_int_distribution<uint32_t> distr(0, static_cast<uint32_t>(maxPossibleAccessIndex) - 1);
@@ -114,7 +112,6 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
         return kernelLoadRes;
     }
 
-    // Configure dispatch parameters
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, computeProperties.maxGroupSizeX, 1, 1));
     const ze_group_count_t dispatchTraits{workItemCnt / computeProperties.maxGroupSizeX, 1, 1};
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(srcBuffer), &srcBuffer));
@@ -126,16 +123,13 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
     const uint32_t maxAccessIndex = std::min<uint32_t>(static_cast<uint32_t>(randomAccessRange), 100u) * static_cast<uint32_t>(maxPossibleAccessIndex / 100.0);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 4, sizeof(maxAccessIndex), &maxAccessIndex));
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
-    // Timer setup for cpu measurement
     Timer timer;
 
-    // Create event for gpu time measurement
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     if (arguments.useEvents) {
@@ -163,7 +157,6 @@ static TestResult run(const RandomAccessArguments &arguments, Statistics &statis
     const size_t randomAccessBytesPerThread = accessMode == AccessMode::ReadWrite ? srcBufferAccessElementSize * 2 : srcBufferAccessElementSize;
     const size_t bytesTransferred = workItemCnt * (randomAccessBytesPerThread + offsetAccessBytesPerThread);
 
-    // Benchmark
     for (auto i = 0u; i < iterations; i++) {
         if (!arguments.useEvents) {
             timer.measureStart();

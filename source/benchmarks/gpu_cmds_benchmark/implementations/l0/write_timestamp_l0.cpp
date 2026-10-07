@@ -25,7 +25,6 @@ static TestResult run(const WriteTimestampArguments &arguments, Statistics &stat
     LevelZero levelzero;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    // Create buffer
     const ze_host_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     void *buffer = nullptr;
     const auto bufferSize = sizeof(uint64_t) * 3;
@@ -35,7 +34,6 @@ static TestResult run(const WriteTimestampArguments &arguments, Statistics &stat
     uint64_t *endTimestamp = beginTimestamp + 1;
     uint64_t *addressForWrite = beginTimestamp + 2;
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
@@ -47,7 +45,6 @@ static TestResult run(const WriteTimestampArguments &arguments, Statistics &stat
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, endTimestamp, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));

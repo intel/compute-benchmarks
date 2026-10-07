@@ -24,7 +24,6 @@ static TestResult run(const UsmSharedFirstCpuAccessArguments &arguments, Statist
     LevelZero levelzero;
     Timer timer;
 
-    // Prepare buffer descriptions
     ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     if (arguments.initialPlacement == UsmInitialPlacement::Host) {
         hostAllocationDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT;
@@ -35,7 +34,6 @@ static TestResult run(const UsmSharedFirstCpuAccessArguments &arguments, Statist
     }
     void *buffer{};
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocShared(levelzero.context, &deviceAllocationDesc, &hostAllocationDesc, arguments.bufferSize, 0, levelzero.device, &buffer));
 

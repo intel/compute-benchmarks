@@ -33,7 +33,6 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
         return TestResult::DeviceNotCapable;
     }
 
-    // Create timestamp buffer
     ze_host_mem_alloc_desc_t timestampHostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     timestampHostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
@@ -46,7 +45,6 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
     uint64_t *measurementCostStart = endTimestamp + 1;
     uint64_t *measurementCostEnd = measurementCostStart + 1;
 
-    // Create output buffer
     void *outputBuffer = nullptr;
     const auto outputBufferSize = arguments.bytesToFlush;
     if (arguments.flushedMemory == UsmMemoryPlacement::Device) {
@@ -63,7 +61,6 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, outputBuffer, outputBufferSize));
 
     {
-        // Initialize buffer data
         ze_command_list_desc_t cmdListDesc{};
         cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
         ze_command_list_handle_t cmdListForFill{};
@@ -77,7 +74,6 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
     }
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     std::string kernelName = arguments.onlyReads ? "write_one" : "only_write_one";
@@ -105,7 +101,6 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList{};
@@ -125,7 +120,6 @@ static TestResult run(const BarrierBetweenKernelsArguments &arguments, Statistic
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, measurementCostEnd, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));

@@ -45,8 +45,6 @@ TestResult execKernel(UrState &ur, ur_kernel_handle_t kernel, ur_queue_handle_t 
     return TestResult::Success;
 }
 
-// This scenario reflects usage of temporary buffers within procedures
-// with no explicit synchronization in between.
 TestResult scenario(UrState &ur, ur_kernel_handle_t kernel, ur_queue_handle_t queue, const TmpBufferFixedSizeArguments &arguments) {
     void *tmpBuffer;
     if (arguments.strategy == MemoryStrategy::Static) {
@@ -87,7 +85,6 @@ static TestResult run(const TmpBufferFixedSizeArguments &arguments, Statistics &
         }
     }
 
-    // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_fill_with_ones.spv");
     if (spirvModule.size() == 0) {
         return TestResult::KernelNotFound;
@@ -105,12 +102,10 @@ static TestResult run(const TmpBufferFixedSizeArguments &arguments, Statistics &
     ur_queue_properties_t queueProperties = {};
     ASSERT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device, &queueProperties, &queue));
 
-    // Buffer size in bytes must be multiple of sizeof(int)
     if (arguments.size % sizeof(int) != 0) {
         return TestResult::InvalidArgs;
     }
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         timer.measureStart();
         ASSERT_TEST_RESULT_SUCCESS(scenario(ur, kernel, queue, arguments));

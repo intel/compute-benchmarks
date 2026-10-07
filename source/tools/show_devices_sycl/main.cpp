@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,6 @@
 #include <string>
 #include <vector>
 
-// ------------------------------------------------------------------------- Helpers for creating/freeing platforms and devices
-
 std::vector<sycl::device> createSubDevices(const sycl::device &rootDevice) {
     auto domain = rootDevice.get_info<sycl::info::device::partition_type_affinity_domain>();
 
@@ -24,8 +22,6 @@ std::vector<sycl::device> createSubDevices(const sycl::device &rootDevice) {
     std::vector<sycl::device> result = rootDevice.create_sub_devices<sycl::info::partition_property::partition_by_affinity_domain>(domain);
     return result;
 }
-
-// ------------------------------------------------------------------------- Printing functions
 
 void showPlatform(size_t indentLevel, const sycl::platform &platform, size_t platformIndex) {
     const std::string indent0(indentLevel + 0, '\t');
@@ -38,7 +34,6 @@ void showDevice(size_t indentLevel, const sycl::device &device, const std::strin
     const std::string indent1(indentLevel + 1, '\t');
     const std::string indent2(indentLevel + 2, '\t');
 
-    // Print device header
     std::cout << indent0 << deviceLabel << " " << deviceIndex << ": " << device.get_info<sycl::info::device::name>() << '\n';
 }
 
@@ -57,8 +52,6 @@ void showDeviceAndItsSubDevices(size_t indentLevel, size_t deviceLevel, const sy
         showDeviceAndItsSubDevices(indentLevel + 1, deviceLevel + 1, subDevices[subDeviceIndex], subDeviceIndex);
     }
 }
-
-// ------------------------------------------------------------------------- Main procedure
 
 int main() {
     Configuration::loadDefaultConfiguration();

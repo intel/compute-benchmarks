@@ -40,13 +40,11 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         return TestResult::Nooped;
     }
 
-    // Setup
     cl_int retVal = {};
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true).setOoq(0);
     Opencl opencl(queueProperties);
     Timer timer;
 
-    // Query max workgroup size
     size_t maxWorkgroupSize = {};
     clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(maxWorkgroupSize), &maxWorkgroupSize, nullptr);
     if (arguments.lws > maxWorkgroupSize) {
@@ -58,7 +56,6 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     bool setScalarArgument = true;
     const bool printBuildInfo = true;
 
-    // Create kernel-specific buffers
     const char *kernelName = {};
     const size_t localWorkSize = std::min<size_t>(arguments.lws, arguments.size / elementSize);
     if (localWorkSize == 0) {
@@ -106,7 +103,6 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         FATAL_ERROR("Unknown StreamMemoryType");
     }
 
-    // Create kernel
     CompilerOptionsBuilder compilerOptions;
     std::string streamType = "uint";
     if (arguments.vectorSize > 1) {
@@ -156,7 +152,6 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(setScalarArgument ? buffersCount + 1 : buffersCount), 4u, &multiplier));
     }
 
-    // Warm up
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
@@ -211,7 +206,6 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         }
     }
 
-    // Cleanup
     for (size_t i = 0; i < buffersCount; i++) {
         ASSERT_CL_SUCCESS(clReleaseMemObject(buffers[i]));
     }

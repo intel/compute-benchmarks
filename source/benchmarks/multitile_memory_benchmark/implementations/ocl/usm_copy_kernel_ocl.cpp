@@ -24,7 +24,6 @@ static TestResult run(const UsmCopyKernelArguments &arguments, Statistics &stati
         return TestResult::Nooped;
     }
 
-    // Setup
     cl_int retVal;
     QueueProperties queueProperties = QueueProperties::create().setDeviceSelection(arguments.queuePlacement).setProfiling(arguments.useEvents).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create().setDeviceSelection(arguments.contextPlacement).allowCreationFail();
@@ -39,13 +38,11 @@ static TestResult run(const UsmCopyKernelArguments &arguments, Statistics &stati
     }
     Timer timer;
 
-    // Create buffer
     void *src = UsmHelperOcl::allocate(arguments.srcPlacement, opencl, arguments.size, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     void *dst = UsmHelperOcl::allocate(arguments.dstPlacement, opencl, arguments.size, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Create kernel
     const char *source = "kernel void copy_buffer(__global int *src, __global int *dst) { const uint gid = get_global_id(0);  dst[gid] = src[gid]; }";
     const auto sourceLength = strlen(source);
     cl_program program = clCreateProgramWithSource(opencl.context, 1, &source, &sourceLength, &retVal);
@@ -58,7 +55,6 @@ static TestResult run(const UsmCopyKernelArguments &arguments, Statistics &stati
     ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, 0, src));
     ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, 1, dst));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         cl_event profilingEvent{};
         cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;

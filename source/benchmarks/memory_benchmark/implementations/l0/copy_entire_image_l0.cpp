@@ -23,7 +23,6 @@ static TestResult run(const CopyEntireImageArguments &arguments, Statistics &sta
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).allowCreationFail();
     LevelZero levelzero(queueProperties);
     if (levelzero.commandQueue == nullptr) {
@@ -40,7 +39,6 @@ static TestResult run(const CopyEntireImageArguments &arguments, Statistics &sta
     const auto channelOrder = ImageHelperL0::ChannelOrder::RGBA;
     const auto channelFormat = ImageHelperL0::ChannelFormat::Float;
 
-    // Create image
     ze_image_desc_t imageDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
     imageDesc.type = ImageHelperL0::getL0ImageTypeFromDimensions(arguments.size);
     imageDesc.format = ImageHelperL0::getImageFormat(channelOrder, channelFormat);
@@ -54,7 +52,6 @@ static TestResult run(const CopyEntireImageArguments &arguments, Statistics &sta
     ASSERT_ZE_RESULT_SUCCESS(zeImageCreate(levelzero.context, levelzero.device, &imageDesc, &dstImage));
     const auto imageSizeInBytes = ImageHelperL0::getImageSizeInBytes(channelOrder, channelFormat, arguments.size);
 
-    // Create event
     ze_event_handle_t event{};
     if (arguments.useEvents) {
         ze_event_counter_based_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
@@ -66,7 +63,6 @@ static TestResult run(const CopyEntireImageArguments &arguments, Statistics &sta
         ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &eventDesc, &event));
     }
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     cmdListDesc.flags |= ZE_COMMAND_LIST_FLAG_IN_ORDER;
@@ -78,7 +74,6 @@ static TestResult run(const CopyEntireImageArguments &arguments, Statistics &sta
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendImageCopy(cmdList, dstImage, srcImage, event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
@@ -96,7 +91,6 @@ static TestResult run(const CopyEntireImageArguments &arguments, Statistics &sta
         }
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     if (arguments.useEvents) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));

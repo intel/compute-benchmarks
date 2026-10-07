@@ -35,7 +35,7 @@ TEST_P(UsmCopyTest, Test) {
     }
 
     if (args.withCopyOffload && (args.forceBlitter || args.api != Api::L0)) {
-        GTEST_SKIP(); // Copy offload is L0-only and not applicable when already executing on blitter
+        GTEST_SKIP();
     }
 
     UsmCopy test;

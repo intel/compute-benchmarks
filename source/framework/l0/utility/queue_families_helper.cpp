@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,14 +39,12 @@ std::unique_ptr<QueueFamiliesHelper::QueueDesc> QueueFamiliesHelper::getProperti
 }
 
 std::vector<QueueFamiliesHelper::QueueFamilyDesc> QueueFamiliesHelper::queryQueueFamilies(ze_device_handle_t device) {
-    // Get queue ordinals
     uint32_t familiesCount = 0;
     EXPECT_ZE_RESULT_SUCCESS(zeDeviceGetCommandQueueGroupProperties(device, &familiesCount, nullptr));
     FATAL_ERROR_IF(familiesCount == 0, "No queue groups found!");
     std::vector<ze_command_queue_group_properties_t> families(familiesCount);
     EXPECT_ZE_RESULT_SUCCESS(zeDeviceGetCommandQueueGroupProperties(device, &familiesCount, families.data()));
 
-    // Iterate over queue groups
     std::vector<QueueFamilyDesc> result{};
     bool copyEngineFound = false;
     for (uint32_t familyIndex = 0; familyIndex < familiesCount; familyIndex++) {

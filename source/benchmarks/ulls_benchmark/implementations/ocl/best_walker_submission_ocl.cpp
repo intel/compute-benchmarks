@@ -23,7 +23,6 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     Opencl opencl;
     Timer timer;
     auto clHostMemAllocINTEL = reinterpret_cast<pfn_clHostMemAllocINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clHostMemAllocINTEL"));
@@ -33,12 +32,10 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     }
     cl_int retVal;
 
-    // Create system memory buffer
     void *hostMemory = clHostMemAllocINTEL(opencl.context, nullptr, 64, 0, &retVal);
     volatile cl_int *volatileHostMemory = static_cast<cl_int *>(hostMemory);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Create kernel
     const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile("ulls_benchmark_write_one.cl");
     if (kernelSource.size() == 0) {
         return TestResult::KernelNotFound;
@@ -51,18 +48,15 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
     cl_kernel kernel = clCreateKernel(program, "write_one_uncached", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Benchmark
     ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, 0, hostMemory));
     const size_t gws = 1;
     const size_t lws = 1;
 
     for (auto i = 0u; i < arguments.iterations; i++) {
 
-        // Reset value
         *volatileHostMemory = 0;
         _mm_clflush(hostMemory);
 
-        // Enqueue write on GPU and poll for update on CPU
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFlush(opencl.commandQueue));
@@ -73,7 +67,6 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, hostMemory));
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));

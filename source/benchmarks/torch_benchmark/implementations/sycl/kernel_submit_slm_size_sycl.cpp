@@ -56,7 +56,6 @@ static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &stat
         return TestResult::Nooped;
     }
 
-    // setup
     bool useOoq = false;
     Sycl sycl = args.useProfiling
                     ? Sycl{useOoq, sycl::property::queue::enable_profiling()}
@@ -79,7 +78,6 @@ static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &stat
         return TestResult::Error;
     }
 
-    // benchmark
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
 
@@ -100,7 +98,6 @@ static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &stat
         }
     }
 
-    // verification
     data_type out[2] = {0.0f, 0.0f};
 
     sycl.queue.memcpy(out, d_out.get(), 2 * sizeof(data_type)).wait();

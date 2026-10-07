@@ -67,7 +67,6 @@ static TestResult run(const RandomAccessMultiResourceArguments &arguments, Stati
         return TestResult::InvalidArgs;
     }
 
-    // Create buffers
     void *fstSrcBuffer{}, *sndSrcBuffer{}, *offsetBuffer{}, *result{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.firstPlacement, levelzero, firstSize, &fstSrcBuffer));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.secondPlacement, levelzero, secondSize, &sndSrcBuffer));
@@ -77,7 +76,6 @@ static TestResult run(const RandomAccessMultiResourceArguments &arguments, Stati
     const uint32_t fstMaxPossibleAccessIndex = static_cast<uint32_t>((firstSize / srcBufferAccessElementSize) - 1);
     const uint32_t sndMaxPossibleAccessIndex = static_cast<uint32_t>((secondSize / srcBufferAccessElementSize) - 1);
     auto maxPossibleAccessIndex = std::max(fstMaxPossibleAccessIndex, sndMaxPossibleAccessIndex);
-    // Prepare offset bufffer
     uint32_t *randBuff = reinterpret_cast<uint32_t *>(offsetBuffer);
     const auto rngSeed = 0xBEEFu;
     std::mt19937 generator(rngSeed);
@@ -92,7 +90,6 @@ static TestResult run(const RandomAccessMultiResourceArguments &arguments, Stati
         return kernelLoadRes;
     }
 
-    // Configure dispatch parameters
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, computeProperties.maxGroupSizeX, 1, 1));
     const ze_group_count_t dispatchTraits{workItemCnt / computeProperties.maxGroupSizeX, 1, 1};
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(fstSrcBuffer), &fstSrcBuffer));
@@ -102,18 +99,15 @@ static TestResult run(const RandomAccessMultiResourceArguments &arguments, Stati
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 4, sizeof(fstMaxPossibleAccessIndex), &fstMaxPossibleAccessIndex));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 5, sizeof(sndMaxPossibleAccessIndex), &sndMaxPossibleAccessIndex));
 
-    // Create command list
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdList));
 
-    // Create event for gpu time measurement
     ze_event_handle_t event{};
     ze_event_counter_based_desc_t cbDesc{.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, .pNext = nullptr, .flags = ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP, .signal = 0, .wait = 0};
     ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &cbDesc, &event));
 
     const size_t bytesTransferred = workItemCnt * (srcBufferAccessElementSize * 2 + offsetAccessBytesPerThread);
 
-    // Benchmark
     for (auto i = 0u; i < iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));

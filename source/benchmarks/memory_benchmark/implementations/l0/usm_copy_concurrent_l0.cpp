@@ -46,7 +46,6 @@ static TestResult run(const UsmConcurrentCopyArguments &arguments, Statistics &s
         d2hQueueDesc->desc.pNext = &copyOffload;
     }
 
-    // Create events
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 3u;
@@ -76,14 +75,12 @@ static TestResult run(const UsmConcurrentCopyArguments &arguments, Statistics &s
 
     Timer timer, h2dTimer, d2hTimer;
 
-    // Create buffers
     void *host1{}, *device1{}, *host2{}, *device2{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Host, levelzero, arguments.size, &host1));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.size, &device1));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Host, levelzero, arguments.size, &host2));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.size, &device2));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         auto h2dDone = false;
         auto d2hDone = false;
@@ -117,7 +114,6 @@ static TestResult run(const UsmConcurrentCopyArguments &arguments, Statistics &s
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(waitEvent));
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(h2dCommandList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(d2hCommandList));
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(waitEvent));

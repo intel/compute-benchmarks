@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 
-/// Defines the type of profiler used.
 enum class ProfilerType {
     Unknown,
     Timer,      /// Timer class, representing wall time

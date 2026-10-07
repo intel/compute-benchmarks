@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,12 +38,10 @@ struct BitfieldEnumArgument : Argument {
             }
         }
 
-        // At least one value must be enabled
         if (enabledValuesCount == 0) {
             return false;
         }
 
-        // Incorrect values cannot by set
         const auto unknownValues = this->value & ~getAllValuesSum();
         if (unknownValues != DerivedType::zeroEnumValue) {
             return false;

@@ -22,7 +22,6 @@ static TestResult run(const KernelSwitchLatencyFillArguments &arguments, Statist
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     queueProperties.setOoq(!arguments.inOrder);
 
@@ -33,7 +32,6 @@ static TestResult run(const KernelSwitchLatencyFillArguments &arguments, Statist
     const size_t gws = arguments.fillSize / sizeof(uint32_t);
     const size_t lws = 256u;
 
-    // Create kernel
     const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile("ulls_benchmark_fill_with_ones.cl");
     if (kernelSource.size() == 0) {
         return TestResult::KernelNotFound;
@@ -55,7 +53,6 @@ static TestResult run(const KernelSwitchLatencyFillArguments &arguments, Statist
 
     profilingEvents.resize(arguments.kernelCount);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, &profilingEvents[0]));
@@ -90,7 +87,6 @@ static TestResult run(const KernelSwitchLatencyFillArguments &arguments, Statist
         }
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));

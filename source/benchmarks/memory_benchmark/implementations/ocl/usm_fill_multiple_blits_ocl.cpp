@@ -25,7 +25,6 @@ static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     Opencl opencl(queueProperties);
     Timer timer;
@@ -34,7 +33,6 @@ static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics
         return TestResult::DriverFunctionNotFound;
     }
 
-    // Create selected blitter queues
     struct PerQueueData {
         cl_command_queue queue; // freed by the OpenCL class
         std::string name;
@@ -67,11 +65,9 @@ static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics
         queues.push_back(PerQueueData{queue, queueName, isMainCopyEngine});
     }
 
-    // Create buffer
     UsmHelperOcl::Alloc dstAlloc{};
     ASSERT_CL_SUCCESS(UsmHelperOcl::allocate(opencl, arguments.memoryPlacement, arguments.size, dstAlloc));
 
-    // Calculate copyOffset and copySize for each copy engine
     for (auto i = 0u; i < queues.size(); i++) {
         const auto [offset, size] = blitSizeAssigner.getSpaceForBlit(queues[i].isMainCopyEngine);
         queues[i].fillDst = static_cast<char *>(dstAlloc.ptr) + offset;
@@ -79,11 +75,9 @@ static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics
     }
     blitSizeAssigner.validate();
 
-    // Create pattern
     const auto pattern = std::make_unique<uint8_t[]>(arguments.patternSize);
     BufferContentsHelperOcl::fill(pattern.get(), arguments.patternSize, arguments.patternContents);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         for (PerQueueData &queue : queues) {
@@ -97,7 +91,6 @@ static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics
         }
         timer.measureEnd();
 
-        // Report individual engines results and get time delta
         std::chrono::nanoseconds endGpuTime{};
         std::chrono::nanoseconds startGpuTime = std::chrono::nanoseconds::duration::max();
 
@@ -115,7 +108,6 @@ static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics
             endGpuTime = std::max(std::chrono::nanoseconds(end), endGpuTime);
         }
 
-        // Report total results
         const uint64_t totalSize = arguments.size * queues.size();
         statistics.pushValue(endGpuTime - startGpuTime, totalSize, typeSelector.getUnit(), typeSelector.getType(), "Total (Gpu)");
         statistics.pushValue(timer.get(), totalSize, typeSelector.getUnit(), MeasurementType::Cpu, "Total (Cpu)");

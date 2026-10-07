@@ -22,12 +22,10 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
         return TestResult::Nooped;
     }
 
-    // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
     Timer timer;
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_eat_time.cl", "eat_time", &kernel, &module, nullptr);
@@ -35,7 +33,6 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
         return result;
     }
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     if (arguments.useIoq) {
@@ -63,12 +60,10 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
     }
 
-    // Configure kernel
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime * 4);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
 
-    // Create an immediate command list
     const ze_group_count_t groupCount{1, 1, 1};
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -78,7 +73,6 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         auto limit = arguments.useBarrierSynchronization ? arguments.amountOfCalls : arguments.amountOfCalls - 1;
@@ -86,7 +80,6 @@ static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Sta
         for (uint32_t callId = 0u; callId < limit; callId++) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
         }
-        // last call synchronizes
         if (!arguments.useBarrierSynchronization) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, arguments.useEventForHostSync ? event : nullptr, 0, nullptr));
         } else {

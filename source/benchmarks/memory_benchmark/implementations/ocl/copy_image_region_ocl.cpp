@@ -23,7 +23,6 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
         return TestResult::Nooped;
     }
 
-    // Setup
     cl_int retVal{};
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents).setForceBlitter(arguments.forceBlitter).allowCreationFail();
     Opencl opencl(queueProperties);
@@ -42,7 +41,6 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
     const auto channelOrder = ImageHelperOcl::ChannelOrder::RGBA;
     const auto channelFormat = ImageHelperOcl::ChannelFormat::Float;
 
-    // Create image
     const cl_image_format imageFormat = ImageHelperOcl::getImageFormat(channelOrder, channelFormat);
     cl_image_desc imageDescription = {};
     imageDescription.image_type = ImageHelperOcl::getOclImageTypeFromDimensions(arguments.size);
@@ -63,7 +61,6 @@ static TestResult run(const CopyImageRegionArguments &arguments, Statistics &sta
     const size_t origin[] = {0, 0, 0};
     const size_t region[] = {arguments.size[0], arguments.size[1], arguments.size[2]};
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         timer.measureStart();

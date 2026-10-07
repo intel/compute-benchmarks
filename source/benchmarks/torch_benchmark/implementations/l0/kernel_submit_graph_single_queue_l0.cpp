@@ -18,7 +18,6 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
         return TestResult::Nooped;
     }
 
-    // setup
     ExtensionProperties extensionProperties = ExtensionProperties::create()
                                                   .setGraphFunctions(true);
     LevelZero l0{extensionProperties};
@@ -34,7 +33,6 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
     DeviceMemory<data_type> d_d{l0, length};
     DeviceMemory<data_type> d_e{l0, length};
 
-    // create kernels
     std::string kernel_file_name_1 = "";
     std::string kernel_file_name_2 = "";
     std::string kernel_name_1 = "";
@@ -88,17 +86,14 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
         return TestResult::Success;
     };
 
-    // capture graph
     Graph graph{l0};
     ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListBeginCaptureIntoGraph(cmd_list_1.get(), graph.get(), nullptr));
     for (size_t i = 0; i < args.kernelsPerQueue; ++i) {
         ASSERT_TEST_RESULT_SUCCESS(submit_kernels());
     }
     ASSERT_ZE_RESULT_SUCCESS(l0.graphExtension.commandListEndGraphCapture(cmd_list_1.get(), graph.getAddress(), nullptr));
-    // instantiate graph
     ASSERT_TEST_RESULT_SUCCESS(graph.instantiate());
 
-    // benchmark: run captured graph
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
 

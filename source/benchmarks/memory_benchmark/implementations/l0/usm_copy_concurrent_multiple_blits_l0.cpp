@@ -137,7 +137,6 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
         return TestResult::DeviceNotCapable;
     }
 
-    // Create buffers
     TransferBuffer h2dTransferBuffers(levelzero);
     TransferBuffer d2hTransferBuffers(levelzero);
     result = h2dTransferBuffers.allocate(arguments.size);
@@ -149,7 +148,6 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
         return result;
     }
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -157,14 +155,12 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
     eventPoolDesc.count = maxNumberOfEngines * 2 + 1;
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
 
-    // Create start event
     ze_event_handle_t synchronizedStartEvent;
     ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
     eventDesc.index = 0;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &synchronizedStartEvent));
 
     uint32_t eventIndex = 1;
-    // Create selected blitter lists
     std::vector<PerBlitterWorkInfo> blitterWorkInfos;
 
     result = prepareWorkForBlitters(blitterWorkInfos, true, arguments.h2dBlitters,
@@ -180,7 +176,6 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
         return result;
     }
 
-    // Benchmark
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     const auto totalBytesTransferred = gettotalBytesTransferred(blitterWorkInfos);
@@ -198,7 +193,6 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
         }
         timer.measureEnd();
 
-        // Report individual engines results and get time delta
         std::chrono::nanoseconds endGpuTime{};
         std::chrono::nanoseconds startGpuTime = std::chrono::nanoseconds::duration::max();
 
@@ -213,7 +207,6 @@ static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, 
             statistics.pushValue(commandTime, workInfo.size, typeSelector.getUnit(), typeSelector.getType(), workInfo.name);
         }
 
-        // Report total results
         statistics.pushValue(endGpuTime - startGpuTime, totalBytesTransferred, typeSelector.getUnit(), typeSelector.getType(), "Total (Gpu)");
         statistics.pushValue(timer.get(), totalBytesTransferred, typeSelector.getUnit(), MeasurementType::Cpu, "Total (Cpu)");
 

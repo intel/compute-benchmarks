@@ -32,7 +32,6 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     }
     Timer timer;
 
-    // Create buffer
     void *bufferVoid{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.bufferPlacement, levelzero, arguments.bufferSize, &bufferVoid));
     int32_t *buffer = static_cast<int32_t *>(bufferVoid);
@@ -44,14 +43,12 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
         return result;
     }
 
-    // Configure dispatch parameters
     const uint32_t wgs = 256;
     const uint32_t wgc = static_cast<uint32_t>(elementsCount) / wgs;
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, wgs, 1, 1));
     const ze_group_count_t dispatchTraits{wgc, 1, 1};
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
@@ -59,7 +56,6 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         for (auto elementIndex = 0u; elementIndex < elementsCount; elementIndex++) {
             buffer[elementIndex] = 0;

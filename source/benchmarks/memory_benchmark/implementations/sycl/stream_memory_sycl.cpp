@@ -41,8 +41,6 @@ class StreamMemoryBenchmark {
     virtual TestResult verify(sycl::queue &) = 0;
 };
 
-// Read benchmark
-
 template <typename FloatingPointType>
 class ReadKernel;
 
@@ -89,8 +87,6 @@ class ReadBenchmark : public StreamMemoryBenchmark {
     sycl::buffer<FloatingPointType, 1> dummyOutputBuf;
 };
 
-// Write benchmark
-
 template <typename FloatingPointType>
 class WriteKernel;
 
@@ -128,8 +124,6 @@ class WriteBenchmark : public StreamMemoryBenchmark {
     const FloatingPointType scalarValue;
     sycl::buffer<FloatingPointType, 1> deviceBuffer;
 };
-
-// Scale benchmark
 
 template <typename FloatingPointType>
 class ScaleKernel;
@@ -172,8 +166,6 @@ class ScaleBenchmark : public StreamMemoryBenchmark {
     sycl::buffer<FloatingPointType, 1> deviceBufferX;
     sycl::buffer<FloatingPointType, 1> deviceBufferY;
 };
-
-// Triad benchmark
 
 template <typename FloatingPointType>
 class TriadKernel;
@@ -274,11 +266,9 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         FATAL_ERROR("Unknown StreamMemoryType");
     }
 
-    // Warm-up
     auto event = benchmark->run(sycl.queue);
     event.wait();
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         auto event = benchmark->run(sycl.queue);

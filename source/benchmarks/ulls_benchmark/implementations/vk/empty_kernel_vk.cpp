@@ -23,7 +23,6 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
         return TestResult::Nooped;
     }
 
-    // Setup
     Vulkan vulkan;
     Timer timer;
 
@@ -34,7 +33,6 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
         return TestResult::DeviceNotCapable;
     }
 
-    // Create pipeline
     std::vector<uint32_t> spirv;
     if (const TestResult result = ShaderCompiler::compileComputeShaderToSpirv("ulls_benchmark_empty_kernel.comp", {}, spirv);
         result != TestResult::Success) {
@@ -43,7 +41,6 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     VulkanShaderModule shaderModule(vulkan, spirv);
     VulkanComputePipeline pipeline(vulkan, shaderModule, static_cast<uint32_t>(arguments.workgroupSize));
 
-    // Record the command buffer once, it is re-submitted in every iteration
     VkCommandBuffer commandBuffer = vulkan.allocateCommandBuffer();
     VkCommandBufferBeginInfo commandBufferBeginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     ASSERT_VK_SUCCESS(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
@@ -55,7 +52,6 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_VK_SUCCESS(vkQueueSubmit(vulkan.queue, 1, &submitInfo, VK_NULL_HANDLE));

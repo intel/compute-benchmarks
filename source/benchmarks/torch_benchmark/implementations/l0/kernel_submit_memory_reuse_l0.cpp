@@ -10,11 +10,10 @@
 
 #include <random>
 
-static constexpr size_t REUSE_MEMORY_SIZE = 1024 * 1024 * 64; // 64MB
+static constexpr size_t REUSE_MEMORY_SIZE = 1024 * 1024 * 64;
 
 template <typename data_type>
 static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, ComboProfilerWithStats &profiler, Statistics &statistics) {
-    // setup
     LevelZero l0{};
     CommandList cmd_list{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
 
@@ -22,7 +21,6 @@ static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, Com
     auto d_reuse_addr = d_reuse.getAddress();
     data_type *d_reuse_end = &d_reuse.getPtr()[REUSE_MEMORY_SIZE / sizeof(data_type) - 1];
 
-    // create kernel
     const std::string kernel_name = "write_" + DataTypeHelper::toOpenclC(args.kernelDataType);
     const auto kernel_file = "torch_benchmark_write.cl";
     Kernel kernel{l0, kernel_file, kernel_name};
@@ -36,7 +34,6 @@ static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, Com
         return TestResult::Success;
     };
 
-    // benchmark
     std::mt19937 rng(42);
     std::uniform_int_distribution<> offset_dist{0, 10};
 

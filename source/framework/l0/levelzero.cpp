@@ -16,7 +16,6 @@ LevelZero::LevelZero(const QueueProperties &queueProperties, const ContextProper
       rootDeviceIndex(Configuration::get().l0DeviceIndex) {
     EXPECT_ZE_RESULT_SUCCESS(zeInit(ZE_INIT_FLAG_GPU_ONLY));
 
-    // Get driver
     uint32_t driverCount = 0;
     EXPECT_ZE_RESULT_SUCCESS(zeDriverGet(&driverCount, nullptr));
     if (driverIndex >= driverCount) {
@@ -26,7 +25,6 @@ LevelZero::LevelZero(const QueueProperties &queueProperties, const ContextProper
     EXPECT_ZE_RESULT_SUCCESS(zeDriverGet(&driverCount, drivers.get()));
     this->driver = drivers[driverIndex];
 
-    // Create root device
     uint32_t deviceCount = 0;
     EXPECT_ZE_RESULT_SUCCESS(zeDeviceGet(driver, &deviceCount, nullptr));
     if (rootDeviceIndex >= deviceCount) {
@@ -36,7 +34,6 @@ LevelZero::LevelZero(const QueueProperties &queueProperties, const ContextProper
     EXPECT_ZE_RESULT_SUCCESS(zeDeviceGet(driver, &deviceCount, rootDevices.data()));
     this->rootDevice = rootDevices[rootDeviceIndex];
 
-    // Create subDevices if needed
     if (DeviceSelectionHelper::hasAnySubDevice(contextProperties.deviceSelection)) {
         this->createSubDevices(contextProperties.requireCreationSuccess, contextProperties.fakeSubDeviceAllowed);
         const auto requiredSubDevicesCount = DeviceSelectionHelper::getMaxSubDeviceIndex(contextProperties.deviceSelection) + 1;
@@ -45,23 +42,19 @@ LevelZero::LevelZero(const QueueProperties &queueProperties, const ContextProper
         }
     }
 
-    // Set the default device
     if (DeviceSelectionHelper::hasSingleDevice(contextProperties.deviceSelection)) {
         this->device = getDevice(contextProperties.deviceSelection);
     }
 
-    // Query API version for feature detection
     EXPECT_ZE_RESULT_SUCCESS(zeDriverGetApiVersion(this->driver, &this->apiVersion));
     DEVELOPER_WARNING_IF(!isCounterBasedEventsSupported(), "Counter-based events require L0 API version >= 1.15");
 
     initializeExtension(extensionProperties);
-    // Create context on the default device
     this->context = createContext(contextProperties);
     if (this->context == nullptr) {
         return;
     }
 
-    // Create queue
     QueueFamiliesHelper::QueueDesc queueDesc = createQueue(queueProperties);
     this->commandQueue = queueDesc.queue;
     this->commandQueueDesc = queueDesc.desc;
@@ -121,10 +114,8 @@ QueueFamiliesHelper::QueueDesc LevelZero::createQueue(const QueueProperties &que
         return {};
     }
 
-    // Get device
     const ze_device_handle_t deviceForQueue = getDevice(queueProperties.deviceSelection);
 
-    // Get queue info, which matches our requirements passed in QueueProperties
     auto queueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(deviceForQueue, queueProperties.selectedEngine);
     if (queueDesc == nullptr) {
         FATAL_ERROR_IF(queueProperties.requireCreationSuccess, "Device does not support such queue");
@@ -133,7 +124,6 @@ QueueFamiliesHelper::QueueDesc LevelZero::createQueue(const QueueProperties &que
     auto desc = queueDesc->desc;
     desc.priority = queueProperties.priority;
 
-    // Create
     queueDesc->queue = createQueue(deviceForQueue, desc);
     return *queueDesc;
 }

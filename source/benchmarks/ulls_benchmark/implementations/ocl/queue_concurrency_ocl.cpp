@@ -25,7 +25,6 @@ static TestResult run(const QueueConcurrencyArguments &arguments, Statistics &st
         return TestResult::Nooped;
     }
 
-    // Setup
     Opencl opencl;
     Timer timer{};
     cl_int retVal{};
@@ -44,7 +43,6 @@ static TestResult run(const QueueConcurrencyArguments &arguments, Statistics &st
     cl_kernel fastKernel = clCreateKernel(program, "eat_time", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // setup kernel time
     cl_uint kernelTime = static_cast<cl_uint>(arguments.kernelTime) * 7u;
     ASSERT_CL_SUCCESS(clSetKernelArg(slowKernel, 0, sizeof(kernelTime), &kernelTime));
     cl_uint fastTime = 1u;
@@ -55,14 +53,12 @@ static TestResult run(const QueueConcurrencyArguments &arguments, Statistics &st
     std::vector<cl_event> events;
     events.resize(arguments.kernelCount * 2);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, slowKernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[0]));
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, fastKernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[1]));
 
         for (auto j = 2u; j < arguments.kernelCount * 2; j += 2) {
-            // wait only for fast kernel
             ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, slowKernel, 1, nullptr, &gws, &lws, 1, &events[j - 1], &events[j]));
             ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, fastKernel, 1, nullptr, &gws, &lws, 0, nullptr, &events[j + 1]));
         }
@@ -74,8 +70,6 @@ static TestResult run(const QueueConcurrencyArguments &arguments, Statistics &st
             ASSERT_CL_SUCCESS(clReleaseEvent(events[j]));
         }
     }
-
-    // Cleanup
 
     ASSERT_CL_SUCCESS(clReleaseKernel(slowKernel));
     ASSERT_CL_SUCCESS(clReleaseKernel(fastKernel));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,6 @@ std::vector<std::chrono::nanoseconds> runLauncher(const std::string &launcher, c
                 break;
             }
         }
-        // Early termination
         if (!foundMeasurement) {
             return measurements;
         }

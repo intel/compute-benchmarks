@@ -22,7 +22,6 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
         return TestResult::Nooped;
     }
 
-    // Setup
     Opencl opencl;
 
     Timer timer;
@@ -48,7 +47,6 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
 
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (arguments.usedIds == WorkItemIdUsage::AtomicPerWorkgroup) {
             uint32_t workgroupCount = static_cast<uint32_t>(arguments.workgroupCount);
@@ -70,7 +68,6 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
         }
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));

@@ -21,12 +21,10 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     Timer timer;
     Sycl sycl{sycl::property::queue::enable_profiling{}};
     int operationsCount = static_cast<int>(arguments.kernelExecutionTime * 2);
 
-    // Create kernel
     const auto kernel = [operationsCount]() {
         volatile int value = 1u;
         for (int i = 0; i < operationsCount; i++) {
@@ -37,7 +35,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
 
     std::vector<sycl::event> events(arguments.kernelCount);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         events[0] = sycl.queue.single_task(kernel);

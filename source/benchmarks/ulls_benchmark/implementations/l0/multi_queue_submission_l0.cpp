@@ -22,7 +22,6 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     LevelZero levelzero(queueProperties);
     Timer timer;
@@ -31,7 +30,6 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
         return TestResult::DeviceNotCapable;
     }
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_write_one_global_ids.cl", "write_one", &kernel, &module, nullptr);
@@ -49,7 +47,6 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    // Check how many compute queues we can run
     auto queueFamilies = QueueFamiliesHelper::queryQueueFamilies(levelzero.device);
     size_t computeQueuesCount = 0;
     for (const auto &queueFamily : queueFamilies) {
@@ -62,7 +59,6 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
         return TestResult::DeviceNotCapable;
     }
 
-    // Create command queues, command lists and buffers
     size_t gws = arguments.workgroupCount * arguments.workgroupSize;
     size_t size = gws * sizeof(int);
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -89,7 +85,6 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         for (size_t j = 0; j < arguments.queueCount; j++) {

@@ -23,7 +23,6 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
         return TestResult::Nooped;
     }
 
-    // setup
     sycl::device dev = sycl::device(sycl::gpu_selector_v);
     Sycl sycl[NUM_OF_QUEUES] = {
         args.useProfiling ? Sycl{dev, inOrder, enableProfiling} : Sycl{dev, inOrder},
@@ -46,30 +45,24 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
         sycl[i].queue.wait();
     }
 
-    // Totally submit numIterations of a specific kernel
     for (size_t i = 0; i < args.iterations; i++) {
 
         if (args.measureCompletionTime) {
             profiler.measureStart();
         }
 
-        // Submit several kernels into queue1
         for (size_t j = 0; j < args.kernelsPerQueue; j++) {
             submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, sycl[0].queue, args.useEvents, d_a[0].get(), d_b[0].get(), d_c[0].get());
         }
 
-        // Submit several kernels into queue2
         for (size_t j = 1; j < args.kernelsPerQueue; j++) {
             submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, sycl[1].queue, args.useEvents, d_a[1].get(), d_b[1].get(), d_c[1].get());
         }
-        // q2_last_event is the last event of queue2
         sycl::event q2_last_event = submit_with_event_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, sycl[1].queue, args.useEvents, d_a[1].get(), d_b[1].get(), d_c[1].get());
 
-        // Start to measure submit time for a specific kernel
         if (!args.measureCompletionTime) {
             profiler.measureStart();
         }
-        // Submit a new kernel into queue1, but the new kernel can only be executed after q2_last_event ends
         submit_kernel_add<data_type>(args.kernelWGCount, args.kernelWGSize, sycl[0].queue, args.useEvents, q2_last_event, d_a[0].get(), d_b[0].get(), d_c[0].get());
         if (!args.measureCompletionTime) {
             profiler.measureEnd();

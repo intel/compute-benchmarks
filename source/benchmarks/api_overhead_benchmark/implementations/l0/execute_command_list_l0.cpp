@@ -22,11 +22,9 @@ static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_empty_kernel.cl", "empty", &kernel, &module, nullptr);
@@ -34,17 +32,14 @@ static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &
         return result;
     }
 
-    // Configure kernel
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
 
-    // Create fence if neccessary
     ze_fence_handle_t fence{};
     if (arguments.useFence) {
         const ze_fence_desc_t fenceDesc{ZE_STRUCTURE_TYPE_FENCE_DESC};
         ASSERT_ZE_RESULT_SUCCESS(zeFenceCreate(levelzero.commandQueue, &fenceDesc, &fence));
     }
 
-    // Create command list
     const ze_group_count_t dispatchTraits{1u, 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
@@ -53,7 +48,6 @@ static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (arguments.useFence) {
             ASSERT_ZE_RESULT_SUCCESS(zeFenceReset(fence));

@@ -21,13 +21,11 @@ static TestResult run(const FlushTimeArguments &arguments, Statistics &statistic
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setOoq(arguments.useOoq);
     Opencl opencl(queueProperties);
     Timer timer;
     cl_int retVal;
 
-    // Get parameters for the enqueue call
     cl_event event{};
     cl_event *eventForNdr = arguments.useEvent ? &event : nullptr;
     size_t gws = arguments.workgroupCount * arguments.workgroupSize;
@@ -38,7 +36,6 @@ static TestResult run(const FlushTimeArguments &arguments, Statistics &statistic
         gws = 1;
     }
 
-    // Create kernel
     const char *source = "__kernel void empty() {}";
     const auto sourceLength = strlen(source);
     cl_program program = clCreateProgramWithSource(opencl.context, 1, &source, &sourceLength, &retVal);
@@ -47,7 +44,6 @@ static TestResult run(const FlushTimeArguments &arguments, Statistics &statistic
     cl_kernel kernel = clCreateKernel(program, "empty", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         std::chrono::high_resolution_clock::duration totalTime{};
         for (auto j = 0u; j < arguments.flushCount; j++) {
@@ -64,7 +60,6 @@ static TestResult run(const FlushTimeArguments &arguments, Statistics &statistic
         statistics.pushValue(totalTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     return TestResult::Success;

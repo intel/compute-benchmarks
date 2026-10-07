@@ -41,7 +41,6 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     Sycl sycl = Sycl(inOrder);
     bool isAsync = false;
     void *ptr{};
@@ -67,8 +66,6 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
         return TestResult::InvalidArgs;
     }
 
-    // check if proper memory placement was picked and make sure
-    // that if async memory strategy is selected, it is for Device memory placement
     if (arguments.usmMemoryPlacement != UsmRuntimeMemoryPlacement::Device) {
         if (arguments.usmMemoryPlacement != UsmRuntimeMemoryPlacement::Host &&
             arguments.usmMemoryPlacement != UsmRuntimeMemoryPlacement::Shared) {
@@ -80,13 +77,11 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
         }
     }
 
-    // check if USM support is available on the requested placement type
     if (!hasUsmPlacementSupport(sycl.device, arguments.usmMemoryPlacement)) {
         std::cerr << "USM allocations are not supported!" << std::endl;
         return TestResult::DeviceNotCapable;
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (arguments.measureMode == AllocationMeasureMode::Allocate ||
             arguments.measureMode == AllocationMeasureMode::Both) {
@@ -111,7 +106,6 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
                 ptr = sycl::malloc_shared(arguments.size, sycl.queue);
                 break;
             default:
-                // unreachable, as we have already checked for valid placements above
                 break;
             }
         }

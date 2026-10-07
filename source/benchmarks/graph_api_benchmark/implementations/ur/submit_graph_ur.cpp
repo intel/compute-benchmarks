@@ -36,9 +36,7 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
     UrState ur;
 
-    // Check device capabilities based on mode
     if (arguments.emulateGraphs) {
-        // Command buffer mode - check command buffer support
         ur_bool_t command_buffer_support = false;
         EXPECT_UR_RESULT_SUCCESS(urDeviceGetInfo(
             ur.device, UR_DEVICE_INFO_COMMAND_BUFFER_SUPPORT_EXP,
@@ -47,7 +45,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
             return TestResult::DeviceNotCapable;
         }
     } else {
-        // Graph record & replay mode - check graph support
         ur_bool_t graph_support = false;
         EXPECT_UR_RESULT_SUCCESS(urDeviceGetInfo(
             ur.device, UR_DEVICE_INFO_GRAPH_RECORD_AND_REPLAY_SUPPORT_EXP,
@@ -57,7 +54,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         }
     }
 
-    // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_eat_time.spv");
     if (spirvModule.size() == 0) {
         return TestResult::KernelNotFound;
@@ -91,13 +87,11 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
     EXPECT_UR_RESULT_SUCCESS(urQueueCreate(ur.context, ur.device,
                                            &queueProperties, &queue));
 
-    // Handles for both modes (only one set will be used)
     ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
     ur_exp_graph_handle_t graph = nullptr;
     ur_exp_executable_graph_handle_t execGraph = nullptr;
 
     if (arguments.emulateGraphs) {
-        // Command buffer mode
         ur_exp_command_buffer_desc_t cmdBufferDesc = {
             UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
             nullptr,     // pNext
@@ -117,7 +111,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
         EXPECT_UR_RESULT_SUCCESS(urCommandBufferFinalizeExp(cmdBuffer));
     } else {
-        // Graph record & replay mode
         EXPECT_UR_RESULT_SUCCESS(urGraphCreateExp(ur.context, &graph));
         EXPECT_UR_RESULT_SUCCESS(urQueueBeginCaptureIntoGraphExp(queue, graph));
 
@@ -138,7 +131,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         EXPECT_UR_RESULT_SUCCESS(urGraphInstantiateGraphExp(graph, &execGraph));
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         prof.measureStart();
 

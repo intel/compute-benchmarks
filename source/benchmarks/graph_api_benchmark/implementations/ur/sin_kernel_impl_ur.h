@@ -49,6 +49,5 @@ class SinKernelGraphUR : public SinKernelGraphBase {
     ur_queue_handle_t queue;
     ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
 
-    // all commands use this single sync point
     std::vector<ur_exp_command_buffer_sync_point_t> syncPoints;
 };

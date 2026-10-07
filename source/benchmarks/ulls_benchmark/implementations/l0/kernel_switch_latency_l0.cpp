@@ -26,7 +26,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
 
@@ -35,7 +34,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     const size_t gws = 1024u;
     const size_t lws = 64u;
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_eat_time.cl", "eat_time", &kernel, &module, nullptr);
@@ -46,7 +44,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime * 8);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
 
-    // Create command list and append kernel
     const ze_group_count_t groupCount{static_cast<uint32_t>(gws / lws), 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
@@ -54,7 +51,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
         cmdListDesc.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
     }
 
-    // Create events for profiling
     ze_event_counter_based_flags_t cbFlags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
     ze_event_scope_flags_t cbSignalScope = 0;
     if (arguments.hostVisible) {
@@ -100,7 +96,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
-        // Benchmark
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
 

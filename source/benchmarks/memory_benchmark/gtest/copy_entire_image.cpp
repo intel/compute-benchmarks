@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,15 +39,14 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
         ::testing::Values(
-            ImageSize(8192, 1, 1),  // 1D
-            ImageSize(16384, 1, 1), // 1D
+            ImageSize(8192, 1, 1),
+            ImageSize(16384, 1, 1),
 
-            ImageSize(256, 512, 1), // 2D
-            ImageSize(512, 512, 1), // 2D
+            ImageSize(256, 512, 1),
+            ImageSize(512, 512, 1),
 
-            ImageSize(512, 512, 2), // 3D
-            ImageSize(512, 512, 64) // 3D
-            ),
+            ImageSize(512, 512, 2),
+            ImageSize(512, 512, 64)),
         ::testing::Values(false),
         ::testing::Values(true)));
 
@@ -57,7 +56,6 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(Api::L0, Api::OpenCL),
         ::testing::Values(
-            ImageSize(16384, 1, 1) // 1D
-            ),
+            ImageSize(16384, 1, 1)),
         ::testing::Values(false),
         ::testing::Values(true)));

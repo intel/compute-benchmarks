@@ -20,7 +20,6 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
         return TestResult::Nooped;
     }
 
-    // setup
     bool useOOQ = false;
     Sycl sycl = args.useProfiling
                     ? Sycl{useOOQ, sycl::property::queue::enable_profiling()}
@@ -49,7 +48,6 @@ static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statist
         }
     };
 
-    // Capture graph
     auto graph = syclex::command_graph<syclex::graph_state::modifiable>(sycl.queue.get_context(), sycl.queue.get_device());
 
     graph.begin_recording(sycl.queue);

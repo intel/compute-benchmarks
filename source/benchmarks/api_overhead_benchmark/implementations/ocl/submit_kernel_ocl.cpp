@@ -22,7 +22,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         return TestResult::Nooped;
     }
 
-    // Setup
     auto queueProperties = QueueProperties::create().setProfiling(arguments.useProfiling).setOoq(!arguments.inOrderQueue);
     Opencl opencl(queueProperties);
     cl_int retVal{};
@@ -31,7 +30,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     const size_t gws = 1u;
     const size_t lws = 1u;
 
-    // Create kernel
     cl_program program = nullptr;
     if (auto result = ProgramHelperOcl::buildProgramFromSourceFile(opencl.context, opencl.device, "api_overhead_benchmark_eat_time.cl", nullptr, program);
         result != TestResult::Success) {
@@ -45,7 +43,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     cl_event event{};
     cl_event *eventPtr = arguments.useEvents ? &event : nullptr;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {
@@ -72,7 +69,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     }
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
-    // Clean up
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
 

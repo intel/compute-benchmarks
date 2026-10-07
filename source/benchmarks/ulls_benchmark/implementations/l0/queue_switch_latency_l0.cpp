@@ -22,13 +22,11 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
 
     const size_t lws = static_cast<size_t>(arguments.workgroupSize);
     const size_t gws = lws * static_cast<size_t>(arguments.workgroupCount);
 
-    // Create kernels
     ze_module_handle_t module{};
     ze_kernel_handle_t kernelA{};
     ze_kernel_handle_t kernelB{};
@@ -47,7 +45,6 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernelA, 0, sizeof(int), &kernelOperationsCount));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernelB, 0, sizeof(int), &kernelOperationsCount));
 
-    // Create command lists and append kernels
     const ze_group_count_t groupCount{static_cast<uint32_t>(gws / lws), 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
@@ -102,7 +99,6 @@ static TestResult run(const QueueSwitchArguments &arguments, Statistics &statist
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueCreate(levelzero.context, levelzero.device, &commandQueueDesc, &queues[queueId]));
     }
 
-    // Benchmark
     for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
         for (size_t queueId = 0; queueId < queueCount; queueId++) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(queues[queueId], 1, &commandLists[queueId], nullptr));

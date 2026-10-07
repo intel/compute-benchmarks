@@ -24,7 +24,6 @@ static TestResult run(const ReductionArguments &arguments, Statistics &statistic
     Opencl opencl(queueProperties);
     cl_int retVal;
 
-    // Create kernel
     std::string kernelSource = R"(
        __kernel void reduction(__global uint *results) {
             if(get_global_id(0) != 0 )
@@ -39,7 +38,6 @@ static TestResult run(const ReductionArguments &arguments, Statistics &statistic
     cl_kernel kernel = clCreateKernel(program, "reduction", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Prepare data
     const size_t sizeInBytes = arguments.numberOfElements * sizeof(int32_t);
 
     size_t maxAllocSize = {};
@@ -61,11 +59,9 @@ static TestResult run(const ReductionArguments &arguments, Statistics &statistic
         expectedSum += value;
     }
 
-    // Create buffer
     cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeInBytes, data.get(), &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Validate results
     int32_t actualSum;
     cl_event profilingEvent{};
     cl_ulong timeNs{};
@@ -84,7 +80,6 @@ static TestResult run(const ReductionArguments &arguments, Statistics &statistic
     }
     ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         int zero = 0u;
         ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, buffer, true, 0u, 4u, &zero, 0u, nullptr, nullptr));

@@ -27,12 +27,10 @@ static TestResult run(const KernelSubmitLinearKernelSizeArguments &args, Statist
         return TestResult::InvalidArgs;
     }
 
-    // setup
     LevelZero l0{};
     CommandList cmd_list(l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc);
     DeviceMemory<data_type> d_out(l0, 1);
 
-    // create kernel
     const auto kernelName = "linear_kernel_size_" + std::to_string(args.kernelSize);
     Kernel kernel(l0, "torch_benchmark_" + kernelName + ".cl", kernelName);
     const ze_group_count_t dispatch{static_cast<uint32_t>(1), 1, 1};
@@ -45,21 +43,18 @@ static TestResult run(const KernelSubmitLinearKernelSizeArguments &args, Statist
         return TestResult::Success;
     };
 
-    // benchmark
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
         ASSERT_TEST_RESULT_SUCCESS(submit_kernel());
         profiler.measureEnd();
         profiler.pushStats(statistics);
 
-        // expect a wait here after a batch of submissions, if batch > 0
         if (args.kernelBatchSize > 0 && ((i + 1) % args.kernelBatchSize) == 0) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list.get(), UINT64_MAX));
         }
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list.get(), UINT64_MAX));
 
-    // verify result
     data_type host_result[1] = {0};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmd_list.get(), &host_result, d_out.getPtr(), sizeof(data_type), nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list.get(), UINT64_MAX));

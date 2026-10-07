@@ -82,12 +82,10 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
         return TestResult::Nooped;
     }
 
-    // Check support
     if (!MathOperationHelper::isSupportedAsNormal(arguments.operation, arguments.dataType)) {
         return TestResult::DeviceNotCapable;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents);
     Opencl opencl(queueProperties);
     cl_event profilingEvent{};
@@ -95,16 +93,14 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
     Timer timer{};
     cl_int retVal{};
 
-    // Prepare data
     const size_t lws = arguments.workgroupSize;
     const size_t gws = arguments.workgroupSize * arguments.workgroupCount;
-    const size_t loopIterations = 200u;                                // tweakable constant
-    const size_t operationsPerLoop = 128u;                             // non-tweakable constant, this is hardcoded in the kernel code
-    const size_t initIterations = arguments.mixGrfModes;               // mixGrf iterations
-    const size_t enqueueCount = arguments.iterations + initIterations; // non-tweakable constant
+    const size_t loopIterations = 200u;
+    const size_t operationsPerLoop = 128u; // non-tweakable constant, this is hardcoded in the kernel code
+    const size_t initIterations = arguments.mixGrfModes;
+    const size_t enqueueCount = arguments.iterations + initIterations;
     const auto data = MathOperationHelper::generateTestData(arguments.dataType, arguments.operation, loopIterations, operationsPerLoop, enqueueCount);
 
-    // Create and initialize the buffer with test data
     cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, gws * data.sizeOfDataType, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
@@ -114,7 +110,6 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
     }
     ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, initialData.size(), initialData.data(), 0, nullptr, nullptr));
 
-    // Create kernel
     cl_program program = nullptr;
     const char *programName = "eu_benchmark_perform_math_operation.cl";
     const char *kernelName = "do_math_operation";
@@ -168,7 +163,6 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
         }
     }
 
-    // Verify
     auto testResult = TestResult::Success;
     std::vector<std::byte> result(gws * data.sizeOfDataType);
     ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, result.size(), result.data(), 0, nullptr, nullptr));
@@ -179,7 +173,6 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
         }
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));

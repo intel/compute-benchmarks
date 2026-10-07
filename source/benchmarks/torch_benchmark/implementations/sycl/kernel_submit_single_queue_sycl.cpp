@@ -64,12 +64,10 @@ static HostPtr<T> allocateBufferHost(size_t bufferSize, std::vector<HostPtr<doub
 
 template <typename T>
 static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, ComboProfilerWithStats &profiler, Statistics &statistics) {
-    // setup
     constexpr bool useOoq = false;
     Sycl sycl{sycl::device{sycl::gpu_selector_v}, useOoq};
     const size_t bufferSize = args.kernelWGCount * args.kernelWGSize;
 
-    // benchmark an empty kernel, no allocations need to be made
     if (args.kernelName == KernelName::Empty) {
         for (size_t i = 0; i < args.iterations; i++) {
             profiler.measureStart();
@@ -85,7 +83,6 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
         return TestResult::Success;
     }
 
-    // allocate and initialize buffers based on args.kernelDataType type
     std::vector<DevicePtr<double>> pool_double;
     std::vector<DevicePtr<int>> pool_int;
 
@@ -106,7 +103,6 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
     for (unsigned i = 0; i < num_main_buffers; i++) {
         deviceBufferVec.push_back(allocateBufferDevice<T>(bufferSize, pool_double, pool_int, sycl));
     }
-    // Extract raw pointers for kernel submission
     std::vector<T *> rawPtrs;
     rawPtrs.reserve(num_main_buffers);
     for (unsigned i = 0; i < num_main_buffers; i++) {
@@ -132,10 +128,8 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
         hostBuffer.emplace(allocateBufferHost<T>(bufferSize, pool_double, pool_int, sycl));
     }
 
-    // benchmark
     for (size_t i = 0; i < args.iterations; i++) {
         if (args.kernelSubmitPattern == KernelSubmitPattern::H2d_before_batch) {
-            // Host to device copy before each batch
             sycl.queue.memcpy(deviceBuffer.get(), hostBuffer->get(), bufferSize * sizeof(T));
         }
 
@@ -156,13 +150,11 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
         if (args.kernelBatchSize > 0 && (i + 1) % args.kernelBatchSize == 0) {
             sycl.queue.wait();
             if (args.kernelSubmitPattern == KernelSubmitPattern::D2h_after_batch) {
-                // Device to host copy after each batch
                 sycl.queue.memcpy(hostBuffer->get(), deviceBuffer.get(), bufferSize * sizeof(T));
             }
         }
     }
     sycl.queue.wait();
-    // Final D2H copy if needed (for last batch that didn't hit boundary)
     if (args.kernelSubmitPattern == KernelSubmitPattern::D2h_after_batch) {
         sycl.queue.memcpy(hostBuffer->get(), deviceBuffer.get(), bufferSize * sizeof(T));
     }
@@ -178,8 +170,6 @@ static TestResult run(const KernelSubmitSingleQueueArguments &args, Statistics &
         return TestResult::Nooped;
     }
 
-    // validate arguments
-    // Currently limit args.kernelParamsNum up to 10
     if (args.kernelParamsNum < 1u) {
         std::cerr << "kernelParamsNum must be at least 1" << std::endl;
         return TestResult::InvalidArgs;

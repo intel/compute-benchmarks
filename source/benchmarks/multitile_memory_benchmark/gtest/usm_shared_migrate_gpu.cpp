@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ TEST_P(UsmSharedMigrateGpuTest, Test) {
     args.bufferSize = std::get<3>(GetParam());
 
     if (!args.validateArgumentsExtra()) {
-        GTEST_SKIP(); // If above arguments make no sense (e.g. queue created outside of the context), skip the case
+        GTEST_SKIP();
     }
 
     UsmSharedMigrateGpu test;

@@ -21,12 +21,10 @@ static TestResult run(const DriverGetArguments &arguments, Statistics &statistic
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     LevelZero levelzero(queueProperties);
     Timer timer;
 
-    // Benchmark
     uint32_t driverCount = 0;
     for (auto j = 0u; j < arguments.iterations; j++) {
         if (arguments.getDriverCount) {

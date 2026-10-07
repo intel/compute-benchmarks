@@ -58,11 +58,9 @@ static TestResult run(const VirtualMemReserveArguments &arguments, Statistics &s
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         auto status = doVirtualMemReserve(levelzero, arguments, timer);
         if (status != TestResult::Success) {

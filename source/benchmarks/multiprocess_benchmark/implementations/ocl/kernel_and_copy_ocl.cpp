@@ -26,13 +26,11 @@ static TestResult run(const KernelAndCopyArguments &arguments, Statistics &stati
         return TestResult::DeviceNotCapable;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     Opencl opencl(queueProperties);
     Timer timer{};
     cl_int retVal{};
 
-    // Create queues
     const auto queueForCopyProperties = QueueProperties::create().setForceBlitter(arguments.useCopyQueue).allowCreationFail();
     const auto queueForKernelPropertes = QueueProperties::create();
     cl_command_queue queueForKernel{};
@@ -55,12 +53,10 @@ static TestResult run(const KernelAndCopyArguments &arguments, Statistics &stati
         }
     }
 
-    // Validate copy queue creation (device may not support a BCS queue)
     if (arguments.runCopy && queueForCopy == nullptr) {
         return TestResult::DeviceNotCapable;
     }
 
-    // Create buffers
     const size_t bufferForKernelSize = 1024 * 600;
     const size_t bufferForCopySize = 1024 * 1024 * 512;
     cl_mem bufferForCopy1{};
@@ -74,7 +70,6 @@ static TestResult run(const KernelAndCopyArguments &arguments, Statistics &stati
         bufferForCopy2 = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferForCopySize, nullptr, &retVal);
     }
 
-    // Create kernel
     const char *source = "__kernel void fill_with_ones(__global char *buffer, int size) { "
                          "    for(int i=0; i < size; i++) {"
                          "        buffer[i] = 1;"
@@ -94,9 +89,7 @@ static TestResult run(const KernelAndCopyArguments &arguments, Statistics &stati
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, sizeof(bufferForKernelSize), &bufferForKernelSize));
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
-        // Enqueue
         if (arguments.runKernel) {
             ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(queueForKernel, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
         }
@@ -104,7 +97,6 @@ static TestResult run(const KernelAndCopyArguments &arguments, Statistics &stati
             ASSERT_CL_SUCCESS(clEnqueueCopyBuffer(queueForCopy, bufferForCopy1, bufferForCopy2, 0, 0, bufferForCopySize, 0, nullptr, nullptr));
         }
 
-        // Flush
         if (arguments.runKernel) {
             ASSERT_CL_SUCCESS(clFlush(queueForKernel));
         }
@@ -112,7 +104,6 @@ static TestResult run(const KernelAndCopyArguments &arguments, Statistics &stati
             ASSERT_CL_SUCCESS(clFlush(queueForCopy));
         }
 
-        // Measure finish
         timer.measureStart();
         if (arguments.runKernel) {
             ASSERT_CL_SUCCESS(clFinish(queueForKernel));
@@ -124,7 +115,6 @@ static TestResult run(const KernelAndCopyArguments &arguments, Statistics &stati
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     if (arguments.runKernel) {

@@ -30,7 +30,6 @@ static TestResult doVirtualMemGetAccessAttrib(LevelZero &levelzero, const Virtua
                                                        arguments.size, &pageSize));
     size = getPageAlignedSize(size, pageSize);
 
-    // Reserve virtual Memory
     void *virtualMem = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemReserve(levelzero.context, nullptr, size * 2, &virtualMem));
     EXPECT_NE(virtualMem, static_cast<void *>(nullptr));
@@ -46,7 +45,6 @@ static TestResult doVirtualMemGetAccessAttrib(LevelZero &levelzero, const Virtua
                                                             &getAccessType, &outSize));
     timer.measureEnd();
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemFree(levelzero.context, virtualMem, size * 2));
 
     return TestResult::Success;
@@ -60,11 +58,9 @@ static TestResult run(const VirtualMemGetAccessAttribArguments &arguments, Stati
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         auto status = doVirtualMemGetAccessAttrib(levelzero, arguments, timer);
         if (status != TestResult::Success) {

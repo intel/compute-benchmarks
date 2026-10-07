@@ -35,7 +35,6 @@ static TestResult run(const EventCtxtSwitchLatencyArguments &arguments, Statisti
     auto cmdQueueSecond = queueDescSecond.queue;
     auto ordinalSecond = queueDescSecond.family.ordinal;
 
-    // Create buffer
     const ze_host_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     void *buffer = nullptr;
     const auto bufferSize = sizeof(uint64_t) * 2;
@@ -44,7 +43,6 @@ static TestResult run(const EventCtxtSwitchLatencyArguments &arguments, Statisti
     uint64_t *beginTimestamp = static_cast<uint64_t *>(buffer);
     uint64_t *endTimestamp = beginTimestamp + 1;
 
-    // Create events
     uint32_t eventsCount = static_cast<uint32_t>(arguments.measuredCommands);
     const ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, eventsCount};
     ze_event_pool_handle_t eventPool{};
@@ -57,7 +55,6 @@ static TestResult run(const EventCtxtSwitchLatencyArguments &arguments, Statisti
         ZE_RESULT_SUCCESS_OR_ERROR(zeEventCreate(eventPool, &eventDesc, event));
     }
 
-    // Create command lists
     ze_command_list_desc_t cmdListDescFirst{};
     cmdListDescFirst.commandQueueGroupOrdinal = ordinalFirst;
     ze_command_list_handle_t cmdListFirst{};
@@ -90,17 +87,14 @@ static TestResult run(const EventCtxtSwitchLatencyArguments &arguments, Statisti
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdListSecond));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdListReset));
 
-    // reset all events before next round
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(cmdQueueFirst, 1, &cmdListReset, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(cmdQueueFirst, std::numeric_limits<uint64_t>::max()));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(cmdQueueFirst, 1, &cmdListFirst, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(cmdQueueSecond, 1, &cmdListSecond, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(cmdQueueFirst, std::numeric_limits<uint64_t>::max()));
 
-        // reset all events before next round
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(cmdQueueFirst, 1, &cmdListReset, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(cmdQueueFirst, std::numeric_limits<uint64_t>::max()));
 

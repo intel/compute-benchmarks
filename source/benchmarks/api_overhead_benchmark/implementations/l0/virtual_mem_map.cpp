@@ -36,7 +36,6 @@ static TestResult prepareVirtualMemoryMaps(LevelZero &levelzero, const size_t re
         EXPECT_NE(virtualMem, static_cast<void *>(nullptr));
         reservedMemlist.push_back(virtualMem);
 
-        // Allocate Physical Memory handle
         ze_physical_mem_desc_t physDesc = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr};
         physDesc.size = reserveSize;
         ze_physical_mem_handle_t physicalMemoryHandle{};
@@ -77,7 +76,6 @@ static TestResult run(const VirtualMemMapArguments &arguments, Statistics &stati
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     size_t pageSize = 0;
     size_t reserveSize = arguments.reserveSize;
@@ -85,14 +83,12 @@ static TestResult run(const VirtualMemMapArguments &arguments, Statistics &stati
                                                        arguments.reserveSize, &pageSize));
     reserveSize = getPageAlignedSize(reserveSize, pageSize);
 
-    // Use 2x allocation size for virtual memory
     uint64_t alignedOffset = 0;
     if (arguments.useOffset != 0) {
         alignedOffset = reserveSize;
         reserveSize *= 2;
     }
 
-    // Handle access type
     ze_memory_access_attribute_t accessType = ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE;
     std::string accessTypeString = static_cast<const std::string &>(arguments.accessType);
     if (accessTypeString == "ReadOnly") {
@@ -104,7 +100,6 @@ static TestResult run(const VirtualMemMapArguments &arguments, Statistics &stati
     std::vector<void *> reservedMemlist{};
     std::vector<ze_physical_mem_handle_t> physicalMemoryHandleList{};
 
-    // Benchmark
     Timer timer;
     auto status = prepareVirtualMemoryMaps(levelzero, reserveSize, reservedMemlist, physicalMemoryHandleList, static_cast<uint32_t>(arguments.iterations));
     if (status != TestResult::Success) {

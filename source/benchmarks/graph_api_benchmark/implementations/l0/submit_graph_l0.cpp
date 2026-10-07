@@ -23,14 +23,12 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         return TestResult::Nooped;
     }
 
-    // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create()
                                                   .setGraphFunctions(!arguments.emulateGraphs);
     LevelZero levelzero(extensionProperties);
 
     const ze_group_count_t groupCount{1, 1, 1};
 
-    // Only used when emulateGraphs is 0
     ze_graph_handle_t graph{};
     ze_executable_graph_handle_t execGraph{};
 
@@ -38,7 +36,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         ASSERT_ZE_RESULT_SUCCESS(levelzero.graphExtension.graphCreate(levelzero.context, &graph, nullptr));
     }
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_eat_time.cl", "eat_time", &kernel, &module, nullptr);
@@ -46,7 +43,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         return result;
     }
 
-    // Create an immediate command list
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     if (arguments.inOrderQueue) {
@@ -55,7 +51,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
-    // Create command list that represents command graph
     ze_command_list_handle_t graphCmdList{};
 
     ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
@@ -74,12 +69,10 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
             levelzero.context, levelzero.device, &cmdListDesc, &graphCmdList));
     }
 
-    // Configure kernel
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime);
 
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
 
-    // Begin recording stage
     if (!arguments.emulateGraphs) {
         ASSERT_ZE_RESULT_SUCCESS(levelzero.graphExtension.commandListBeginCaptureIntoGraph(graphCmdList, graph, nullptr));
     }
@@ -90,7 +83,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
             graphCmdList, kernel, &groupCount, nullptr, 0, nullptr));
     }
 
-    // End recording stage
     if (!arguments.emulateGraphs) {
         ASSERT_ZE_RESULT_SUCCESS(levelzero.graphExtension.commandListEndGraphCapture(graphCmdList, &graph, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(levelzero.graphExtension.commandListInstantiateGraph(graph, &execGraph, nullptr));
@@ -98,18 +90,16 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(graphCmdList));
     }
 
-    // cb event description
     const bool counterBasedEvents = arguments.inOrderQueue;
     ze_event_counter_based_flags_t cbFlags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
     cbFlags |= arguments.useProfiling ? ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP : 0;
     ze_event_scope_flags_t cbSignalScope = ZE_EVENT_SCOPE_FLAG_DEVICE;
     ze_event_scope_flags_t cbWaitScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
-    // Create event pool (if not using counter based events)
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.flags |= arguments.useProfiling ? ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP : 0;
-    eventPoolDesc.count = static_cast<uint32_t>(arguments.numKernels); // ensures one unique event per kernel
+    eventPoolDesc.count = static_cast<uint32_t>(arguments.numKernels);
 
     ze_event_pool_handle_t eventPool = nullptr;
     if (!counterBasedEvents) {
@@ -133,7 +123,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         signalEvent = event;
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         prof.measureStart();
 
@@ -166,7 +155,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         prof.pushStats(statistics);
     }
 
-    // Cleanup
     if (arguments.useEvents) {
         EXPECT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
         if (!counterBasedEvents) {
@@ -174,7 +162,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         }
     }
 
-    // Cleanup graph objects if used
     if (!arguments.emulateGraphs) {
         EXPECT_ZE_RESULT_SUCCESS(levelzero.graphExtension.executableGraphDestroy(execGraph));
         EXPECT_ZE_RESULT_SUCCESS(levelzero.graphExtension.graphDestroy(graph));

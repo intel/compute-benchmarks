@@ -22,7 +22,6 @@ static TestResult run(const GetMemoryPropertiesArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
@@ -38,7 +37,6 @@ static TestResult run(const GetMemoryPropertiesArguments &arguments, Statistics 
 
     ze_memory_allocation_properties_t properties{};
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         timer.measureStart();
@@ -50,7 +48,6 @@ static TestResult run(const GetMemoryPropertiesArguments &arguments, Statistics 
         statistics.pushValue(timer.get() / arguments.AllocationsCount, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     for (int64_t i = 0; i < arguments.AllocationsCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, allocations[i]));
     }

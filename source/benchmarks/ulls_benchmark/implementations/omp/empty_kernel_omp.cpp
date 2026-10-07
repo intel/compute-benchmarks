@@ -29,13 +29,11 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
         return TestResult::Nooped;
     }
 
-    // Setup
     SetEnvRAII("OMP_TARGET_OFFLOAD", "MANDATORY");
     Timer timer;
     const size_t wgc = arguments.workgroupCount;
     const size_t lws = arguments.workgroupSize;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
 

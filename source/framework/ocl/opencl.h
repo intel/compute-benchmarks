@@ -22,13 +22,11 @@ namespace OCL {
 //
 // Opencl performs it's own cleanup.
 struct Opencl {
-    // Public fields, accessible in benchmarks
     cl_platform_id platform{};
     cl_device_id device{};
     cl_context context{};
     cl_command_queue commandQueue{};
 
-    // Constructors, destructor
     Opencl() : Opencl(QueueProperties::create()) {}
     Opencl(const QueueProperties &queueProperties) : Opencl(queueProperties, ContextProperties::create()) {}
     Opencl(const QueueProperties &queueProperties, const ContextProperties &contextProperties);
@@ -46,15 +44,11 @@ struct Opencl {
     cl_device_id getDevice(DeviceSelection deviceSelection);
     std::vector<cl_device_id> getDevices(DeviceSelection deviceSelection, bool requireSuccess);
 
-    // Get helper used to query if certain extensions are supported by the OpenCL implementation
     const ExtensionsHelper &getExtensions();
 
   private:
-    // Queriers subDevices of the root device and creates them if any. This method is only called when
-    // it's necessary, i.e. user specified some subDevices in ContextProperties.
     bool createSubDevices(bool requireSuccess);
 
-    // Internal fields managed by the Opencl class
     cl_device_id rootDevice;
     std::vector<cl_device_id> subDevices{};
     std::vector<cl_context> contexts{};

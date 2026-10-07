@@ -21,7 +21,6 @@ static TestResult run(const LifecycleCommandListArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.copyOnly).allowCreationFail();
     LevelZero levelzero(queueProperties);
     if (nullptr == levelzero.commandQueue) {
@@ -32,7 +31,6 @@ static TestResult run(const LifecycleCommandListArguments &arguments, Statistics
     ze_command_list_desc_t commandListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC, nullptr, levelzero.commandQueueDesc.ordinal};
     ze_command_list_handle_t commandList;
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         timer.measureStart();
         for (auto i = 0u; i < arguments.cmdListCount; i++) {

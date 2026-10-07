@@ -24,7 +24,6 @@ static TestResult run(const UsmMemsetArguments &arguments, Statistics &statistic
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).setProfiling(arguments.useEvents).allowCreationFail();
     Opencl opencl(queueProperties);
     if (opencl.commandQueue == nullptr) {
@@ -39,13 +38,11 @@ static TestResult run(const UsmMemsetArguments &arguments, Statistics &statistic
         return TestResult::DriverFunctionNotFound;
     }
 
-    // Create buffer
     UsmHelperOcl::Alloc dstAlloc{};
     ASSERT_CL_SUCCESS(UsmHelperOcl::allocate(opencl, arguments.usmMemoryPlacement, arguments.bufferSize, dstAlloc));
 
     const uint8_t memsetValue = 0x1;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillUsmBufferOrHostPtr(opencl.commandQueue, dstAlloc.ptr, arguments.bufferSize, dstAlloc.placement, arguments.contents));
 

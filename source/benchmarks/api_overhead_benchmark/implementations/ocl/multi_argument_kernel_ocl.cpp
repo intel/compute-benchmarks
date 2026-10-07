@@ -27,7 +27,6 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
         return TestResult::Nooped;
     }
 
-    // Setup
     Opencl opencl;
     cl_int retVal{};
     Timer timer;
@@ -35,7 +34,6 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
     size_t gws[3] = {arguments.lws * arguments.groupCount, 1, 1};
     const size_t lws[3] = {arguments.lws, 1, 1};
 
-    // Create kernels
     const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile("api_overhead_benchmark_multi_arg_kernel.cl");
     if (kernelSource.size() == 0) {
         return TestResult::KernelNotFound;
@@ -66,7 +64,6 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
 
     auto reverseOrder = false;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (arguments.measureSetKernelArg) {
             timer.measureStart();
@@ -90,7 +87,6 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
 

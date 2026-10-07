@@ -23,7 +23,6 @@ static TestResult run(const AppendMemCopyArguments &arguments, Statistics &stati
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).allowCreationFail();
     LevelZero levelzero(queueProperties);
     if (levelzero.commandQueue == nullptr) {
@@ -31,13 +30,11 @@ static TestResult run(const AppendMemCopyArguments &arguments, Statistics &stati
     }
     Timer timer;
 
-    // Allocate source and destination memory
     void *src{};
     void *dst{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.src, levelzero, arguments.size, &src));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.dst, levelzero, arguments.size, &dst));
 
-    // Create event if necessary
     const ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, arguments.appendCount};
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, ZE_EVENT_SCOPE_FLAG_DEVICE, ZE_EVENT_SCOPE_FLAG_DEVICE};
     ze_event_pool_handle_t eventPool{};
@@ -50,13 +47,11 @@ static TestResult run(const AppendMemCopyArguments &arguments, Statistics &stati
         }
     }
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; ++i) {
         timer.measureStart();
         for (auto j = 0u; j < arguments.appendCount; ++j) {
@@ -67,7 +62,6 @@ static TestResult run(const AppendMemCopyArguments &arguments, Statistics &stati
         statistics.pushValue(timer.get() / arguments.appendCount, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     if (arguments.useEvent) {
         for (auto j = 0u; j < arguments.appendCount; ++j) {

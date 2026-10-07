@@ -27,13 +27,11 @@ static TestResult run(const BestSubmissionArguments &arguments, Statistics &stat
     constexpr uint64_t timestampInitial = 0xffffffffu;
     Timer timer;
 
-    // Create buffer
     const ze_host_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     void *buffer = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &allocationDesc, bufferSize, 0, &buffer));
     volatile uint64_t *volatileBuffer = static_cast<uint64_t *>(buffer);
 
-    // Create command list writing 1 to the buffer
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
@@ -41,7 +39,6 @@ static TestResult run(const BestSubmissionArguments &arguments, Statistics &stat
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, static_cast<uint64_t *>(buffer), nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         *volatileBuffer = timestampInitial;
         _mm_clflush(buffer);

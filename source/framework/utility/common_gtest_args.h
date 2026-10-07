@@ -89,13 +89,12 @@ struct EnqueueSize {
 
 inline auto enqueueSizesForAtomics() {
     return ::testing::Values(
-        EnqueueSize{1, 1},    // single work item
-        EnqueueSize{1, 256},  // one big group
-        EnqueueSize{2048, 1}, // 2048 threads in 1024 groups
-        EnqueueSize{64, 32},  // 2048 threads in 64 groups
-        EnqueueSize{32, 64},  // 2048 threads in 32 groups
-        EnqueueSize{8, 256}   // 2048 threads in 8 groups
-    );
+        EnqueueSize{1, 1},
+        EnqueueSize{1, 256},
+        EnqueueSize{2048, 1},
+        EnqueueSize{64, 32},
+        EnqueueSize{32, 64},
+        EnqueueSize{8, 256});
 }
 
 inline auto reducedEnqueueSizesForAtomics() {

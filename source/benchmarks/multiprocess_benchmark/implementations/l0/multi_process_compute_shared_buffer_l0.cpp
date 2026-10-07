@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,24 +22,20 @@ static TestResult run(const MultiProcessComputeSharedBufferArguments &arguments,
         return TestResult::Nooped;
     }
 
-    // Setup
     ContextProperties contexProperties = ContextProperties::create().setDeviceSelection(arguments.deviceSelection).createSingleFakeSubDeviceIfNeeded();
     QueueProperties queueProperties = QueueProperties::create().disable();
     LevelZero levelzero{queueProperties, contexProperties};
 
-    // We need IPC to run this benchmark
     if ((levelzero.getIpcProperties().flags & ZE_IPC_PROPERTY_FLAG_MEMORY) == 0) {
         return TestResult::DeviceNotCapable;
     }
 
-    // Get tiles for execution, validate if they are available
     std::vector<DeviceSelection> subDevicesForExecution = {};
     ASSERT_ZE_RESULT_SUCCESS(MultiProcessHelperL0::getSubDevicesForExecution(levelzero, arguments.deviceSelection, arguments.processesPerTile, subDevicesForExecution));
     if (subDevicesForExecution.size() == 0) {
         return TestResult::DeviceNotCapable;
     }
 
-    // Create a buffer for each tile
     std::unordered_map<DeviceSelection, MultiProcessHelperL0::BufferForSubDevice> buffersForSubDevices = {};
     ASSERT_ZE_RESULT_SUCCESS(MultiProcessHelperL0::allocateSharedBuffersForSubDevices(levelzero, arguments.deviceSelection,
                                                                                       arguments.processesPerTile,
@@ -47,7 +43,6 @@ static TestResult run(const MultiProcessComputeSharedBufferArguments &arguments,
                                                                                       MultiProcessHelperL0::workloadWorkgroupSize,
                                                                                       buffersForSubDevices));
 
-    // Prepare processes
     ProcessGroup processes{"single_queue_workload_shared_buffer_l0", subDevicesForExecution.size()};
     processes.addArgumentAll("iterations", std::to_string(arguments.iterations));
     processes.addArgumentAll("synchronize", std::to_string(arguments.synchronize));
@@ -63,7 +58,6 @@ static TestResult run(const MultiProcessComputeSharedBufferArguments &arguments,
         processes[i].setName(MultiProcessHelperL0::createProcessName(subDevicesForExecution, i));
     }
 
-    // Run processes
     processes.runAll();
     if (arguments.synchronize) {
         processes.synchronizeAll(arguments.iterations);
@@ -76,7 +70,6 @@ static TestResult run(const MultiProcessComputeSharedBufferArguments &arguments,
     processes.pushMeasurementsToStatistics(arguments.iterations, statistics, typeSelector.getUnit(),
                                            typeSelector.getType(), pushIndividualProcessesMeasurements, true);
 
-    // Free allocated buffers
     for (const auto &bufferForSubDevice : buffersForSubDevices) {
         void *buffer = bufferForSubDevice.second.buffer;
         ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffer));

@@ -26,7 +26,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     queueProperties.setOoq(!arguments.inOrder);
 
@@ -37,7 +36,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
     const size_t gws = 1024 * 1024u;
     const size_t lws = 64u;
 
-    // Create kernel
     const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile("ulls_benchmark_eat_time.cl");
     if (kernelSource.size() == 0) {
         return TestResult::KernelNotFound;
@@ -58,7 +56,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
 
     profilingEvents.resize(arguments.kernelCount);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, &profilingEvents[0]));
@@ -93,7 +90,6 @@ static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics 
         }
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     return TestResult::Success;

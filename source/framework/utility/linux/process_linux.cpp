@@ -47,37 +47,28 @@ struct ProcessDataLinux {
 void Process::run() {
     auto processDataLinux = std::make_unique<ProcessDataLinux>();
 
-    // Create pipes for stdout and stdin of the child process.
     FATAL_ERROR_IF_SYS_CALL_FAILED(pipe(processDataLinux->synchronizationPipeParentToChild.pipes), "Creating pipe failed, ");
     FATAL_ERROR_IF_SYS_CALL_FAILED(pipe(processDataLinux->synchronizationPipeChildToParent.pipes), "Creating pipe failed, ");
     FATAL_ERROR_IF_SYS_CALL_FAILED(pipe(processDataLinux->measurementPipe.pipes), "Creating pipe failed, ");
     FATAL_ERROR_IF_SYS_CALL_FAILED(pipe(processDataLinux->stdOutPipe.pipes), "Creating pipe failed, ");
 
-    // Fork the process
     processDataLinux->childPid = fork();
     FATAL_ERROR_IF(processDataLinux->childPid == -1, "Creating process failed");
 
-    // Different behaviour for parent and slave process
     if (processDataLinux->childPid != 0) {
-        // We're in parent process
-
-        // Close pipes that we won't need (these are descriptors, which will be used by child)
         FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->synchronizationPipeParentToChild.read), "closing pipe failed");
         FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->synchronizationPipeChildToParent.write), "closing pipe failed");
         FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->measurementPipe.write), "closing pipe failed");
         FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->stdOutPipe.write), "closing pipe failed");
 
-        // Store all data in Process class
         this->osSpecificData = processDataLinux.release();
     } else {
         // We're in child process. Nothing below may return to the caller: a forked child
         // that unwinds back into the test framework runs the remaining scenarios itself
         // and forks again on each of them, which multiplies into a fork storm.
         try {
-            // Redirect stdout to our pipe
             FATAL_ERROR_IF_SYS_CALL_FAILED(dup2(processDataLinux->stdOutPipe.write, STDOUT_FILENO), "dup2 for stdout failed");
 
-            // Close pipes that we won't need (these are descriptors, which will be used by parent)
             FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->synchronizationPipeParentToChild.write), "closing pipe failed");
             FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->synchronizationPipeChildToParent.read), "closing pipe failed");
             FATAL_ERROR_IF_SYS_CALL_FAILED(close(processDataLinux->measurementPipe.read), "closing pipe failed");
@@ -88,7 +79,6 @@ void Process::run() {
             this->addArgument("synchronizationPipeOut", std::to_string(processDataLinux->synchronizationPipeChildToParent.write));
             this->addArgument("measurementPipe", std::to_string(processDataLinux->measurementPipe.write));
 
-            // Prepare arguments
             std::vector<std::string> argumentsForExecStrings = {};
             argumentsForExecStrings.reserve(this->arguments.size());
             for (auto &argument : this->arguments) {
@@ -106,19 +96,16 @@ void Process::run() {
             }
             argumentsForExec.push_back(nullptr);
 
-            // Prepare environment
             for (auto &envVariable : this->envVariables) {
                 FATAL_ERROR_IF_SYS_CALL_FAILED(setenv(envVariable.first.c_str(), envVariable.second.c_str(), 1), "setenv failed");
             }
 
-            // Enable inheritance for requested handles
             for (int handle : handlesForInheritance) {
                 int currentFlags = fcntl(handle, F_GETFD);
                 FATAL_ERROR_IF_SYS_CALL_FAILED(currentFlags, "Failed getting descriptor flags for fd=", handle)
                 FATAL_ERROR_IF_SYS_CALL_FAILED(fcntl(handle, F_SETFD, currentFlags & ~FD_CLOEXEC), "Failed getting descriptor flags for fd=", handle);
             }
 
-            // Load new binary image
             extern char **environ;
             const int execResult = execve(this->exeName.c_str(), argumentsForExec.data(), environ);
             FATAL_ERROR_IF_SYS_CALL_FAILED(execResult, "Sys call execve failed, ");

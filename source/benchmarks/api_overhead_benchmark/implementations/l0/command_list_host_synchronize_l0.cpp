@@ -22,11 +22,9 @@ static TestResult run(const CommandListHostSynchronizeArguments &arguments, Stat
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     if (arguments.useBarrierBeforeSync) {
@@ -41,7 +39,6 @@ static TestResult run(const CommandListHostSynchronizeArguments &arguments, Stat
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
     }
 
-    // Create an immediate command list
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     commandQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_command_list_handle_t cmdList;
@@ -56,7 +53,6 @@ static TestResult run(const CommandListHostSynchronizeArguments &arguments, Stat
         return TestResult::Success;
     };
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         auto status = runBenchmark();

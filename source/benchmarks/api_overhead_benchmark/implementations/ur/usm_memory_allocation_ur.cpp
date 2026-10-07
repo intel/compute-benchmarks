@@ -16,7 +16,6 @@
 #include <gtest/gtest.h>
 
 static TestResult isAsyncSupported(ur_device_handle_t device, const UsmMemoryAllocationArguments &arguments) {
-    // check if async USM allocations are supported
     ur_bool_t usmAllocsSupport = false;
     auto status = urDeviceGetInfo(device, UR_DEVICE_INFO_ASYNC_USM_ALLOCATIONS_SUPPORT_EXP,
                                   sizeof(usmAllocsSupport), &usmAllocsSupport, nullptr);
@@ -26,7 +25,6 @@ static TestResult isAsyncSupported(ur_device_handle_t device, const UsmMemoryAll
         return TestResult::DeviceNotCapable;
     }
 
-    // select the correct support flag for the requested placement type
     ur_device_info_t supportFlag;
     switch (arguments.usmMemoryPlacement) {
     case UsmRuntimeMemoryPlacement::Host:
@@ -42,7 +40,6 @@ static TestResult isAsyncSupported(ur_device_handle_t device, const UsmMemoryAll
         return TestResult::InvalidArgs;
     }
 
-    // check if async USM is supported on the requested placement type
     ur_device_usm_access_capability_flags_t usmSupport = false;
     auto status2 = urDeviceGetInfo(device, supportFlag,
                                    sizeof(usmSupport), &usmSupport, nullptr);
@@ -62,7 +59,6 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     UrState ur;
     ur_queue_handle_t queue = nullptr;
     ur_queue_properties_t queueProperties = {};
@@ -89,7 +85,6 @@ static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics 
         return TestResult::InvalidArgs;
     }
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         if (arguments.measureMode == AllocationMeasureMode::Allocate ||
             arguments.measureMode == AllocationMeasureMode::Both) {

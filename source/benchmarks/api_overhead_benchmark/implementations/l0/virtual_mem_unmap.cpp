@@ -36,7 +36,6 @@ static TestResult prepareVirtualMemoryMaps(LevelZero &levelzero, const size_t re
         EXPECT_NE(virtualMem, static_cast<void *>(nullptr));
         reservedMemlist.push_back(virtualMem);
 
-        // Allocate Physical Memory handle
         ze_physical_mem_desc_t physDesc = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr};
         physDesc.size = reserveSize;
         ze_physical_mem_handle_t physicalMemoryHandle{};
@@ -75,7 +74,6 @@ static TestResult run(const VirtualMemUnMapArguments &arguments, Statistics &sta
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     size_t pageSize = 0;
     size_t reserveSize = arguments.reserveSize;
@@ -88,7 +86,6 @@ static TestResult run(const VirtualMemUnMapArguments &arguments, Statistics &sta
 
     Timer timer;
 
-    // Benchmark
     auto status = prepareVirtualMemoryMaps(levelzero, reserveSize, reservedMemlist, physicalMemoryHandleList, static_cast<uint32_t>(arguments.iterations));
     if (status != TestResult::Success) {
         return status;

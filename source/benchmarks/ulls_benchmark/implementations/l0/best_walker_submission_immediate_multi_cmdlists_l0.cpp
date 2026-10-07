@@ -27,7 +27,6 @@ static TestResult run(const BestWalkerSubmissionImmediateMultiCmdlistsArguments 
     constexpr static auto bufferSize = 4096u;
     Timer timer;
 
-    // Create events
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = static_cast<uint32_t>(arguments.cmdlistCount);
@@ -42,7 +41,6 @@ static TestResult run(const BestWalkerSubmissionImmediateMultiCmdlistsArguments 
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &events[i]));
     }
 
-    // Create buffers
     ze_host_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     std::vector<void *> buffers(arguments.cmdlistCount);
     std::vector<volatile uint64_t *> volatileBuffers(arguments.cmdlistCount);
@@ -51,7 +49,6 @@ static TestResult run(const BestWalkerSubmissionImmediateMultiCmdlistsArguments 
         volatileBuffers[i] = static_cast<uint64_t *>(buffers[i]);
     }
 
-    // Create and configure kernels
     ze_module_handle_t module{};
     if (auto result = L0::KernelHelper::loadModule(levelzero, "ulls_benchmark_write_one.cl", &module, nullptr);
         result != TestResult::Success) {
@@ -67,7 +64,6 @@ static TestResult run(const BestWalkerSubmissionImmediateMultiCmdlistsArguments 
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernels[i], 0, sizeof(buffers[i]), &buffers[i]));
     }
 
-    // Create an immediate command lists
     const ze_group_count_t groupCount{1, 1, 1};
     std::vector<ze_command_list_handle_t> cmdLists(arguments.cmdlistCount);
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, Engine::Ccs0);
@@ -75,7 +71,6 @@ static TestResult run(const BestWalkerSubmissionImmediateMultiCmdlistsArguments 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdLists[i]));
     }
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
         for (auto i = 0u; i < arguments.cmdlistCount; i++) {
             *volatileBuffers[i] = 0;
@@ -99,7 +94,6 @@ static TestResult run(const BestWalkerSubmissionImmediateMultiCmdlistsArguments 
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     for (auto i = 0u; i < arguments.cmdlistCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernels[i]));
     }

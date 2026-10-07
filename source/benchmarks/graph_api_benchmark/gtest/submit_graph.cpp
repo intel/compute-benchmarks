@@ -41,7 +41,6 @@ TEST_P(SubmitGraphTest, Test) {
 //    UR) vs native graph record & replay (L0, SYCL, UR).
 //  - UR's native graph mode requires an in-order queue.
 
-// Command-buffer / emulation mode (emulateGraphs = true).
 INSTANTIATE_TEST_SUITE_P(
     SubmitGraphCmdBuffer,
     SubmitGraphTest,
@@ -58,8 +57,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1u),            // kernelExecutionTime
         ::testing::Values(false, true))); // measureCompletionTime
 
-// Native graph record & replay (emulateGraphs = false). Level Zero supports
-// both queue orderings.
 INSTANTIATE_TEST_SUITE_P(
     SubmitGraphNativeGraph,
     SubmitGraphTest,
@@ -93,8 +90,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1u),            // kernelExecutionTime
         ::testing::Values(false, true))); // measureCompletionTime
 
-// SYCL native graph, exercising the SYCL-only host-task, explicit-graph and
-// native-recording paths.
 INSTANTIATE_TEST_SUITE_P(
     SubmitGraphSycl,
     SubmitGraphTest,

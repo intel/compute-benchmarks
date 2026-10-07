@@ -25,13 +25,11 @@ static TestResult run(const VirtualMemQueryPageSizeArguments &arguments, Statist
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
     size_t pageSize = 0;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         uint32_t implicitIterationCount = 100;

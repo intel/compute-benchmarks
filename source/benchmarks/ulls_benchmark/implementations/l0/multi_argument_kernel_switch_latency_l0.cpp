@@ -24,7 +24,6 @@ static TestResult run(const MultiArgumentKernelSwitchLatencyArguments &arguments
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
@@ -80,7 +79,6 @@ static TestResult run(const MultiArgumentKernelSwitchLatencyArguments &arguments
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto iteration = 0u; iteration < arguments.iterations; ++iteration) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
@@ -96,7 +94,6 @@ static TestResult run(const MultiArgumentKernelSwitchLatencyArguments &arguments
         }
     }
 
-    // Cleanup
     if (arguments.profiling) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, timestampBuffer));
     }

@@ -50,11 +50,9 @@ static TestResult run(const PhysicalMemCreateArguments &arguments, Statistics &s
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         auto status = doPhysicalMemCreate(levelzero, arguments, timer);
         if (status != TestResult::Success) {

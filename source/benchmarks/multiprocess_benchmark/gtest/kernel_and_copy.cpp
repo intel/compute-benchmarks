@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,13 +32,10 @@ INSTANTIATE_TEST_SUITE_P(
     KernelAndCopyTest,
     KernelAndCopyTest,
     ::testing::Values(
-        // Without copy queue
-        std::make_tuple(false, true, false, false), // only kernel
-        std::make_tuple(false, false, true, false), // only copy
-        std::make_tuple(false, true, true, false),  // kernel+copy on same queue
-        std::make_tuple(true, true, true, false),   // kernel+copy on different queues
+        std::make_tuple(false, true, false, false),
+        std::make_tuple(false, false, true, false),
+        std::make_tuple(false, true, true, false),
+        std::make_tuple(true, true, true, false),
 
-        // With copy queue
-        std::make_tuple(false, false, true, true), // only copy
-        std::make_tuple(true, true, true, true)    // kernel+copy on different queues
-        ));
+        std::make_tuple(false, false, true, true),
+        std::make_tuple(true, true, true, true)));

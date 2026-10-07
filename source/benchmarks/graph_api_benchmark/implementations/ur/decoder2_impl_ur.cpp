@@ -37,7 +37,6 @@ TestResult Decoder2GraphUR::clearDeviceBuffer(int *devicePtr, uint32_t count) {
 TestResult Decoder2GraphUR::init() {
     urState = std::make_shared<UrState>();
 
-    // Check if device supports command buffers
     ur_bool_t commandBufferSupport = false;
     EXPECT_UR_RESULT_SUCCESS(urDeviceGetInfo(
         urState->device, UR_DEVICE_INFO_COMMAND_BUFFER_SUPPORT_EXP,
@@ -60,7 +59,6 @@ TestResult Decoder2GraphUR::init() {
     EXPECT_UR_RESULT_SUCCESS(urProgramBuild(urState->context, program, nullptr));
     EXPECT_UR_RESULT_SUCCESS(urKernelCreate(program, kernelName, &kernel));
 
-    // Create command buffer if using graphs
     if (useGraphs) {
         ur_exp_command_buffer_desc_t cmdBufferDesc = {
             UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
@@ -109,16 +107,13 @@ TestResult Decoder2GraphUR::runLayer() {
         {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_VALUE, 0, sizeof(numIncrements), val1},
         {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_POINTER, 1, sizeof(data), val2}};
 
-    // Launch kernels for this layer
     for (uint32_t i = 0; i < KERNELS_PER_LAYER; ++i) {
         if (useGraphs) {
-            // Append to command buffer
             EXPECT_UR_RESULT_SUCCESS(urCommandBufferAppendKernelLaunchWithArgsExp(
                 cmdBuffer, kernel, nDimensions, &globalOffset, globalWorkGroupSize,
                 nullptr, 2, args, 0, nullptr, 0, nullptr, 0, nullptr,
                 nullptr, nullptr, nullptr));
         } else {
-            // Eager submission
             EXPECT_UR_RESULT_SUCCESS(urEnqueueKernelLaunchWithArgsExp(
                 queue, kernel, nDimensions, &globalOffset, globalWorkGroupSize,
                 nullptr, 2, args, nullptr, 0, nullptr, nullptr));

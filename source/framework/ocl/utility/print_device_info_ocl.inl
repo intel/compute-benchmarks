@@ -45,7 +45,6 @@ static void printDeviceInfo(std::ostream &output) {
 static void printAvailableDevices() {
     char bufferString[4096];
 
-    // Get platforms count
     cl_uint numPlatforms;
     cl_int retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
     if (retVal != CL_SUCCESS) {
@@ -54,11 +53,9 @@ static void printAvailableDevices() {
     }
     std::cout << "OpenCL platforms: " << numPlatforms << '\n';
 
-    // Iterate over platforms
     auto platforms = std::make_unique<cl_platform_id[]>(numPlatforms);
     EXPECT_CL_SUCCESS(clGetPlatformIDs(numPlatforms, platforms.get(), nullptr));
     for (cl_uint platformIndex = 0; platformIndex < numPlatforms; platformIndex++) {
-        // Print info about current platform
         cl_platform_id platform = platforms[platformIndex];
         EXPECT_CL_SUCCESS(clGetPlatformInfo(platform, CL_PLATFORM_NAME, sizeof(bufferString), bufferString, nullptr));
         std::cout << "  Platform: " << bufferString << " ";
@@ -71,7 +68,6 @@ static void printAvailableDevices() {
             std::cout << "(" << numDevices << " GPU devices)\n";
         }
 
-        // Iterate over devices
         auto devices = std::make_unique<cl_device_id[]>(numDevices);
         EXPECT_CL_SUCCESS(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices.get(), nullptr));
         for (cl_uint deviceIndex = 0; deviceIndex < numDevices; deviceIndex++) {

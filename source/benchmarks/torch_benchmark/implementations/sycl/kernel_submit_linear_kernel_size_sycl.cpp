@@ -50,28 +50,24 @@ static TestResult run(const KernelSubmitLinearKernelSizeArguments &args, Statist
         return TestResult::Nooped;
     }
 
-    // setup
     bool useOoq = false;
     Sycl sycl = args.useProfiling
                     ? Sycl{useOoq, sycl::property::queue::enable_profiling()}
                     : Sycl{useOoq};
     auto d_out = make_device_ptr<data_type>(sycl, 1);
 
-    // benchmark
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
         ASSERT_TEST_RESULT_SUCCESS(submit_kernel_linear_kernel_size(sycl.queue, args.kernelSize, d_out.get()));
         profiler.measureEnd();
         profiler.pushStats(statistics);
 
-        // expect a wait here after a batch of submissions, if batch > 0
         if (args.kernelBatchSize > 0 && ((i + 1) % args.kernelBatchSize) == 0) {
             sycl.queue.wait();
         }
     }
     sycl.queue.wait();
 
-    // verify result
     auto host_data = make_host_ptr<data_type>(sycl, 1);
     sycl.queue.memcpy(host_data.get(), d_out.get(), sizeof(data_type)).wait();
     if (*host_data > (static_cast<data_type>(args.kernelSize) + 0.1) || *host_data < (static_cast<data_type>(args.kernelSize) - 0.1)) {

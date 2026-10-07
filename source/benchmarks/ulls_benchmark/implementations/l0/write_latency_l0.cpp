@@ -27,14 +27,12 @@ static TestResult run(const WriteLatencyArguments &arguments, Statistics &statis
     constexpr uint64_t timestampInitial = 0xffffffffu;
     Timer timer;
 
-    // Create buffer
     const ze_host_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     void *buffer = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &allocationDesc, bufferSize, 0, &buffer));
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, buffer, bufferSize));
     volatile uint64_t *volatileBuffer = static_cast<uint64_t *>(buffer);
 
-    // Create event pool
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
         nullptr,
@@ -43,7 +41,6 @@ static TestResult run(const WriteLatencyArguments &arguments, Statistics &statis
     ze_event_pool_handle_t hEventPool{};
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 0, nullptr, &hEventPool));
 
-    // Create events
     const ze_event_desc_t eventDesc = {
         ZE_STRUCTURE_TYPE_EVENT_DESC,
         nullptr,
@@ -61,7 +58,6 @@ static TestResult run(const WriteLatencyArguments &arguments, Statistics &statis
     ze_event_handle_t hEvent2;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(hEventPool, &eventDesc2, &hEvent2));
 
-    // Create command list writing 1 to the buffer
     ze_command_list_desc_t cmdListDesc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
@@ -72,7 +68,6 @@ static TestResult run(const WriteLatencyArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendEventReset(cmdList, hEvent));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         *volatileBuffer = timestampInitial;
         _mm_clflush(buffer);

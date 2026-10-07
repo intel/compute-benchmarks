@@ -29,7 +29,6 @@ static TestResult run(const NonUsmCopyArguments &arguments, Statistics &statisti
 
     LevelZero levelzero;
     Timer timer;
-    // Create an immediate command list
     ze_command_list_handle_t cmdList{};
     auto status = zeCommandListCreateImmediate(levelzero.context, levelzero.device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdList);
     if (status != ZE_RESULT_SUCCESS) {
@@ -53,7 +52,6 @@ static TestResult run(const NonUsmCopyArguments &arguments, Statistics &statisti
         memset(destination, 1u, arguments.size);
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         timer.measureStart();
@@ -91,7 +89,6 @@ static TestResult run(const NonUsmCopyArguments &arguments, Statistics &statisti
         statistics.pushValue(timer.get(), arguments.size, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
 
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.sourcePlacement, levelzero, source));

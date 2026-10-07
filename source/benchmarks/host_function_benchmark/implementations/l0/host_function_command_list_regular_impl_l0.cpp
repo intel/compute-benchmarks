@@ -23,7 +23,6 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
         return TestResult::Nooped;
     }
 
-    // Setup
     bool useKernels = arguments.useKernels;
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     extensionProperties.setHostFunctionFunctions(true);
@@ -33,7 +32,6 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
     HostFunctions hostFunctions = getHostFunctions(arguments.useEmptyHostFunction);
     auto &nCalls = arguments.amountOfCalls;
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_eat_time.cl", "eat_time", &kernel, &module, nullptr);
@@ -41,7 +39,6 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
         return result;
     }
 
-    // Configure kernel
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime * 4);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
@@ -72,7 +69,6 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
                                           &event));
         }
     }
-    // Create command list with HostFunction
     const ze_group_count_t dispatchTraits{1u, 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
@@ -99,10 +95,8 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
-        // measure cmdlist with host functions
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
 
@@ -135,7 +129,6 @@ static TestResult run(const HostFunctionCommandListRegularArguments &arguments, 
         }
     }
 
-    // Cleanup
     for (auto &event : eventKernel1) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     }

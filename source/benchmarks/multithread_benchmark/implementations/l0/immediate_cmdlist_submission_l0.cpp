@@ -78,7 +78,6 @@ static TestResult run(const ImmediateCommandListSubmissionArguments &arguments, 
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
     }
-    // Setup
     LevelZero levelzero;
 
     std::vector<EngineInfo> supportedEngineInfo{};
@@ -110,7 +109,6 @@ static TestResult run(const ImmediateCommandListSubmissionArguments &arguments, 
     std::vector<ThreadSpecificData> threadData(arguments.numberOfThreads);
     const size_t bufferSize = 4096u;
 
-    // Create kernel
     ze_module_handle_t module{};
     if (auto result = L0::KernelHelper::loadModule(levelzero, "ulls_benchmark_write_one.cl", &module, nullptr);
         result != TestResult::Success) {
@@ -136,7 +134,6 @@ static TestResult run(const ImmediateCommandListSubmissionArguments &arguments, 
 
     std::shared_mutex barrier;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         std::unique_lock lock(barrier);
         std::vector<std::unique_ptr<std::thread>> threads;
@@ -159,7 +156,6 @@ static TestResult run(const ImmediateCommandListSubmissionArguments &arguments, 
         statistics.pushValue(averageThreadDuration, MeasurementUnit::Microseconds, MeasurementType::Cpu, "Average Thread Duration");
     }
 
-    // Cleanup
     for (auto i = 0u; i < arguments.numberOfThreads; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, threadData[i].hostMemory, bufferSize));
         ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(threadData[i].kernel));

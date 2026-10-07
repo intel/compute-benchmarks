@@ -31,7 +31,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         return TestResult::Nooped;
     }
 
-    // Setup
     auto queuePropsIndex = 0;
     queuePropsIndex |= arguments.useProfiling ? 0x1 : 0;
     queuePropsIndex |= arguments.inOrderQueue ? 0x2 : 0;
@@ -41,7 +40,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
     const size_t lws = 1u;
     sycl::nd_range<1> range(gws, lws);
 
-    // Create kernel
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime);
     const auto eat_time = [=]([[maybe_unused]] auto u) {
         if (kernelOperationsCount > 4) {
@@ -52,7 +50,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
         }
     };
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         prof.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {

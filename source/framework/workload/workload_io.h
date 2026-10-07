@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,6 @@
 
 class WorkloadIo {
   public:
-    // Os-specific factory function
     static std::unique_ptr<WorkloadIo> create(const WorkloadArgumentContainer &arguments);
 
     virtual ~WorkloadIo() {}

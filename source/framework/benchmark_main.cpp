@@ -97,7 +97,6 @@ int BenchmarkMain::printVersion(bool enableWarning, const char *prefix) {
 int BenchmarkMain::generateDocs() {
     const std::string illegalCharacters = " -:='\"<>|{}[]/.,?\\+$";
 
-    // Print benchmark name and description
     const std::string benchmarkName = BenchmarkInfo::get().getBenchmarkName();
     if (containsIllegalCharacters(benchmarkName, illegalCharacters)) {
         std::cerr << "ERROR: benchmark name contains invalid characters.";
@@ -110,14 +109,12 @@ int BenchmarkMain::generateDocs() {
     }
     std::cout << benchmarkName << ";" << benchmarkDescription << '\n';
 
-    // Print test cases
     for (const auto &testEntry : TestMap::get()) {
         const std::unique_ptr<TestCaseInterface> &testCase = testEntry.second;
         if (testCase->getApisWithImplementation().empty()) {
             continue;
         }
 
-        // Print test case name and help message.
         const std::string testCaseName = testCase->getTestCaseName();
         if (containsIllegalCharacters(testCaseName, illegalCharacters)) {
             std::cerr << "ERROR: test case \"" << testCaseName << "\" contains illegal characters.";
@@ -130,7 +127,6 @@ int BenchmarkMain::generateDocs() {
         }
         std::cout << " " << testCaseName << ";" << testCaseHelp << '\n';
 
-        // Print test case arguments
         const std::unique_ptr<ArgumentContainer> arguments = testCase->getArguments();
         for (const Argument *argument : arguments->getArguments()) {
             const std::string argumentKey = argument->getKey();
@@ -259,21 +255,17 @@ int BenchmarkMain::setupEnvironment() {
     // Kernels will be loaded from the CWD, so we need to ensure we're in the right directory.
     WorkingDirectoryHelper::changeDirectoryToExeDirectory();
 
-    // Each command line argument must be parsed and validated.
     std::string commandLineArgumentsParsingErrors = {};
     if (!CommandLineArgument::parseArguments(argc, argv, commandLineArguments, commandLineArgumentsParsingErrors)) {
         std::cerr << commandLineArgumentsParsingErrors << std::endl;
         return 1;
     }
 
-    // Based on parsed command line arguments we can initialize Configuration, which contains global toggles
-    // useful for various debug activities.
     if (!Configuration::parseArgumentsForConfiguration(commandLineArguments)) {
         std::cerr << "Error parsing command line\n";
         return 1;
     }
 
-    // Opt-in CPU pinning (a zero mask leaves affinity untouched).
     if (const uint64_t mask = Configuration::get().cpuAffinityMask; mask != 0u) {
         std::string errorMessage{};
         if (!pinToCpuMask(mask, errorMessage)) {
@@ -296,12 +288,10 @@ int BenchmarkMain::setupEnvironment() {
 }
 
 int BenchmarkMain::main() {
-    // Perform general setup
     if (const int result = setupEnvironment(); result != 0) {
         return result;
     }
 
-    // Run diagnostic activities
     const Configuration &configuration = Configuration::get();
     if (configuration.generateDocs) {
         return generateDocs();
@@ -321,7 +311,6 @@ int BenchmarkMain::main() {
         return printVersion(true);
     }
 
-    // Run tests
     if (!Configuration::get().noHeaders) {
         const std::string deviceInfoStr = DeviceInfo::getDeviceInfoString();
         std::cout << deviceInfoStr;

@@ -32,7 +32,7 @@ TEST_P(QueueInOrderMemcpyTest, Test) {
     }
 
     if (args.isCopyOnly && args.withCopyOffload) {
-        GTEST_SKIP(); // If copy offload were to be executed on blitter
+        GTEST_SKIP();
     }
 
     QueueInOrderMemcpy test;

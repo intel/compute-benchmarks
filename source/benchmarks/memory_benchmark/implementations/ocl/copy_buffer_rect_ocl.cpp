@@ -26,12 +26,10 @@ static TestResult run(const CopyBufferRectArguments &arguments, Statistics &stat
         return TestResult::DeviceNotCapable;
     }
 
-    // Setup
     Opencl opencl;
     Timer timer;
     cl_int retVal;
 
-    // Create buffers
     const cl_mem_flags compressionHintSrc = CompressionHelper::getCompressionFlags(arguments.compressedSource, arguments.noIntelExtensions);
     const cl_mem_flags compressionHintDst = CompressionHelper::getCompressionFlags(arguments.compressedDestination, arguments.noIntelExtensions);
     const cl_mem sourceBuffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | compressionHintSrc, arguments.size, nullptr, &retVal);
@@ -39,7 +37,6 @@ static TestResult run(const CopyBufferRectArguments &arguments, Statistics &stat
     const cl_mem destinationBuffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | compressionHintDst, arguments.size, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Check buffers compression
     const auto srcCompressionStatus = CompressionHelper::verifyCompression(sourceBuffer, arguments.compressedSource, arguments.noIntelExtensions);
     const auto dstCompressionStatus = CompressionHelper::verifyCompression(destinationBuffer, arguments.compressedDestination, arguments.noIntelExtensions);
     if (srcCompressionStatus != TestResult::Success || dstCompressionStatus != TestResult::Success) {
@@ -54,7 +51,6 @@ static TestResult run(const CopyBufferRectArguments &arguments, Statistics &stat
 
     const auto copySize = (arguments.region[0] > 0 ? arguments.region[0] : 1u) * (arguments.region[1] > 0 ? arguments.region[1] : 1u) * (arguments.region[2] > 0 ? arguments.region[2] : 1u);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueCopyBufferRect(opencl.commandQueue, sourceBuffer, destinationBuffer,

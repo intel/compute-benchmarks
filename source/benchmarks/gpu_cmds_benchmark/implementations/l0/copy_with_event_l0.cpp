@@ -25,7 +25,6 @@ static TestResult run(const CopyWithEventArguments &arguments, Statistics &stati
     LevelZero levelzero;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    // Create buffer
     const ze_host_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     void *buffer = nullptr;
     const auto bufferSize = sizeof(uint64_t) * 3;
@@ -34,7 +33,6 @@ static TestResult run(const CopyWithEventArguments &arguments, Statistics &stati
     uint64_t *beginTimestamp = static_cast<uint64_t *>(buffer);
     uint64_t *endTimestamp = beginTimestamp + 1;
 
-    // Create copy buffers
     constexpr size_t allocSize = 4096;
     ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
@@ -48,12 +46,10 @@ static TestResult run(const CopyWithEventArguments &arguments, Statistics &stati
     void *dstBuffer = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocShared(levelzero.context, &deviceDesc, &hostDesc, allocSize, 1, levelzero.device, &dstBuffer));
 
-    // Initialize memory
     constexpr uint8_t val = 55;
     memset(srcBuffer, val, allocSize);
     memset(dstBuffer, 0, allocSize);
 
-    // Create event
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 1};
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
     if (arguments.useHostSignalEvent) {
@@ -72,24 +68,20 @@ static TestResult run(const CopyWithEventArguments &arguments, Statistics &stati
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 0, nullptr, &eventPool));
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList{};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, beginTimestamp, nullptr, 0, nullptr));
     for (auto commandIndex = 0u; commandIndex < arguments.measuredCommands; commandIndex++) {
-        // Perform a GPU copy
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, allocSize, event, 0, nullptr));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, nullptr, 0u, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, endTimestamp, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Reset the event
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
@@ -100,7 +92,6 @@ static TestResult run(const CopyWithEventArguments &arguments, Statistics &stati
         statistics.pushValue(commandTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Validate
     if (memcmp(dstBuffer, srcBuffer, allocSize)) {
         uint8_t *srcCharBuffer = static_cast<uint8_t *>(srcBuffer);
         uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);

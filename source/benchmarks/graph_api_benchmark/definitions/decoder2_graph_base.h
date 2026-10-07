@@ -72,7 +72,6 @@ class Decoder2GraphBase {
     }
 
     TestResult calcRefResults(int *refSum, int *refSignalCount) {
-        // Our kernel performs INCREMENTS_PER_KERNEL increments. The final result is this times the number of total kernels ran
         *refSum = numTokens * LAYER_NUM * KERNELS_PER_LAYER * INCREMENTS_PER_KERNEL;
         // Since we reset the signal for each layer, we should compare to the number of increments of this counter per layer.
         // This is done once per layer for the CPU and once per layer from the graph host task with host tasks. Without host
@@ -96,9 +95,6 @@ class Decoder2GraphBase {
 
     TestResult runIteration() {
         for (uint32_t tokenIdx = 0; tokenIdx < numTokens; ++tokenIdx) {
-            // Perform CPU work in coordination with GPU. Note that the lock based GPU - CPU coordination via 'com' is
-            // only used when host tasks are enabled and extra queue waits are used without host tasks. A single graph
-            // is executed per token if host tasks are enabled. Otherwise, we execute a single graph per layer.
             if (useHostTasks) {
                 com.reset();
                 ASSERT_TEST_RESULT_SUCCESS(runGraph());
@@ -142,7 +138,6 @@ class Decoder2GraphBase {
         Timer timer;
 
         graphData = allocDevice(size);
-        // Warmup & correctness check
         {
             ASSERT_TEST_RESULT_SUCCESS(recordGraph());
             ASSERT_TEST_RESULT_SUCCESS(runIteration());
@@ -155,14 +150,11 @@ class Decoder2GraphBase {
             }
         }
 
-        // Timed runs
         for (uint32_t i = 0; i < iterations; ++i) {
             clearDeviceBuffer(graphData.get(), size);
             timer.measureStart();
             ASSERT_TEST_RESULT_SUCCESS(runIteration());
             timer.measureEnd();
-            // Normalize the results to report average time per token. We expect a constant time when scaling the number
-            // of tokens.
             statistics.pushValue(timer.get() / numTokens, typeSelector.getUnit(), typeSelector.getType());
         }
         ASSERT_TEST_RESULT_SUCCESS(destroy());
@@ -195,7 +187,6 @@ class Decoder2GraphBase {
         void reset() {
             *canBegin = 0;
         }
-        // Notify CPU|GPU task done
         void notify() {
             {
                 std::unique_lock lk(m);
@@ -203,12 +194,10 @@ class Decoder2GraphBase {
             }
             cv.notify_one();
         };
-        // wait for the CPU task to be done
         void waitCPU() {
             std::unique_lock lk(m);
             cv.wait(lk, [this] { return *canBegin % 2 == 0; });
         };
-        // wait for the GPU task to be done
         void waitGPU() {
             std::unique_lock lk(m);
             cv.wait(lk, [this] { return *canBegin % 2 == 1; });

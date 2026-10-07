@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,6 @@ TestResult run(const HelloWorldArguments &arguments, Statistics &statistics, Wor
     }
     Timer timer{};
 
-    // Create kernel
     std::string kernelSource = R"(
        __kernel void addOne(__global uint *results) {
             results[get_global_id(0)]++;
@@ -45,7 +44,6 @@ TestResult run(const HelloWorldArguments &arguments, Statistics &statistics, Wor
     cl_kernel kernel = clCreateKernel(program, "addOne", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Prepare the buffer with data.
     auto cpuBuffer = std::make_unique<cl_int[]>(arguments.numberOfElements);
     for (auto i = 0u; i < arguments.numberOfElements; i++) {
         cpuBuffer[i] = i;
@@ -54,14 +52,12 @@ TestResult run(const HelloWorldArguments &arguments, Statistics &statistics, Wor
     cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeInBytes, cpuBuffer.get(), &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Warmup kernel
     const size_t gws[1] = {arguments.numberOfElements};
     const size_t *lws = nullptr;
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, gws, lws, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
-    // Workload
     for (auto i = 0u; i < arguments.iterations; i++) {
         synchronization.synchronize(io);
 
@@ -83,7 +79,6 @@ TestResult run(const HelloWorldArguments &arguments, Statistics &statistics, Wor
         }
     }
 
-    // Validation
     ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0u, sizeInBytes, cpuBuffer.get(), 0u, nullptr, nullptr));
     for (auto i = 0u; i < arguments.numberOfElements; i++) {
         const cl_int expectedValue = i + 1 + static_cast<cl_int>(arguments.iterations);
@@ -92,7 +87,6 @@ TestResult run(const HelloWorldArguments &arguments, Statistics &statistics, Wor
         }
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));

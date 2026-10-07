@@ -28,7 +28,6 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
         return TestResult::Nooped;
     }
 
-    // Setup
     cl_int retVal = {};
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true).setOoq(0);
     Opencl opencl(queueProperties);
@@ -47,7 +46,6 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
     const uint32_t scalarValue = static_cast<uint32_t>(arguments.workItemPackSize);
     const size_t n_th = arguments.remoteFraction;
 
-    // Create kernel-specific buffers
     const char *kernelName = {};
     const size_t bufferSize = arguments.size;
     cl_mem buffers[3] = {};
@@ -77,7 +75,6 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
         FATAL_ERROR("Unknown StreamMemoryType");
     }
 
-    // Create kernel
     CompilerOptionsBuilder compilerOptions;
     compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "double");
     const char *programName = "memory_benchmark_stream_memory.cl";
@@ -102,7 +99,6 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount), sizeof(scalarValue), &scalarValue));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount + 1), sizeof(n_th), &n_th));
 
-    // Query max workgroup size
     size_t maxWorkgroupSize = {};
     clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(maxWorkgroupSize), &maxWorkgroupSize, nullptr);
 
@@ -141,7 +137,6 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
         }
     }
 
-    // Cleanup
     for (size_t i = 0; i < buffersCount; i++) {
         ASSERT_CL_SUCCESS(clReleaseMemObject(buffers[i]));
     }

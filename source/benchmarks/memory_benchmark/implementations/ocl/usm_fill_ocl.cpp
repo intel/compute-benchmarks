@@ -24,7 +24,6 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents).setForceBlitter(arguments.forceBlitter).allowCreationFail();
     Opencl opencl(queueProperties);
     if (opencl.commandQueue == nullptr) {
@@ -39,17 +38,14 @@ static TestResult run(const UsmFillArguments &arguments, Statistics &statistics)
         return TestResult::DriverFunctionNotFound;
     }
 
-    // Create buffer
     UsmHelperOcl::Alloc dstAlloc{};
     ASSERT_CL_SUCCESS(UsmHelperOcl::allocate(opencl, arguments.usmMemoryPlacement, arguments.bufferSize, dstAlloc));
 
-    // Create pattern
     const auto pattern = std::make_unique<uint8_t[]>(arguments.patternSize);
     if (arguments.patternContents == BufferContents::Random) {
         BufferContentsHelperOcl::fillWithRandomBytes(pattern.get(), arguments.patternSize);
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillUsmBufferOrHostPtr(opencl.commandQueue, dstAlloc.ptr, arguments.bufferSize, dstAlloc.placement, arguments.contents));
 

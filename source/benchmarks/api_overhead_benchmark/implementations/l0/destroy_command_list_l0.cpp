@@ -21,7 +21,6 @@ static TestResult run(const DestroyCommandListArguments &arguments, Statistics &
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
@@ -30,7 +29,6 @@ static TestResult run(const DestroyCommandListArguments &arguments, Statistics &
     commandListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t commandList;
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
 
         for (auto i = 0u; i < arguments.cmdListCount; i++) {

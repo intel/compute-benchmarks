@@ -246,7 +246,7 @@ struct RecordGraphConfig final {
     RecordGraphConfig(const RecordGraphArguments &arguments, LevelZero &levelzero) : l0env{levelzero} {
         ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr};
         eventPoolDesc.count = static_cast<uint32_t>(arguments.nLvls * 2);
-        eventPoolDesc.count = eventPoolDesc.count ? eventPoolDesc.count : 1; // at least one
+        eventPoolDesc.count = eventPoolDesc.count ? eventPoolDesc.count : 1;
         EXPECT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &l0env.eventPool));
         ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr};
         eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
@@ -275,7 +275,6 @@ struct RecordGraphConfig final {
             l0env.cmdListInfos[this->forkLevelInfo[i].target] = {levelzero.device, levelzero.commandQueueDesc};
         }
 
-        // Create kernel
         if (auto result = L0::KernelHelper::loadKernel(levelzero, "graph_api_benchmark_kernel_assign.cl", "kernel_assign", &this->kernel, &l0env.module, nullptr);
             result != TestResult::Success) {
             this->status = result;

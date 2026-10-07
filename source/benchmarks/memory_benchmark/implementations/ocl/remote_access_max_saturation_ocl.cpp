@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,6 @@ static TestResult run(const RemoteAccessMaxSaturationArguments &arguments, Stati
         return TestResult::Nooped;
     }
 
-    // Setup
     cl_int retVal = {};
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true).setOoq(0);
     Opencl opencl(queueProperties);
@@ -50,11 +49,9 @@ static TestResult run(const RemoteAccessMaxSaturationArguments &arguments, Stati
     const size_t n_th = arguments.remoteFraction;
     const uint32_t writesPerWorkgroup = arguments.writesPerWorkgroup;
 
-    // Create kernel-specific buffers
     const char *kernelName = "remote_max_saturation";
     cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
 
-    // Create kernel
     CompilerOptionsBuilder compilerOptions;
     compilerOptions.addDefinitionKeyValue("STREAM_TYPE", "double");
     const char *programName = "memory_benchmark_stream_memory.cl";
@@ -77,11 +74,9 @@ static TestResult run(const RemoteAccessMaxSaturationArguments &arguments, Stati
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(2), elementSize, &n_th));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(3), sizeof(cl_uint), &writesPerWorkgroup));
 
-    // Query max workgroup size
     size_t maxWorkgroupSize = {};
     clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(maxWorkgroupSize), &maxWorkgroupSize, nullptr);
 
-    // Warm up
     const size_t globalWorkSize = arguments.size / elementSize;
     const size_t localWorkSize = maxWorkgroupSize;
 
@@ -114,7 +109,6 @@ static TestResult run(const RemoteAccessMaxSaturationArguments &arguments, Stati
         }
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));

@@ -25,7 +25,6 @@ static TestResult run(const WaitOnEventHotArguments &arguments, Statistics &stat
     LevelZero levelzero;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    // Create buffer
     const ze_host_mem_alloc_desc_t allocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     void *buffer = nullptr;
     const auto bufferSize = sizeof(uint64_t) * 2;
@@ -34,7 +33,6 @@ static TestResult run(const WaitOnEventHotArguments &arguments, Statistics &stat
     uint64_t *beginTimestamp = static_cast<uint64_t *>(buffer);
     uint64_t *endTimestamp = beginTimestamp + 1;
 
-    // Create event and signal it
     const ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 1};
     const ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_DEVICE};
     ze_event_pool_handle_t eventPool{};
@@ -43,7 +41,6 @@ static TestResult run(const WaitOnEventHotArguments &arguments, Statistics &stat
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(event));
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList{};
@@ -55,7 +52,6 @@ static TestResult run(const WaitOnEventHotArguments &arguments, Statistics &stat
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWriteGlobalTimestamp(cmdList, endTimestamp, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));

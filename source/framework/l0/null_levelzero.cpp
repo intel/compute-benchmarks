@@ -15,7 +15,6 @@
     std::cerr << __func__ << " not implemented in null_levelzero.cpp\n"; \
     abort();
 
-// Multi versions (same pattern, all args unused, return success)
 #define ZE_MOCK_SUCCESS(name, ...)                          \
     ZE_APIEXPORT ze_result_t ZE_APICALL name(__VA_ARGS__) { \
         return ZE_RESULT_SUCCESS;                           \
@@ -25,8 +24,6 @@
     ZE_APIEXPORT ze_result_t ZE_APICALL name(__VA_ARGS__) { \
         FAIL_NOT_IMPLEMENTED;                               \
     }
-
-// Extension functions
 
 ZE_APIEXPORT ze_result_t ZE_APICALL null_zeGraphCreateExp(ze_context_handle_t hContext, ze_graph_handle_t *phGraph, void *pNext) {
     static_cast<void>(hContext);
@@ -98,7 +95,6 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetProperties(ze_driver_handle_t hDr
 
 ZE_MOCK_FAILURE(zeDriverGetIpcProperties, ze_driver_handle_t, ze_driver_ipc_properties_t *)
 ZE_MOCK_SUCCESS(zeDriverGetExtensionProperties, ze_driver_handle_t, uint32_t *, ze_driver_extension_properties_t *)
-// zeDriverGetExtensionFunctionAddress is defined earlier
 ZE_MOCK_SUCCESS(zeDriverGetLastErrorDescription, ze_driver_handle_t, const char **)
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGet(ze_driver_handle_t hDriver,
@@ -557,7 +553,6 @@ ZE_MOCK_SUCCESS(zesVFManagementGetVFMemoryUtilizationExp2, zes_vf_handle_t, uint
 ZE_MOCK_SUCCESS(zesVFManagementGetVFEngineUtilizationExp2, zes_vf_handle_t, uint32_t *, zes_vf_util_engine_exp2_t *)
 ZE_MOCK_SUCCESS(zesVFManagementGetVFCapabilitiesExp2, zes_vf_handle_t, zes_vf_exp2_capabilities_t *)
 
-// ze_intel_gpu.h
 ZE_MOCK_FAILURE(zeIntelGetDriverVersionString, ze_driver_handle_t, char *, size_t *)
 ZE_MOCK_FAILURE(zeIntelKernelGetBinaryExp, ze_kernel_handle_t, size_t *, char *)
 ZE_MOCK_FAILURE(zeIntelImageGetFormatModifiersSupportedExp, ze_device_handle_t, const ze_image_desc_t *const, uint32_t *, uint64_t *)
@@ -606,12 +601,8 @@ ze_result_t zerGetLastErrorDescription(const char **ppString) {
     return ZE_RESULT_SUCCESS;
 }
 
-// zex_event.h
-
 ZE_MOCK_SUCCESS(null_zexIntelAllocateNetworkInterrupt, ze_context_handle_t, uint32_t &)
 ZE_MOCK_SUCCESS(null_zexIntelReleaseNetworkInterrupt, ze_context_handle_t, uint32_t)
-
-// -----------------
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetExtensionFunctionAddress(

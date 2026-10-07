@@ -22,13 +22,11 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     Opencl opencl(queueProperties);
     cl_int retVal{};
     cl_event profilingEvent{};
 
-    // Create kernel
     const char *source = "__kernel void empty() {}";
     const auto sourceLength = strlen(source);
     cl_program program = clCreateProgramWithSource(opencl.context, 1, &source, &sourceLength, &retVal);
@@ -40,7 +38,6 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
     const size_t gws = 1;
     const size_t lws = 1;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, &profilingEvent));
         ASSERT_CL_SUCCESS(clWaitForEvents(1, &profilingEvent));
@@ -53,7 +50,6 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
         statistics.pushValue(submissionTime, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     return TestResult::Success;

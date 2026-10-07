@@ -822,14 +822,12 @@ void showDevice(size_t indentLevel, cl_device_id device, const std::string &devi
 
     printAllDeviceInfo(indentLevel + 1, device);
 
-    // Print queue families support
     const bool queueuFamiliesSupported = ExtensionsHelper{device}.isCommandQueueFamiliesSupported();
     if (!queueuFamiliesSupported) {
         std::cout << indent1 << "Extension cl_intel_command_queue_families is NOT SUPPORTED\n";
         return;
     }
 
-    // Print default queue
     size_t defaultFamilyIndex{};
     size_t defaultQueueIndex{};
     {
@@ -847,7 +845,6 @@ void showDevice(size_t indentLevel, cl_device_id device, const std::string &devi
     }
     std::cout << indent1 << "defaultFamilyIndex=" << defaultFamilyIndex << " defaultQueueIndex=" << defaultQueueIndex << '\n';
 
-    // Print queue families
     size_t familyPropertiesSize{};
     CL_SUCCESS_OR_ERROR(clGetDeviceInfo(device, CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, 0, nullptr, &familyPropertiesSize), "Querying families");
     const size_t numQueueFamilies = familyPropertiesSize / sizeof(cl_queue_family_properties_intel);
@@ -880,8 +877,6 @@ void showDeviceAndItsSubDevices(size_t indentLevel, size_t deviceLevel, cl_devic
     }
     freeSubDevices(subDevices);
 }
-
-// ------------------------------------------------------------------------- Main procedure
 
 int main() {
     Configuration::loadDefaultConfiguration();

@@ -29,7 +29,6 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
         return TestResult::Nooped;
     }
 
-    // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(QueueProperties::create().disable(), ContextProperties::create(), extensionProperties);
 
@@ -38,7 +37,6 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     const size_t gws = 1024u;
     const size_t lws = 64u;
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_eat_time.cl", "eat_time", &kernel, &module, nullptr);
@@ -49,7 +47,6 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime * 8);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
 
-    // Create command list and append kernel
     const ze_group_count_t groupCount{static_cast<uint32_t>(gws / lws), 1u, 1u};
 
     ze_command_queue_desc_t commandQueueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -60,7 +57,6 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &cmdList));
 
-    // Create events for profiling
     ze_event_pool_flags_t flags = {0u};
     ze_event_pool_flags_t profilingFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
@@ -106,7 +102,6 @@ static TestResult run(const KernelSwitchLatencyImmediateArguments &arguments, St
     Timer timer;
 
     auto kernelsTime = std::chrono::nanoseconds(0u);
-    // if no profiling, we need to get average kernel time
     if (!arguments.useProfiling) {
         ze_event_pool_handle_t profilingEventPool = nullptr;
         ze_event_handle_t eventHandle = nullptr;

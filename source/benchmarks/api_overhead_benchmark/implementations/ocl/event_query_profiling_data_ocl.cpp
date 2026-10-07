@@ -23,7 +23,6 @@ static TestResult run(const EventQueryProfilingDataArguments &arguments, Statist
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     Opencl opencl(queueProperties);
     cl_int retVal{};
@@ -50,13 +49,11 @@ static TestResult run(const EventQueryProfilingDataArguments &arguments, Statist
 
     const size_t fillSize = totalSize - offset;
 
-    // Create buffer
     cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, totalSize, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
     const cl_uchar pattern = 0xAB;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; ++i) {
         std::vector<cl_event> events(arguments.eventCount);
         for (auto j = 0u; j < arguments.eventCount; ++j) {
@@ -90,7 +87,6 @@ static TestResult run(const EventQueryProfilingDataArguments &arguments, Statist
         }
     }
 
-    // Verify
     std::vector<uint8_t> hostBuffer(totalSize);
     ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, totalSize, hostBuffer.data(), 0, nullptr, nullptr));
 
@@ -105,7 +101,6 @@ static TestResult run(const EventQueryProfilingDataArguments &arguments, Statist
         return TestResult::VerificationFail;
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
 
     return TestResult::Success;

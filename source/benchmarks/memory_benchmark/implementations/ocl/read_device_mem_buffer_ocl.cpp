@@ -33,7 +33,6 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
         return TestResult::DeviceNotCapable;
     }
 
-    // Setup
     cl_int retVal;
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     Opencl opencl(queueProperties);
@@ -46,14 +45,13 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
     const size_t vectorSize = 4;
     const size_t singleSendSizeInBytes = subgroupSize * vectorSize * sizeof(float);
     const size_t threadTileSizeInBytes = 4 * kiloByte;
-    const size_t numOfSends = threadTileSizeInBytes / singleSendSizeInBytes; // keeps the per-thread tile independent of the sub-group size
+    const size_t numOfSends = threadTileSizeInBytes / singleSendSizeInBytes;
     const size_t numOfLoops = 500U;
     const auto threadTileSizeInSubgroup = singleSendSizeInBytes * numOfSends;
     size_t euNum = 0;
 
     ASSERT_CL_SUCCESS(clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(euNum), &euNum, nullptr));
 
-    // Check platform we're on
     IntelProduct intelProduct = getIntelProduct(opencl);
     IntelGen gpuGen = getIntelGen(intelProduct);
 
@@ -68,7 +66,6 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
                                      largeGrfOpt +
                                      std::string(" ");
 
-    // Create buffer
     const cl_mem_flags compressionHint = CompressionHelper::getCompressionFlags(arguments.compressed, arguments.noIntelExtensions);
     const cl_mem_flags memFlags = CL_MEM_READ_WRITE | compressionHint;
 
@@ -91,7 +88,6 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
     const cl_mem clearGpuBuff = clCreateBuffer(opencl.context, memFlags, clearGpuBuffSize, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Check buffers compression
     auto compressionStatus = CompressionHelper::verifyCompression(source, arguments.compressed, arguments.noIntelExtensions);
     if (compressionStatus != TestResult::Success) {
         ASSERT_CL_SUCCESS(clReleaseMemObject(source));
@@ -132,7 +128,6 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
         "   }"
         "}";
 
-    // Create kernel
     const auto programSrcLen = strlen(programSrc);
     cl_program program{};
     if (TestResult result = ProgramHelperOcl::buildProgramFromSource(opencl.context, opencl.device, programSrc, programSrcLen, buildOptions.c_str(), program); result != TestResult::Success) {
@@ -144,7 +139,6 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
     cl_kernel clearCacheKernel = clCreateKernel(program, "ClearCaches", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Clear L3$ Cache kernel
     const size_t clearGws = clearGpuBuffSize / sizeof(cl_uint);
     const int buffSizeInInts = clearGpuBuffSize / sizeof(cl_uint);
     ASSERT_CL_SUCCESS(clSetKernelArg(clearCacheKernel, 0, sizeof(clearGpuBuff), &clearGpuBuff));
@@ -160,12 +154,10 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
     const size_t lws = subgroupSize * 2;
     size_t gws = numHwThreads * subgroupSize;
 
-    // check if surface can be covered with more than one slice
     if ((2 * numHwThreads * threadTileSizeInSubgroup) < static_cast<cl_uint>(arguments.size)) {
         slotMask = numHwThreads;
         sliceSize = static_cast<cl_uint>(numHwThreads * threadTileSizeInSubgroup);
         const auto numMaxSlices = static_cast<cl_uint>(arguments.size) / sliceSize;
-        // can cover with more than one slice for all threads
         sliceMask = 1;
         do {
             sliceMask *= 2;
@@ -189,7 +181,6 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 4, sizeof(slotMask), &slotMask));
     ASSERT_CL_SUCCESS(retVal);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         cl_event evt;
 
@@ -206,7 +197,6 @@ static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics 
         ASSERT_CL_SUCCESS(clReleaseEvent(evt));
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseKernel(clearCacheKernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));

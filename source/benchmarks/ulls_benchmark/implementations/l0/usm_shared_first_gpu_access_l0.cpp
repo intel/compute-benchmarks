@@ -25,8 +25,6 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
     LevelZero levelzero;
     Timer timer;
 
-    // Create buffers
-    // Prepare buffer descriptions
     ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     if (arguments.initialPlacement == UsmInitialPlacement::Host) {
         hostAllocationDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT;
@@ -37,7 +35,6 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
     }
     void *buffer{};
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_write_one.cl", "write_one", &kernel, &module, nullptr, ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY);
@@ -54,7 +51,6 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
     // Keep the previous allocation alive while creating the next one so the driver hands out a fresh VA
     void *previousBuffer = nullptr;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocShared(levelzero.context, &deviceAllocationDesc, &hostAllocationDesc, arguments.bufferSize, 0, levelzero.device, &buffer));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));

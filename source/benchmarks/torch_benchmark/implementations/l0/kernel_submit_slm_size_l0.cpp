@@ -34,7 +34,6 @@ static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &stat
         return TestResult::Nooped;
     }
 
-    // setup
     LevelZero l0{};
     CommandList cmd_list{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
     DeviceMemory<data_type> out_buf{l0, 2};
@@ -42,7 +41,6 @@ static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &stat
     int slm_num = static_cast<int>(args.slmNum);
     ASSERT_TEST_RESULT_SUCCESS(compute_slm_num(slm_num, l0));
 
-    // create kernel
     const std::string kernelName = "elementwise_slm";
     Kernel kernel{l0, "torch_benchmark_" + kernelName + ".cl", kernelName};
     const int wgs = std::min(slm_num, 1024);
@@ -57,7 +55,6 @@ static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &stat
         return TestResult::Success;
     };
 
-    // benchmark
     for (size_t i = 0; i < args.iterations; ++i) {
         profiler.measureStart();
 
@@ -78,7 +75,6 @@ static TestResult run(const KernelSubmitSlmSizeArguments &args, Statistics &stat
         }
     }
 
-    // verify result
     data_type host_result[2];
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmd_list.get(), &host_result, out_buf.getPtr(), 2 * sizeof(data_type), nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmd_list.get(), UINT64_MAX));

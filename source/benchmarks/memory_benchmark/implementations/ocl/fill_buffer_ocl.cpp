@@ -28,7 +28,6 @@ static TestResult run(const FillBufferArguments &arguments, Statistics &statisti
         return TestResult::DeviceNotCapable;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.forceBlitter).setProfiling(arguments.useEvents).allowCreationFail();
     Opencl opencl(queueProperties);
     if (opencl.commandQueue == nullptr) {
@@ -40,22 +39,18 @@ static TestResult run(const FillBufferArguments &arguments, Statistics &statisti
     Timer timer;
     cl_int retVal;
 
-    // Create buffer
     const cl_mem_flags compressionHint = CompressionHelper::getCompressionFlags(arguments.compressed, arguments.noIntelExtensions);
     const cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | compressionHint, arguments.size, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Check buffer compression
     const auto compressionStatus = CompressionHelper::verifyCompression(buffer, arguments.compressed, arguments.noIntelExtensions);
     if (compressionStatus != TestResult::Success) {
         ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
         return compressionStatus;
     }
 
-    // Create pattern
     const auto pattern = std::make_unique<uint8_t[]>(arguments.patternSize);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillBuffer(opencl.commandQueue, buffer, arguments.size, arguments.contents))
 

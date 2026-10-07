@@ -24,7 +24,6 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     const DeviceSelection queuePlacement = DeviceSelectionHelper::withoutHost(arguments.bufferPlacement);
     QueueProperties queueProperties = QueueProperties::create().setDeviceSelection(queuePlacement).allowCreationFail();
     ContextProperties contextProperties = ContextProperties::create().setDeviceSelection(arguments.contextPlacement).allowCreationFail();
@@ -40,12 +39,10 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     Timer timer;
     cl_int retVal;
 
-    // Create buffer
     cl_int *buffer = static_cast<cl_int *>(UsmHelperOcl::allocate(arguments.bufferPlacement, opencl, arguments.bufferSize, &retVal));
     ASSERT_CL_SUCCESS(retVal);
     const size_t elementsCount = arguments.bufferSize / sizeof(cl_int);
 
-    // Create kernel
     const char *source = "kernel void fill_with_ones(__global int *buffer) { const uint gid = get_global_id(0);  buffer[gid] = 1; }";
     const auto sourceLength = strlen(source);
     cl_program program = clCreateProgramWithSource(opencl.context, 1, &source, &sourceLength, &retVal);
@@ -57,14 +54,12 @@ static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics 
     const auto gws = elementsCount;
     ASSERT_CL_SUCCESS(clSetKernelArgSVMPointer(kernel, 0, buffer));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         // Migrate whole resource to CPU
         for (auto elementIndex = 0u; elementIndex < elementsCount; elementIndex++) {
             buffer[elementIndex] = 0;
         }
 
-        // Measure kernel which must migrate the resource to GPU
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));

@@ -56,12 +56,10 @@ static TestResult run(const UsmP2PCopyArguments &arguments, Statistics &statisti
     Timer timer;
     const uint64_t timerResolution = levelzero.getTimerResolution(srcDevice);
 
-    // Create buffers
     void *source{}, *destination{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmRuntimeMemoryPlacement::Device, levelzero, srcDevice, arguments.size, &source));
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmRuntimeMemoryPlacement::Device, levelzero, dstDevice, arguments.size, &destination));
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     if (arguments.useEvents) {
@@ -76,7 +74,6 @@ static TestResult run(const UsmP2PCopyArguments &arguments, Statistics &statisti
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
     }
 
-    // Create queue and list
     ze_command_queue_handle_t cmdQueue;
     ze_command_queue_desc_t cmdQueueDesc = {};
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -93,7 +90,6 @@ static TestResult run(const UsmP2PCopyArguments &arguments, Statistics &statisti
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, arguments.size, event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         if (!arguments.reuseCommandList) {
@@ -117,7 +113,6 @@ static TestResult run(const UsmP2PCopyArguments &arguments, Statistics &statisti
         }
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueDestroy(cmdQueue));
     if (arguments.useEvents) {

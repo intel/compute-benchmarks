@@ -41,9 +41,6 @@ TEST_P(ExecuteCommandListImmediateCopyQueueTest, Test) {
 
 constexpr static size_t megaByte = 1024 * 1024;
 
-// Representative host->device and device->device placement pairs only, covering both
-// append-only and completion-time measurement. Copy offload only applies to the
-// compute engine.
 INSTANTIATE_TEST_SUITE_P(
     ExecuteCommandListImmediateCopyQueueTest,
     ExecuteCommandListImmediateCopyQueueTest,
@@ -58,7 +55,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true),
         ::testing::Values(TestType::Regular)));
 
-// Copy-only queue (blitter); copy offload does not apply.
 INSTANTIATE_TEST_SUITE_P(
     ExecuteCommandListImmediateCopyQueueCopyOnlyTest,
     ExecuteCommandListImmediateCopyQueueTest,

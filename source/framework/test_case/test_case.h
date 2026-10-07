@@ -51,21 +51,18 @@ class TestCase : public TestCaseBase {
     }
 
     bool runFromCommandLine(CommandLineArguments &commandLineArguments) override {
-        // Parse test-specific parameters
         ArgumentContainerT arguments;
         bool error = false;
         if (!parseArguments(arguments, commandLineArguments)) {
             return false;
         }
 
-        // Check if all command line arguments were processed (no ignoring)
         if (const auto unprocessedArgs = CommandLineArgument::getUnprocessedArguments(commandLineArguments); !unprocessedArgs.empty()) {
             const auto getKey = +[](const CommandLineArgument *a) { return a->getKey(); };
             std::cerr << CommonHelpMessage::errorIgnoredCommandLineArgs() << joinStrings(", ", unprocessedArgs, getKey) << std::endl;
             error = true;
         }
 
-        // Check if all test case arguments were set (no defaults)
         if (const auto unparsedArgs = arguments.getUnparsedArguments(); !unparsedArgs.empty()) {
             const auto getKey = +[](const Argument *a) { return a->getKey(); };
             std::cerr << CommonHelpMessage::errorUnsetArguments() << joinStrings(", ", unparsedArgs, getKey) << std::endl;
@@ -95,11 +92,9 @@ class TestCase : public TestCaseBase {
         arguments.warmupIterations = Configuration::get().warmupIterations;
         arguments.iterations += arguments.warmupIterations;
 
-        // Create statistics object
         const auto testCaseNameWithConfig = getTestCaseNameWithConfig(arguments, Configuration::get().dumpCommandLines);
         TestCaseStatistics statistics{arguments.iterations, Configuration::get().printType};
 
-        // Run test
         const auto testResult = runImpl(statistics, arguments, testCaseNameWithConfig);
         if (testResult == TestResult::Success) {
             DEVELOPER_WARNING_IF(!statistics.isFull(), "test did not generate as many values as expected");
@@ -112,10 +107,8 @@ class TestCase : public TestCaseBase {
         } else {
             const auto &testResultInfo = TestResultHelper::getTestResultInfo(testResult);
 
-            // If test was skipped at the very beginning, it shouldn't have pushed any statistics
             DEVELOPER_WARNING_IF(testResultInfo.wasTestSkipped && !statistics.isEmpty(), "test was skipped but generated some values");
 
-            // Print output line with error info if needed
             const auto printMessage = (Configuration::get().printAllResults && testResultInfo.printInPrintAllResultsMode) ||
                                       (arguments.isSingleTestMode ? testResultInfo.printInSingleTestMode : testResultInfo.printInAllTestsMode);
             if (printMessage) {
@@ -126,7 +119,6 @@ class TestCase : public TestCaseBase {
 
   private:
     TestResult runImpl(TestCaseStatistics &statistics, const ArgumentContainerT &arguments, const std::string &testCaseNameWithConfig) const {
-        // Check test filters and arg filters
         if (!matchesWithTestFilter()) {
             return TestResult::FilteredOut;
         }
@@ -139,7 +131,6 @@ class TestCase : public TestCaseBase {
             return TestResult::FilteredOut;
         }
 
-        // Get API
         const auto selectedApi = Configuration::get().selectedApi;
         if (arguments.api != selectedApi && selectedApi != Api::All) {
             return TestResult::SkippedApi;
@@ -148,38 +139,30 @@ class TestCase : public TestCaseBase {
             return TestResult::UnsupportedApi;
         }
 
-        // Get implementation
         const auto apiIndex = static_cast<int>(arguments.api);
         const auto &benchmarkImplementation = implementations[apiIndex];
         if (benchmarkImplementation.function == nullptr) {
             return TestResult::NoImplementation;
         }
 
-        // Check if test needs Intel extensions
         if (arguments.noIntelExtensions && benchmarkImplementation.requiresIntelExtensions) {
             return TestResult::IntelExtensionsRequired;
         }
 
-        // Validate arguments
         if (!arguments.validateArguments()) {
             return TestResult::InvalidArgs;
         }
 
-        // Verify if current test case is added to the test map
         const auto &testMap = TestMap::get();
         if (testMap.find(getTestCaseName()) == testMap.end()) {
             printTestMapWarning();
         }
 
-        // Run the test
         if (Configuration::get().interactivePrints) {
-            // This will print test name before running the actual test along with '\r' character,
-            // so it will be overwritten in next step.
             statistics.printStatisticsBeforeTest(testCaseNameWithConfig);
         }
         const TestResult testResult = benchmarkImplementation.function(arguments, statistics);
         if (Configuration::get().interactivePrints) {
-            // This will overwrite the test name, because it was only a temporal caption.
             statistics.printClearLineAfterTest();
         }
         return testResult;

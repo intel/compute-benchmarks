@@ -29,10 +29,8 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
     int kernelExecutionTime = arguments.kernelExecutionTime;
 
-    // Setup
     UrState ur;
 
-    // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("api_overhead_benchmark_eat_time.spv");
     if (spirvModule.size() == 0) {
         return TestResult::KernelNotFound;
@@ -61,7 +59,6 @@ static TestResult run(const SubmitKernelArguments &arguments, Statistics &statis
 
     std::vector<ur_event_handle_t> events(arguments.numKernels, nullptr);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         profiler.measureStart();
         for (auto iteration = 0u; iteration < arguments.numKernels; iteration++) {

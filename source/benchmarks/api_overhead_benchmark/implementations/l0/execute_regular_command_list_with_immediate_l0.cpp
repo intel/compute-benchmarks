@@ -34,12 +34,10 @@ static TestResult run(const ExecuteRegularCommandListWithImmediateArguments &arg
         return TestResult::Nooped;
     }
 
-    // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
     Timer timer;
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_empty_kernel.cl", "empty", &kernel, &module, nullptr);
@@ -47,10 +45,8 @@ static TestResult run(const ExecuteRegularCommandListWithImmediateArguments &arg
         return result;
     }
 
-    // Configure kernel
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
 
-    // Create output event if neccessary
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> events(numEvents);
     ze_event_pool_handle_t eventPool{};
@@ -85,14 +81,12 @@ static TestResult run(const ExecuteRegularCommandListWithImmediateArguments &arg
         }
     }
 
-    // Create immediate command list
     ze_command_list_handle_t immediateCmdlist;
     if (arguments.inOrder) {
         levelzero.commandQueueDesc.flags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &levelzero.commandQueueDesc, &immediateCmdlist));
 
-    // Create regular command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     if (arguments.inOrder) {
@@ -109,7 +103,6 @@ static TestResult run(const ExecuteRegularCommandListWithImmediateArguments &arg
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(events[0]));
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         timer.measureStart();

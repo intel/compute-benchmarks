@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,6 @@ class QueueFamiliesHelper {
     };
 
     static inline std::vector<QueueFamilyDesc> queryQueueFamilies(cl_device_id device) {
-        // Get families count
         size_t familyPropertiesSize{};
         cl_int retVal = clGetDeviceInfo(device, CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, 0, nullptr, &familyPropertiesSize);
         if (retVal != CL_SUCCESS) {
@@ -87,7 +86,6 @@ class QueueFamiliesHelper {
             return {};
         }
 
-        // Get families
         auto families = std::make_unique<cl_queue_family_properties_intel[]>(familiesCount);
         retVal = clGetDeviceInfo(device, CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, familyPropertiesSize, families.get(), nullptr);
         if (retVal != CL_SUCCESS) {

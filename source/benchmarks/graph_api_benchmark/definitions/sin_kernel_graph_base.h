@@ -42,12 +42,10 @@ class SinKernelGraphBase {
         std::vector<float> buffer0(size);
         std::vector<float> buffer1(size);
 
-        // assign action
         for (uint32_t i = 0; i < size; ++i) {
             buffer0[i] = input_h[i];
         }
 
-        // repeat sin action
         for (size_t k = 0; k < numKernels; ++k) {
             std::swap(buffer0, buffer1);
             for (uint32_t i = 0; i < size; ++i) {
@@ -111,14 +109,12 @@ class SinKernelGraphBase {
             inputData.get()[i] = randFloat();
         }
 
-        // reference results
         ASSERT_TEST_RESULT_SUCCESS(calcRefResults(inputData.get(), refResult.get()));
 
         if (withGraphs) {
             ASSERT_TEST_RESULT_SUCCESS(recordGraph());
         }
 
-        // warm-up & results verification
         {
             if (withGraphs) {
                 ASSERT_TEST_RESULT_SUCCESS(runGraph(inputData.get()));
@@ -128,7 +124,6 @@ class SinKernelGraphBase {
             ASSERT_TEST_RESULT_SUCCESS(waitCompletion());
             ASSERT_TEST_RESULT_SUCCESS(readResults(outputData.get()));
 
-            // if results don't match, fail the benchmark
             if (!checkResults(outputData.get(), refResult.get())) {
                 std::cout << "Check FAILED" << std::endl;
                 return TestResult::Error;
@@ -169,7 +164,6 @@ class SinKernelGraphBase {
 
     float pattern = 123.4567f;
 
-    // device memory
     DataFloatPtr graphInputData;
     DataFloatPtr graphOutputData;
 

@@ -25,17 +25,14 @@ static TestResult run(const KernelWithWorkImmediateArguments &arguments, Statist
     if (arguments.usedIds == WorkItemIdUsage::AtomicPerWorkgroup) {
         return TestResult::NoImplementation;
     }
-    // Setup
     LevelZero levelzero(QueueProperties::create().disable());
     Timer timer;
 
-    // Create output buffer
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     void *buffer = nullptr;
     const auto bufferSize = sizeof(uint32_t) * arguments.workgroupCount * arguments.workgroupSize;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffer));
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     if (auto result = L0::KernelHelper::loadKernel(levelzero, selectKernel(arguments.usedIds, "cl"), "write_one", &kernel, &module, nullptr);
@@ -45,7 +42,6 @@ static TestResult run(const KernelWithWorkImmediateArguments &arguments, Statist
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(arguments.workgroupSize), 1u, 1u));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(buffer), &buffer));
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
@@ -57,14 +53,12 @@ static TestResult run(const KernelWithWorkImmediateArguments &arguments, Statist
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
-    // Create an immediate command list
     ze_command_list_handle_t cmdList{};
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, Engine::Ccs0);
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
 
     const ze_group_count_t groupCount{static_cast<uint32_t>(arguments.workgroupCount), 1u, 1u};
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, event, 0, nullptr));
@@ -78,7 +72,6 @@ static TestResult run(const KernelWithWorkImmediateArguments &arguments, Statist
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));

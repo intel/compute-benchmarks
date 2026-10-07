@@ -22,13 +22,11 @@ static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
 
     const size_t lws = arguments.workgroupSize;
     const size_t gws = lws * arguments.workgroupCount;
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_multi_kernel_execution.cl", arguments.inOrderOverOOO ? "emptyWithSynchro" : "empty", &kernel, &module, nullptr);
@@ -37,7 +35,6 @@ static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics
     }
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(lws), 1u, 1u));
 
-    // Create command list and append kernel
     const ze_group_count_t groupCount{static_cast<uint32_t>(gws / lws), 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
@@ -80,7 +77,6 @@ static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-        // Benchmark
         for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
             timer.measureStart();
             ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
@@ -125,7 +121,6 @@ static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-        // Benchmark
         for (auto iteration = 0u; iteration < arguments.iterations; iteration++) {
             timer.measureStart();
             ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));

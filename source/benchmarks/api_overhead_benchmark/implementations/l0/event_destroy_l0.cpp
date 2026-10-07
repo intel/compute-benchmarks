@@ -21,7 +21,6 @@ static TestResult run(const EventDestroyArguments &arguments, Statistics &statis
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
@@ -29,7 +28,6 @@ static TestResult run(const EventDestroyArguments &arguments, Statistics &statis
         return TestResult::DeviceNotCapable;
     }
 
-    // prepare descriptor for event creation
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
     ze_event_scope_flags_t signalScope = 0;
     ze_event_scope_flags_t waitScope = 0;
@@ -68,7 +66,6 @@ static TestResult run(const EventDestroyArguments &arguments, Statistics &statis
         ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 0, nullptr, &eventPool));
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         for (auto j = 0u; j < arguments.eventCount; ++j) {
@@ -82,7 +79,6 @@ static TestResult run(const EventDestroyArguments &arguments, Statistics &statis
                 ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(events[j]));
             }
 
-            // Validate event is already completed
             ASSERT_ZE_RESULT_SUCCESS(zeEventQueryStatus(events[j]));
         }
 

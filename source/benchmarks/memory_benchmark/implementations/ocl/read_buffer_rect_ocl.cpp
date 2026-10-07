@@ -26,32 +26,27 @@ static TestResult run(const ReadBufferRectArguments &arguments, Statistics &stat
         return TestResult::DeviceNotCapable;
     }
 
-    // Setup
     Opencl opencl;
     Timer timer;
     cl_int retVal;
 
-    // Create buffer
     const cl_mem_flags compressionHint = CompressionHelper::getCompressionFlags(arguments.compressed, arguments.noIntelExtensions);
     const cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | compressionHint, arguments.size, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     auto cpuBuffer = std::make_unique<uint8_t[]>(arguments.size);
 
-    // Check buffer compression
     const auto compressionStatus = CompressionHelper::verifyCompression(buffer, arguments.compressed, arguments.noIntelExtensions);
     if (compressionStatus != TestResult::Success) {
         ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
         return compressionStatus;
     }
 
-    // Fill the buffer
     const char pattern[] = {0};
     ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, buffer, pattern, sizeof(pattern) / sizeof(pattern[0]), 0, arguments.size, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     size_t bufferOffset[3] = {};
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueReadBufferRect(opencl.commandQueue, buffer, CL_NON_BLOCKING,

@@ -50,11 +50,9 @@ static TestResult run(const PhysicalMemDestroyArguments &arguments, Statistics &
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         auto status = doPhysicalMemDestroy(levelzero, timer);
         if (status != TestResult::Success) {

@@ -78,7 +78,6 @@ TestResult set_kernel_args(const std::string &kernel_name,
             }
         }
 
-        // Now build kernel_arguments pointing to elements in arg_storage
         for (size_t i = 0; i < arg_storage.size(); i++) {
             kernel_arguments.push_back(&arg_storage[i]);
         }
@@ -88,7 +87,6 @@ TestResult set_kernel_args(const std::string &kernel_name,
 
 static TestResult verify_result(ze_command_list_handle_t cmdList,
                                 LevelZero &l0) {
-    // setup
     constexpr uint32_t num_verify = 2;
     constexpr uint32_t length = 1;
 
@@ -98,7 +96,6 @@ static TestResult verify_result(ze_command_list_handle_t cmdList,
     ASSERT_TEST_RESULT_SUCCESS(create_and_copy_host_arrays<int>(l0, DataType::Int32,
                                                                 nullptr, nullptr,
                                                                 num_verify, length, host_array));
-    // create kernel
     std::string kernel_file_name = "torch_benchmark_elementwise_sum_2.cl";
     std::string kernel_name = "elementwise_sum_2_int";
     Kernel kernel_verify{l0, kernel_file_name, kernel_name};
@@ -119,7 +116,6 @@ static TestResult verify_result(ze_command_list_handle_t cmdList,
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, UINT64_MAX));
 
-    // submit kernel
     std::vector<void *> kernel_arguments;
     std::vector<void *> arg_storage;
     ASSERT_TEST_RESULT_SUCCESS(set_kernel_args("add", result_d.getPtr(), num_verify, device_array.getPtr(), length, kernel_arguments, arg_storage));
@@ -127,12 +123,10 @@ static TestResult verify_result(ze_command_list_handle_t cmdList,
                                                                           nullptr, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, UINT64_MAX));
 
-    // do D2H after iterations to verify the result
     HostMemory<int> result_h(l0, length);
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, result_h.getPtr(), result_d.getPtr(), length * sizeof(int), nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, UINT64_MAX));
 
-    // verify result
     if (*result_h.getPtr() != num_verify) {
         std::cerr << "Result verification failed: expected " << num_verify << " but got " << *result_h.getPtr() << std::endl;
         return TestResult::Error;
@@ -143,7 +137,6 @@ static TestResult verify_result(ze_command_list_handle_t cmdList,
 
 template <typename T>
 static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, ComboProfilerWithStats &profiler, Statistics &statistics) {
-    // setup
     std::set<std::string> kernel_names;
     if (args.kernelName == KernelName::Empty) {
         kernel_names.insert("empty");
@@ -167,7 +160,6 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
     uint32_t arraysize_of_b = num_params;
     std::unique_ptr<HostMemory<T>> h_a;
     std::vector<HostMemory<T>> h_b;
-    // These are used only in Mixed DataType scenarios
     uint32_t arraysize_of_c = 0;
     uint32_t arraysize_of_d = 0;
     std::vector<HostMemory<float>> h_c;
@@ -218,7 +210,6 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
         }
     }
 
-    // create kernel
     for (const auto &name : kernel_names) {
         std::string kernelFileName;
         std::string kernelName;
@@ -261,10 +252,8 @@ static TestResult runBenchmark(const KernelSubmitSingleQueueArguments &args, Com
     std::vector<void *> kernel_arguments;
     std::vector<void *> arg_storage;
 
-    // simple kernel validation
     ASSERT_TEST_RESULT_SUCCESS(verify_result(cmd_list.get(), l0));
 
-    // benchmark
     for (size_t i = 0; i < args.iterations; ++i) {
         if (h2d && args.kernelName != KernelName::Empty) {
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmd_list.get(), d_a->getPtr(), h_a->getPtr(), length * sizeof(T), nullptr, 0, nullptr));
@@ -304,7 +293,6 @@ static TestResult run(const KernelSubmitSingleQueueArguments &args, Statistics &
         return TestResult::Nooped;
     }
 
-    // validate arguments
     if (args.kernelParamsNum != 1u && args.kernelParamsNum != 5u && args.kernelParamsNum != 10u) {
         std::cerr << "KernelParamsNum must be 1, 5, or 10" << std::endl;
         return TestResult::InvalidArgs;

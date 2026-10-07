@@ -50,24 +50,20 @@ static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &
         return TestResult::Nooped;
     }
 
-    // Verify copy queue exists
     if (auto ret = verifyCopyEngineExists(); ret != TestResult::Success) {
         return ret;
     }
 
-    // Setup
     Timer timer;
     auto queueProperties = QueueProperties::create().setForceEngine(Engine::Bcs);
     auto levelzero = LevelZero{queueProperties};
 
-    // Create fence if neccessary
     ze_fence_handle_t fence{};
     if (arguments.useFence) {
         const ze_fence_desc_t fenceDesc{ZE_STRUCTURE_TYPE_FENCE_DESC};
         ASSERT_ZE_RESULT_SUCCESS(zeFenceCreate(levelzero.commandQueue, &fenceDesc, &fence));
     }
 
-    // Create buffers
     void *source{}, *destination{};
     size_t bufferSize = 4096;
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Host, levelzero, bufferSize, &source));
@@ -76,7 +72,6 @@ static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, bufferSize, &destination));
     ASSERT_ZE_RESULT_SUCCESS(zeContextMakeMemoryResident(levelzero.context, levelzero.device, destination, bufferSize));
 
-    // Create command list
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
@@ -84,7 +79,6 @@ static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, destination, source, bufferSize, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (arguments.useFence) {
             ASSERT_ZE_RESULT_SUCCESS(zeFenceReset(fence));
@@ -108,7 +102,6 @@ static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &
         }
     }
 
-    // Release resources
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeContextEvictMemory(levelzero.context, levelzero.device, source, bufferSize));
     ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, source));

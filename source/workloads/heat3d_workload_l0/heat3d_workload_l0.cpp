@@ -5,53 +5,51 @@
  *
  */
 
-/*
- * This program simulates the heat transfer in a 3D square block of solid material, placed in a
- * right-handed coordinate system. The heat equation is solved using the simplest explicit scheme
- * (7-point stencil).
- *
- *  Z
- *  ^   Y
- *  |  7
- *  | /
- *  |/
- *  +-------> X
- *
- *  Whenever we need to pick an ordering, the z-y-x order is used:
- *  1. Use all the available slots in the z-direction first, fix x & y
- *  2. When the z-column is filled up, we move to the next z-column in the y-direction
- *  3. When the yz-plane is filled up, we move to the next yz-plane in the x-direction
- *
- *  Therefore:
- *  1. Neighboring ranks will likely to have consecutive sub-domain z-coordinates
- *  2. When storing the mesh points in a 1D array, the z-columns of a yz-plane will be stored
- *  one-after-one, then we move to the next yz-plane
- *  3. As a consequence of (2), although we transfer data between a 3D array and a 2D array when we
- *  pack/unpack the buffers, we can use the same triple-loop to deal with different xyz-ranges and
- *  buffer dimensions, as long as the loop ordering is the same everywhere. This is because one of
- *  the i/j/k index is fixed during the process, so we traverse the sub-domain mesh and the buffer
- *  in the same order.
- *
- *  Each process handles a sub-domain of the simulation domain, these 3D sub-domains look like
- *  onions:
- *  1. The outer-most "shell" stores a single layer of ghost points for the six neighbors' facets,
- *  which will be updated at the end of every iteration, using the latest data sent by the
- *  neighbors. For each ghost facet, one of the coordinates is fixed to either [0] or [npt_* + 1],
- *  and the other two coordinates are in the range of [1, npt_*]. Therefore, the edges and the
- *  corners are unused, and the ghost points are stored in the inner (npt_* x npt_*) area.
- *  2. The next "shell" is the surface of the sub-domain managed by this process. For each facet of
- *  the sub-domain, one of the coordinates is fixed to either [1] or [npt_*], while the other two
- *  are in the range of [1, npt_*]. Note that there are overlaps between the facets under this
- *  definition, so we need to be careful to not update any points on the edges more than once when
- *  updating the facets. In this implementation, we update the full yz-facets, partial xz-facets
- *  and the inner-parts of the xy-facets. The full facets should still be copied to and from the
- *  send and the receive buffers, respectively.
- *  3. The most inner block is the interior of the sub-domain that does not need data from other
- *  sub-domains. All three coordinates of this block are in the rage of [2, npt_* - 1].
- *
- *  Since we cannot overwrite the temperature of un-updated mesh points, we allocate two buffers to
- *  store two copies of the sub-domain, and alternate them at the end of each iteration.
- */
+// This program simulates the heat transfer in a 3D square block of solid material, placed in a
+// right-handed coordinate system. The heat equation is solved using the simplest explicit scheme
+// (7-point stencil).
+//
+//  Z
+//  ^   Y
+//  |  7
+//  | /
+//  |/
+//  +-------> X
+//
+//  Whenever we need to pick an ordering, the z-y-x order is used:
+//  1. Use all the available slots in the z-direction first, fix x & y
+//  2. When the z-column is filled up, we move to the next z-column in the y-direction
+//  3. When the yz-plane is filled up, we move to the next yz-plane in the x-direction
+//
+//  Therefore:
+//  1. Neighboring ranks will likely to have consecutive sub-domain z-coordinates
+//  2. When storing the mesh points in a 1D array, the z-columns of a yz-plane will be stored
+//  one-after-one, then we move to the next yz-plane
+//  3. As a consequence of (2), although we transfer data between a 3D array and a 2D array when we
+//  pack/unpack the buffers, we can use the same triple-loop to deal with different xyz-ranges and
+//  buffer dimensions, as long as the loop ordering is the same everywhere. This is because one of
+//  the i/j/k index is fixed during the process, so we traverse the sub-domain mesh and the buffer
+//  in the same order.
+//
+//  Each process handles a sub-domain of the simulation domain, these 3D sub-domains look like
+//  onions:
+//  1. The outer-most "shell" stores a single layer of ghost points for the six neighbors' facets,
+//  which will be updated at the end of every iteration, using the latest data sent by the
+//  neighbors. For each ghost facet, one of the coordinates is fixed to either [0] or [npt_* + 1],
+//  and the other two coordinates are in the range of [1, npt_*]. Therefore, the edges and the
+//  corners are unused, and the ghost points are stored in the inner (npt_* x npt_*) area.
+//  2. The next "shell" is the surface of the sub-domain managed by this process. For each facet of
+//  the sub-domain, one of the coordinates is fixed to either [1] or [npt_*], while the other two
+//  are in the range of [1, npt_*]. Note that there are overlaps between the facets under this
+//  definition, so we need to be careful to not update any points on the edges more than once when
+//  updating the facets. In this implementation, we update the full yz-facets, partial xz-facets
+//  and the inner-parts of the xy-facets. The full facets should still be copied to and from the
+//  send and the receive buffers, respectively.
+//  3. The most inner block is the interior of the sub-domain that does not need data from other
+//  sub-domains. All three coordinates of this block are in the rage of [2, npt_* - 1].
+//
+//  Since we cannot overwrite the temperature of un-updated mesh points, we allocate two buffers to
+//  store two copies of the sub-domain, and alternate them at the end of each iteration.
 
 #include "framework/l0/levelzero.h"
 #include "framework/l0/utility/kernel_helper_l0.h"
@@ -107,7 +105,6 @@ static std::string getMasterSocketName(pid_t parentPid) {
 constexpr int masterConnectTimeoutSeconds = 120;
 #endif // USE_PIDFD
 
-// Identify the six facets of a sub-domain
 enum class FacetTy : uint8_t { XU = 0,
                                XD = 1,
                                YU = 2,
@@ -116,13 +113,9 @@ enum class FacetTy : uint8_t { XU = 0,
                                ZD = 5,
                                LAST = 6 };
 
-// Stores info about a particular facet in a unified form
 struct FacetInfoTy {
-    // Send, receive, and the neighbor's receive buffer of this facet
     float *sendBuffer = nullptr, *recvBuffer = nullptr, *recvBufferNeighbor = nullptr;
-    // Length of the buffers
     size_t bufferLen{};
-    // The neighbor's rank in this facet's direction
     int neighborRank{};
     // The facet on the neighbor rank that is connected to this facet (U <-> D)
     FacetTy neighborFacet{};
@@ -135,7 +128,6 @@ struct FacetInfoTy {
     uint32_t innerFacetXDedupStart{}, innerFacetXDedupEnd{}, innerFacetYDedupStart{}, innerFacetYDedupEnd{}, innerFacetZDedupStart{}, innerFacetZDedupEnd{};
 };
 
-// Store various simulation parameters & variables
 struct ParamsTy {
     ParamsTy(LevelZero &levelzero) : levelzero(levelzero) {}
 
@@ -153,9 +145,7 @@ struct ParamsTy {
 
     pid_t parentPid{};
     uint32_t rank{}, nRanks{};
-    // Number of sub-domains in each direction
     uint32_t nSubDomainX{}, nSubDomainY{}, nSubDomainZ{};
-    // Sub-domain coordinates of this rank
     uint32_t subDomainCoordX{}, subDomainCoordY{}, subDomainCoordZ{};
     uint32_t meshLength{}, nTimesteps{};
     // Neighbor ranks in each direction, up & down
@@ -163,28 +153,22 @@ struct ParamsTy {
     uint32_t neighbors[int(FacetTy::LAST)] = {};
     // Number of mesh points on each side of the sub-domain, sans the ghost facets
     uint32_t nPointsX{}, nPointsY{}, nPointsZ{};
-    // Thermal conductivity, space & time resolution
     float thermalConductivity{}, deltaSpace{}, deltaTime{};
     // Store the sub-domain (incl. ghost facets) in flat storage, for current & next timestep
     float *subDomainOld = nullptr, *subDomainNew = nullptr;
-    // Send buffers for the six facets
     float *sendBuffers[int(FacetTy::LAST)] = {};
-    // Receive buffers for the six facets
     float *recvBuffers[int(FacetTy::LAST)] = {};
     // Store information of the six facets in the sub-domain, determined by the topology of the ranks, won't change during the simulation
     FacetInfoTy facetInfo[int(FacetTy::LAST)] = {};
 };
 
-// Stores the PID and the IPC handle for the halo exchange receive buffers
 struct HaloBufferInfoTy {
     pid_t pid{};
     ze_ipc_mem_handle_t ipcHandle{};
 };
 
 static TestResult ipcBarrierWorker(ParamsTy &params) {
-    // Notify the master process
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostSignal(params.barrierEvents[params.rank]));
-    // Wait for the master process
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(params.barrierEvents[params.rank + params.nRanks], UINT64_MAX));
     ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(params.barrierEvents[params.rank + params.nRanks]));
 
@@ -213,7 +197,6 @@ static uint32_t subDomainCoordToRank(const uint32_t x, const uint32_t y, const u
 }
 
 static void findNeighbors(ParamsTy &params) {
-    // Compute the coordinates for each of the directions
     const uint32_t coordXU = (params.subDomainCoordX + 1 + params.nSubDomainX) % params.nSubDomainX;
     const uint32_t coordXD = (params.subDomainCoordX - 1 + params.nSubDomainX) % params.nSubDomainX;
     const uint32_t coordYU = (params.subDomainCoordY + 1 + params.nSubDomainY) % params.nSubDomainY;
@@ -221,7 +204,6 @@ static void findNeighbors(ParamsTy &params) {
     const uint32_t coordZU = (params.subDomainCoordZ + 1 + params.nSubDomainZ) % params.nSubDomainZ;
     const uint32_t coordZD = (params.subDomainCoordZ - 1 + params.nSubDomainZ) % params.nSubDomainZ;
 
-    // Compute the IDs of the neighboring PEs
     params.neighbors[int(FacetTy::XU)] = subDomainCoordToRank(coordXU, params.subDomainCoordY, params.subDomainCoordZ, params);
     params.neighbors[int(FacetTy::XD)] = subDomainCoordToRank(coordXD, params.subDomainCoordY, params.subDomainCoordZ, params);
     params.neighbors[int(FacetTy::YU)] = subDomainCoordToRank(params.subDomainCoordX, coordYU, params.subDomainCoordZ, params);
@@ -246,7 +228,6 @@ static TestResult allocateStorage(ParamsTy &params) {
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(params.levelzero.context, &desc, subDomainSz, 0, params.levelzero.device, &ptr));
     params.subDomainNew = static_cast<float *>(ptr);
 
-    // Allocate the send buffers for the ghost facets
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(params.levelzero.context, &desc, sizeof(float) * params.nPointsY * params.nPointsZ, 0, params.levelzero.device, &ptr));
     params.sendBuffers[int(FacetTy::XU)] = static_cast<float *>(ptr);
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(params.levelzero.context, &desc, sizeof(float) * params.nPointsY * params.nPointsZ, 0, params.levelzero.device, &ptr));
@@ -260,7 +241,6 @@ static TestResult allocateStorage(ParamsTy &params) {
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(params.levelzero.context, &desc, sizeof(float) * params.nPointsX * params.nPointsY, 0, params.levelzero.device, &ptr));
     params.sendBuffers[int(FacetTy::ZD)] = static_cast<float *>(ptr);
 
-    // Allocate the receive buffers for the ghost facets
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(params.levelzero.context, &desc, sizeof(float) * params.nPointsY * params.nPointsZ, 0, params.levelzero.device, &ptr));
     params.recvBuffers[int(FacetTy::XU)] = static_cast<float *>(ptr);
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(params.levelzero.context, &desc, sizeof(float) * params.nPointsY * params.nPointsZ, 0, params.levelzero.device, &ptr));
@@ -293,151 +273,151 @@ FacetInfoTy makeFacetInfo(const FacetTy facet, ParamsTy &params) {
     case FacetTy::XU:
         facetInfo.bufferLen = params.nPointsY * params.nPointsZ;
 
-        facetInfo.outerFacetXStart = params.nPointsX + 1; // X-Front of the outer shell
-        facetInfo.outerFacetXEnd = params.nPointsX + 1;   // X-Front of the outer shell
-        facetInfo.outerFacetYStart = 1;                   // Y range covers the whole
-        facetInfo.outerFacetYEnd = params.nPointsY;       // sub-domain facet
-        facetInfo.outerFacetZStart = 1;                   // Z range covers the whole
-        facetInfo.outerFacetZEnd = params.nPointsZ;       // sub-domain facet
+        facetInfo.outerFacetXStart = params.nPointsX + 1;
+        facetInfo.outerFacetXEnd = params.nPointsX + 1;
+        facetInfo.outerFacetYStart = 1;
+        facetInfo.outerFacetYEnd = params.nPointsY;
+        facetInfo.outerFacetZStart = 1;
+        facetInfo.outerFacetZEnd = params.nPointsZ;
 
-        facetInfo.innerFacetXStart = params.nPointsX; // X-Front of the inner shell
-        facetInfo.innerFacetXEnd = params.nPointsX;   // X-Front of the inner shell
-        facetInfo.innerFacetYStart = 1;               // Y range covers the whole
-        facetInfo.innerFacetYEnd = params.nPointsY;   // sub-domain facet
-        facetInfo.innerFacetZStart = 1;               // Z range covers the whole
-        facetInfo.innerFacetZEnd = params.nPointsZ;   // sub-domain facet
+        facetInfo.innerFacetXStart = params.nPointsX;
+        facetInfo.innerFacetXEnd = params.nPointsX;
+        facetInfo.innerFacetYStart = 1;
+        facetInfo.innerFacetYEnd = params.nPointsY;
+        facetInfo.innerFacetZStart = 1;
+        facetInfo.innerFacetZEnd = params.nPointsZ;
 
-        facetInfo.innerFacetXDedupStart = params.nPointsX; // X-Front of the inner shell
-        facetInfo.innerFacetXDedupEnd = params.nPointsX;   // X-Front of the inner shell
-        facetInfo.innerFacetYDedupStart = 1;               // Y range covers the whole
-        facetInfo.innerFacetYDedupEnd = params.nPointsY;   // sub-domain facet
-        facetInfo.innerFacetZDedupStart = 1;               // Z range covers the whole
-        facetInfo.innerFacetZDedupEnd = params.nPointsZ;   // sub-domain facet
+        facetInfo.innerFacetXDedupStart = params.nPointsX;
+        facetInfo.innerFacetXDedupEnd = params.nPointsX;
+        facetInfo.innerFacetYDedupStart = 1;
+        facetInfo.innerFacetYDedupEnd = params.nPointsY;
+        facetInfo.innerFacetZDedupStart = 1;
+        facetInfo.innerFacetZDedupEnd = params.nPointsZ;
         break;
 
     case FacetTy::XD:
         facetInfo.bufferLen = params.nPointsY * params.nPointsZ;
 
-        facetInfo.outerFacetXStart = 0;             // X-Back of the outer shell
-        facetInfo.outerFacetXEnd = 0;               // X-Back of the outer shell
-        facetInfo.outerFacetYStart = 1;             // Y range covers the whole
-        facetInfo.outerFacetYEnd = params.nPointsY; // sub-domain facet
-        facetInfo.outerFacetZStart = 1;             // Z range covers the whole
-        facetInfo.outerFacetZEnd = params.nPointsZ; // sub-domain facet
+        facetInfo.outerFacetXStart = 0;
+        facetInfo.outerFacetXEnd = 0;
+        facetInfo.outerFacetYStart = 1;
+        facetInfo.outerFacetYEnd = params.nPointsY;
+        facetInfo.outerFacetZStart = 1;
+        facetInfo.outerFacetZEnd = params.nPointsZ;
 
-        facetInfo.innerFacetXStart = 1;             // X-Back of the inner shell
-        facetInfo.innerFacetXEnd = 1;               // X-Back of the inner shell
-        facetInfo.innerFacetYStart = 1;             // Y range covers the whole
-        facetInfo.innerFacetYEnd = params.nPointsY; // sub-domain facet
-        facetInfo.innerFacetZStart = 1;             // Z range covers the whole
-        facetInfo.innerFacetZEnd = params.nPointsZ; // sub-domain facet
+        facetInfo.innerFacetXStart = 1;
+        facetInfo.innerFacetXEnd = 1;
+        facetInfo.innerFacetYStart = 1;
+        facetInfo.innerFacetYEnd = params.nPointsY;
+        facetInfo.innerFacetZStart = 1;
+        facetInfo.innerFacetZEnd = params.nPointsZ;
 
-        facetInfo.innerFacetXDedupStart = 1;             // X-Back of the inner shell
-        facetInfo.innerFacetXDedupEnd = 1;               // X-Back of the inner shell
-        facetInfo.innerFacetYDedupStart = 1;             // Y range covers the whole
-        facetInfo.innerFacetYDedupEnd = params.nPointsY; // sub-domain facet
-        facetInfo.innerFacetZDedupStart = 1;             // Z range covers the whole
-        facetInfo.innerFacetZDedupEnd = params.nPointsZ; // sub-domain facet
+        facetInfo.innerFacetXDedupStart = 1;
+        facetInfo.innerFacetXDedupEnd = 1;
+        facetInfo.innerFacetYDedupStart = 1;
+        facetInfo.innerFacetYDedupEnd = params.nPointsY;
+        facetInfo.innerFacetZDedupStart = 1;
+        facetInfo.innerFacetZDedupEnd = params.nPointsZ;
         break;
 
     case FacetTy::YU:
         facetInfo.bufferLen = params.nPointsX * params.nPointsZ;
 
-        facetInfo.outerFacetXStart = 1;                   // X range covers the whole
-        facetInfo.outerFacetXEnd = params.nPointsX;       // sub-domain facet
-        facetInfo.outerFacetYStart = params.nPointsY + 1; // Y-Front of the outer shell
-        facetInfo.outerFacetYEnd = params.nPointsY + 1;   // Y-Front of the outer shell
-        facetInfo.outerFacetZStart = 1;                   // Z range covers the whole
-        facetInfo.outerFacetZEnd = params.nPointsZ;       // sub-domain facet
+        facetInfo.outerFacetXStart = 1;
+        facetInfo.outerFacetXEnd = params.nPointsX;
+        facetInfo.outerFacetYStart = params.nPointsY + 1;
+        facetInfo.outerFacetYEnd = params.nPointsY + 1;
+        facetInfo.outerFacetZStart = 1;
+        facetInfo.outerFacetZEnd = params.nPointsZ;
 
-        facetInfo.innerFacetXStart = 1;               // X range covers the whole
-        facetInfo.innerFacetXEnd = params.nPointsX;   // sub-domain facet
-        facetInfo.innerFacetYStart = params.nPointsY; // Y-Front of the inner shell
-        facetInfo.innerFacetYEnd = params.nPointsY;   // Y-Front of the inner shell
-        facetInfo.innerFacetZStart = 1;               // Z range covers the whole
-        facetInfo.innerFacetZEnd = params.nPointsZ;   // sub-domain facet
+        facetInfo.innerFacetXStart = 1;
+        facetInfo.innerFacetXEnd = params.nPointsX;
+        facetInfo.innerFacetYStart = params.nPointsY;
+        facetInfo.innerFacetYEnd = params.nPointsY;
+        facetInfo.innerFacetZStart = 1;
+        facetInfo.innerFacetZEnd = params.nPointsZ;
 
         facetInfo.innerFacetXDedupStart = 2;                 // Avoid duplicating the
         facetInfo.innerFacetXDedupEnd = params.nPointsX - 1; // X-Front and X-Back
-        facetInfo.innerFacetYDedupStart = params.nPointsY;   // Y-Front of the inner shell
-        facetInfo.innerFacetYDedupEnd = params.nPointsY;     // Y-Front of the inner shell
-        facetInfo.innerFacetZDedupStart = 1;                 // Z range covers the whole
-        facetInfo.innerFacetZDedupEnd = params.nPointsZ;     // sub-domain facet
+        facetInfo.innerFacetYDedupStart = params.nPointsY;
+        facetInfo.innerFacetYDedupEnd = params.nPointsY;
+        facetInfo.innerFacetZDedupStart = 1;
+        facetInfo.innerFacetZDedupEnd = params.nPointsZ;
         break;
 
     case FacetTy::YD:
         facetInfo.bufferLen = params.nPointsX * params.nPointsZ;
 
-        facetInfo.outerFacetXStart = 1;             // X range covers the whole
-        facetInfo.outerFacetXEnd = params.nPointsX; // sub-domain facet
-        facetInfo.outerFacetYStart = 0;             // Y-Back of the outer shell
-        facetInfo.outerFacetYEnd = 0;               // Y-Back of the outer shell
-        facetInfo.outerFacetZStart = 1;             // Z range covers the whole
-        facetInfo.outerFacetZEnd = params.nPointsZ; // sub-domain facet
+        facetInfo.outerFacetXStart = 1;
+        facetInfo.outerFacetXEnd = params.nPointsX;
+        facetInfo.outerFacetYStart = 0;
+        facetInfo.outerFacetYEnd = 0;
+        facetInfo.outerFacetZStart = 1;
+        facetInfo.outerFacetZEnd = params.nPointsZ;
 
-        facetInfo.innerFacetXStart = 1;             // X range covers the whole
-        facetInfo.innerFacetXEnd = params.nPointsX; // sub-domain facet
-        facetInfo.innerFacetYStart = 1;             // Y-Back of the inner shell
-        facetInfo.innerFacetYEnd = 1;               // Y-Back of the inner shell
-        facetInfo.innerFacetZStart = 1;             // Z range covers the whole
-        facetInfo.innerFacetZEnd = params.nPointsZ; // sub-domain facet
+        facetInfo.innerFacetXStart = 1;
+        facetInfo.innerFacetXEnd = params.nPointsX;
+        facetInfo.innerFacetYStart = 1;
+        facetInfo.innerFacetYEnd = 1;
+        facetInfo.innerFacetZStart = 1;
+        facetInfo.innerFacetZEnd = params.nPointsZ;
 
         facetInfo.innerFacetXDedupStart = 2;                 // Avoid duplicating the
         facetInfo.innerFacetXDedupEnd = params.nPointsX - 1; // X-Front and X-Back
-        facetInfo.innerFacetYDedupStart = 1;                 // Y-Back of the inner shell
-        facetInfo.innerFacetYDedupEnd = 1;                   // Y-Back of the inner shell
-        facetInfo.innerFacetZDedupStart = 1;                 // Z range covers the whole
-        facetInfo.innerFacetZDedupEnd = params.nPointsZ;     // sub-domain facet
+        facetInfo.innerFacetYDedupStart = 1;
+        facetInfo.innerFacetYDedupEnd = 1;
+        facetInfo.innerFacetZDedupStart = 1;
+        facetInfo.innerFacetZDedupEnd = params.nPointsZ;
         break;
 
     case FacetTy::ZU:
         facetInfo.bufferLen = params.nPointsX * params.nPointsY;
 
-        facetInfo.outerFacetXStart = 1;                   // X range covers the whole
-        facetInfo.outerFacetXEnd = params.nPointsX;       // sub-domain facet
-        facetInfo.outerFacetYStart = 1;                   // Y range covers the whole
-        facetInfo.outerFacetYEnd = params.nPointsY;       // sub-domain facet
-        facetInfo.outerFacetZStart = params.nPointsZ + 1; // Z-Front of the outer shell
-        facetInfo.outerFacetZEnd = params.nPointsZ + 1;   // Z-Front of the outer shell
+        facetInfo.outerFacetXStart = 1;
+        facetInfo.outerFacetXEnd = params.nPointsX;
+        facetInfo.outerFacetYStart = 1;
+        facetInfo.outerFacetYEnd = params.nPointsY;
+        facetInfo.outerFacetZStart = params.nPointsZ + 1;
+        facetInfo.outerFacetZEnd = params.nPointsZ + 1;
 
-        facetInfo.innerFacetXStart = 1;               // X range covers the whole
-        facetInfo.innerFacetXEnd = params.nPointsX;   // sub-domain facet
-        facetInfo.innerFacetYStart = 1;               // Y range covers the whole
-        facetInfo.innerFacetYEnd = params.nPointsY;   // sub-domain facet
-        facetInfo.innerFacetZStart = params.nPointsZ; // Z-Front of the inner shell
-        facetInfo.innerFacetZEnd = params.nPointsZ;   // Z-Front of the inner shell
+        facetInfo.innerFacetXStart = 1;
+        facetInfo.innerFacetXEnd = params.nPointsX;
+        facetInfo.innerFacetYStart = 1;
+        facetInfo.innerFacetYEnd = params.nPointsY;
+        facetInfo.innerFacetZStart = params.nPointsZ;
+        facetInfo.innerFacetZEnd = params.nPointsZ;
 
         facetInfo.innerFacetXDedupStart = 2;                 // Avoid duplicating the
         facetInfo.innerFacetXDedupEnd = params.nPointsX - 1; // X-Front and X-Back
         facetInfo.innerFacetYDedupStart = 2;                 // Avoid duplicating the
         facetInfo.innerFacetYDedupEnd = params.nPointsY - 1; // Y-Front and Y-Back
-        facetInfo.innerFacetZDedupStart = params.nPointsZ;   // Z-Front of the inner shell
-        facetInfo.innerFacetZDedupEnd = params.nPointsZ;     // Z-Front of the inner shell
+        facetInfo.innerFacetZDedupStart = params.nPointsZ;
+        facetInfo.innerFacetZDedupEnd = params.nPointsZ;
         break;
 
     case FacetTy::ZD:
         facetInfo.bufferLen = params.nPointsX * params.nPointsY;
 
-        facetInfo.outerFacetXStart = 1;             // X range covers the whole
-        facetInfo.outerFacetXEnd = params.nPointsX; // sub-domain facet
-        facetInfo.outerFacetYStart = 1;             // Y range covers the whole
-        facetInfo.outerFacetYEnd = params.nPointsY; // sub-domain facet
-        facetInfo.outerFacetZStart = 0;             // Z-Back of the outer shell
-        facetInfo.outerFacetZEnd = 0;               // Z-Back of the outer shell
+        facetInfo.outerFacetXStart = 1;
+        facetInfo.outerFacetXEnd = params.nPointsX;
+        facetInfo.outerFacetYStart = 1;
+        facetInfo.outerFacetYEnd = params.nPointsY;
+        facetInfo.outerFacetZStart = 0;
+        facetInfo.outerFacetZEnd = 0;
 
-        facetInfo.innerFacetXStart = 1;             // X range covers the whole
-        facetInfo.innerFacetXEnd = params.nPointsX; // sub-domain facet
-        facetInfo.innerFacetYStart = 1;             // Y range covers the whole
-        facetInfo.innerFacetYEnd = params.nPointsY; // sub-domain facet
-        facetInfo.innerFacetZStart = 1;             // Z-Back of the inner shell
-        facetInfo.innerFacetZEnd = 1;               // Z-Back of the inner shell
+        facetInfo.innerFacetXStart = 1;
+        facetInfo.innerFacetXEnd = params.nPointsX;
+        facetInfo.innerFacetYStart = 1;
+        facetInfo.innerFacetYEnd = params.nPointsY;
+        facetInfo.innerFacetZStart = 1;
+        facetInfo.innerFacetZEnd = 1;
 
         facetInfo.innerFacetXDedupStart = 2;                 // Avoid duplicating the
         facetInfo.innerFacetXDedupEnd = params.nPointsX - 1; // X-Front and X-Back
         facetInfo.innerFacetYDedupStart = 2;                 // Avoid duplicating the
         facetInfo.innerFacetYDedupEnd = params.nPointsY - 1; // Y-Front and Y-Back
-        facetInfo.innerFacetZDedupStart = 1;                 // Z-Back of the inner shell
-        facetInfo.innerFacetZDedupEnd = 1;                   // Z-Back of the inner shell
+        facetInfo.innerFacetZDedupStart = 1;
+        facetInfo.innerFacetZDedupEnd = 1;
         break;
 
     default:
@@ -465,7 +445,6 @@ static TestResult initParams(ParamsTy &params, const Heat3DArguments &arguments)
     params.nSubDomainY = arguments.nSubDomainY;
     params.nSubDomainZ = arguments.nSubDomainZ;
 
-    // Initialize this rank's sub-domain coordinates
     params.subDomainCoordX = params.rank / (params.nSubDomainY * params.nSubDomainZ);
     params.subDomainCoordY = (params.rank - params.subDomainCoordX * params.nSubDomainY * params.nSubDomainZ) / params.nSubDomainZ;
     params.subDomainCoordZ = params.rank - params.subDomainCoordX * params.nSubDomainY * params.nSubDomainZ - params.subDomainCoordY * params.nSubDomainZ;
@@ -481,16 +460,13 @@ static TestResult initParams(ParamsTy &params, const Heat3DArguments &arguments)
     params.nPointsY = params.meshLength / params.nSubDomainY;
     params.nPointsZ = params.meshLength / params.nSubDomainZ;
 
-    // Thermal conductivity parameter
     params.thermalConductivity = 1.0;
-    // Spacial discretization length, uniform in all three dimensions
     params.deltaSpace = 1.0 / params.meshLength;
     // Tempral discretization, respecting the convergence criterion
     params.deltaTime = params.deltaSpace * params.deltaSpace / (8.1 * params.thermalConductivity);
 
     allocateStorage(params);
 
-    // When the buffers are ready and we know who our neighbors are, we can associate them with each of the six facets
     for (uint8_t i = 0; i < int(FacetTy::LAST); i++) {
         params.facetInfo[i] = makeFacetInfo(FacetTy(i), params);
     }
@@ -552,7 +528,6 @@ static TestResult initParams(ParamsTy &params, const Heat3DArguments &arguments)
     ASSERT_ZE_RESULT_SUCCESS(zeKernelCreate(params.module, &kernelDesc, &params.kernelUpdateInterior));
 
 #ifdef USE_PIDFD
-    // Write receive buffers' IPC handles into shared init buffer
     for (int i = 0; i < int(FacetTy::LAST); i++) {
         const size_t initBufferOffset = (6 * params.rank + i) * 1024;
         HaloBufferInfoTy *haloBufferInfoPtr = reinterpret_cast<HaloBufferInfoTy *>(static_cast<uint8_t *>(params.initBuffer) + initBufferOffset);
@@ -563,7 +538,6 @@ static TestResult initParams(ParamsTy &params, const Heat3DArguments &arguments)
 
     ipcBarrierWorker(params);
 
-    // Find each facet's neighbor rank's receive buffer, and store the address
     for (int i = 0; i < int(FacetTy::LAST); i++) {
         const uint32_t neighborRank = params.neighbors[i];
         const size_t neighborInitBufferOffset = (6 * neighborRank + int(reverseFacetUD(FacetTy(i)))) * 1024;
@@ -666,7 +640,6 @@ static TestResult initTemperature(ParamsTy &params) {
 static TestResult packSendBuffer(FacetTy facet, ParamsTy &params) {
     const FacetInfoTy &facetInfo = params.facetInfo[int(facet)];
 
-    // Copying from the inner shell facets
     const uint32_t xRange = facetInfo.innerFacetXEnd - facetInfo.innerFacetXStart + 1;
     const uint32_t yRange = facetInfo.innerFacetYEnd - facetInfo.innerFacetYStart + 1;
     const uint32_t zRange = facetInfo.innerFacetZEnd - facetInfo.innerFacetZStart + 1;
@@ -717,7 +690,6 @@ static TestResult initHaloExchange(ParamsTy &params) {
 static TestResult unpackRecvBufferHelper(FacetTy facet, ParamsTy &params) {
     const FacetInfoTy &facetInfo = params.facetInfo[int(facet)];
 
-    // Copying to the outer shell facets
     const uint32_t xRange = facetInfo.outerFacetXEnd - facetInfo.outerFacetXStart + 1;
     const uint32_t yRange = facetInfo.outerFacetYEnd - facetInfo.outerFacetYStart + 1;
     const uint32_t zRange = facetInfo.outerFacetZEnd - facetInfo.outerFacetZStart + 1;

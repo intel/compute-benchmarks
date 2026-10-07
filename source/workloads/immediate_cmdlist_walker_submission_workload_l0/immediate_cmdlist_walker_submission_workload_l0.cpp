@@ -26,8 +26,6 @@ struct ImmediateCmdListWalkerSubmissionArguments : WorkloadArgumentContainer {
 struct ImmediateCmdListWalkerSubmission : Workload<ImmediateCmdListWalkerSubmissionArguments> {};
 
 TestResult run(const ImmediateCmdListWalkerSubmissionArguments &arguments, Statistics &statistics, WorkloadSynchronization &synchronization, WorkloadIo &io) {
-
-    // Setup
     LevelZero levelzero{};
 
     uint32_t queueGroupPropertiesCount = 0;
@@ -63,7 +61,6 @@ TestResult run(const ImmediateCmdListWalkerSubmissionArguments &arguments, Stati
     ze_event_handle_t event{};
     Timer timer{};
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_write_one.cl", "write_one_uncached", &kernel, &module, nullptr, ZE_KERNEL_FLAG_EXPLICIT_RESIDENCY);
@@ -83,7 +80,6 @@ TestResult run(const ImmediateCmdListWalkerSubmissionArguments &arguments, Stati
 
     const ze_group_count_t groupCount{1, 1, 1};
     volatile uint64_t *volatileBuffer = static_cast<uint64_t *>(hostMemory);
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         *volatileBuffer = 0;
@@ -100,7 +96,6 @@ TestResult run(const ImmediateCmdListWalkerSubmissionArguments &arguments, Stati
         statistics.pushValue(timer.get(), MeasurementUnit::Unknown, MeasurementType::Unknown);
     }
 
-    // Cleanup
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeContextEvictMemory(levelzero.context, levelzero.device, hostMemory, bufferSize));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeKernelDestroy(kernel));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeMemFree(levelzero.context, hostMemory));

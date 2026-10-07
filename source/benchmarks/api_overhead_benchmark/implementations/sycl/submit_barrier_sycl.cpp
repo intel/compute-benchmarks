@@ -20,14 +20,12 @@ static TestResult run(const SubmitBarrierArguments &arguments, Statistics &stati
         return TestResult::Nooped;
     }
 
-    // Setup
     sycl::queue queue{arguments.inOrderQueue ? sycl::property_list{sycl::property::queue::in_order()} : sycl::property_list{}};
 
     const size_t gws = 1u;
     const size_t lws = 1u;
     sycl::nd_range<1> range(gws, lws);
 
-    // Create kernel
     int kernelOperationsCount = 10000;
     const auto eat_time = [=]([[maybe_unused]] auto u) {
         if (kernelOperationsCount > 4) {
@@ -38,7 +36,6 @@ static TestResult run(const SubmitBarrierArguments &arguments, Statistics &stati
         }
     };
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (!arguments.useEvents) {
             sycl::ext::oneapi::experimental::nd_launch(queue, range, eat_time);

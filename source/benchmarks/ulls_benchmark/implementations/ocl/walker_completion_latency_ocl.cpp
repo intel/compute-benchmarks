@@ -23,7 +23,6 @@ static TestResult run(const WalkerCompletionLatencyArguments &arguments, Statist
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setOoq(!arguments.inOrderQueue);
     Opencl opencl(queueProperties);
     Timer timer;
@@ -34,12 +33,10 @@ static TestResult run(const WalkerCompletionLatencyArguments &arguments, Statist
     }
     cl_int retVal;
 
-    // Create system memory buffer
     void *hostMemory = clHostMemAllocINTEL(opencl.context, nullptr, 64, 0, &retVal);
     volatile cl_int *volatileHostMemory = static_cast<cl_int *>(hostMemory);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Create kernel
     const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile("ulls_benchmark_write_one.cl");
     if (kernelSource.size() == 0) {
         return TestResult::KernelNotFound;
@@ -55,7 +52,6 @@ static TestResult run(const WalkerCompletionLatencyArguments &arguments, Statist
     const size_t gws = 1;
     const size_t lws = 1;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         *volatileHostMemory = 0;
         _mm_clflush(hostMemory);
@@ -72,7 +68,6 @@ static TestResult run(const WalkerCompletionLatencyArguments &arguments, Statist
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clMemFreeINTEL(opencl.context, hostMemory));
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));

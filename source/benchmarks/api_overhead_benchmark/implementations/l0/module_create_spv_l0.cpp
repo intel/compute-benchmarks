@@ -22,11 +22,9 @@ static TestResult run(const ModuleCreateSpvArguments &arguments, Statistics &sta
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Create module description
     auto spirvModule = FileHelper::loadBinaryFile(arguments.kernelName);
     if (spirvModule.size() == 0) {
         return TestResult::KernelNotFound;
@@ -37,7 +35,6 @@ static TestResult run(const ModuleCreateSpvArguments &arguments, Statistics &sta
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
     moduleDesc.inputSize = spirvModule.size();
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeModuleCreate(levelzero.context, levelzero.device, &moduleDesc, &module, nullptr));

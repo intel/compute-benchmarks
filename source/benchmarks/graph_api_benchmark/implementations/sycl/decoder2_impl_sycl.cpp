@@ -63,7 +63,6 @@ TestResult Decoder2GraphSYCL::init() {
 }
 
 TestResult Decoder2GraphSYCL::readResults(int *actualSum, int *actualSignalCount) {
-    // Read the results from the device
     queue->memcpy(actualSum, graphData.get(), sizeof(int)).wait();
     *actualSignalCount = *(com.canBegin);
     return TestResult::Success;
@@ -91,7 +90,6 @@ TestResult Decoder2GraphSYCL::runLayer() {
 TestResult Decoder2GraphSYCL::runAllLayers() {
     for (uint32_t i = 0; i < LAYER_NUM; ++i) {
         runLayer();
-        // Tell the CPU that it can progress in its work
         queue->submit([&](sycl::handler &cgh) {
             cgh.host_task([this]() {
                 gpuHostTask();
@@ -111,7 +109,6 @@ TestResult Decoder2GraphSYCL::runAllLayersNative() {
 }
 
 TestResult Decoder2GraphSYCL::recordGraph() {
-    // No-op if eager execution is used
     if (useGraphs) {
         sycl::property_list graphProps = useNativeRecording
                                              ? sycl::property_list{sycl_ext::property::graph::enable_native_recording{}}
@@ -121,9 +118,9 @@ TestResult Decoder2GraphSYCL::recordGraph() {
         graph->begin_recording(*queue);
         if (useHostTasks) {
             if (useNativeRecording) {
-                runAllLayersNative(); // zeCommandListAppendHostFunction instead of host_task
+                runAllLayersNative();
             } else {
-                runAllLayers(); // SYCL host_task
+                runAllLayers();
             }
         } else {
             runLayer();
@@ -157,6 +154,5 @@ TestResult Decoder2GraphSYCL::runGraph() {
 }
 
 bool Decoder2GraphSYCL::isUnsupported() {
-    // Emulation mode is for L0 only
     return emulateGraphs;
 }

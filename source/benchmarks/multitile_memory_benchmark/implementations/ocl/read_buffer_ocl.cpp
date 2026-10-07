@@ -27,7 +27,6 @@ static TestResult run(const ReadBufferArguments &arguments, Statistics &statisti
         return TestResult::DeviceNotCapable;
     }
 
-    // Setup
     cl_int retVal;
     QueueProperties queueProperties = QueueProperties::create().setDeviceSelection(arguments.queuePlacement).setProfiling(arguments.useEvents);
     ContextProperties contextProperties = ContextProperties::create().setDeviceSelection(arguments.contextPlacement).allowCreationFail();
@@ -41,7 +40,6 @@ static TestResult run(const ReadBufferArguments &arguments, Statistics &statisti
     }
     Timer timer;
 
-    // Create buffers
     const cl_mem_properties_intel memPropertiesDst[] = {
         CL_MEM_FLAGS,
         CL_MEM_READ_WRITE | CompressionHelper::getCompressionFlags(arguments.compressed, arguments.noIntelExtensions),
@@ -52,21 +50,18 @@ static TestResult run(const ReadBufferArguments &arguments, Statistics &statisti
     const cl_mem buffer = clCreateBufferWithPropertiesINTEL(opencl.context, memPropertiesDst, 0, arguments.size, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Check buffer compression
     const auto compressionStatus = CompressionHelper::verifyCompression(buffer, arguments.compressed, arguments.noIntelExtensions);
     if (compressionStatus != TestResult::Success) {
         ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
         return compressionStatus;
     }
 
-    // Fill buffer
     const char pattern[] = {0};
     ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, buffer, pattern, sizeof(pattern) / sizeof(pattern[0]), 0, arguments.size, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     auto cpuBuffer = std::make_unique<uint8_t[]>(arguments.size);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         cl_event profilingEvent{};
         cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;

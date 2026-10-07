@@ -20,20 +20,16 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     Sycl sycl{sycl::device{sycl::gpu_selector_v}};
     auto size = 1u;
 
-    // Create buffer
     auto buffer = sycl::malloc_host<uint32_t>(size, sycl.queue);
     volatile auto volatileBuffer = buffer;
 
-    // Create kernel
     const auto writeOne = [buffer]() {
         *buffer = 1u;
     };
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         *buffer = 0u;
 
@@ -49,7 +45,6 @@ static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics
         sycl.queue.wait();
     }
 
-    // Cleanup
     sycl::free(buffer, sycl.queue);
 
     return TestResult::Success;

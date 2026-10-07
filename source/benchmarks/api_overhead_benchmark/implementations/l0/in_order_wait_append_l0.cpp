@@ -24,7 +24,6 @@ static TestResult run(const InOrderWaitAppendArguments &arguments, Statistics &s
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     if (arguments.counterBasedEvents && !levelzero.isCounterBasedEventsSupported()) {
         return TestResult::ApiNotCapable;
@@ -35,7 +34,6 @@ static TestResult run(const InOrderWaitAppendArguments &arguments, Statistics &s
     ze_command_queue_desc_t commandQueueDesc = zeDefaultGPUImmediateCommandQueueDesc;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc, &commandList));
 
-    // create event
     ze_event_handle_t event = nullptr;
     ze_event_pool_handle_t eventPool = nullptr;
     if (!arguments.counterBasedEvents) {
@@ -53,7 +51,6 @@ static TestResult run(const InOrderWaitAppendArguments &arguments, Statistics &s
         ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &eventDescCBE, &event));
     }
 
-    // kernel for delaying the signal of event
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t kernel = nullptr;
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_eat_time.cl", "eat_time", &kernel, &module, nullptr);
@@ -71,7 +68,6 @@ static TestResult run(const InOrderWaitAppendArguments &arguments, Statistics &s
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(commandList, std::numeric_limits<uint64_t>::max()));
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendWaitOnEvents(commandList, 1, &event));
@@ -80,7 +76,6 @@ static TestResult run(const InOrderWaitAppendArguments &arguments, Statistics &s
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(commandList, std::numeric_limits<uint64_t>::max()));
 
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));

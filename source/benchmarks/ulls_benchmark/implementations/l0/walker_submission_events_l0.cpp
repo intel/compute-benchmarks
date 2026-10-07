@@ -26,7 +26,6 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
 
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
@@ -34,7 +33,6 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
     const uint32_t kernelTimestampValidBits = levelzero.getKernelTimestampValidBits(levelzero.device);
     const uint32_t sharedTimestampValidBits = std::min(timestampValidBits, kernelTimestampValidBits);
 
-    // Create event for profiling
     const ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1};
     uint32_t numDevices = 1;
     ze_event_pool_handle_t hEventPool;
@@ -44,7 +42,6 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
     ze_event_handle_t hEvent;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(hEventPool, &eventDesc, &hEvent));
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_empty_kernel.cl", "empty", &kernel, &module, nullptr);
@@ -52,7 +49,6 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
         return result;
     }
 
-    // Create command list
     ze_command_list_handle_t cmdList;
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
@@ -61,7 +57,6 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, hEvent, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     uint64_t hostEnqueueTimestamp = 0;
     uint64_t deviceEnqueueTimestamp = 0;
     ze_kernel_timestamp_result_t kernelTimestamp;
@@ -83,7 +78,6 @@ static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statisti
 
         statistics.pushValue(submissionTime, typeSelector.getUnit(), typeSelector.getType());
     }
-    // Cleanup
 
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(hEvent));
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(hEventPool));

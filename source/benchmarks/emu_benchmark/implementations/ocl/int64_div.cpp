@@ -26,7 +26,6 @@ static TestResult run(const Int64DivArguments &arguments, Statistics &statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents);
     Opencl opencl(queueProperties);
     cl_event profilingEvent{};
@@ -34,19 +33,16 @@ static TestResult run(const Int64DivArguments &arguments, Statistics &statistics
     Timer timer{};
     cl_int retVal{};
 
-    // Prepare data
     const size_t lws = arguments.workgroupSize;
     const size_t gws = arguments.workgroupSize * arguments.workgroupCount;
     const cl_long initialValue = std::numeric_limits<int64_t>::max() - 1;
     const cl_long divisor = 2;
-    const size_t loopIterations = 640u; // tweakable constant
+    const size_t loopIterations = 640u;
 
-    // Create and initialize the buffer with test data
     cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, gws * sizeof(cl_long), nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, buffer, &initialValue, sizeof(initialValue), 0, gws * sizeof(cl_long), 0, nullptr, nullptr));
 
-    // Create kernel
     cl_program program = nullptr;
     const char *programName = "emu_benchmark_int64_div.cl";
     const char *kernelName = "int64_div";
@@ -60,7 +56,6 @@ static TestResult run(const Int64DivArguments &arguments, Statistics &statistics
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, sizeof(divisor), &divisor));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(loopIterations), &loopIterations));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
@@ -76,14 +71,12 @@ static TestResult run(const Int64DivArguments &arguments, Statistics &statistics
         }
     }
 
-    // Verify
     std::byte result[8] = {};
     ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, sizeof(cl_long), result, 0, nullptr, nullptr));
     if (std::memcmp(result, &initialValue, sizeof(cl_long)) != 0) {
         return TestResult::VerificationFail;
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));

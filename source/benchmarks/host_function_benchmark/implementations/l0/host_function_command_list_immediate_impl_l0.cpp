@@ -24,7 +24,6 @@ static TestResult run(const HostFunctionCommandListImmediateArguments &arguments
         return TestResult::Nooped;
     }
 
-    // Setup
     bool useKernels = arguments.useKernels;
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     extensionProperties.setHostFunctionFunctions(true);
@@ -35,7 +34,6 @@ static TestResult run(const HostFunctionCommandListImmediateArguments &arguments
 
     HostFunctions hostFunctions = getHostFunctions(arguments.useEmptyHostFunction);
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_eat_time.cl", "eat_time", &kernel, &module, nullptr);
@@ -43,7 +41,6 @@ static TestResult run(const HostFunctionCommandListImmediateArguments &arguments
         return result;
     }
 
-    // Configure kernel
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
     int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime * 4);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(int), &kernelOperationsCount));
@@ -79,8 +76,6 @@ static TestResult run(const HostFunctionCommandListImmediateArguments &arguments
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdList));
 
     const ze_group_count_t groupCount{1, 1, 1};
-
-    // Benchmark
 
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
@@ -133,7 +128,6 @@ static TestResult run(const HostFunctionCommandListImmediateArguments &arguments
         }
     }
 
-    // Cleanup
     for (auto &event : eventKernel1) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     }

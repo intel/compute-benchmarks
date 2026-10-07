@@ -102,12 +102,10 @@ ze_result_t BufferContentsHelperL0::fillBufferWithData(LevelZero &levelzero, voi
 }
 
 ze_result_t BufferContentsHelperL0::fillBufferWithRandomBytes(ze_context_handle_t context, ze_command_list_handle_t cmdList, void *buffer, size_t bufferSize, void *&stagingAllocation) {
-    // Create staging allocation
     ze_host_mem_alloc_desc_t desc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     ZE_RESULT_SUCCESS_OR_RETURN(zeMemAllocHost(context, &desc, bufferSize, 0, &stagingAllocation));
     fillWithRandomBytes(static_cast<uint8_t *>(stagingAllocation), bufferSize);
 
-    // Copy to destination allocation
     ZE_RESULT_SUCCESS_OR_RETURN(zeCommandListAppendMemoryCopy(cmdList, buffer, stagingAllocation, bufferSize, nullptr, 0, nullptr));
 
     return ZE_RESULT_SUCCESS;

@@ -41,7 +41,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         }
 
 #if defined(HAS_SYCL_GRAPH)
-        // Setup
         auto queuePropsIndex = 0;
         queuePropsIndex |= arguments.useProfiling ? 0x1 : 0;
         queuePropsIndex |= arguments.inOrderQueue ? 0x2 : 0;
@@ -54,7 +53,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         const size_t lws = 1u;
         sycl::nd_range<1> range(gws, lws);
 
-        // Create kernel
         int kernelOperationsCount = static_cast<int>(arguments.kernelExecutionTime);
         [[maybe_unused]] const auto eat_time = [=]([[maybe_unused]] auto u) {
             if (kernelOperationsCount > 4) {
@@ -129,10 +127,8 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
             graph.end_recording();
         }
 
-        // Finalize the graph
         auto executable_graph = graph.finalize();
 
-        // Benchmark
         for (auto i = 0u; i < arguments.iterations; i++) {
             prof.measureStart();
             if (!arguments.useEvents) {

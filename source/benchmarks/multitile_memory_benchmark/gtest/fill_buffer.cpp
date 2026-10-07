@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ TEST_P(FillBufferTest, Test) {
     args.useEvents = std::get<7>(GetParam());
 
     if (!args.validateArgumentsExtra()) {
-        GTEST_SKIP(); // If above arguments make no sense (e.g. queue created outside of the context), skip the case
+        GTEST_SKIP();
     }
 
     FillBuffer test;

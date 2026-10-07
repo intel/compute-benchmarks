@@ -24,11 +24,9 @@ run(const ExecuteCommandListWithIndirectArguments &arguments, Statistics &statis
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_empty_kernel.cl", "empty", &kernel, &module, nullptr);
@@ -36,10 +34,8 @@ run(const ExecuteCommandListWithIndirectArguments &arguments, Statistics &statis
         return result;
     }
 
-    // Configure kernel
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, 1u, 1u, 1u));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetIndirectAccess(kernel, ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST | ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE | ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED));
-    // create indirect allocations
 
     std::vector<void *> indirectAllocations;
 
@@ -49,7 +45,6 @@ run(const ExecuteCommandListWithIndirectArguments &arguments, Statistics &statis
         indirectAllocations.push_back(ptr);
     }
 
-    // Create command list
     const ze_group_count_t dispatchTraits{1u, 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
@@ -58,7 +53,6 @@ run(const ExecuteCommandListWithIndirectArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         timer.measureStart();

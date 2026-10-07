@@ -14,10 +14,8 @@
 #include <string>
 
 enum class Api {
-    // Default, invalid value
     Unknown = 0,
 
-    // Supported APIs
     OpenCL,
     L0,
     SYCL,
@@ -28,7 +26,6 @@ enum class Api {
     OPT,
     Vulkan,
 
-    // Special values
     COUNT,
     FIRST = OpenCL,
     LAST = Vulkan,

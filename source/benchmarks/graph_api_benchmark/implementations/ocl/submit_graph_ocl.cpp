@@ -93,12 +93,10 @@ static TestResult run(const SubmitGraphArguments &arguments, Statistics &statist
         return TestResult::Nooped;
     }
 
-    // Setup
     auto queueProperties = QueueProperties::create().setProfiling(arguments.useProfiling).setOoq(!arguments.inOrderQueue);
     Opencl opencl(queueProperties);
     cl_int retVal{};
 
-    // cl_khr_command_buffer extension is required
     if (!opencl.getExtensions().isSupported(CL_KHR_COMMAND_BUFFER_EXTENSION_NAME)) {
         return TestResult::DeviceNotCapable;
     }
@@ -113,7 +111,6 @@ static TestResult run(const SubmitGraphArguments &arguments, Statistics &statist
     const size_t gws = 1u;
     const size_t lws = 1u;
 
-    // Create kernel
     cl_program program = nullptr;
     if (auto result = ProgramHelperOcl::buildProgramFromSourceFile(opencl.context, opencl.device, "api_overhead_benchmark_eat_time.cl", nullptr, program);
         result != TestResult::Success) {
@@ -124,7 +121,6 @@ static TestResult run(const SubmitGraphArguments &arguments, Statistics &statist
     cl_int kernelOperationsCount = static_cast<cl_int>(arguments.kernelExecutionTime);
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(cl_int), &kernelOperationsCount));
 
-    // Create command-buffer
     cl_command_buffer_khr cmdBuf = clCreateCommandBufferKHR(1, &opencl.commandQueue, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
@@ -134,7 +130,6 @@ static TestResult run(const SubmitGraphArguments &arguments, Statistics &statist
 
     ASSERT_CL_SUCCESS(clFinalizeCommandBufferKHR(cmdBuf));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
 

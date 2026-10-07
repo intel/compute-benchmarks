@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,6 @@ class Decoder2GraphL0 : public Decoder2GraphBase<Decoder2GraphL0> {
     ze_kernel_handle_t kernelDecoder2{};
     ze_module_handle_t moduleDecoder2{};
     ze_command_list_handle_t cmdList{};
-    // In emulate mode these graph types are unused
     ze_graph_handle_t graph{};
     ze_executable_graph_handle_t execGraph{};
     ze_command_list_handle_t immCmdList{};

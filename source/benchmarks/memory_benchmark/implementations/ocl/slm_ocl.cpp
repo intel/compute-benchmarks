@@ -34,12 +34,10 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
         return TestResult::DeviceNotCapable;
     }
 
-    // Setup
     cl_int retVal;
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true);
     Opencl opencl(queueProperties);
 
-    // Check platform we're on
     IntelProduct intelProduct = getIntelProduct(opencl);
     IntelGen gpuGen = getIntelGen(intelProduct);
 
@@ -74,7 +72,6 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
     buildOptions.addDefinitionKeyValue("MAX_GROUPS", numDataGroups);
     buildOptions.addDefinitionKeyValue("SUBGROUP_SIZE", subGroupSize);
 
-    // Create buffer
     const cl_mem_flags memFlagsIn = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
     const cl_mem_flags memFlagsOut = CL_MEM_READ_WRITE;
 
@@ -194,7 +191,6 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(slmInitBuff), &slmInitBuff));
     ASSERT_CL_SUCCESS(retVal);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         cl_event evt;
 
@@ -243,7 +239,6 @@ static TestResult run(const SlmTrafficArguments &arguments, Statistics &statisti
         ASSERT_CL_SUCCESS(clReleaseEvent(evt));
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     ASSERT_CL_SUCCESS(clReleaseMemObject(destination));

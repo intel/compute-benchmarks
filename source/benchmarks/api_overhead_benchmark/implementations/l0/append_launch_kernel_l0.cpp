@@ -22,11 +22,9 @@ static TestResult run(const AppendLaunchKernelArguments &arguments, Statistics &
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_empty_kernel.cl", "empty", &kernel, &module, nullptr);
@@ -34,11 +32,9 @@ static TestResult run(const AppendLaunchKernelArguments &arguments, Statistics &
         return result;
     }
 
-    // Configure kernel
     uint32_t groupSizeX = static_cast<uint32_t>(arguments.workgroupSize);
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, 1u, 1u));
 
-    // Create event if necessary
     const ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, arguments.appendCount};
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, ZE_EVENT_SCOPE_FLAG_DEVICE, ZE_EVENT_SCOPE_FLAG_DEVICE};
     ze_event_pool_handle_t eventPool{};
@@ -51,12 +47,10 @@ static TestResult run(const AppendLaunchKernelArguments &arguments, Statistics &
         }
     }
 
-    // Create command list descriptor
     const ze_group_count_t dispatchTraits{static_cast<uint32_t>(arguments.workgroupCount), 1u, 1u};
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; ++i) {
         ze_command_list_handle_t cmdList;
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));

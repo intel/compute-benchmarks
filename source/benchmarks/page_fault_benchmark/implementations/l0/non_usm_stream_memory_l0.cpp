@@ -40,7 +40,6 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create();
     ContextProperties contextProperties = ContextProperties::create();
     ExtensionProperties extensionProperties = ExtensionProperties::create();
@@ -62,7 +61,6 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     }
     Timer timer;
 
-    // Query double support
     ze_device_module_properties_t moduleProperties{};
     ASSERT_ZE_RESULT_SUCCESS(zeDeviceGetModuleProperties(levelzero.device, &moduleProperties));
 
@@ -77,7 +75,6 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize / groupSizeX * groupSizeX);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    // Create buffers
     size_t bufferSize = static_cast<size_t>(gws) * elementSize;
     void *buffers[3] = {};
     size_t buffersCount = {};
@@ -115,7 +112,6 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
         FATAL_ERROR("Unknown StreamMemoryType");
     }
 
-    // Create kernel
     ze_kernel_handle_t kernel{};
     ze_module_handle_t module{};
     CompilerOptionsBuilder compilerOptions;
@@ -131,19 +127,14 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
         return kernelLoadRes;
     }
 
-    // Query maximum group size
-
-    // Configure kernel group size
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, 1u, 1u));
     const ze_group_count_t dispatchTraits{gws / groupSizeX, 1u, 1u};
 
-    // Create command list
     ze_command_list_handle_t cmdList;
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
-    // Create event
     ze_event_pool_flags_t eventPoolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     if (arguments.useEvents) {
         eventPoolFlags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -160,7 +151,6 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
-    // Enqueue filling of the buffers and set kernel arguments
     const bool verify = Configuration::get().verify;
     const size_t outputIndex = arguments.type == StreamMemoryType::Read ? 0u : buffersCount - 1;
     const bool poisonOutput = verify && (arguments.type == StreamMemoryType::Scale || arguments.type == StreamMemoryType::Triad);
@@ -213,7 +203,6 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
         }
     }
 
-    // Enqueue kernel to command list
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
@@ -234,12 +223,10 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     };
     TestResult result = TestResult::Success;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (isSharedSystemPointer(arguments.memoryPlacement)) {
             fillSystemBuffers();
         }
-        // Launch kernel
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, 0));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
@@ -283,7 +270,6 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
         }
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     for (size_t i = 0; i < buffersCount; i++) {

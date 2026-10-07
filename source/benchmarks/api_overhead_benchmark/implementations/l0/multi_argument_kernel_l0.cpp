@@ -26,11 +26,9 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero{};
     Timer timer;
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     std::string kernelName = "kernelWith" + std::to_string(arguments.argumentCount);
@@ -42,7 +40,6 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
         return result;
     }
 
-    // Configure kernel
     ze_group_size_t groupSizes = {static_cast<uint32_t>(arguments.lws), 1u, 1u};
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizes.groupSizeX, groupSizes.groupSizeY, groupSizes.groupSizeZ));
 
@@ -70,7 +67,6 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; ++i) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListReset(cmdList));
         if (arguments.reverseOrder) {

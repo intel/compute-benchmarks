@@ -91,7 +91,6 @@ cl_int BufferContentsHelperOcl::fillUsmBuffer(cl_command_queue queue, void *usmB
 }
 
 cl_int BufferContentsHelperOcl::fillUsmBufferWithRandomBytes(cl_command_queue queue, void *usmBuffer, size_t bufferSize) {
-    // Get API calls
     cl_device_id device = {};
     CL_SUCCESS_OR_RETURN(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(device), &device, nullptr));
     cl_context context = {};
@@ -102,13 +101,11 @@ cl_int BufferContentsHelperOcl::fillUsmBufferWithRandomBytes(cl_command_queue qu
     auto clMemFreeINTEL = reinterpret_cast<pfn_clMemFreeINTEL>(clGetExtensionFunctionAddressForPlatform(platform, "clMemFreeINTEL"));
     auto clEnqueueMemcpyINTEL = reinterpret_cast<pfn_clEnqueueMemcpyINTEL>(clGetExtensionFunctionAddressForPlatform(platform, "clEnqueueMemcpyINTEL"));
 
-    // Create staging allocation
     cl_int retVal = {};
     void *stagingAlloc = clHostMemAllocINTEL(context, nullptr, bufferSize, 0, &retVal);
     CL_SUCCESS_OR_RETURN(retVal);
     fillWithRandomBytes(static_cast<uint8_t *>(stagingAlloc), bufferSize);
 
-    // Copy to destination allocation
     CL_SUCCESS_OR_RETURN(clEnqueueMemcpyINTEL(queue, CL_NON_BLOCKING, usmBuffer, stagingAlloc, bufferSize, 0, nullptr, nullptr));
     CL_SUCCESS_OR_RETURN(clFinish(queue));
     CL_SUCCESS_OR_RETURN(clMemFreeINTEL(context, stagingAlloc));
@@ -117,14 +114,12 @@ cl_int BufferContentsHelperOcl::fillUsmBufferWithRandomBytes(cl_command_queue qu
 }
 
 cl_int BufferContentsHelperOcl::fillUsmBufferWithZeros(cl_command_queue queue, void *usmBuffer, size_t bufferSize) {
-    // Get API calls
     cl_device_id device = {};
     CL_SUCCESS_OR_RETURN(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(device), &device, nullptr));
     cl_platform_id platform = {};
     CL_SUCCESS_OR_RETURN(clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(platform), &platform, nullptr));
     auto clEnqueueMemFillINTEL = reinterpret_cast<pfn_clEnqueueMemFillINTEL>(clGetExtensionFunctionAddressForPlatform(platform, "clEnqueueMemFillINTEL"));
 
-    // Fill with zeros
     const cl_uint pattern[] = {0};
     size_t patternSize = std::min(sizeof(pattern), bufferSize);
     CL_SUCCESS_OR_RETURN(clEnqueueMemFillINTEL(queue, usmBuffer, pattern, patternSize, bufferSize, 0, nullptr, nullptr));

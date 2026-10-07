@@ -22,11 +22,9 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_empty_kernel.cl", "empty", &kernel, &module, nullptr);
@@ -44,7 +42,6 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    // Create command list and append empty kernel
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
@@ -52,7 +49,6 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));

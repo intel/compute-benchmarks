@@ -24,7 +24,6 @@ namespace FileSystem = std::experimental::filesystem;
 #endif
 
 int main(int argc, char **argv) {
-    // Parse command-line arguments
     CommandLineArguments commandLineArguments = {};
     std::string commandLineArgumentsParsingErrors = {};
     if (!CommandLineArgument::parseArguments(argc, argv, commandLineArguments, commandLineArgumentsParsingErrors)) {
@@ -39,9 +38,7 @@ int main(int argc, char **argv) {
     // Full names and paths of benchmarks are known by CMake and passed via a preprocessor definition.
     const BenchmarkInstance benchmarkInstances[] = {TARGETS};
 
-    // Group BenchmarkInstances by base name
     Benchmarks benchmarks = {};
-    // And collect list of locations
     std::set<std::string> locations = {};
     for (const BenchmarkInstance &benchmarkInstance : benchmarkInstances) {
         Benchmark &benchmark = benchmarks[benchmarkInstance.baseName];
@@ -53,16 +50,13 @@ int main(int argc, char **argv) {
         benchmark.instances.push_back(&benchmarkInstance);
     }
 
-    // Fill all fields for each Benchmark
     std::cerr << "Gathering test information from binaries\n";
     for (auto &entry : benchmarks) {
         Benchmark &benchmark = entry.second;
 
-        // Call every instance
         for (const BenchmarkInstance *benchmarkInstance : benchmark.instances) {
             std::cerr << "  " << benchmarkInstance->path << '\n';
 
-            // Call the instance and get output
             Process process{benchmarkInstance->path};
             process.addArgument("generateDocs", "");
             std::cerr << "    Running\n";
@@ -72,7 +66,6 @@ int main(int argc, char **argv) {
             }
             std::istringstream output{process.getStdout()};
 
-            // Parse first line of output - benchmark name and description
             std::cerr << "    Parsing output\n";
             std::string line{};
             {
@@ -83,7 +76,6 @@ int main(int argc, char **argv) {
                 assignAndValidate(benchmark.description, tokens.second, " setting description from benchmark output");
             }
 
-            // Parse rest of the output - test cases and their arguments
             TestCases::iterator currentTestCase = benchmark.testCases.end();
             while (std::getline(output, line)) {
                 switch (cutLeadingSpaces(line)) {
@@ -113,7 +105,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    // Generate Markdown code (with embedded HTML)
     std::cerr << "Outputting documentation in Markdown format\n";
     for (const auto &location : locations) {
         FileSystem::path filePath(static_cast<const std::string &>(path));

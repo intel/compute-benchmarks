@@ -13,11 +13,11 @@
 inline void submit_kernel_empty(unsigned int wgc, unsigned int wgs, sycl::queue &q, bool useEvents) {
     if (!useEvents) {
         sycl::ext::oneapi::experimental::nd_launch(q, sycl::nd_range<1>{wgc * wgs, wgs}, [=]([[maybe_unused]] sycl::nd_item<1> item) {
-            ; // empty kernel
+            ;
         });
     } else {
         q.parallel_for(sycl::nd_range<1>{wgc * wgs, wgs}, [=]([[maybe_unused]] sycl::nd_item<1> item) {
-            ; // empty kernel
+            ;
         });
     }
 }

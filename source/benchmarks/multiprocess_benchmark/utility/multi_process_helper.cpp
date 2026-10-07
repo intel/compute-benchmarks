@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,17 +10,14 @@
 #include <sstream>
 
 std::vector<DeviceSelection> MultiProcessHelper::getSubDevicesForExecution(DeviceSelection subDevices, size_t processesPerDevice, size_t actualSubDevicesCount) {
-    // Split bitfield of merged subDevices to a vector of single subDevices
     std::vector<DeviceSelection> subDevicesForExecution = DeviceSelectionHelper::split(subDevices);
 
-    // Validate if we're not using an illegal subDevice
     for (DeviceSelection subDevice : subDevicesForExecution) {
         if (DeviceSelectionHelper::getSubDeviceIndex(subDevice) >= actualSubDevicesCount) {
             return {};
         }
     }
 
-    // Duplicate all subDevices respectively if we have more than one processPerDevice
     const auto tilesForExecutionCount = subDevicesForExecution.size();
     for (auto i = 1u; i < processesPerDevice; i++) {
         for (auto j = 0u; j < tilesForExecutionCount; j++) {

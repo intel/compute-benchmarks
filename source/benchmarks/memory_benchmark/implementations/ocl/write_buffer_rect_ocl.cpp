@@ -28,13 +28,11 @@ static TestResult run(const WriteBufferRectArguments &arguments, Statistics &sta
         return TestResult::DeviceNotCapable;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setOoq(!arguments.inOrderQueue);
     Opencl opencl(queueProperties);
     Timer timer;
     cl_int retVal;
 
-    // Create buffer
     const cl_mem_flags compressionHint = CompressionHelper::getCompressionFlags(arguments.compressed, arguments.noIntelExtensions);
     const cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | compressionHint, arguments.size, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
@@ -42,21 +40,18 @@ static TestResult run(const WriteBufferRectArguments &arguments, Statistics &sta
     ASSERT_CL_SUCCESS(HostptrReuseHelper::allocateBufferHostptr(opencl, arguments.reuse, arguments.size, cpuBuffer));
     ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillUsmBufferOrHostPtr(opencl.commandQueue, cpuBuffer.ptr, arguments.size, arguments.reuse, arguments.contents));
 
-    // Check buffer compression
     const auto compressionStatus = CompressionHelper::verifyCompression(buffer, arguments.compressed, arguments.noIntelExtensions);
     if (compressionStatus != TestResult::Success) {
         ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
         return compressionStatus;
     }
 
-    // Fill the buffer
     const char pattern[] = {0};
     ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, buffer, pattern, sizeof(pattern) / sizeof(pattern[0]), 0, arguments.size, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     size_t bufferOffset[3] = {};
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueWriteBufferRect(opencl.commandQueue, buffer, CL_NON_BLOCKING,

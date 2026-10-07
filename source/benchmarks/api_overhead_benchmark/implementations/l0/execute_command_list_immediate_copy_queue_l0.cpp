@@ -28,7 +28,6 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
         return TestResult::Nooped;
     }
 
-    // Setup
     Timer timer;
 
     QueueProperties queueProperties = QueueProperties::create().setForceBlitter(arguments.isCopyOnly).allowCreationFail();
@@ -42,7 +41,6 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
         return TestResult::DeviceNotCapable;
     }
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     if (arguments.useIoq) {
@@ -63,7 +61,6 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
     }
 
-    // Create buffers
     void *srcBuffer{}, *dstBuffer{};
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.sourcePlacement, levelzero, arguments.size, &srcBuffer));
     if (isUsmMemoryType(arguments.sourcePlacement)) {
@@ -73,7 +70,6 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
     }
     ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.destinationPlacement, levelzero, arguments.size, &dstBuffer));
 
-    // Create an immediate command list
     ze_command_list_handle_t cmdList{};
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, queueProperties.selectedEngine);
     if (arguments.useIoq) {
@@ -87,7 +83,6 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, arguments.size, event, 0, nullptr));
@@ -108,7 +103,6 @@ static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &argum
         }
     }
 
-    // Release
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     if (!arguments.useIoq) {
         ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));

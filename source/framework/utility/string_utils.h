@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,6 @@
 #include <vector>
 
 inline bool parseArgumentToKeyValue(const std::string &argument, std::string &outKey, std::string &outValue) {
-    // Check for common errors
     const std::string prefix = "--";
     const bool incorrectPrefix = argument.find(prefix) != 0;
     const bool empty = argument == prefix;
@@ -24,7 +23,6 @@ inline bool parseArgumentToKeyValue(const std::string &argument, std::string &ou
         return false;
     }
 
-    // Find '=', which is boundary between key and value. If it's not present, treat argument as a flag, which is also valid
     size_t index = argument.find('=');
     if (index == std::string::npos) {
         outKey = argument.substr(prefix.size());
@@ -32,7 +30,6 @@ inline bool parseArgumentToKeyValue(const std::string &argument, std::string &ou
         return true;
     }
 
-    // Key-Value argument, also valid
     outKey = argument.substr(prefix.size(), index - prefix.size());
     outValue = argument.substr(index + 1);
     return true;

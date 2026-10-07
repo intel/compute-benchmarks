@@ -22,7 +22,6 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().disable();
     Opencl opencl(queueProperties);
     Timer timer{};
@@ -48,7 +47,6 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
     cl_kernel kernel = clCreateKernel(program, "fill_with_ones", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Benchmark
     for (auto j = 0u; j < arguments.iterations; j++) {
 
         timer.measureStart();
@@ -64,7 +62,6 @@ static TestResult run(const MultiQueueSubmissionArguments &arguments, Statistics
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
     for (size_t i = 0; i < arguments.queueCount; i++) {

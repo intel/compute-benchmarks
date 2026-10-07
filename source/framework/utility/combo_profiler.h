@@ -97,7 +97,6 @@ class ComboProfilerWithStats : public ComboProfiler {
     }
 
     void pushNoop(Statistics &statistics) {
-        // Push dummy statistic for Noop
         statistics.pushUnitAndType(
             measurement.getUnit(), measurement.getType());
     }

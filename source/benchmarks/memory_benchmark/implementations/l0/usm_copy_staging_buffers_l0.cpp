@@ -36,7 +36,6 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
     }
 
     Timer timer;
-    // Create src & dst buffers
     std::unique_ptr<char[]> srcStorage{};
     std::unique_ptr<char[]> dstStorage{};
     char *src{};
@@ -53,7 +52,6 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
         dst = dstStorage.get();
     }
 
-    // create staging buffers
     std::vector<void *> usmHost(arguments.chunks);
     for (auto i = 0u; i < arguments.chunks; i++) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Host, levelzero, offset, &usmHost[i]));
@@ -65,7 +63,6 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
         ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, src, arguments.size, BufferContents::Zeros, false));
     }
 
-    // Create events
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 1;
@@ -76,7 +73,6 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, ZE_EVENT_SCOPE_FLAG_DEVICE, ZE_EVENT_SCOPE_FLAG_HOST};
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
-    // Create command list
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.commandQueueDevice, queueProperties.selectedEngine);
     zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffload = {ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES, nullptr, true};
     if (arguments.withCopyOffload) {
@@ -86,7 +82,6 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.commandQueueDevice, &commandQueueDesc->desc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         for (auto j = 0u; j < arguments.chunks; j++) {
@@ -112,7 +107,6 @@ static TestResult run(const UsmCopyStagingBuffersArguments &arguments, Statistic
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(event));
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));

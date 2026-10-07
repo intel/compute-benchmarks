@@ -64,14 +64,12 @@ TestResult createCommandList(TestEnv &env, bool useInOrder, bool isMutable, ze_c
     return TestResult::Success;
 }
 
-/*
-    As an algorithm we use consecutive addition and multiplication.
-    We start with addition only, and depending on arguments.changeRate,
-    we change some addition operations to multiplication operations.
-    (for example changeRate = 3 means that every third operation will be changed)
-    Because both addition and multiplication are very quick, we assume that they take the similar amount of time,
-    and because of that we can say that all graphs should take the same amount of time to execute.
-*/
+// As an algorithm we use consecutive addition and multiplication.
+// We start with addition only, and depending on arguments.changeRate,
+// we change some addition operations to multiplication operations.
+// (for example changeRate = 3 means that every third operation will be changed)
+// Because both addition and multiplication are very quick, we assume that they take the similar amount of time,
+// and because of that we can say that all graphs should take the same amount of time to execute.
 void calcRefResults(uint32_t size,
                     const MutateGraphArguments &arguments,
                     float *inputData,
@@ -267,7 +265,6 @@ TestResult mutateList(TestEnv &env,
         grpSize[0] /= 2;
         groupCount.groupCountX *= 2;
 
-        // switch memory argument from default in odd iterations
         dest = env.graphInputData.get();
         source = env.graphOutputData.get();
     }
@@ -278,7 +275,6 @@ TestResult mutateList(TestEnv &env,
             ASSERT_ZE_RESULT_SUCCESS(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &identifier, &currentKernelHandle));
         }
 
-        // modify group count
         ze_mutable_group_count_exp_desc_t groupCountDesc = {
             ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC, // stype
             nullptr,                                        // pNext
@@ -313,7 +309,6 @@ TestResult mutateList(TestEnv &env,
             &source                                             // pArgValue
         };
 
-        // Prepare to update mutable commands
         ze_mutable_commands_exp_desc_t desc = {
             ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC, // stype
             &krnlArgMemoryArg1Desc,                      // pNext
@@ -370,10 +365,7 @@ TestResult testCorrectness(const MutateGraphArguments &arguments, TestEnv &env) 
     // test correctness assumes kernel ISA mutation is ON
     testCorrectnessArguments.mutateIsa = true;
 
-    // reference results
     calcRefResults(env.size, arguments, env.inputData.get(), env.outputData.get(), env.refResult.get());
-
-    // warm-up & results verification
 
     ASSERT_ZE_RESULT_SUCCESS(
         zeCommandListAppendMemoryCopy(env.immCmdList, env.graphInputData.get(), env.inputData.get(),
@@ -408,7 +400,6 @@ TestResult testCorrectness(const MutateGraphArguments &arguments, TestEnv &env) 
         env.immCmdList, std::numeric_limits<uint64_t>::max()));
 
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
-    // if results don't match, fail the benchmark
     if (!checkResults(env, env.resData.get(), env.refResult.get())) {
         std::cout << "Check FAILED" << std::endl;
         return TestResult::Error;

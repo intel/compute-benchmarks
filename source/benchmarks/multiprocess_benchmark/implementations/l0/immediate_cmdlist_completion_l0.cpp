@@ -39,13 +39,11 @@ static TestResult getEngineInfo(std::vector<EngineInfo> &supportedEngineInfo, Le
                 insertToEngineInfoList(queueGroupProperties[i].numQueues, i);
             }
         } else {
-            // Use all Copy Engines (main and link)
             if (queueGroupProperties[i].flags == ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) {
                 insertToEngineInfoList(queueGroupProperties[i].numQueues, i);
             }
         }
     }
-    // Apply the mask
     std::vector<EngineInfo>::iterator it = supportedEngineInfo.begin();
     std::bitset<maxNumberOfEngines> engineBitset = arguments.engineMask;
     uint32_t engineMaskPosition = 0;
@@ -68,7 +66,6 @@ static TestResult run(const MultiProcessImmediateCmdlistCompletionArguments &arg
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero(QueueProperties::create().disable());
 
     std::vector<EngineInfo> supportedEngineInfo{};
@@ -80,7 +77,6 @@ static TestResult run(const MultiProcessImmediateCmdlistCompletionArguments &arg
 
     const auto numberOfSupportedEngines = supportedEngineInfo.size();
 
-    // Prepare processes
     ProcessGroup processes{"immediate_cmdlist_copy_workload_l0", arguments.numberOfProcesses};
     processes.addArgumentAll("iterations", std::to_string(arguments.iterations));
     processes.addArgumentAll("synchronize", std::string("1"));
@@ -93,7 +89,6 @@ static TestResult run(const MultiProcessImmediateCmdlistCompletionArguments &arg
         processes[i].addArgument("withCopyOffload", "1");
     }
     processes.addArgumentAll("copySize", std::to_string(arguments.copySize));
-    // Run processes
     processes.runAll();
     processes.synchronizeAll(arguments.iterations);
     processes.waitForFinishAll();

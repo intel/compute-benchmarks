@@ -28,7 +28,6 @@ static TestResult run(const FullRemoteAccessMemoryXeCoresDistributedArguments &a
         return TestResult::Nooped;
     }
 
-    // Setup
     cl_int retVal = {};
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true).setOoq(0);
     Opencl opencl(queueProperties);
@@ -51,7 +50,6 @@ static TestResult run(const FullRemoteAccessMemoryXeCoresDistributedArguments &a
     const auto bufferLength = bufferSize / elementSize;
     const auto iterations = bufferLength / workItems;
 
-    // Create kernel-specific buffers
     const char *kernelName = {};
     cl_mem buffers[2] = {};
     size_t buffersCount = {};
@@ -75,7 +73,6 @@ static TestResult run(const FullRemoteAccessMemoryXeCoresDistributedArguments &a
         FATAL_ERROR("Unknown StreamMemoryType");
     }
 
-    // Create kernel
     CompilerOptionsBuilder compilerOptions;
     compilerOptions.addDefinitionKeyValue("ELEMENT_SIZE", elementSize);
     // To distribute threadgroups between XeCores we use all of the SLM memory
@@ -119,7 +116,6 @@ static TestResult run(const FullRemoteAccessMemoryXeCoresDistributedArguments &a
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount), sizeof(cl_uint), &bufferLength));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount + 1), sizeof(cl_uint), &iterations));
 
-    // Query SIMD size
     size_t simdSize = {};
     clGetKernelWorkGroupInfo(kernel, opencl.device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(simdSize), &simdSize, nullptr);
 
@@ -148,7 +144,6 @@ static TestResult run(const FullRemoteAccessMemoryXeCoresDistributedArguments &a
         }
     }
 
-    // Cleanup
     for (size_t i = 0; i < buffersCount; i++) {
         ASSERT_CL_SUCCESS(clReleaseMemObject(buffers[i]));
     }

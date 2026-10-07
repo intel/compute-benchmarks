@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ namespace FileSystem = std::experimental::filesystem;
 #include <string>
 
 struct WorkingDirectoryHelper {
-    static FileSystem::path getExeLocation(); // OS-specific implementation
+    static FileSystem::path getExeLocation();
 
     static void changeDirectory(const FileSystem::path &directory) {
         FileSystem::current_path(directory);

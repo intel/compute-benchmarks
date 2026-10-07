@@ -29,7 +29,6 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(QueueProperties::create().disable(), ContextProperties::create(), extensionProperties);
 
-    // Create kernel
     ze_module_handle_t module{};
     ze_kernel_handle_t kernel{};
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "gpu_cmds_benchmark_write_one_global_ids.cl", "write_one_with_args", &kernel, &module, nullptr);
@@ -37,7 +36,6 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
         return result;
     }
 
-    // Setup kernel args and properties
     const ze_group_count_t wgc{32u, 1u, 1u};
     const ze_group_size_t wgs{32u, 1u, 1u};
     auto buffSize = wgc.groupCountX * wgs.groupSizeX * sizeof(uint32_t);
@@ -48,7 +46,6 @@ static TestResult run([[maybe_unused]] const LastEventLatencyArguments &argument
     uint32_t immData = 10u;
     void *kernelArgs[3] = {&deviceUsmPtr, &slmSize, &immData};
 
-    // Setup command list with CB event
     ze_command_list_handle_t cmdList;
     ze_event_handle_t event;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdList));

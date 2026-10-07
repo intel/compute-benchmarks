@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 namespace OCL {
 
 Opencl::Opencl(const QueueProperties &queueProperties, const ContextProperties &contextProperties) {
-    // Get Platform
     cl_uint numPlatforms;
     EXPECT_CL_SUCCESS(clGetPlatformIDs(0, nullptr, &numPlatforms));
 
@@ -35,7 +34,6 @@ Opencl::Opencl(const QueueProperties &queueProperties, const ContextProperties &
 
     this->platform = platforms[platformIndex];
 
-    // Create root device
     EXPECT_CL_SUCCESS(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices));
     const auto deviceIndex = Configuration::get().oclDeviceIndex;
     if (deviceIndex >= numDevices) {
@@ -45,7 +43,6 @@ Opencl::Opencl(const QueueProperties &queueProperties, const ContextProperties &
     EXPECT_CL_SUCCESS(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices.get(), nullptr));
     this->rootDevice = devices[deviceIndex];
 
-    // Create sub devices if needed
     if (DeviceSelectionHelper::hasAnySubDevice(contextProperties.deviceSelection)) {
         this->createSubDevices(contextProperties.requireCreationSuccess);
         const auto requiredSubDevicesCount = DeviceSelectionHelper::getMaxSubDeviceIndex(contextProperties.deviceSelection) + 1;
@@ -54,18 +51,15 @@ Opencl::Opencl(const QueueProperties &queueProperties, const ContextProperties &
         }
     }
 
-    // Set the default device
     if (DeviceSelectionHelper::hasSingleDevice(contextProperties.deviceSelection)) {
         this->device = getDevice(contextProperties.deviceSelection);
     }
 
-    // Create context on the default device
     this->context = createContext(contextProperties);
     if (this->context == nullptr) {
         return;
     }
 
-    // Create command queue on the default device
     this->commandQueue = createQueue(queueProperties);
 }
 
@@ -91,7 +85,6 @@ cl_command_queue Opencl::createQueue(QueueProperties queueProperties) {
     cl_command_queue queue{};
     cl_queue_properties properties[maxPropertiesCount] = {};
 
-    // Create queue
     if (queueProperties.fillQueueProperties(deviceForQueue, properties, maxPropertiesCount)) {
         queue = clCreateCommandQueueWithProperties(this->context, deviceForQueue, properties, &retVal);
     }
@@ -145,13 +138,11 @@ std::vector<cl_device_id> Opencl::getDevices(DeviceSelection deviceSelection, bo
     FATAL_ERROR_IF(DeviceSelectionHelper::hasHost(deviceSelection), "Cannot get cl_device_id for host");
     std::vector<cl_device_id> result = {};
 
-    // Add root device
     if ((deviceSelection & DeviceSelection::Root) == DeviceSelection::Root) {
         FATAL_ERROR_IF(this->rootDevice == nullptr, "Root device has not been created yet");
         result.push_back(this->rootDevice);
     }
 
-    // Add subDevices
     for (DeviceSelection subDevice : DeviceSelectionHelper::subDevices) {
         if (DeviceSelectionHelper::hasDevice(deviceSelection, subDevice)) {
             const auto subDeviceIndex = DeviceSelectionHelper::getSubDeviceIndex(subDevice);
@@ -160,7 +151,6 @@ std::vector<cl_device_id> Opencl::getDevices(DeviceSelection deviceSelection, bo
         }
     }
 
-    // Validate number of devices
     const auto expectedCount = DeviceSelectionHelper::getDevicesCount(deviceSelection);
     const auto actualCount = result.size();
     if (expectedCount != actualCount) {

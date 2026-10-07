@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,6 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     cl_int retVal = {};
     QueueProperties queueProperties = QueueProperties::create().setProfiling(true).setOoq(0);
     Opencl opencl(queueProperties);
@@ -39,7 +38,6 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
     const int64_t scalarValue = -999;
     const bool printBuildInfo = true;
 
-    // Create kernel-specific buffers
     const char *kernelName = {};
     size_t bufferSize = arguments.size;
     cl_mem buffers[3] = {};
@@ -72,7 +70,6 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
         FATAL_ERROR("Unknown StreamMemoryType");
     }
 
-    // Create kernel
     CompilerOptionsBuilder compilerOptions;
     compilerOptions.addDefinitionKeyValue("STREAM_TYPE", useDoubles ? "double" : "float");
     const char *programName = "memory_benchmark_stream_memory.cl";
@@ -92,7 +89,7 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
     cl_kernel cacheCleaner = clCreateKernel(program, "write", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    auto cleanerSize = 1073741824u; // 1GB
+    auto cleanerSize = 1073741824u;
     cl_mem cleanerBuffer = clCreateBuffer(opencl.context, CL_MEM_READ_ONLY, cleanerSize, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     ASSERT_CL_SUCCESS(clSetKernelArg(cacheCleaner, 0u, sizeof(cleanerBuffer), &cleanerBuffer));
@@ -107,23 +104,19 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
 
     auto data = std::make_unique<char[]>(arguments.size);
 
-    // Query max workgroup size
     size_t maxWorkgroupSize = {};
     clGetDeviceInfo(opencl.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(maxWorkgroupSize), &maxWorkgroupSize, nullptr);
 
-    // Warm up
     const size_t globalWorkSize = arguments.size / elementSize;
     const size_t localWorkSize = maxWorkgroupSize;
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     for (auto i = 0u; i < arguments.iterations; i++) {
-        // clean caches
         const size_t cleanCacheWorkSize = cleanerSize / elementSize;
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, cacheCleaner, 1, nullptr, &cleanCacheWorkSize, &localWorkSize, 0, nullptr, nullptr));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
-        // emit transfers
         for (auto bufferId = 0u; bufferId < buffersCount; bufferId++) {
             ASSERT_CL_SUCCESS(clEnqueueWriteBuffer(opencl.commandQueue, buffers[bufferId], false, 0u, bufferSizes[bufferId], data.get(), 0u, nullptr, nullptr));
         }
@@ -151,7 +144,6 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
         statistics.pushValue(std::chrono::nanoseconds(timeNs), transferSize, typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     for (size_t i = 0; i < buffersCount; i++) {
         ASSERT_CL_SUCCESS(clReleaseMemObject(buffers[i]));
     }

@@ -22,7 +22,6 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
         return TestResult::Nooped;
     }
 
-    // Setup
     Opencl opencl;
     Timer timer;
     auto clSharedMemAllocINTEL = reinterpret_cast<pfn_clSharedMemAllocINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clSharedMemAllocINTEL"));
@@ -32,7 +31,6 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
     }
     cl_int retVal{};
 
-    // Create kernel
     const char *source = "__kernel void write(__global uint *outBuffer) {  \n"
                          "   outBuffer[0u] = 1;                            \n"
                          "}";
@@ -54,7 +52,6 @@ static TestResult run(const UsmSharedFirstGpuAccessArguments &arguments, Statist
     // Keep the previous allocation alive while creating the next one so the driver hands out a fresh VA
     void *previousBuffer = nullptr;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         void *buffer = clSharedMemAllocINTEL(opencl.context, opencl.device, properties, arguments.bufferSize, 0u, &retVal);
         ASSERT_CL_SUCCESS(retVal);

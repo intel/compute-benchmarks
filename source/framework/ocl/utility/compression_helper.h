@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ inline cl_mem_flags getCompressionFlags(bool compression, bool noIntelExtensions
 
 inline TestResult verifyCompression(cl_mem mem, bool expectedCompression, bool noIntelExtensions) {
     if (noIntelExtensions) {
-        return TestResult::Success; // We have nothing to check, this is a vendor agnostic benchmark run
+        return TestResult::Success;
     }
 
     cl_bool isCompressedRaw{};

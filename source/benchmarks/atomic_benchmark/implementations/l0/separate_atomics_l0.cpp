@@ -25,23 +25,19 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     Timer timer{};
 
-    // Check support
     if (!MathOperationHelper::isSupportedAsAtomic(arguments.atomicOperation, arguments.dataType, levelzero.isGlobalFloatAtomicsSupported(), false)) {
         return TestResult::DeviceNotCapable;
     }
 
-    // Prepare data
     const size_t lws = arguments.workgroupSize;
     const size_t gws = arguments.workgroupSize * arguments.workgroupCount;
     const size_t threadsPerAtomicCount = arguments.iterations;
     const auto data = KernelHelper::getDataForKernel(arguments.dataType, arguments.atomicOperation, threadsPerAtomicCount);
 
-    // Prepare timestamp event
     ze_event_pool_handle_t eventPool{};
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1};
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 1, &levelzero.device, &eventPool));
@@ -49,21 +45,18 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
     ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST};
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &perfEvent));
 
-    // Create the buffer with atomic
     const size_t cachelinesCount = gws / arguments.atomicsPerCacheline;
     const size_t totalBufferSize = cachelinesCount * MemoryConstants::cachelineSize;
     void *buffer = nullptr;
     const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, totalBufferSize, 0, levelzero.device, &buffer));
 
-    // Create the buffer with other argument
     const size_t otherArgumentsBufferSize = 32u;
     void *otherArgumentsBuffer = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, data.sizeOfDataType * otherArgumentsBufferSize, 0, levelzero.device, &otherArgumentsBuffer));
     uint32_t iterations = static_cast<uint32_t>(data.loopIterations);
     uint32_t atomicsPerCacheline = static_cast<uint32_t>(arguments.atomicsPerCacheline);
 
-    // Initialize buffers data
     ze_command_list_desc_t cmdListDesc{};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t tmpCmdList{};
@@ -74,7 +67,6 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &tmpCmdList, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
 
-    // Create kernel
     const char *programName = "atomic_benchmark_kernel.cl";
     auto sourceBytes = FileHelper::loadBinaryFile(programName);
     if (sourceBytes.size() == 0) {
@@ -100,7 +92,6 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 3, sizeof(atomicsPerCacheline), &atomicsPerCacheline));
     const ze_group_count_t groupCount{static_cast<uint32_t>(gws / lws), 1u, 1u};
 
-    // Benchmark
     ze_command_list_handle_t cmdList{};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, arguments.useEvents ? perfEvent : nullptr, 0, nullptr));
@@ -127,7 +118,6 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
         }
     }
 
-    // Verify
     auto result = std::make_unique<std::byte[]>(totalBufferSize);
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListReset(tmpCmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(tmpCmdList, result.get(), buffer, totalBufferSize, nullptr, 0, nullptr));
@@ -145,7 +135,6 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
         }
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(perfEvent));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));

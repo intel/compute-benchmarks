@@ -19,7 +19,6 @@
 
 void enqueueSvmCopy(cl_command_queue queue, void *src, void *dst, size_t size, std::shared_mutex *barrier, pfn_clEnqueueMemcpyINTEL clEnqueueMemcpyINTEL) {
     std::shared_lock sharedLock(*barrier);
-    // benchmark
     EXPECT_CL_SUCCESS(clEnqueueMemcpyINTEL(queue, CL_FALSE, dst, src, size, 0, nullptr, nullptr));
     EXPECT_CL_SUCCESS(clFinish(queue));
 }
@@ -32,7 +31,6 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
         return TestResult::Nooped;
     }
 
-    // Setup
     Opencl opencl;
     Timer timer{};
     auto clEnqueueMemcpyINTEL = reinterpret_cast<pfn_clEnqueueMemcpyINTEL>(clGetExtensionFunctionAddressForPlatform(opencl.platform, "clEnqueueMemcpyINTEL"));
@@ -40,11 +38,9 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
         return TestResult::DriverFunctionNotFound;
     }
 
-    // Create queues
     std::vector<cl_command_queue> commandQueues;
     QueueProperties queueProperties = QueueProperties::create();
     for (auto i = 0u; i < arguments.numberOfThreads; i++) {
-        // Try to use engines BCS1 to BCS8
         Engine copyEngine = EngineHelper::getBlitterEngineFromIndex((i + 1) % 9);
         queueProperties.setForceEngine(copyEngine);
         cl_command_queue queue = opencl.createQueue(queueProperties);
@@ -52,12 +48,10 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
             commandQueues.push_back(queue);
         }
     }
-    // If no copy engines available, use default queue
     if (commandQueues.empty()) {
         commandQueues.push_back(opencl.commandQueue);
     }
 
-    // Create buffers
     const size_t bufferForCopySize = 64 * 1024;
     std::vector<UsmHelperOcl::Alloc> srcAllocs;
     std::vector<UsmHelperOcl::Alloc> dstAllocs;
@@ -73,7 +67,6 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
 
     std::shared_mutex barrier;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         std::unique_lock lock(barrier);
         std::vector<std::unique_ptr<std::thread>> threads;
@@ -90,7 +83,6 @@ static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics)
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     for (auto i = 0u; i < arguments.numberOfThreads; i++) {
         ASSERT_CL_SUCCESS(UsmHelperOcl::deallocate(srcAllocs[i]));
         ASSERT_CL_SUCCESS(UsmHelperOcl::deallocate(dstAllocs[i]));

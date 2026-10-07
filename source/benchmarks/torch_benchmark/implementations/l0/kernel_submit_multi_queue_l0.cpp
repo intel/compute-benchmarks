@@ -20,7 +20,6 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
         return TestResult::Nooped;
     }
 
-    // setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero l0{extensionProperties};
     CommandList cmd_list_1{l0.context, l0.device, zeDefaultGPUImmediateCommandQueueDesc};
@@ -36,7 +35,6 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
         d_c.emplace_back(DeviceMemory<data_type>(l0, length));
     }
 
-    // create kernel
     Kernel kernel{l0, "torch_benchmark_elementwise_sum_2.cl", "elementwise_sum_2_int"};
     const ze_group_count_t dispatch{static_cast<uint32_t>(args.kernelWGCount), 1u, 1u};
     const ze_group_size_t groupSizes{static_cast<uint32_t>(args.kernelWGSize), 1u, 1u};
@@ -56,25 +54,20 @@ static TestResult run(const KernelSubmitMultiQueueArguments &args, Statistics &s
         return TestResult::Success;
     };
 
-    // create counter-based event to sync cmd_list_1 and cmd_list_2
     CounterBasedEvent q2_last_event{l0, args.useProfiling};
 
-    // benchmark
     for (size_t i = 0; i < args.iterations; i++) {
         if (args.measureCompletionTime) {
             profiler.measureStart();
         }
 
-        // submit several kernels into cmd_list_1
         for (size_t j = 0; j < args.kernelsPerQueue; j++) {
             ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmd_list_1.get(), kernel_args_0, nullptr, nullptr));
         }
-        // submit several kernels into cmd_list_2
         for (size_t j = 1; j < args.kernelsPerQueue; j++) {
             ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmd_list_2.get(), kernel_args_1, nullptr, nullptr));
         }
         ASSERT_TEST_RESULT_SUCCESS(submit_kernel(cmd_list_2.get(), kernel_args_1, q2_last_event.get(), nullptr));
-        // mark the last kernel in cmd_list_2
         if (!args.measureCompletionTime) {
             profiler.measureStart();
         }

@@ -20,10 +20,8 @@ static TestResult run(const QueueMemcpyArguments &arguments, Statistics &statist
         return TestResult::Nooped;
     }
 
-    // Setup
     Sycl sycl{sycl::device{sycl::gpu_selector_v}};
 
-    // Create buffers
     constexpr size_t alignment = 512;
     void *source{}, *destination{};
     auto allocateMemory = [&](UsmMemoryPlacement placement) {
@@ -36,7 +34,6 @@ static TestResult run(const QueueMemcpyArguments &arguments, Statistics &statist
     source = allocateMemory(arguments.sourcePlacement);
     destination = allocateMemory(arguments.destinationPlacement);
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         prof.measureStart();
         sycl.queue.memcpy(destination, source, arguments.size).wait();
@@ -44,7 +41,6 @@ static TestResult run(const QueueMemcpyArguments &arguments, Statistics &statist
         prof.pushStats(statistics);
     }
 
-    // Cleanup
     UsmHelper::deallocate(arguments.sourcePlacement, sycl, source);
     UsmHelper::deallocate(arguments.destinationPlacement, sycl, destination);
 

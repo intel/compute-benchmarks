@@ -10,18 +10,16 @@
 
 #include <random>
 
-static constexpr size_t REUSE_MEMORY_SIZE = 1024 * 1024 * 64; // 64MB
+static constexpr size_t REUSE_MEMORY_SIZE = 1024 * 1024 * 64;
 
 template <typename data_type>
 static TestResult runBenchmark(const KernelSubmitMemoryReuseArguments &args, ComboProfilerWithStats &profiler, Statistics &statistics) {
-    // Setup
     constexpr bool useOoq = false;
     Sycl sycl{sycl::device{sycl::gpu_selector_v}, useOoq};
 
     auto d_reuse = make_device_ptr<data_type>(sycl, REUSE_MEMORY_SIZE);
     data_type *d_reuse_end = &d_reuse.get()[REUSE_MEMORY_SIZE - 1];
 
-    // Benchmark
     std::mt19937 rng(42);
     std::uniform_int_distribution<> offset_dist{0, 10};
 

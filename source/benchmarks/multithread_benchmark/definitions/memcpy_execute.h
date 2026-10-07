@@ -47,7 +47,6 @@ struct MemcpyExecute : TestCase<MemcpyExecuteArguments> {
     }
 };
 
-// verify the results
 static inline TestResult verifyResults(size_t numThreads, size_t numOpsPerThread, size_t allocSize, std::vector<void *> &dst_buffers, int value) {
     for (size_t t = 0; t < numThreads; t++) {
         for (size_t i = 0; i < numOpsPerThread; i++) {

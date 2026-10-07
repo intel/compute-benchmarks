@@ -19,7 +19,6 @@ static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &stat
         return TestResult::Nooped;
     }
 
-    // Prepare data
     const size_t sizeInElements = arguments.numberOfElementsX * arguments.numberOfElementsY * arguments.numberOfElementsZ;
     const size_t sizeInBytes = sizeInElements * sizeof(int);
 

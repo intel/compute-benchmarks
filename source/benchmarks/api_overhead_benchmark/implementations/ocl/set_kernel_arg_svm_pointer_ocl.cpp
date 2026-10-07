@@ -23,7 +23,6 @@ static TestResult run(const SetKernelArgSvmPointerArguments &arguments, Statisti
         return TestResult::Nooped;
     }
 
-    // Setup
     Opencl opencl;
     Timer timer;
     cl_int retVal{};
@@ -31,7 +30,6 @@ static TestResult run(const SetKernelArgSvmPointerArguments &arguments, Statisti
         return TestResult::DriverFunctionNotFound;
     }
 
-    // Create kernels
     const std::vector<uint8_t> kernelSource = FileHelper::loadTextFile("api_overhead_benchmark_fill_with_ones.cl");
     if (kernelSource.size() == 0) {
         return TestResult::KernelNotFound;
@@ -49,7 +47,6 @@ static TestResult run(const SetKernelArgSvmPointerArguments &arguments, Statisti
         kernels.push_back(kernel);
     }
 
-    // Create allocations
     std::vector<UsmHelperOcl::Alloc> allocations;
     for (auto i = 0u; i < arguments.allocationsCount; i++) {
         UsmHelperOcl::Alloc alloc{};
@@ -57,7 +54,6 @@ static TestResult run(const SetKernelArgSvmPointerArguments &arguments, Statisti
         allocations.push_back(alloc);
     }
 
-    // Reallocate if argument is set
     if (arguments.reallocate) {
         for (auto i = 0u; i < arguments.allocationsCount; i++) {
             ASSERT_CL_SUCCESS(UsmHelperOcl::deallocate(allocations[i]));
@@ -67,7 +63,6 @@ static TestResult run(const SetKernelArgSvmPointerArguments &arguments, Statisti
         }
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         for (auto j = 0u; j < arguments.allocationsCount; j++) {
@@ -77,7 +72,6 @@ static TestResult run(const SetKernelArgSvmPointerArguments &arguments, Statisti
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     for (auto i = 0u; i < arguments.allocationsCount; i++) {
         ASSERT_CL_SUCCESS(clReleaseKernel(kernels[i]));
         ASSERT_CL_SUCCESS(UsmHelperOcl::deallocate(allocations[i]));

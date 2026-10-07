@@ -26,35 +26,29 @@ static TestResult run(const SeparateAtomicsExplicitArguments &arguments, Statist
         return TestResult::Nooped;
     }
 
-    // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero(extensionProperties);
     Timer timer{};
 
-    // Check support
     if (!MathOperationHelper::isSupportedAsAtomic(arguments.atomicOperation, arguments.dataType, levelzero.isGlobalFloatAtomicsSupported(), false)) {
         return TestResult::DeviceNotCapable;
     }
 
-    // Prepare data
     const size_t lws = arguments.workgroupSize;
     const size_t gws = arguments.workgroupSize * arguments.workgroupCount;
     const size_t threadsPerAtomicCount = arguments.iterations;
     const auto data = KernelHelper::getDataForKernel(arguments.dataType, arguments.atomicOperation, threadsPerAtomicCount);
 
-    // Buffer sizes
     const size_t cachelinesCount = gws / arguments.atomicsPerCacheline;
     const size_t atomicBufferSize = cachelinesCount * MemoryConstants::cachelineSize;
     const size_t otherArgumentsBufferEntryCount = 4u; // we only need 1 value, but storing in multiple can prevent some compiler opts
     const size_t otherArgumentsBufferSize = otherArgumentsBufferEntryCount * data.sizeOfDataType;
 
-    // Prepare timestamp event
     ze_event_handle_t perfEvent{};
     auto eventDesc = defaultIntelCounterBasedEventDesc;
     eventDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCounterBasedCreate(levelzero.context, levelzero.device, &eventDesc, &perfEvent));
 
-    // Create kernel
     const char *programName = "atomic_benchmark_kernel.cl";
     auto sourceBytes = FileHelper::loadBinaryFile(programName);
     if (sourceBytes.size() == 0) {
@@ -95,14 +89,12 @@ static TestResult run(const SeparateAtomicsExplicitArguments &arguments, Statist
     const ze_group_count_t initGroupCount{gwsForInitialize, 1u, 1u};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(immCmdList, initializeKernel, &initGroupCount, nullptr, 0, nullptr));
 
-    // Create and initialize the buffer with value for the other argument of atomic operation
     void *otherArgumentsBuffer = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &zeDefaultGPUDeviceMemAllocDesc, otherArgumentsBufferSize, 0, levelzero.device, &otherArgumentsBuffer));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(immCmdList, otherArgumentsBuffer, data.otherArgument, data.sizeOfDataType, otherArgumentsBufferSize, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(immCmdList, std::numeric_limits<uint64_t>::max()));
     uint32_t iterations = static_cast<uint32_t>(data.loopIterations);
 
-    // Benchmark
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(atomicBuffer), &atomicBuffer));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 1, sizeof(otherArgumentsBuffer), &otherArgumentsBuffer));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 2, sizeof(iterations), &iterations));
@@ -128,7 +120,6 @@ static TestResult run(const SeparateAtomicsExplicitArguments &arguments, Statist
         }
     }
 
-    // Verify
     auto result = std::make_unique<std::byte[]>(atomicBufferSize);
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(immCmdList, result.get(), atomicBuffer, atomicBufferSize, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(immCmdList, std::numeric_limits<uint64_t>::max()));
@@ -143,7 +134,6 @@ static TestResult run(const SeparateAtomicsExplicitArguments &arguments, Statist
         }
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(perfEvent));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(immCmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(initializeKernel));

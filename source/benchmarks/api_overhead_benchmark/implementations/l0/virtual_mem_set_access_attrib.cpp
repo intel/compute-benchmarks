@@ -30,12 +30,10 @@ static TestResult doVirtualMemSetAccessAttrib(LevelZero &levelzero, const Virtua
                                                        arguments.size, &pageSize));
     size = getPageAlignedSize(size, pageSize);
 
-    // Reserve virtual Memory
     void *virtualMem = nullptr;
     ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemReserve(levelzero.context, nullptr, size, &virtualMem));
     EXPECT_NE(virtualMem, static_cast<void *>(nullptr));
 
-    // Handle access type
     ze_memory_access_attribute_t accessType = ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE;
     std::string accessTypeString = static_cast<const std::string &>(arguments.accessType);
     if (accessTypeString == "ReadOnly") {
@@ -49,7 +47,6 @@ static TestResult doVirtualMemSetAccessAttrib(LevelZero &levelzero, const Virtua
                                                             accessType));
     timer.measureEnd();
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemFree(levelzero.context, virtualMem, size));
 
     return TestResult::Success;
@@ -63,11 +60,9 @@ static TestResult run(const VirtualMemSetAccessAttribArguments &arguments, Stati
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         auto status = doVirtualMemSetAccessAttrib(levelzero, arguments, timer);
         if (status != TestResult::Success) {

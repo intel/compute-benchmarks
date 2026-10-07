@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,8 @@
 MathOperationTestData KernelHelper::getDataForKernel(DataType dataType,
                                                      MathOperation operation,
                                                      size_t totalThreadsCount) {
-    const size_t loopIterations = 100u;                   // Kernel performs some number of loop iterations
-    const size_t operatorApplicationsPerIteration = 128u; // Each iteration performs some number of atomic operations
+    const size_t loopIterations = 100u;
+    const size_t operatorApplicationsPerIteration = 128u;
     return MathOperationHelper::generateTestData(dataType, operation, loopIterations, operatorApplicationsPerIteration, totalThreadsCount);
 }
 

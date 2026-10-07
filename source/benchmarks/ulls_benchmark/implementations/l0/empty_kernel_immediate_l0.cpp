@@ -22,11 +22,9 @@ static TestResult run(const EmptyKernelImmediateArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero(QueueProperties::create().disable());
     Timer timer;
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "ulls_benchmark_empty_kernel.cl", "empty", &kernel, &module, nullptr);
@@ -44,7 +42,6 @@ static TestResult run(const EmptyKernelImmediateArguments &arguments, Statistics
     groupCounts.groupCountY = 1u;
     groupCounts.groupCountZ = 1u;
 
-    // Create event
     ze_event_pool_handle_t eventPool{};
     ze_event_handle_t event{};
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
@@ -56,12 +53,10 @@ static TestResult run(const EmptyKernelImmediateArguments &arguments, Statistics
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
-    // Create an immediate command list
     ze_command_list_handle_t cmdList{};
     auto commandQueueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, Engine::Ccs0);
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &commandQueueDesc->desc, &cmdList));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCounts, event, 0, nullptr));
@@ -76,7 +71,6 @@ static TestResult run(const EmptyKernelImmediateArguments &arguments, Statistics
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));

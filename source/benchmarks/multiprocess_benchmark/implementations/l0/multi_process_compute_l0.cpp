@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,19 +22,16 @@ static TestResult run(const MultiProcessComputeArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     ContextProperties contexProperties = ContextProperties::create().setDeviceSelection(arguments.deviceSelection).createSingleFakeSubDeviceIfNeeded();
     QueueProperties queueProperties = QueueProperties::create().disable();
     LevelZero levelzero{queueProperties, contexProperties};
 
-    // Get tiles for execution, validate if they are available
     std::vector<DeviceSelection> subDevicesForExecution = {};
     ASSERT_ZE_RESULT_SUCCESS(MultiProcessHelperL0::getSubDevicesForExecution(levelzero, arguments.deviceSelection, arguments.processesPerTile, subDevicesForExecution));
     if (subDevicesForExecution.size() == 0) {
         return TestResult::DeviceNotCapable;
     }
 
-    // Prepare processes
     ProcessGroup processes{"single_queue_workload_l0", subDevicesForExecution.size()};
     processes.addArgumentAll("iterations", std::to_string(arguments.iterations));
     processes.addArgumentAll("synchronize", std::to_string(arguments.synchronize));
@@ -46,7 +43,6 @@ static TestResult run(const MultiProcessComputeArguments &arguments, Statistics 
         processes[i].setName(MultiProcessHelperL0::createProcessName(subDevicesForExecution, i));
     }
 
-    // Run processes
     processes.runAll();
     if (arguments.synchronize) {
         processes.synchronizeAll(arguments.iterations);

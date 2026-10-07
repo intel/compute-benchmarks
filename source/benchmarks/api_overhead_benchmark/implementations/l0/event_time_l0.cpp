@@ -22,12 +22,10 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
         return TestResult::Nooped;
     }
 
-    // Setup
     ExtensionProperties extensionProperties = ExtensionProperties::create();
     LevelZero levelzero{extensionProperties};
     Timer timer;
 
-    // prepare descriptor for event creation
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
     ze_event_counter_based_flags_t cbFlags = 0;
     ze_event_scope_flags_t cbSignalScope = 0;
@@ -64,16 +62,14 @@ static TestResult run(const EventTimeArguments &arguments, Statistics &statistic
 
     std::vector<ze_event_handle_t> events(arguments.eventCount);
 
-    ze_event_pool_handle_t eventPool{}; // only for non-CBE
+    ze_event_pool_handle_t eventPool{};
     if (!arguments.counterBasedEvents) {
-        // Create event if necessary
         ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, arguments.eventCount};
         auto eventPoolFlags = arguments.hostVisible * ZE_EVENT_POOL_FLAG_HOST_VISIBLE | arguments.useProfiling * ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
         eventPoolDesc.flags = eventPoolFlags;
         ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &eventPoolDesc, 0, nullptr, &eventPool));
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
 
         timer.measureStart();

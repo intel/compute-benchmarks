@@ -28,7 +28,6 @@ static TestResult run(const CopyBufferArguments &arguments, Statistics &statisti
         return TestResult::DeviceNotCapable;
     }
 
-    // Setup
     cl_int retVal;
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents);
     Opencl opencl(queueProperties);
@@ -37,7 +36,6 @@ static TestResult run(const CopyBufferArguments &arguments, Statistics &statisti
     }
     Timer timer;
 
-    // Create buffers
     const cl_mem_flags compressionHintSrc = CompressionHelper::getCompressionFlags(arguments.compressedSource, arguments.noIntelExtensions);
     const cl_mem_flags compressionHintDst = CompressionHelper::getCompressionFlags(arguments.compressedDestination, arguments.noIntelExtensions);
     const cl_mem source = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | compressionHintSrc, arguments.size, nullptr, &retVal);
@@ -45,7 +43,6 @@ static TestResult run(const CopyBufferArguments &arguments, Statistics &statisti
     const cl_mem destination = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | compressionHintDst, arguments.size, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Check buffers compression
     const auto srcCompressionStatus = CompressionHelper::verifyCompression(source, arguments.compressedSource, arguments.noIntelExtensions);
     const auto dstCompressionStatus = CompressionHelper::verifyCompression(destination, arguments.compressedDestination, arguments.noIntelExtensions);
     if (srcCompressionStatus != TestResult::Success || dstCompressionStatus != TestResult::Success) {
@@ -61,7 +58,6 @@ static TestResult run(const CopyBufferArguments &arguments, Statistics &statisti
     ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillBuffer(opencl.commandQueue, source, arguments.size, arguments.contents));
     ASSERT_CL_SUCCESS(BufferContentsHelperOcl::fillBuffer(opencl.commandQueue, destination, arguments.size, arguments.contents));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         cl_event profilingEvent{};
         cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;

@@ -21,12 +21,10 @@ static TestResult run(const NewResourcesSubmissionDeviceArguments &arguments, St
         return TestResult::Nooped;
     }
 
-    // Setup
     Opencl opencl;
     Timer timer;
     cl_int retVal;
 
-    // Create kernel
     const char *source = "__kernel void write(__global int *outBuffer) {  \n"
                          "   outBuffer[get_global_id(0)] = 1;             \n"
                          "}";
@@ -37,7 +35,6 @@ static TestResult run(const NewResourcesSubmissionDeviceArguments &arguments, St
     cl_kernel kernel = clCreateKernel(program, "write", &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Setup sizes
     const size_t gws = 1;
     const size_t lws = 1;
     const size_t sizeInBytes = arguments.size;
@@ -45,7 +42,6 @@ static TestResult run(const NewResourcesSubmissionDeviceArguments &arguments, St
     // Keep the previous allocation alive while creating the next one so the driver hands out a fresh VA
     cl_mem previousBuffer = nullptr;
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, sizeInBytes, nullptr, &retVal);
@@ -63,7 +59,6 @@ static TestResult run(const NewResourcesSubmissionDeviceArguments &arguments, St
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     if (previousBuffer != nullptr) {
         ASSERT_CL_SUCCESS(clReleaseMemObject(previousBuffer));
     }

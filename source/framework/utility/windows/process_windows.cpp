@@ -16,7 +16,6 @@
 #include <thread>
 
 struct ProcessDataWindows {
-    // Resources to be freed
     PROCESS_INFORMATION processInfo{};
     struct ProcessPipes {
         HANDLE write = INVALID_HANDLE_VALUE;
@@ -29,7 +28,6 @@ struct ProcessDataWindows {
     ProcessPipes measurementPipe = {};
     std::unique_ptr<std::thread> asyncReadThread;
 
-    // Cached Values
     bool ended = false;
     bool hasResult = false;
     TestResult result = TestResult::Error;
@@ -138,7 +136,6 @@ void Process::run() {
     FATAL_ERROR_IF_SYS_CALL_FAILED(SetHandleInformation(processDataWindows->synchronizationPipeChildToParent.read, HANDLE_FLAG_INHERIT, 0), "setting handle inheritance")
     FATAL_ERROR_IF_SYS_CALL_FAILED(SetHandleInformation(processDataWindows->measurementPipe.read, HANDLE_FLAG_INHERIT, 0), "setting handle inheritance")
 
-    // Prepare arguments
     this->addArgument("synchronizationPipeIn", handleToArgument(processDataWindows->synchronizationPipeParentToChild.read));
     this->addArgument("synchronizationPipeOut", handleToArgument(processDataWindows->synchronizationPipeChildToParent.write));
     this->addArgument("measurementPipe", handleToArgument(processDataWindows->measurementPipe.write));
@@ -157,13 +154,11 @@ void Process::run() {
         FATAL_ERROR_IF_SYS_CALL_FAILED(SetEnvironmentVariableA(envVariable.first.c_str(), envVariable.second.c_str()), "setting env variable");
     }
 
-    // Prepare exeName (.exe extension is Windows-specific)
     std::string exeNameWithExtension = this->exeName;
     if (!endsWith(exeNameWithExtension, ".exe")) {
         exeNameWithExtension += ".exe";
     }
 
-    // Start child process
     STARTUPINFOA startupInfo{};
     startupInfo.cb = sizeof(STARTUPINFO);
     startupInfo.hStdOutput = processDataWindows->processStdOut.write;
@@ -197,7 +192,6 @@ void Process::run() {
     // a deadlock, because WaitForSingleProcess will block inifinitely.
     processDataWindows->asyncReadThread = std::make_unique<std::thread>(asyncReadThreadBody, processDataWindows.get());
 
-    // Set process data
     this->osSpecificData = processDataWindows.release();
 }
 

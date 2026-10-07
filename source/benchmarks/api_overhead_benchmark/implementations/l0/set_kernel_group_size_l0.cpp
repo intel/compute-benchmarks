@@ -23,11 +23,9 @@ static TestResult run(const SetKernelGroupSizeArguments &arguments, Statistics &
         return TestResult::Nooped;
     }
 
-    // Setup
     LevelZero levelzero;
     Timer timer;
 
-    // Create kernel
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     if (auto result = L0::KernelHelper::loadKernel(levelzero, "api_overhead_benchmark_write_sum_local.cl", "write_sum_local", &kernel, &module, nullptr);
@@ -49,7 +47,6 @@ static TestResult run(const SetKernelGroupSizeArguments &arguments, Statistics &
         groupSizeZ = 4u;
     }
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
@@ -57,7 +54,6 @@ static TestResult run(const SetKernelGroupSizeArguments &arguments, Statistics &
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
     ASSERT_ZE_RESULT_SUCCESS(zeModuleDestroy(module));
 

@@ -27,8 +27,6 @@ struct ImmediateCmdListCopyWorkloadArguments : WorkloadArgumentContainer {
 struct ImmediateCmdListCopyWorkload : Workload<ImmediateCmdListCopyWorkloadArguments> {};
 
 TestResult run(const ImmediateCmdListCopyWorkloadArguments &arguments, Statistics &statistics, WorkloadSynchronization &synchronization, WorkloadIo &io) {
-
-    // Setup
     LevelZero levelzero{};
     uint32_t queueGroupPropertiesCount = 0;
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeDeviceGetCommandQueueGroupProperties(levelzero.device, &queueGroupPropertiesCount, nullptr));
@@ -77,7 +75,6 @@ TestResult run(const ImmediateCmdListCopyWorkloadArguments &arguments, Statistic
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(UsmHelper::allocate(UsmMemoryPlacement::Host, levelzero, arguments.copySize, &hostSrcMemory));
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, arguments.copySize, &deviceDstMemory));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         synchronization.synchronize(io);
         timer.measureStart();
@@ -88,7 +85,6 @@ TestResult run(const ImmediateCmdListCopyWorkloadArguments &arguments, Statistic
         ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeEventHostReset(event));
         statistics.pushValue(timer.get(), MeasurementUnit::Unknown, MeasurementType::Unknown);
     }
-    // Cleanup
     UsmHelper::deallocate(UsmMemoryPlacement::Host, levelzero, hostSrcMemory);
     UsmHelper::deallocate(UsmMemoryPlacement::Device, levelzero, deviceDstMemory);
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeEventDestroy(event));

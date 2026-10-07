@@ -26,7 +26,6 @@ static TestResult run(const OneAtomicExplicitArguments &arguments, Statistics &s
         return TestResult::Nooped;
     }
 
-    // Setup
     QueueProperties queueProperties = QueueProperties::create().setProfiling(arguments.useEvents);
     cl_event profilingEvent{};
     cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;
@@ -34,23 +33,19 @@ static TestResult run(const OneAtomicExplicitArguments &arguments, Statistics &s
     Timer timer{};
     cl_int retVal{};
 
-    // Check support
     if (!MathOperationHelper::isSupportedAsAtomic(arguments.atomicOperation, arguments.dataType, opencl.getExtensions().isGlobalFloatAtomicsSupported(), false)) {
         return TestResult::DeviceNotCapable;
     }
 
-    // Prepare data
     const size_t lws = arguments.workgroupSize;
     const size_t gws = arguments.workgroupSize * arguments.workgroupCount;
     const size_t totalThreadsCount = gws * arguments.iterations;
     const auto data = KernelHelper::getDataForKernel(arguments.dataType, arguments.atomicOperation, totalThreadsCount);
 
-    // Buffer sizes
-    const size_t atomicBufferSize = data.sizeOfDataType; // only one atomic value
-    const size_t otherArgumentsBufferEntryCount = 4u;    // we only need 1 value, but storing in multiple can prevent some compiler opts
+    const size_t atomicBufferSize = data.sizeOfDataType;
+    const size_t otherArgumentsBufferEntryCount = 4u; // we only need 1 value, but storing in multiple can prevent some compiler opts
     const size_t otherArgumentsBufferSize = otherArgumentsBufferEntryCount * data.sizeOfDataType;
 
-    // Create kernel
     cl_program program = nullptr;
     const char *programName = "atomic_benchmark_kernel.cl";
     const std::string compilerOptions = KernelHelper::getCompilerOptionsExplicit(arguments.dataType, arguments.atomicOperation, arguments.memoryOrder, arguments.scope, otherArgumentsBufferEntryCount);
@@ -71,7 +66,6 @@ static TestResult run(const OneAtomicExplicitArguments &arguments, Statistics &s
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, initializeKernel, 1, nullptr, &gwsForInitialize, nullptr, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
-    // Create and initialize the buffer with value for the other argument of atomic operation
     cl_mem otherArgumentsBuffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, otherArgumentsBufferSize, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
     ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, otherArgumentsBuffer, data.otherArgument, data.sizeOfDataType, 0, otherArgumentsBufferSize, 0, nullptr, nullptr));
@@ -83,7 +77,6 @@ static TestResult run(const OneAtomicExplicitArguments &arguments, Statistics &s
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 1, sizeof(otherArgumentsBuffer), &otherArgumentsBuffer));
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 2, sizeof(iterations), &iterations));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, eventForEnqueue));
@@ -102,14 +95,12 @@ static TestResult run(const OneAtomicExplicitArguments &arguments, Statistics &s
         }
     }
 
-    // Verify
     std::byte result[8] = {};
     ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, atomicBuffer, CL_BLOCKING, 0, data.sizeOfDataType, result, 0, nullptr, nullptr));
     if (std::memcmp(result, data.expectedValue, data.sizeOfDataType) != 0) {
         return TestResult::VerificationFail;
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseKernel(initializeKernel));
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));

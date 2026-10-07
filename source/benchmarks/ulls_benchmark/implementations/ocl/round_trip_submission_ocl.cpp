@@ -21,16 +21,13 @@ static TestResult run(const RoundTripSubmissionArguments &arguments, Statistics 
         return TestResult::Nooped;
     }
 
-    // Setup
     Opencl opencl;
     Timer timer;
     cl_int retVal;
 
-    // Create buffer
     cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, 64u, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
-    // Create kernel
     const char *source = "__kernel void write(__global int *outBuffer) {  \n"
                          "   outBuffer[get_global_id(0)] = 1;             \n"
                          "}";
@@ -45,7 +42,6 @@ static TestResult run(const RoundTripSubmissionArguments &arguments, Statistics 
     const size_t lws = 1;
     ASSERT_CL_SUCCESS(clSetKernelArg(kernel, 0, sizeof(buffer), &buffer));
 
-    // Benchmark
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &gws, &lws, 0, nullptr, nullptr));
@@ -56,7 +52,6 @@ static TestResult run(const RoundTripSubmissionArguments &arguments, Statistics 
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
 
-    // Cleanup
     ASSERT_CL_SUCCESS(clReleaseMemObject(buffer));
     ASSERT_CL_SUCCESS(clReleaseKernel(kernel));
     ASSERT_CL_SUCCESS(clReleaseProgram(program));
