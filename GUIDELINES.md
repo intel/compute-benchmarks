@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 # Coding guidelines
 This document lists the coding rules for Compute Benchmarks. They apply to all new and modified code. `clang-format` checks the formatting automatically; the code review checks the rules below.
 
+The rules do not apply to definitions that are copied from a specification or an API header, for example extension types, function pointer types, structures and macros of OpenCL, Level Zero or other APIs. Keep these definitions exactly as the source writes them, and when the source changes, update the copy to match it.
+
 ## Table of Contents
 
 - [1. C++ usage](#cpp-usage)
