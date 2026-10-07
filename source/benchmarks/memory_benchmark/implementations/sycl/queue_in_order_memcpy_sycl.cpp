@@ -17,6 +17,12 @@ using namespace SYCL;
 static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &statistics) {
     ComboProfilerWithStats prof(Configuration::get().profilerType);
 
+    // SYCL has no way to select the copy engine, and copy offload is an L0
+    // driver hint.
+    if (arguments.isCopyOnly || arguments.withCopyOffload) {
+        return TestResult::ApiNotCapable;
+    }
+
     if (isNoopRun()) {
         prof.pushNoop(statistics);
         return TestResult::Nooped;
