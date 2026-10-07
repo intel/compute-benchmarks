@@ -14,12 +14,6 @@
 #include <emmintrin.h>
 #include <gtest/gtest.h>
 
-#define ADD_ENTER_SUPPORT 0
-
-#if ADD_ENTER_SUPPORT
-#include <iostream>
-#endif
-
 static TestResult run(const WriteLatencyArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 

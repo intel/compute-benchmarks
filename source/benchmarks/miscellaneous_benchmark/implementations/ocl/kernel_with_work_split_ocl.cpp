@@ -15,8 +15,6 @@
 
 #include <gtest/gtest.h>
 
-#define PROVIDE_PROFLING_DETAILS 0
-
 static TestResult run(const KernelWithWorkArgumentsSplit &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 

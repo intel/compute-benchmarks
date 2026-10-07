@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,13 +14,10 @@
 struct ReadDeviceMemBufferArguments : TestCaseArgumentContainer {
     ByteSizeArgument size;
     CompressionBooleanArgument compressed;
-    // ByteSizeArgument numWaves;
 
     ReadDeviceMemBufferArguments()
         : size(*this, "size", "Size of the buffer"),
-          compressed(*this, "compressed", CommonHelpMessage::compression("buffer"))
-    //,numWaves(*this, "waves")
-    {}
+          compressed(*this, "compressed", CommonHelpMessage::compression("buffer")) {}
 };
 
 struct ReadDeviceMemBuffer : TestCase<ReadDeviceMemBufferArguments> {
