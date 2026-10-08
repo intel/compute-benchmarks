@@ -7,7 +7,7 @@
 
 #include "random_distribution.h"
 
-#include <cassert>
+#include "framework/utility/error.h"
 
 UniformDistribution::UniformDistribution(size_t min, size_t max) : distr(min, max) {}
 
@@ -16,7 +16,7 @@ size_t UniformDistribution::get(std::mt19937 &gen) {
 }
 
 LogUniformDistribution::LogUniformDistribution(size_t min, size_t max) {
-    assert(min < max && min != 0);
+    FATAL_ERROR_IF(min >= max || min == 0, "LogUniformDistribution requires 0 < min < max");
     double quotient = static_cast<double>(max) / static_cast<double>(min);
     minValue = min;
     maxValue = max;
@@ -43,7 +43,6 @@ std::unique_ptr<RandomDistribution> makeRandomDistribution(DistributionKind kind
     case DistributionKind::LogUniform:
         return std::make_unique<LogUniformDistribution>(min, max);
     default:
-        assert(false);
-        return {}; // silence warning
+        FATAL_ERROR("Unknown distribution kind");
     }
 }

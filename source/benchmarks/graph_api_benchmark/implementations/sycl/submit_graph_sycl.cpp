@@ -46,8 +46,10 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         queuePropsIndex |= arguments.inOrderQueue ? 0x2 : 0;
         sycl::queue queue{queueProps[queuePropsIndex]};
 
-        assert(queue.has_property<sycl::property::queue::in_order>() == arguments.inOrderQueue);
-        assert(queue.has_property<sycl::property::queue::enable_profiling>() == arguments.useProfiling);
+        if (queue.has_property<sycl::property::queue::in_order>() != arguments.inOrderQueue ||
+            queue.has_property<sycl::property::queue::enable_profiling>() != arguments.useProfiling) {
+            return TestResult::Error;
+        }
 
         const size_t gws = 1u;
         const size_t lws = 1u;

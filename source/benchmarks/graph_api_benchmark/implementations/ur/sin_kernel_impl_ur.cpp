@@ -112,7 +112,9 @@ TestResult SinKernelGraphUR::runKernels() {
         {UR_STRUCTURE_TYPE_EXP_KERNEL_ARG_PROPERTIES, nullptr, UR_EXP_KERNEL_ARG_TYPE_POINTER, 1, sizeof(source), val2}};
 
     if (withGraphs) {
-        assert(cmdBuffer != nullptr && "Command buffer is not initialized");
+        if (cmdBuffer == nullptr) {
+            return TestResult::Error;
+        }
         EXPECT_UR_RESULT_SUCCESS(urCommandBufferAppendKernelLaunchWithArgsExp(
             cmdBuffer, kernelAssign, n_dimensions, &global_offset, global_size,
             nullptr, 2, args, 0, nullptr, 0, nullptr, 0, nullptr, &syncPoints[0], nullptr,
