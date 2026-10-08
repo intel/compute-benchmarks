@@ -15,11 +15,9 @@
 
 #include <gtest/gtest.h>
 
-typedef struct _st_container st_container;
-
-struct _st_container {
+struct IndirectContainer {
     int32_t *value;
-    st_container *next;
+    IndirectContainer *next;
 };
 
 static TestResult run(const SetKernelArgSvmPointerArguments &arguments, Statistics &statistics) {

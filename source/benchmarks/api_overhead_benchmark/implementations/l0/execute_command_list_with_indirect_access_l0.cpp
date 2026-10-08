@@ -14,11 +14,9 @@
 
 #include <gtest/gtest.h>
 
-typedef struct _st_container st_container;
-
-struct _st_container {
+struct IndirectContainer {
     int32_t *value;
-    st_container *next;
+    IndirectContainer *next;
 };
 
 static TestResult run(const ExecuteCommandListWithIndirectAccessArguments &arguments, Statistics &statistics) {
@@ -51,14 +49,14 @@ static TestResult run(const ExecuteCommandListWithIndirectAccessArguments &argum
         indirectAllocations.push_back(static_cast<int32_t *>(ptr));
     }
 
-    std::vector<st_container *> wrappedIndirectAllocations;
-    st_container *lastContainer = nullptr;
+    std::vector<IndirectContainer *> wrappedIndirectAllocations;
+    IndirectContainer *lastContainer = nullptr;
     for (auto &allocation : indirectAllocations) {
         *allocation = 0;
         const ze_host_mem_alloc_desc_t hostAllocationDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
         void *ptr = nullptr;
-        ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostAllocationDesc, sizeof(st_container), 4u, &ptr));
-        st_container *wrappedIndirectAllocation = static_cast<st_container *>(ptr);
+        ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostAllocationDesc, sizeof(IndirectContainer), 4u, &ptr));
+        IndirectContainer *wrappedIndirectAllocation = static_cast<IndirectContainer *>(ptr);
         wrappedIndirectAllocation->next = lastContainer;
         wrappedIndirectAllocation->value = allocation;
         wrappedIndirectAllocations.push_back(wrappedIndirectAllocation);
@@ -70,7 +68,7 @@ static TestResult run(const ExecuteCommandListWithIndirectAccessArguments &argum
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ze_command_list_handle_t cmdList;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(st_container *), &wrappedIndirectAllocations.back()));
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 0, sizeof(IndirectContainer *), &wrappedIndirectAllocations.back()));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
