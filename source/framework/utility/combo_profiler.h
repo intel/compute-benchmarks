@@ -17,7 +17,7 @@
 
 class ComboProfiler {
   public:
-    ComboProfiler(ProfilerType profiler = ProfilerType::Timer)
+    ComboProfiler(ProfilerType profiler)
         : profiler_type(profiler) {
         switch (profiler_type) {
         case ProfilerType::Timer:
@@ -68,7 +68,7 @@ class ComboProfiler {
 
 class ComboProfilerWithStats : public ComboProfiler {
   public:
-    ComboProfilerWithStats(ProfilerType profiler = ProfilerType::Timer)
+    ComboProfilerWithStats(ProfilerType profiler)
         : ComboProfiler(profiler) {}
 
     void pushStats(Statistics &statistics) {

@@ -70,7 +70,7 @@ static TestResult run(const KernelWithWorkArguments &arguments, Statistics &stat
         return result;
     }
     VulkanShaderModule shaderModule(vulkan, spirv);
-    VulkanDescriptorSet descriptorSets(vulkan, 1);
+    VulkanDescriptorSet descriptorSets(vulkan, 1, 1);
     VulkanComputePipeline pipeline(vulkan, shaderModule, static_cast<uint32_t>(arguments.workgroupSize), descriptorSets.layout());
 
     const VkDescriptorBufferInfo bufferInfo{buffer, 0u, bufferSize};

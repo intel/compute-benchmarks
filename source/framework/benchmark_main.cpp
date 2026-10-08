@@ -308,7 +308,7 @@ int BenchmarkMain::main() {
         return 0;
     }
     if (configuration.version) {
-        return printVersion(true);
+        return printVersion(true, "");
     }
 
     if (!Configuration::get().noHeaders) {

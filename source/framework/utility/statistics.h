@@ -20,16 +20,26 @@ class Statistics {
 
     Statistics(size_t maxSamplesCount) : maxSamplesCount(maxSamplesCount) {}
 
-    virtual void pushPercentage(double value, MeasurementUnit unit, MeasurementType type, std::string_view description = "") = 0;
-    virtual void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, std::string_view description = "") = 0;
-    virtual void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, std::string_view description = "") = 0;
-    virtual void pushCpuCounter(uint64_t count, MeasurementUnit unit, MeasurementType type, std::string_view description = "") = 0;
-    virtual void pushEnergy(size_t microJoules, MeasurementUnit unit, MeasurementType type, std::string_view description = "") = 0;
-    virtual void pushEnergy(double watts, MeasurementUnit unit, MeasurementType type, std::string_view description = "") = 0;
+    virtual void pushPercentage(double value, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
+    virtual void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
+    virtual void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
+    virtual void pushCpuCounter(uint64_t count, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
+    virtual void pushEnergy(size_t microJoules, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
+    virtual void pushEnergy(double watts, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
     virtual void pushUnitAndType(MeasurementUnit unit, MeasurementType type) = 0;
 
     virtual bool isEmpty() const = 0;
     virtual bool isFull() const = 0;
+
+    void pushPercentage(double value, MeasurementUnit unit, MeasurementType type) {
+        this->pushPercentage(value, unit, type, "");
+    }
+    void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type) {
+        this->pushValue(time, unit, type, "");
+    }
+    void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type) {
+        this->pushValue(time, size, unit, type, "");
+    }
 
   protected:
     const size_t maxSamplesCount = 0;

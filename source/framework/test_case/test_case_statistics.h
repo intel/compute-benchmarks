@@ -29,12 +29,14 @@ class TestCaseStatistics : public Statistics {
 
     explicit TestCaseStatistics(size_t maxSamplesCount, Configuration::PrintType printType);
 
-    void pushPercentage(double value, MeasurementUnit unit, MeasurementType type, std::string_view description = "") override;
-    void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, std::string_view description = "") override;
-    void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, std::string_view description = "") override;
-    void pushCpuCounter(uint64_t count, MeasurementUnit unit, MeasurementType type, std::string_view description = "") override;
-    void pushEnergy(size_t microJoules, MeasurementUnit unit, MeasurementType type, std::string_view description = "") override;
-    void pushEnergy(double watts, MeasurementUnit unit, MeasurementType type, std::string_view description = "") override;
+    using Statistics::pushPercentage;
+    using Statistics::pushValue;
+    void pushPercentage(double value, MeasurementUnit unit, MeasurementType type, std::string_view description) override;
+    void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, std::string_view description) override;
+    void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, std::string_view description) override;
+    void pushCpuCounter(uint64_t count, MeasurementUnit unit, MeasurementType type, std::string_view description) override;
+    void pushEnergy(size_t microJoules, MeasurementUnit unit, MeasurementType type, std::string_view description) override;
+    void pushEnergy(double watts, MeasurementUnit unit, MeasurementType type, std::string_view description) override;
     void pushUnitAndType(MeasurementUnit unit, MeasurementType type) override;
 
     bool isEmpty() const override;
@@ -48,7 +50,7 @@ class TestCaseStatistics : public Statistics {
     void printStatisticsBeforeTest(const std::string &testCaseName) const;
     void printClearLineAfterTest() const;
     void printStatistics(const std::string &testCaseName) const;
-    void printStatisticsString(const std::string &testCaseName, const std::string &message, char lineEnding = '\n') const;
+    void printStatisticsString(const std::string &testCaseName, const std::string &message, char lineEnding) const;
 
   private:
     struct BufferedLine {

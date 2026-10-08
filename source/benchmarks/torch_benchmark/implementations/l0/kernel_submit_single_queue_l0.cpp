@@ -49,8 +49,8 @@ TestResult set_kernel_args(const std::string &kernel_name,
                            size_t total_elements,
                            std::vector<void *> &kernel_arguments,
                            std::vector<void *> &arg_storage,
-                           uint32_t num_params2 = 0, DATATYPE2 *device_array_2 = nullptr,
-                           uint32_t num_params3 = 0, DATATYPE3 *device_array_3 = nullptr) {
+                           uint32_t num_params2, DATATYPE2 *device_array_2,
+                           uint32_t num_params3, DATATYPE3 *device_array_3) {
     if (kernel_name != "empty") {
         arg_storage.clear();
         kernel_arguments.clear();
@@ -83,6 +83,16 @@ TestResult set_kernel_args(const std::string &kernel_name,
         }
     }
     return TestResult::Success;
+}
+
+template <typename DATATYPE1>
+TestResult set_kernel_args(const std::string &kernel_name,
+                           DATATYPE1 *res,
+                           uint32_t num_params1, DATATYPE1 *device_array_1,
+                           size_t total_elements,
+                           std::vector<void *> &kernel_arguments,
+                           std::vector<void *> &arg_storage) {
+    return set_kernel_args<DATATYPE1, float, int>(kernel_name, res, num_params1, device_array_1, total_elements, kernel_arguments, arg_storage, 0, nullptr, 0, nullptr);
 }
 
 static TestResult verify_result(ze_command_list_handle_t cmdList,

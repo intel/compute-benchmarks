@@ -66,7 +66,7 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
     std::vector<VkDescriptorBufferInfo> bufferInfos(argumentCount);
     std::vector<VkDescriptorBufferInfo> reversedBufferInfos(argumentCount);
     for (auto allocationId = 0u; allocationId < argumentCount; allocationId++) {
-        allocations.push_back(std::make_unique<VulkanBuffer>(vulkan, 4096u));
+        allocations.push_back(std::make_unique<VulkanBuffer>(vulkan, 4096u, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
         bufferInfos[allocationId] = VkDescriptorBufferInfo{*allocations.back(), 0u, VK_WHOLE_SIZE};
     }
     for (auto index = 0u; index < argumentCount; index++) {

@@ -150,7 +150,7 @@ class CounterBasedEvent {
     ze_event_handle_t event{};
 
   public:
-    CounterBasedEvent(LevelZero &l0, bool enableProfiling = false);
+    CounterBasedEvent(LevelZero &l0, bool enableProfiling);
     ~CounterBasedEvent();
 
     CounterBasedEvent(const CounterBasedEvent &) = delete;

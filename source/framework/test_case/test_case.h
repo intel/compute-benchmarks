@@ -112,7 +112,7 @@ class TestCase : public TestCaseBase {
             const auto printMessage = (Configuration::get().printAllResults && testResultInfo.printInPrintAllResultsMode) ||
                                       (arguments.isSingleTestMode ? testResultInfo.printInSingleTestMode : testResultInfo.printInAllTestsMode);
             if (printMessage) {
-                statistics.printStatisticsString(testCaseNameWithConfig, testResultInfo.stringMessage);
+                statistics.printStatisticsString(testCaseNameWithConfig, testResultInfo.stringMessage, '\n');
             }
         }
     }

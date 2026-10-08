@@ -15,7 +15,9 @@ namespace L0::KernelHelper {
 TestResult loadModule(LevelZero &levelzero, const std::string &filePath, ze_module_handle_t *module, const char *pBuildFlags);
 TestResult loadModule(LevelZero &levelzero, ze_device_handle_t device, const std::string &filePath, ze_module_handle_t *module, const char *pBuildFlags);
 TestResult loadKernel(LevelZero &levelzero, const std::string &filePath, const std::string &kernelName, ze_kernel_handle_t *kernel,
-                      ze_module_handle_t *module, const char *pBuildFlags, ze_kernel_flags_t kernelFlags = 0);
+                      ze_module_handle_t *module, const char *pBuildFlags);
+TestResult loadKernel(LevelZero &levelzero, const std::string &filePath, const std::string &kernelName, ze_kernel_handle_t *kernel,
+                      ze_module_handle_t *module, const char *pBuildFlags, ze_kernel_flags_t kernelFlags);
 TestResult loadKernel(LevelZero &levelzero, ze_device_handle_t device, const std::string &filePath, const std::string &kernelName, ze_kernel_handle_t *kernel,
-                      ze_module_handle_t *module, const char *pBuildFlags, ze_kernel_flags_t kernelFlags = 0);
+                      ze_module_handle_t *module, const char *pBuildFlags, ze_kernel_flags_t kernelFlags);
 } // namespace L0::KernelHelper

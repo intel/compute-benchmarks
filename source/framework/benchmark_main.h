@@ -24,7 +24,7 @@ class BenchmarkMain {
 
     int setupEnvironment();
 
-    int printVersion(bool enableWarning, const char *prefix = "");
+    int printVersion(bool enableWarning, const char *prefix);
     void printHelp();
     int generateDocs();
     int listTestSuites();

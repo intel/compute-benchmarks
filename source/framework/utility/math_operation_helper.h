@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,9 +29,9 @@ struct MathOperationHelper {
     static size_t getArgumentsCount(MathOperation operation);
 
     static MathOperationTestData generateTestData(DataType dataType, MathOperation operation, size_t loopIterations,
-                                                  size_t operationsPerLoop, size_t totalThreadsCount = 1);
+                                                  size_t operationsPerLoop, size_t totalThreadsCount);
     template <typename DataTypeT>
-    static MathOperationTestData generateTestData(MathOperation operation, size_t loopIterations, size_t operationsPerLoop, size_t totalThreadsCount = 1);
+    static MathOperationTestData generateTestData(MathOperation operation, size_t loopIterations, size_t operationsPerLoop, size_t totalThreadsCount);
 };
 
 template <typename DataTypeT>

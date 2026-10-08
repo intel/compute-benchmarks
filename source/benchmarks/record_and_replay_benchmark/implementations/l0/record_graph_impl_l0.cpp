@@ -112,7 +112,7 @@ struct RecordGraphImplBase : RecordedGraphBase {
         return static_cast<ParentT *>(this);
     }
 
-    ze_command_list_handle_t getAppendTarget(int parentLevel = 0) {
+    ze_command_list_handle_t getAppendTarget(int parentLevel) {
         return *(cmdListStack.rbegin() + parentLevel);
     }
 
@@ -356,7 +356,7 @@ void recordGraphLevel(int level, const LevelZero &levelzero, const GraphApi &gra
             EXPECT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(cfg.kernel, 0, sizeof(void *), (0 != (k & 1)) ? &cfg.copyTo : &cfg.copyFrom));
             EXPECT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(cfg.kernel, 1, sizeof(void *), (0 != (k & 1)) ? &cfg.copyFrom : &cfg.copyTo));
             if ((forkSpan == forkToCommandRatio) || (numForksToCreate - numForks >= totalCommands - cmdId)) {
-                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(graph.getAppendTarget(), cfg.kernel, &cfg.kernelGroupCount, forkEvent, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
+                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(graph.getAppendTarget(0), cfg.kernel, &cfg.kernelGroupCount, forkEvent, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
                 waitEvent = cfg.forkLevelInfo[level + 1].joinEvent;
 
                 graph.fork(cfg.forkLevelInfo[level + 1].target);
@@ -365,13 +365,13 @@ void recordGraphLevel(int level, const LevelZero &levelzero, const GraphApi &gra
                 forkSpan = 0;
                 graph.join();
             } else {
-                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(graph.getAppendTarget(), cfg.kernel, &cfg.kernelGroupCount, nullptr, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
+                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(graph.getAppendTarget(0), cfg.kernel, &cfg.kernelGroupCount, nullptr, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
                 waitEvent = nullptr;
             }
         }
         for (int c = 0; c < cfg.numCopiesInSet; ++c, ++cmdId, ++forkSpan) {
             if ((forkSpan == forkToCommandRatio) || (numForksToCreate - numForks >= totalCommands - cmdId)) {
-                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(graph.getAppendTarget(), cfg.copyTo, cfg.copyFrom, cfg.copySize, forkEvent, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
+                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(graph.getAppendTarget(0), cfg.copyTo, cfg.copyFrom, cfg.copySize, forkEvent, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
                 waitEvent = cfg.forkLevelInfo[level + 1].joinEvent;
 
                 graph.fork(cfg.forkLevelInfo[level + 1].target);
@@ -380,13 +380,13 @@ void recordGraphLevel(int level, const LevelZero &levelzero, const GraphApi &gra
                 forkSpan = 0;
                 graph.join();
             } else {
-                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(graph.getAppendTarget(), cfg.copyTo, cfg.copyFrom, cfg.copySize, nullptr, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
+                EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(graph.getAppendTarget(0), cfg.copyTo, cfg.copyFrom, cfg.copySize, nullptr, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
                 waitEvent = nullptr;
             }
         }
     }
     if ((level > 0) || waitEvent) { // trailing join
-        EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(graph.getAppendTarget(), cfg.copyTo, cfg.copyFrom, cfg.copySize,
+        EXPECT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(graph.getAppendTarget(0), cfg.copyTo, cfg.copyFrom, cfg.copySize,
                                                                (level > 0) ? cfg.forkLevelInfo[level].joinEvent : nullptr, waitEvent ? 1 : 0, waitEvent ? &waitEvent : nullptr));
     }
 }

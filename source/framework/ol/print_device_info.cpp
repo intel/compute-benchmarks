@@ -144,7 +144,7 @@ Expected<Type> getPlatformInfoField(ol_platform_handle_t platform,
 
 std::string makeFieldName(std::string_view enumerator,
                           std::string_view prefix,
-                          std::string_view fieldGroup = {}) {
+                          std::string_view fieldGroup) {
     if (enumerator.substr(0, prefix.size()) == prefix) {
         enumerator.remove_prefix(prefix.size());
     }
@@ -172,7 +172,7 @@ void addDeviceField(std::vector<OL::DeviceInfoField> &fields,
                     ol_device_handle_t device, ol_device_info_t info,
                     bool showInDeviceListItem) {
     fields.push_back(
-        {makeFieldName(OL::toString(info), "OL_DEVICE_INFO_"),
+        {makeFieldName(OL::toString(info), "OL_DEVICE_INFO_", std::string_view{}),
          formatDeviceInfoField(getDeviceInfoField<Type>(device, info)),
          showInDeviceListItem});
 }

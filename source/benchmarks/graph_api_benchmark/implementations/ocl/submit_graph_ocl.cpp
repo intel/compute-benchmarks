@@ -97,7 +97,7 @@ static TestResult run(const SubmitGraphArguments &arguments, Statistics &statist
     Opencl opencl(queueProperties);
     cl_int retVal{};
 
-    if (!opencl.getExtensions().isSupported(CL_KHR_COMMAND_BUFFER_EXTENSION_NAME)) {
+    if (!opencl.getExtensions().isSupported(CL_KHR_COMMAND_BUFFER_EXTENSION_NAME, false)) {
         return TestResult::DeviceNotCapable;
     }
 

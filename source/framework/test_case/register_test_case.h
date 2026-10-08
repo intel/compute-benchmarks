@@ -13,7 +13,10 @@
 
 template <typename TestCase>
 struct RegisterTestCaseImplementation {
-    explicit RegisterTestCaseImplementation(typename TestCase::BenchmarkImplementation::Function function, Api api, bool requiresIntelExtensions = false) {
+    explicit RegisterTestCaseImplementation(typename TestCase::BenchmarkImplementation::Function function, Api api)
+        : RegisterTestCaseImplementation(function, api, false) {}
+
+    explicit RegisterTestCaseImplementation(typename TestCase::BenchmarkImplementation::Function function, Api api, bool requiresIntelExtensions) {
         auto &implementation = TestCase::implementations[static_cast<int>(api)];
         implementation.function = function;
         implementation.requiresIntelExtensions = requiresIntelExtensions;

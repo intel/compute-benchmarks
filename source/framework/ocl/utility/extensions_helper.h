@@ -27,7 +27,7 @@ class ExtensionsHelper {
         EXPECT_CL_SUCCESS(clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(platform), &platform, nullptr));
     }
 
-    bool isSupported(const char *extension, bool allowPreview = false) const {
+    bool isSupported(const char *extension, bool allowPreview) const {
         const auto previewExtension = std::string(extension) + "_preview";
         const bool allowIntelExtensions = !Configuration::get().noIntelExtensions;
         const auto predicate = [&](const std::string &currentExtension) {
@@ -39,11 +39,11 @@ class ExtensionsHelper {
     }
 
     bool areDoublesSupported() const {
-        return isSupported("cl_khr_fp64");
+        return isSupported("cl_khr_fp64", false);
     }
 
     bool isGlobalFloatAtomicsSupported() const {
-        return isSupported("cl_intel_global_float_atomics");
+        return isSupported("cl_intel_global_float_atomics", false);
     }
 
     bool isCommandQueueFamiliesSupported() const {

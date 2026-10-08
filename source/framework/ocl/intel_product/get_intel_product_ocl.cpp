@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 IntelProduct getIntelProduct(cl_device_id device) {
     ExtensionsHelper extensions{device};
 
-    if (!extensions.isSupported("cl_intel_device_attribute_query")) {
+    if (!extensions.isSupported("cl_intel_device_attribute_query", false)) {
         return IntelProduct::Unknown;
     }
     cl_uint deviceId{};

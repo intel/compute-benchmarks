@@ -39,7 +39,7 @@ static TestResult run(const EmptyKernelArguments &arguments, Statistics &statist
         return result;
     }
     VulkanShaderModule shaderModule(vulkan, spirv);
-    VulkanComputePipeline pipeline(vulkan, shaderModule, static_cast<uint32_t>(arguments.workgroupSize));
+    VulkanComputePipeline pipeline(vulkan, shaderModule, static_cast<uint32_t>(arguments.workgroupSize), VK_NULL_HANDLE);
 
     VkCommandBuffer commandBuffer = vulkan.allocateCommandBuffer();
     VkCommandBufferBeginInfo commandBufferBeginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};

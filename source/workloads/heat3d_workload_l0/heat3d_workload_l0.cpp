@@ -583,7 +583,7 @@ static TestResult initParams(ParamsTy &params, const Heat3DArguments &arguments)
                     continue;
                 }
                 int socketOther = -1;
-                socketAccept(ipcSocket, socketOthers, socketOther);
+                socketAccept(ipcSocket, socketOthers, socketOther, 0);
                 for (int f = 0; f < int(FacetTy::LAST); f++) {
                     const int fd = *reinterpret_cast<int *>(ipcHandles[r][f].data);
                     socketSendDataWithFd(socketOther, fd, ipcHandles[r][f].data, ZE_MAX_IPC_HANDLE_SIZE);
@@ -595,7 +595,7 @@ static TestResult initParams(ParamsTy &params, const Heat3DArguments &arguments)
             EXPECT_EQ(0, unlink(socketName.c_str()));
         } else {
             usleep(50000 * (params.nRanks - params.rank));
-            socketConnect(ipcSocket, socketName);
+            socketConnect(ipcSocket, socketName, 0);
             for (int f = 0; f < int(FacetTy::LAST); f++) {
                 int fd = -1;
                 socketRecvDataWithFd(ipcSocket, fd, ipcHandles[r][f].data, ZE_MAX_IPC_HANDLE_SIZE);

@@ -33,7 +33,7 @@ class AllTestsGtestListener : public ::testing::EmptyTestEventListener {
                Configuration::get().printType != Configuration::PrintType::Csv;
     }
 
-    void printProgress(const std::string &currentTestName = "") {
+    void printProgress(const std::string &currentTestName) {
         if (!showProgress()) {
             return;
         }
@@ -83,7 +83,7 @@ class AllTestsGtestListener : public ::testing::EmptyTestEventListener {
         if (!Configuration::get().noColumnNames && Configuration::get().printType == Configuration::PrintType::Csv) {
             TestCaseStatistics::printStatisticsHeader(Configuration::get().printType, 0);
         }
-        printProgress();
+        printProgress("");
     }
     void OnTestProgramEnd([[maybe_unused]] const ::testing::UnitTest &unitTest) override {
         clearProgress();
@@ -102,7 +102,7 @@ class AllTestsGtestListener : public ::testing::EmptyTestEventListener {
     }
     void OnTestEnd(const ::testing::TestInfo &testCase) override {
         completedTests++;
-        printProgress();
+        printProgress("");
         if (testCase.result()->Failed()) {
             currentTestCaseErrorInfo.name << testCase.test_case_name() << "." << testCase.name();
             errorInfos.push_back(std::move(currentTestCaseErrorInfo));

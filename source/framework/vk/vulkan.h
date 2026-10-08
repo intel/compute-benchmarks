@@ -70,7 +70,7 @@ class VulkanShaderModule : NoCopyOrMove {
 
 class VulkanDescriptorSet : NoCopyOrMove {
   public:
-    VulkanDescriptorSet(Vulkan &vulkan, uint32_t storageBufferCount, uint32_t setCount = 1);
+    VulkanDescriptorSet(Vulkan &vulkan, uint32_t storageBufferCount, uint32_t setCount);
     ~VulkanDescriptorSet() noexcept;
     VkDescriptorSet operator[](uint32_t setIndex) const { return descriptorSets_[setIndex]; }
     const VkDescriptorSet *address(uint32_t setIndex) const { return &descriptorSets_[setIndex]; }
@@ -87,7 +87,7 @@ class VulkanDescriptorSet : NoCopyOrMove {
 // constant 0, so every workgroup size needs its own pipeline.
 class VulkanComputePipeline : NoCopyOrMove {
   public:
-    VulkanComputePipeline(Vulkan &vulkan, VkShaderModule shaderModule, uint32_t workgroupSize, VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE);
+    VulkanComputePipeline(Vulkan &vulkan, VkShaderModule shaderModule, uint32_t workgroupSize, VkDescriptorSetLayout descriptorSetLayout);
     ~VulkanComputePipeline() noexcept;
     operator VkPipeline() const { return pipeline_; }
     VkPipelineLayout layout() const { return pipelineLayout_; }
@@ -112,7 +112,7 @@ class VulkanFence : NoCopyOrMove {
 
 class VulkanBuffer : NoCopyOrMove {
   public:
-    VulkanBuffer(Vulkan &vulkan, VkDeviceSize size, VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VkMemoryPropertyFlags memoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    VulkanBuffer(Vulkan &vulkan, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperties);
     ~VulkanBuffer() noexcept;
     operator VkBuffer() const { return buffer_; }
     void *mappedPtr() const { return mappedPtr_; }
