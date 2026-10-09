@@ -18,6 +18,8 @@
 #include <cstring>
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 std::string getCompilerOptions(DataType dataType, MathOperation operation, bool largeGrfMode) {
     CompilerOptionsBuilder options{};
     options.addDefinitionKeyValue("DATATYPE", DataTypeHelper::toOpenclC(dataType));

@@ -21,6 +21,8 @@
 #include <gtest/gtest.h>
 #include <vector>
 
+using namespace OCL;
+
 using namespace MemoryConstants;
 
 static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {

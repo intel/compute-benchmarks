@@ -12,6 +12,8 @@
 
 #include "definitions/best_walker_submission.h"
 
+using namespace SYCL;
+
 static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics &statistics) {
     ComboProfilerWithStats prof(Configuration::get().profilerType);
 

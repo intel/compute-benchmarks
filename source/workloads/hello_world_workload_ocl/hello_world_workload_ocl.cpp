@@ -22,6 +22,8 @@
 #include "framework/utility/timer.h"
 #include "framework/workload/register_workload.h"
 
+using namespace OCL;
+
 // First thing, that needs to be done is the definition of parameters taken by our workload. Class
 // which defines this must derive from WorkloadArgumentContainer base class. It is recommended that
 // this class be named as "<WorkloadName>Arguments" for consistency.

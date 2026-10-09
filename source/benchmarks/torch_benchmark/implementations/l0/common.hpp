@@ -24,7 +24,7 @@ class Kernel {
     ze_module_handle_t module{};
 
   public:
-    Kernel(LevelZero &l0, const std::string &kernelFileName, const std::string &kernelName);
+    Kernel(L0::LevelZero &l0, const std::string &kernelFileName, const std::string &kernelName);
     ~Kernel();
 
     ze_kernel_handle_t get() const;
@@ -49,7 +49,7 @@ class DeviceMemory {
     T *ptr;
 
   public:
-    DeviceMemory(LevelZero &l0, size_t length) : context(l0.context), ptr(nullptr) {
+    DeviceMemory(L0::LevelZero &l0, size_t length) : context(l0.context), ptr(nullptr) {
         if (zeMemAllocDevice(l0.context, &zeDefaultGPUDeviceMemAllocDesc,
                              length * sizeof(T), alignof(T), l0.device,
                              reinterpret_cast<void **>(&ptr)) != ZE_RESULT_SUCCESS) {
@@ -93,7 +93,7 @@ class HostMemory {
     T *ptr;
 
   public:
-    HostMemory(LevelZero &l0, size_t length) : context(l0.context), ptr(nullptr) {
+    HostMemory(L0::LevelZero &l0, size_t length) : context(l0.context), ptr(nullptr) {
         if (zeMemAllocHost(l0.context, &zeDefaultGPUHostMemAllocDesc,
                            length * sizeof(T), alignof(T),
                            reinterpret_cast<void **>(&ptr)) != ZE_RESULT_SUCCESS) {
@@ -132,12 +132,12 @@ class HostMemory {
 };
 
 class Graph {
-    LevelZero &l0;
+    L0::LevelZero &l0;
     ze_graph_handle_t graph{};
     ze_executable_graph_handle_t executableGraph{};
 
   public:
-    Graph(LevelZero &l0);
+    Graph(L0::LevelZero &l0);
     ~Graph();
 
     ze_graph_handle_t get() const { return graph; }
@@ -150,7 +150,7 @@ class CounterBasedEvent {
     ze_event_handle_t event{};
 
   public:
-    CounterBasedEvent(LevelZero &l0, bool enableProfiling);
+    CounterBasedEvent(L0::LevelZero &l0, bool enableProfiling);
     ~CounterBasedEvent();
 
     CounterBasedEvent(const CounterBasedEvent &) = delete;

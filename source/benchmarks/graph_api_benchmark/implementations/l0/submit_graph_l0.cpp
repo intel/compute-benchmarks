@@ -14,6 +14,8 @@
 
 #include <iostream>
 
+using namespace L0;
+
 static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, Statistics &statistics) {
     ComboProfilerWithStats prof(Configuration::get().profilerType);
     if (arguments.useHostTasks || arguments.useExplicit) {

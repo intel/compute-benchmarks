@@ -20,6 +20,8 @@
 #include <gtest/gtest.h>
 #include <random>
 
+using namespace L0;
+
 enum AccessMode {
     Read = 0u,
     Write,

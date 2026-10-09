@@ -10,6 +10,8 @@
 
 #include <cmath>
 
+using namespace SYCL;
+
 using data_type = float;
 
 namespace syclex = sycl::ext::oneapi::experimental;

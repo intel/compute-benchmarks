@@ -18,6 +18,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 using namespace MemoryConstants;
 
 static TestResult run(const StreamAfterTransferArguments &arguments, Statistics &statistics) {

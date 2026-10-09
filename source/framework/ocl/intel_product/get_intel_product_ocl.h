@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,4 +11,4 @@
 #include "framework/ocl/opencl.h"
 
 IntelProduct getIntelProduct(cl_device_id device);
-IntelProduct getIntelProduct(const Opencl &opencl);
+IntelProduct getIntelProduct(const OCL::Opencl &opencl);

@@ -128,5 +128,3 @@ class VulkanBuffer : NoCopyOrMove {
 };
 
 } // namespace VK
-
-using namespace VK;

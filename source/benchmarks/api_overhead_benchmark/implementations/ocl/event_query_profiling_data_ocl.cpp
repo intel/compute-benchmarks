@@ -15,6 +15,8 @@
 #include <gtest/gtest.h>
 #include <vector>
 
+using namespace OCL;
+
 static TestResult run(const EventQueryProfilingDataArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 

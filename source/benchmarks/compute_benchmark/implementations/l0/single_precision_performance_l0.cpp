@@ -16,6 +16,8 @@
 #include <level_zero/zer_api.h>
 #include <limits>
 
+using namespace L0;
+
 static TestResult run(const SinglePrecisionPerformanceArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigaFLOPS, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 

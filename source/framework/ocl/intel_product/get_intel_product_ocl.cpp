@@ -9,6 +9,8 @@
 
 #include "framework/ocl/utility/extensions_helper.h"
 
+using namespace OCL;
+
 IntelProduct getIntelProduct(cl_device_id device) {
     ExtensionsHelper extensions{device};
 

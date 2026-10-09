@@ -11,6 +11,8 @@
 
 #include "definitions/matrix_multiply.h"
 
+using namespace SYCL;
+
 static TestResult run(const MatrixMultiplyArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
 

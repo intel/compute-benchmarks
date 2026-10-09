@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 
 #include "framework/intel_product/get_intel_product.h"
 #include "framework/l0/levelzero.h"
+
+using namespace L0;
 
 IntelProduct getIntelProduct(ze_device_handle_t device) {
     ze_device_properties_t properties{};

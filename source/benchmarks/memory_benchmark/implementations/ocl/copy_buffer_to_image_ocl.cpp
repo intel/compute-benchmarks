@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 static TestResult run(const CopyBufferToImageArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include <unordered_map>
 
 struct MultiProcessHelperL0 : MultiProcessHelper {
-    static ze_result_t getSubDevicesForExecution(LevelZero &levelzero,
+    static ze_result_t getSubDevicesForExecution(L0::LevelZero &levelzero,
                                                  DeviceSelection subDevices,
                                                  size_t processesPerDevice,
                                                  std::vector<DeviceSelection> &outSubDevicesForExecution) {
@@ -44,7 +44,7 @@ struct MultiProcessHelperL0 : MultiProcessHelper {
         size_t currentProcessesCount = {};
     };
 
-    static ze_result_t allocateSharedBuffersForSubDevices(LevelZero &levelzero,
+    static ze_result_t allocateSharedBuffersForSubDevices(L0::LevelZero &levelzero,
                                                           DeviceSelection subDevices,
                                                           size_t processesPerSubDevice,
                                                           size_t workgroupsPerProcess,

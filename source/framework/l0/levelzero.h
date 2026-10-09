@@ -247,5 +247,3 @@ struct LevelZero {
     std::vector<ze_command_queue_handle_t> commandQueues{};
 };
 } // namespace L0
-
-using namespace L0;

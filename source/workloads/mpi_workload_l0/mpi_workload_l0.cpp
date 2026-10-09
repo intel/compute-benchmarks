@@ -21,6 +21,8 @@
 #include <mpi.h>
 #include <numeric>
 
+using namespace L0;
+
 #define ZECHK(ZECALL)                                                      \
     {                                                                      \
         const ze_result_t zeRet = (ZECALL);                                \

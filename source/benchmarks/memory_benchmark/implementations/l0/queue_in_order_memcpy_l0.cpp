@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
 

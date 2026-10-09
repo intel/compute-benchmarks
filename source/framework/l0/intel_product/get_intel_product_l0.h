@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,4 +12,4 @@
 
 IntelProduct getIntelProduct(ze_device_handle_t device);
 IntelProduct getIntelProduct(const ze_device_properties_t &deviceProperties);
-IntelProduct getIntelProduct(const LevelZero &levelzero);
+IntelProduct getIntelProduct(const L0::LevelZero &levelzero);

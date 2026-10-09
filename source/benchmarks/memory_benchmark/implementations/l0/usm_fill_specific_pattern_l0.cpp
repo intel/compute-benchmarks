@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 bool validateMemoryFillPatternSize(const size_t patternSize, const size_t maxMemoryFillPatternSize) {
     const auto isPowerOfTwo = (patternSize & (patternSize - 1)) == 0;
     return patternSize != 0 && isPowerOfTwo && patternSize <= maxMemoryFillPatternSize;

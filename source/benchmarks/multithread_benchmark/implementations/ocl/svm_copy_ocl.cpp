@@ -17,6 +17,8 @@
 #include <shared_mutex>
 #include <thread>
 
+using namespace OCL;
+
 void enqueueSvmCopy(cl_command_queue queue, void *src, void *dst, size_t size, std::shared_mutex *barrier, pfn_clEnqueueMemcpyINTEL clEnqueueMemcpyINTEL) {
     std::shared_lock sharedLock(*barrier);
     EXPECT_CL_SUCCESS(clEnqueueMemcpyINTEL(queue, CL_FALSE, dst, src, size, 0, nullptr, nullptr));

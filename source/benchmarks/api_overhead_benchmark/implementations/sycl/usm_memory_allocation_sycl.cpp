@@ -18,6 +18,8 @@
 #define HAS_SYCL_ASYNC_ALLOC 0
 #endif
 
+using namespace SYCL;
+
 static auto inOrder = sycl::property::queue::in_order();
 
 static bool hasUsmPlacementSupport(const sycl::device &device, UsmRuntimeMemoryPlacement placement) {

@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 static TestResult run(const ExecuteCommandListWithFenceUsageArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 

@@ -19,6 +19,9 @@
 #include "definitions/read_device_mem_buffer.h"
 
 #include <gtest/gtest.h>
+
+using namespace OCL;
+
 using namespace MemoryConstants;
 
 static TestResult run(const ReadDeviceMemBufferArguments &arguments, Statistics &statistics) {

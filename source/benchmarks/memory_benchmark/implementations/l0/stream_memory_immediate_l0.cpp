@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 using namespace MemoryConstants;
 
 template <typename T>

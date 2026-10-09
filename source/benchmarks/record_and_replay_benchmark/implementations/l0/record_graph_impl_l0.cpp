@@ -21,6 +21,8 @@
 #include <stack>
 #include <unordered_map>
 
+using namespace L0;
+
 namespace {
 
 using zeGraphCreateExpFP = ze_result_t(ZE_APICALL *)(ze_context_handle_t context, ze_graph_handle_t *phGraph, void *pNext);

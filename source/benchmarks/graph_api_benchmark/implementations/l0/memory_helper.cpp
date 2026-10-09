@@ -9,6 +9,8 @@
 
 #include <utility>
 
+using namespace L0;
+
 namespace MemHelper {
 DataFloatPtr alloc(UsmMemoryPlacement placement, std::shared_ptr<LevelZero> levelzero, uint32_t count) {
     void *deviceptr = nullptr;

@@ -12,6 +12,8 @@
 
 #include "definitions/queue_memcpy.h"
 
+using namespace SYCL;
+
 static TestResult run(const QueueMemcpyArguments &arguments, Statistics &statistics) {
     ComboProfilerWithStats prof(Configuration::get().profilerType);
 

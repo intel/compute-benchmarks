@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 static TestResult run(const SubmitKernelArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 

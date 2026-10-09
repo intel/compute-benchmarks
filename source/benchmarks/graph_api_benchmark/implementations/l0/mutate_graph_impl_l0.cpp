@@ -19,6 +19,8 @@
 #include <level_zero/ze_api.h>
 #include <list>
 
+using namespace L0;
+
 namespace {
 struct TestEnv {
     ze_group_count_t groupCount{64u, 1u, 1u};

@@ -9,6 +9,8 @@
 
 #include "framework/utility/aligned_allocator.h"
 
+using namespace OCL;
+
 cl_int UsmHelperOcl::allocate(Opencl &opencl,
                               UsmMemoryPlacement placement,
                               size_t bufferSize,

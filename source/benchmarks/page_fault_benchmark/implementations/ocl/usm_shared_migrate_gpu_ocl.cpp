@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 static TestResult run(const UsmSharedMigrateGpuArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
 

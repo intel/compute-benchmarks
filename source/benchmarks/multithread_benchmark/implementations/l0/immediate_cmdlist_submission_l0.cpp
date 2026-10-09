@@ -20,6 +20,8 @@
 #include <shared_mutex>
 #include <thread>
 
+using namespace L0;
+
 struct ThreadSpecificData {
     ze_command_list_handle_t cmdList{};
     ze_event_handle_t event{};

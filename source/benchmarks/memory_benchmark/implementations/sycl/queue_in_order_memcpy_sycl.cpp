@@ -12,6 +12,8 @@
 
 #include "definitions/queue_in_order_memcpy.h"
 
+using namespace SYCL;
+
 static TestResult run(const QueueInOrderMemcpyArguments &arguments, Statistics &statistics) {
     ComboProfilerWithStats prof(Configuration::get().profilerType);
 

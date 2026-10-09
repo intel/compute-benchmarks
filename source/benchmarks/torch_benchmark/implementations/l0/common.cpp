@@ -9,6 +9,8 @@
 
 #include "framework/l0/utility/kernel_helper_l0.h"
 
+using namespace L0;
+
 Kernel::Kernel(LevelZero &l0,
                const std::string &kernelFileName,
                const std::string &kernelName) {

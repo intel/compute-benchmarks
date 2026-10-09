@@ -10,6 +10,8 @@
 #include "framework/utility/timer.h"
 #include "framework/workload/register_workload.h"
 
+using namespace L0;
+
 struct SingleQueueWorkloadArguments : WorkloadArgumentContainer {
     PositiveIntegerArgument operationsCount;
     PositiveIntegerArgument workgroupCount;

@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include "definitions/kernel_submit_multi_queue.h"
 
+using namespace SYCL;
+
 using data_type = int;
 
 constexpr int NUM_OF_QUEUES = 2;

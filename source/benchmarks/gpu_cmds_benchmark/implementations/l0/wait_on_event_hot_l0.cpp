@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 static TestResult run(const WaitOnEventHotArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
 

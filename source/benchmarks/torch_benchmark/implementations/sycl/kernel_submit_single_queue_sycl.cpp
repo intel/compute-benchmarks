@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include "definitions/kernel_submit_single_queue.h"
 
+using namespace SYCL;
+
 constexpr size_t pool_double_size = 2;
 constexpr size_t pool_int_size = 3;
 

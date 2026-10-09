@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include "definitions/kernel_submit_event_record_query.h"
 
+using namespace L0;
+
 static TestResult run(const KernelSubmitEventRecordQueryArguments &args, Statistics &statistics) {
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 

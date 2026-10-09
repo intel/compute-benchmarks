@@ -15,6 +15,8 @@
 #include <emmintrin.h>
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 struct KernelSet {
     void *buffer = nullptr;
     ze_module_handle_t module = nullptr;

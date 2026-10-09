@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 struct PerBlitterWorkInfo {
     ze_command_list_handle_t list;
     std::string name;

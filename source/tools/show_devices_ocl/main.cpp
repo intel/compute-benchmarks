@@ -17,6 +17,8 @@
 #include <string>
 #include <vector>
 
+using namespace OCL;
+
 #ifndef CL_VERSION_MAJOR
 #define CL_VERSION_MAJOR(version) ((version) >> 22)
 #endif

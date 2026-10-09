@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include "definitions/kernel_submit_graph_multi_queue.h"
 
+using namespace L0;
+
 using data_type = float;
 
 template <typename T>

@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include "definitions/kernel_submit_graph_single_queue.h"
 
+using namespace SYCL;
+
 using data_type = float;
 
 namespace syclex = sycl::ext::oneapi::experimental;

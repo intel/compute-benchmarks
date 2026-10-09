@@ -17,6 +17,8 @@
 #include <cstring>
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 static TestResult run(const ReadAfterAtomicWriteArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 

@@ -57,4 +57,3 @@ struct Opencl {
 };
 
 } // namespace OCL
-using namespace OCL;

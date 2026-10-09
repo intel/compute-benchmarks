@@ -33,7 +33,7 @@ class Decoder2GraphL0 : public Decoder2GraphBase<Decoder2GraphL0> {
     TestResult runAllLayers();
 
   private:
-    std::shared_ptr<LevelZero> levelzero;
+    std::shared_ptr<L0::LevelZero> levelzero;
 
     ze_group_count_t groupCount{1u, 1u, 1u};
     ze_kernel_handle_t kernelDecoder2{};

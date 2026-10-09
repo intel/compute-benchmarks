@@ -27,7 +27,7 @@ auto make_sycl_deleter(sycl::queue queue) {
 } // namespace Detail
 
 template <typename data_type>
-auto make_device_ptr(Sycl &sycl, size_t size) {
+auto make_device_ptr(SYCL::Sycl &sycl, size_t size) {
     auto deleter = Detail::make_sycl_deleter<data_type>(sycl.queue);
     using unique_ptr_type = std::unique_ptr<data_type, decltype(deleter)>;
     auto ptr = sycl::malloc_device<data_type>(size, sycl.queue);
@@ -38,7 +38,7 @@ auto make_device_ptr(Sycl &sycl, size_t size) {
 }
 
 template <typename data_type>
-auto make_host_ptr(Sycl &sycl, size_t size) {
+auto make_host_ptr(SYCL::Sycl &sycl, size_t size) {
     auto deleter = Detail::make_sycl_deleter<data_type>(sycl.queue);
     using unique_ptr_type = std::unique_ptr<data_type, decltype(deleter)>;
     auto ptr = sycl::malloc_host<data_type>(size, sycl.queue);

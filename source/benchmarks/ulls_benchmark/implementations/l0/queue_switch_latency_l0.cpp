@@ -14,6 +14,8 @@
 #include <gtest/gtest.h>
 #include <vector>
 
+using namespace L0;
+
 static TestResult run(const QueueSwitchArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
 

@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 static TestResult run(const UsmFillMultipleBlitsArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
 

@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include "definitions/kernel_submit_graph_single_queue.h"
 
+using namespace L0;
+
 using data_type = float;
 
 static TestResult run(const KernelSubmitGraphSingleQueueArguments &args, Statistics &statistics) {

@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 struct IndirectContainer {
     int32_t *value;
     IndirectContainer *next;

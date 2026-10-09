@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
 

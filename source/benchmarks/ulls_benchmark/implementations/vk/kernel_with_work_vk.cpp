@@ -17,6 +17,8 @@
 #include <memory>
 #include <vector>
 
+using namespace VK;
+
 static std::vector<ShaderDefine> workItemIdUsageDefines(WorkItemIdUsage usedIds) {
     switch (usedIds) {
     case WorkItemIdUsage::None:

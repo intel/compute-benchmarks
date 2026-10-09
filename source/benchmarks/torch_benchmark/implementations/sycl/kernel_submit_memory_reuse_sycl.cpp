@@ -10,6 +10,8 @@
 
 #include <random>
 
+using namespace SYCL;
+
 static constexpr size_t REUSE_MEMORY_SIZE = 1024 * 1024 * 64;
 
 template <typename data_type>

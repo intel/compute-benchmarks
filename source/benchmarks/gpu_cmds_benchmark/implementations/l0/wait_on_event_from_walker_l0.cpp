@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 struct TestResourcesForWaitOnWalker {
     TestResourcesForWaitOnWalker(LevelZero &levelzero, ze_kernel_handle_t kernel, size_t meassuredCommands, uint64_t *beginTimestamp, uint64_t *endTimestamp)
         : events(1u) {

@@ -16,6 +16,8 @@
 #include <level_zero/zer_api.h>
 #include <limits>
 
+using namespace L0;
+
 static TestResult run(const EventQueryKernelTimestampArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 

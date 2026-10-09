@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 using namespace MemoryConstants;
 
 static TestResult run(const SlmSwitchLatencyArguments &arguments, Statistics &statistics) {

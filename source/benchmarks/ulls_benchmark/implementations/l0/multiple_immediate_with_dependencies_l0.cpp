@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 static TestResult runSingleIteration(const MultipleImmediateCmdListsWithDependenciesArguments &arguments, const std::vector<ze_command_list_handle_t> &cmdLists,
                                      const std::vector<ze_kernel_handle_t> &kernels, const std::vector<ze_event_handle_t> &events) {
     const ze_group_count_t groupCount{1, 1, 1};

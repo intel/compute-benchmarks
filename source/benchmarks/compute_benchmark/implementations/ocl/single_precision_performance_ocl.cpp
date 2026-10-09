@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 static TestResult run(const SinglePrecisionPerformanceArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::GigaFLOPS, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 

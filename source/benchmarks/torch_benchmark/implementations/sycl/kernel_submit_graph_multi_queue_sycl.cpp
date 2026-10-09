@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include "definitions/kernel_submit_graph_multi_queue.h"
 
+using namespace SYCL;
+
 using data_type = float;
 
 constexpr int NUM_OF_QUEUES = 2;

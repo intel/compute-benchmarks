@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include "definitions/kernel_submit_graph_vllm_mock.h"
 
+using namespace L0;
+
 using data_type = float;
 
 constexpr uint32_t BATCH_SIZE = 1;

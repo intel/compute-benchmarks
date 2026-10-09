@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace SYCL;
+
 static TestResult run(const ExecuteCommandListImmediateArguments &arguments, Statistics &statistics) {
     ComboProfilerWithStats prof(Configuration::get().profilerType);
 

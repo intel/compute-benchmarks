@@ -15,6 +15,8 @@
 
 #include <level_zero/ze_api.h>
 
+using namespace L0;
+
 static TestResult run(const HostFunctionCommandListRegularArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Nanoseconds, MeasurementType::Cpu);
 

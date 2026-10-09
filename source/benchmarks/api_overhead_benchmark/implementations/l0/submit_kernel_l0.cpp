@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 static TestResult run(const SubmitKernelArguments &arguments, Statistics &statistics) {
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 

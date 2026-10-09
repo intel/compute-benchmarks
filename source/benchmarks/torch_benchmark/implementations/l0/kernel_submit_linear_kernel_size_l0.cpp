@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include "definitions/kernel_submit_linear_kernel_size.h"
 
+using namespace L0;
+
 using data_type = double;
 
 static TestResult run(const KernelSubmitLinearKernelSizeArguments &args, Statistics &statistics) {

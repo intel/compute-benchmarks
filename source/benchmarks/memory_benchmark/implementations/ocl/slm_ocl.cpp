@@ -22,6 +22,8 @@
 #include <gtest/gtest.h>
 #include <numeric>
 
+using namespace OCL;
+
 static TestResult run(const SlmTrafficArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Latency, MeasurementType::Gpu);
 

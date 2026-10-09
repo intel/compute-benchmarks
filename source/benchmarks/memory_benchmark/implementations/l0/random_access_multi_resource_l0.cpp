@@ -22,6 +22,8 @@
 #include <level_zero/zer_api.h>
 #include <random>
 
+using namespace L0;
+
 static TestResult run(const RandomAccessMultiResourceArguments &arguments, Statistics &statistics) {
     const size_t iterations = arguments.iterations;
     const size_t firstSize = arguments.firstSize;

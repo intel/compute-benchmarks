@@ -15,6 +15,8 @@
 #include <emmintrin.h>
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 struct CmdListSet {
     void *buffer = nullptr;
     ze_command_list_handle_t cmdList = nullptr;

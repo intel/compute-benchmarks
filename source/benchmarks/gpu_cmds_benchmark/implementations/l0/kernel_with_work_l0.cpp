@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 static auto selectKernel(WorkItemIdUsage usedIds) {
     switch (usedIds) {
     case WorkItemIdUsage::None:

@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include "definitions/kernel_submit_event_record_wait.h"
 
+using namespace L0;
+
 static TestResult run(const KernelSubmitEventRecordWaitArguments &args, Statistics &statistics) {
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 

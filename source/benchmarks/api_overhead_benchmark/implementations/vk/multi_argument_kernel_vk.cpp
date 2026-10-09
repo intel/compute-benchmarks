@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+using namespace VK;
+
 static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 

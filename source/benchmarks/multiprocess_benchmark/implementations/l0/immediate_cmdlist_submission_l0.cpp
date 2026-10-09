@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 struct EngineInfo {
     uint32_t ordinal;
     uint32_t engineIndex;

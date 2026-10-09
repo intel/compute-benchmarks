@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ struct HostptrReuseHelper {
         pfn_clMemFreeINTEL clMemFreeINTEL = nullptr;
     };
 
-    static cl_int allocateBufferHostptr(Opencl &opencl,
+    static cl_int allocateBufferHostptr(OCL::Opencl &opencl,
                                         HostptrReuseMode reuseMode,
                                         size_t size,
                                         Alloc &outAlloc);

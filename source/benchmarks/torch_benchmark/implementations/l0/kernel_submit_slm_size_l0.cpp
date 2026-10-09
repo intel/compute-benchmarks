@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include "definitions/kernel_submit_slm_size.h"
 
+using namespace L0;
+
 using data_type = float;
 
 static TestResult compute_slm_num(int &slm_num, LevelZero &l0) {

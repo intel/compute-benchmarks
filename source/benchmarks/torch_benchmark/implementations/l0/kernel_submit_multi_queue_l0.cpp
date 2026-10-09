@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include "definitions/kernel_submit_multi_queue.h"
 
+using namespace L0;
+
 using data_type = int;
 
 constexpr int DATA_NUM = 2;

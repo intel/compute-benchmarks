@@ -9,6 +9,8 @@
 #include "definitions/kernel_submit_linear_kernel_size.h"
 #include "definitions/linear_kernel_size_kernels.h"
 
+using namespace SYCL;
+
 using data_type = double;
 
 namespace syclex = sycl::ext::oneapi::experimental;

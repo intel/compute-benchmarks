@@ -15,6 +15,8 @@
 #include <emmintrin.h>
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 static TestResult run(const BestWalkerSubmissionArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 

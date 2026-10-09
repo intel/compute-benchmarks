@@ -44,5 +44,3 @@ struct Sycl {
     }
 };
 } // namespace SYCL
-
-using namespace SYCL;

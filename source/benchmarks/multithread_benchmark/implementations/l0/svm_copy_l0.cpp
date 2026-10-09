@@ -18,6 +18,8 @@
 #include <shared_mutex>
 #include <thread>
 
+using namespace L0;
+
 void enqueueSvmCopy(ze_command_queue_handle_t queue, ze_command_list_handle_t cmdList, std::shared_mutex *barrier) {
     std::shared_lock sharedLock(*barrier);
     EXPECT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(queue, 1, &cmdList, nullptr));

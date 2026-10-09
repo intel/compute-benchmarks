@@ -14,6 +14,8 @@
 #include <chrono>
 #include <thread>
 
+using namespace L0;
+
 struct ImmediateCmdListWalkerSubmissionArguments : WorkloadArgumentContainer {
     Uint32Argument ordinal;
     Uint32Argument engineIndex;

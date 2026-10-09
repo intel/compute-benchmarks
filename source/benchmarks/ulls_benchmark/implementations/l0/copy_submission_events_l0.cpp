@@ -16,6 +16,8 @@
 #include <emmintrin.h>
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 using Clock = std::chrono::high_resolution_clock;
 
 static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics &statistics) {

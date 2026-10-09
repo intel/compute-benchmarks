@@ -12,6 +12,8 @@
 #include "definitions/kernel_submit_event_record_query.h"
 #include "definitions/sycl_kernels.h"
 
+using namespace SYCL;
+
 static TestResult run(const KernelSubmitEventRecordQueryArguments &args, Statistics &statistics) {
     ComboProfilerWithStats profiler(Configuration::get().profilerType);
 

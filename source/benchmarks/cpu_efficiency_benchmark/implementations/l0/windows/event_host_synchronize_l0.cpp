@@ -17,6 +17,8 @@
 #include <gtest/gtest.h>
 #include <limits>
 
+using namespace L0;
+
 namespace {
 double getCpuUtilizationPercent(std::chrono::nanoseconds cpuTime, Timer::Clock::duration wallTime) {
     const auto cpuSeconds = std::chrono::duration<double>(cpuTime).count();

@@ -16,6 +16,8 @@
 #include <gtest/gtest.h>
 #include <level_zero/zer_api.h>
 
+using namespace L0;
+
 static TestResult run(const InOrderWaitAppendArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 

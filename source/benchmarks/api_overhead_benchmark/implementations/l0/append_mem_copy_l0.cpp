@@ -15,6 +15,8 @@
 #include <gtest/gtest.h>
 #include <vector>
 
+using namespace L0;
+
 static TestResult run(const AppendMemCopyArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 

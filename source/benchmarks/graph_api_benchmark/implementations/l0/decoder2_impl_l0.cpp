@@ -17,6 +17,8 @@
 #include <level_zero/zer_api.h>
 #include <limits>
 
+using namespace L0;
+
 Decoder2GraphL0::DataIntPtr Decoder2GraphL0::allocDevice(uint32_t count) {
     void *ptr = nullptr;
     size_t bytes = count * sizeof(int);

@@ -19,6 +19,8 @@
 #include <level_zero/ze_api.h>
 #include <math.h>
 
+using namespace L0;
+
 SinKernelGraphL0::DataFloatPtr SinKernelGraphL0::allocDevice(uint32_t count) {
     return MemHelper::alloc(UsmMemoryPlacement::Device, levelzero, count);
 }

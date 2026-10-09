@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,14 +26,14 @@ struct UsmHelperOcl {
         } mappedData;
     };
 
-    static cl_int allocate(Opencl &opencl,
+    static cl_int allocate(OCL::Opencl &opencl,
                            UsmMemoryPlacement placement,
                            size_t bufferSize,
                            Alloc &outAlloc);
     static cl_int deallocate(Alloc &alloc);
 
     static void *allocate(DeviceSelection placement,
-                          Opencl &opencl,
+                          OCL::Opencl &opencl,
                           size_t bufferSize,
                           cl_int *retVal);
 

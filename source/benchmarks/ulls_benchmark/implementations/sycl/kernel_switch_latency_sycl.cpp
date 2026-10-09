@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace SYCL;
+
 static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 

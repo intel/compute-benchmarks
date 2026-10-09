@@ -15,5 +15,5 @@
 
 namespace MemHelper {
 using DataFloatPtr = SinKernelGraphBase::DataFloatPtr;
-DataFloatPtr alloc(UsmMemoryPlacement placement, std::shared_ptr<LevelZero> levelzero, uint32_t count);
+DataFloatPtr alloc(UsmMemoryPlacement placement, std::shared_ptr<L0::LevelZero> levelzero, uint32_t count);
 } // namespace MemHelper

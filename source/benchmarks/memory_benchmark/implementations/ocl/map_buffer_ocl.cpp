@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 static TestResult run(const MapBufferArguments &arguments, Statistics &statistics) {
     MeasurementUnit measurementUnit = MeasurementUnit::GigabytesPerSecond;
     if (arguments.mapFlags == MapFlags::WriteInvalidate) {

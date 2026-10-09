@@ -12,6 +12,8 @@
 
 #include "definitions/reduction4.h"
 
+using namespace OCL;
+
 TestResult run(const ReductionArguments4 &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
 

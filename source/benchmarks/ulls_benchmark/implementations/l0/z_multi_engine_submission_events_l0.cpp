@@ -18,6 +18,8 @@
 #include <gtest/gtest.h>
 #include <string>
 
+using namespace L0;
+
 namespace {
 
 struct EngineTarget {

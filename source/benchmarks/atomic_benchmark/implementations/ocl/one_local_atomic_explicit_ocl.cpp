@@ -18,6 +18,8 @@
 #include <cstring>
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 static TestResult run(const OneLocalAtomicExplicitArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Nanoseconds, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 

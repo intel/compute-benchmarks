@@ -18,6 +18,8 @@
 #include <cstring>
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 static TestResult run(const Int64DivArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 

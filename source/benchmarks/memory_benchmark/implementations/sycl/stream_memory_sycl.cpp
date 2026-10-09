@@ -17,6 +17,8 @@
 #include <gtest/gtest.h>
 #include <vector>
 
+using namespace SYCL;
+
 using namespace MemoryConstants;
 
 template <typename T>

@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 struct KernelArgument8 {
     int32_t values[2];
 };

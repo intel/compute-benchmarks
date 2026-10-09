@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 // Mirror cl_khr_command_buffer 0.9.7 declarations from cl_ext.h if compiling
 // against an older version of OpenCL-Headers without cl_khr_command_buffer
 // declarations

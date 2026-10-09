@@ -11,6 +11,8 @@
 #include <memory>
 #include <type_traits>
 
+using namespace L0;
+
 ze_result_t BufferContentsHelperL0::fillBuffer(ze_device_handle_t device, ze_context_handle_t context, ze_command_queue_handle_t queue, uint32_t queueOrdinal, void *buffer, size_t bufferSize, BufferContents contents, bool useImmediate) {
     ze_command_list_handle_t cmdList{};
     void *stagingAllocation{};

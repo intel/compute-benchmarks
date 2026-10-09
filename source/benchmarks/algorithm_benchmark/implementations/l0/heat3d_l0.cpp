@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 #ifdef WIN32
 
 static TestResult run(const Heat3DArguments &, Statistics &) {

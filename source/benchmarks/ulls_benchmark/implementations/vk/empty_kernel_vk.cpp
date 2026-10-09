@@ -15,6 +15,8 @@
 #include <gtest/gtest.h>
 #include <vector>
 
+using namespace VK;
+
 static TestResult run(const EmptyKernelArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 

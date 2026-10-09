@@ -13,6 +13,8 @@
 #include "definitions/graph_vllm_kernels.h"
 #include "definitions/kernel_submit_graph_vllm_mock.h"
 
+using namespace SYCL;
+
 using data_type = float;
 
 namespace syclex = sycl::ext::oneapi::experimental;

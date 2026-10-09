@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 
 #include "framework/ocl/utility/error.h"
 #include "framework/utility/aligned_allocator.h"
+
+using namespace OCL;
 
 cl_int HostptrReuseHelper::allocateBufferHostptr(Opencl &opencl,
                                                  HostptrReuseMode reuseMode,

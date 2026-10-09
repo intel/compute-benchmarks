@@ -12,6 +12,8 @@
 
 #include <cstring>
 
+using namespace L0;
+
 struct SingleQueueWorkloadSharedBufferArguments : WorkloadArgumentContainer {
     PositiveIntegerArgument operationsCount;
     PositiveIntegerArgument workgroupCount;

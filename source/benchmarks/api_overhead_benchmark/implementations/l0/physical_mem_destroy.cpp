@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace L0;
+
 static size_t getPageAlignedSize(size_t requestedSize, size_t pageSize) {
     if (pageSize >= requestedSize) {
         return pageSize;

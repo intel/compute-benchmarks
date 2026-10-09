@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ class SinKernelGraphL0 : public SinKernelGraphBase {
     TestResult runKernels(ze_command_list_handle_t cmdList);
 
   private:
-    std::shared_ptr<LevelZero> levelzero;
+    std::shared_ptr<L0::LevelZero> levelzero;
 
     ze_group_count_t groupCount{64u, 1u, 1u};
     ze_kernel_handle_t kernelAssign{};

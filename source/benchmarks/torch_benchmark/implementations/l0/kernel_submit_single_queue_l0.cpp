@@ -11,6 +11,8 @@
 #include <memory>
 #include <unordered_map>
 
+using namespace L0;
+
 constexpr uint32_t alloc_size_double = 2;
 constexpr uint32_t alloc_size_int = 3;
 

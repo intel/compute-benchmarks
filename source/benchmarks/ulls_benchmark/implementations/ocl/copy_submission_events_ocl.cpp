@@ -14,6 +14,8 @@
 #include <emmintrin.h>
 #include <gtest/gtest.h>
 
+using namespace OCL;
+
 static TestResult run(const CopySubmissionEventsArguments &arguments, Statistics &statistics) {
     MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
 
