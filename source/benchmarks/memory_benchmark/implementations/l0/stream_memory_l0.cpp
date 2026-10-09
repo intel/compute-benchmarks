@@ -9,17 +9,18 @@
 #include "framework/l0/utility/buffer_contents_helper_l0.h"
 #include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/l0/utility/usm_helper.h"
+#include "framework/l0/utility/verification_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/compiler_options_builder.h"
 #include "framework/utility/file_helper.h"
 #include "framework/utility/memory_constants.h"
+#include "framework/utility/stream_memory_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/stream_memory.h"
-#include "stream_memory_verification.h"
 
-#include <algorithm>
 #include <gtest/gtest.h>
+#include <optional>
 
 using namespace L0;
 
@@ -58,18 +59,20 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         return result;
     }
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
+    const bool verify = Configuration::get().verify;
+    const size_t readOutputSize = verify ? dispatch.bufferSize : StreamMemoryHelper::dummyOutputSize;
 
     void *buffers[3] = {};
     size_t buffersCount = {};
     size_t bufferSizes[3] = {dispatch.bufferSize, dispatch.bufferSize, dispatch.bufferSize};
-    const char *pKernelName = getStreamMemoryKernelName(arguments);
+    const char *pKernelName = getStreamMemoryKernelName(arguments, verify);
     const bool setScalarArgument = streamMemoryHasScalarArgument(arguments);
 
     switch (arguments.type) {
     case StreamMemoryType::Read:
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, dispatch.bufferSize, &buffers[buffersCount++]));
-        bufferSizes[buffersCount] = 16u;
-        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, 16u, &buffers[buffersCount++]));
+        bufferSizes[buffersCount] = readOutputSize;
+        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, readOutputSize, &buffers[buffersCount++]));
         break;
     case StreamMemoryType::Triad:
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, dispatch.bufferSize, &buffers[buffersCount++]));
@@ -88,7 +91,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     ze_module_handle_t module{};
     CompilerOptionsBuilder compilerOptions;
     compilerOptions.addDefinitionKeyValue("STREAM_TYPE", getStreamMemoryTypeDefinition(arguments.vectorSize));
-    compilerOptions.addDefinitionKeyValue("WRITE_RANDOM_PATTERN", StreamMemoryVerification::getWriteRandomPatternDefinition());
+    compilerOptions.addDefinitionKeyValue("WRITE_RANDOM_PATTERN", StreamMemoryHelper::getWriteRandomPatternDefinition());
 
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "memory_benchmark_stream_memory.cl", pKernelName, &kernel, &module, compilerOptions.str().c_str());
     if (kernelLoadRes != TestResult::Success) {
@@ -99,7 +102,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     const ze_group_count_t dispatchTraits{static_cast<uint32_t>(dispatch.groupCount), 1u, 1u};
 
     ze_command_list_handle_t cmdList;
-    ze_command_list_desc_t cmdListDesc{};
+    ze_command_list_desc_t cmdListDesc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
@@ -119,14 +122,10 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
-    const bool verify = Configuration::get().verify;
-    const size_t outputIndex = arguments.type == StreamMemoryType::Read ? 0u : buffersCount - 1;
-    const bool poisonOutput = verify && (arguments.type == StreamMemoryType::Scale || arguments.type == StreamMemoryType::Triad);
+    const size_t outputIndex = buffersCount - 1;
     for (auto i = 0u; i < buffersCount; i++) {
-        if (poisonOutput && i == outputIndex) {
-            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffers[i], &StreamMemoryVerification::outputPoison, 1u, bufferSizes[i], nullptr, 0, nullptr));
-        } else if (verify && arguments.type == StreamMemoryType::Triad && i == 1 && arguments.contents == BufferContents::Random) {
-            const auto y = StreamMemoryVerification::getInput(arguments.contents, bufferSizes[i], 1);
+        if (verify && arguments.type == StreamMemoryType::Triad && i == 1 && arguments.contents == BufferContents::Random) {
+            const auto y = StreamMemoryHelper::getInput(arguments.contents, 1);
             ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBufferWithData(levelzero, buffers[i], bufferSizes[i], [&](uint8_t *data) { y.copy(data, 0, bufferSizes[i]); }, true));
         } else {
             ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffers[i], bufferSizes[i], arguments.contents, true));
@@ -150,21 +149,19 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    ze_command_list_handle_t copyCmdList{};
-    void *staging{};
+    VerificationHelperL0 verification(levelzero);
+    std::optional<StreamMemoryHelper::Verifier> verifier;
     if (verify) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &copyCmdList));
-        ze_host_mem_alloc_desc_t hostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-        ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostDesc, std::min(dispatch.bufferSize, VerificationHelper::chunkSize), 0, &staging));
+        ASSERT_ZE_RESULT_SUCCESS(verification.initialize(dispatch.bufferSize));
+        verifier.emplace(arguments.type, arguments.contents, dispatch.bufferSize, dispatch.elementSize, arguments.partialMultiplier, scalarValue[0]);
     }
-    const auto readChunk = [&](size_t offset, size_t size) -> const uint8_t * {
-        ZE_RESULT_SUCCESS_OR_RETURN_VALUE(BufferContentsHelperL0::copyToHost(levelzero, copyCmdList, staging, static_cast<uint8_t *>(buffers[outputIndex]) + offset, size), nullptr);
-        return static_cast<const uint8_t *>(staging);
-    };
-    const auto expected = StreamMemoryVerification::getExpected(arguments.type, arguments.contents, dispatch.bufferSize, dispatch.elementSize, arguments.partialMultiplier, scalarValue[0]);
+    const auto readChunk = [&](size_t offset, size_t size) { return verification.read(buffers[outputIndex], offset, size); };
     TestResult result = TestResult::Success;
 
     for (auto i = 0u; i < arguments.iterations; i++) {
+        if (verify) {
+            ASSERT_ZE_RESULT_SUCCESS(verification.poison(buffers[outputIndex], bufferSizes[outputIndex]));
+        }
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, 0));
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
@@ -184,7 +181,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
 
         if (verify) {
-            result = StreamMemoryVerification::verifyOutput(expected, dispatch.bufferSize, readChunk);
+            result = verifier->verify(readChunk);
             if (result != TestResult::Success) {
                 break;
             }
@@ -195,10 +192,6 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     for (size_t i = 0; i < buffersCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffers[i]));
-    }
-    if (verify) {
-        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, staging));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(copyCmdList));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));

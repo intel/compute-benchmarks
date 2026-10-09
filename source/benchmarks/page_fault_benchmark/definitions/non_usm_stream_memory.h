@@ -47,6 +47,6 @@ struct NonUsmStreamMemory : TestCase<NonUsmStreamMemoryArguments> {
         return "Streams memory inside of kernel in a fashion described by 'type'. Copy means one "
                "memory location is read from and the second one is written to. Triad means two "
                "buffers are read and one is written to. In read and write memory is only read or "
-               "written to.";
+               "written to. With --verify, Read stores what it reads so the output can be checked.";
     }
 };

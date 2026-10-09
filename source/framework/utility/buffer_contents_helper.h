@@ -19,11 +19,12 @@ class BufferContentsHelper {
     static void fillWithRandomBytes(uint8_t *buffer, size_t size);
     static void fillWithIncreasingBytes(uint8_t *buffer, size_t size);
 
-    static const uint8_t *getRandomBytes(size_t size);
+    static void copyRandomBytes(uint8_t *destination, size_t offset, size_t size);
 
   private:
     static std::mt19937 generator;
     static std::vector<uint8_t> cachedRandomData;
 
+    static void generateRandomBytes(size_t size);
     static uint64_t randomOword();
 };

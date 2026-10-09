@@ -57,11 +57,15 @@ cl_int BufferContentsHelperOcl::fillUsmBufferOrHostPtr(cl_command_queue queue, v
     }
 }
 
-cl_int BufferContentsHelperOcl::fillBufferWithRandomBytes(cl_command_queue queue, cl_mem buffer, size_t bufferSize) {
+cl_int BufferContentsHelperOcl::fillBufferWithData(cl_command_queue queue, cl_mem buffer, size_t bufferSize, const GenerateData &generateData) {
     auto cpuBuffer = std::make_unique<uint8_t[]>(bufferSize);
-    BufferContentsHelper::fillWithRandomBytes(cpuBuffer.get(), bufferSize);
+    generateData(cpuBuffer.get());
     CL_SUCCESS_OR_RETURN(clEnqueueWriteBuffer(queue, buffer, CL_BLOCKING, 0, bufferSize, cpuBuffer.get(), 0, nullptr, nullptr));
     return CL_SUCCESS;
+}
+
+cl_int BufferContentsHelperOcl::fillBufferWithRandomBytes(cl_command_queue queue, cl_mem buffer, size_t bufferSize) {
+    return fillBufferWithData(queue, buffer, bufferSize, [bufferSize](uint8_t *data) { BufferContentsHelper::fillWithRandomBytes(data, bufferSize); });
 }
 
 cl_int BufferContentsHelperOcl::fillBufferWithZeros(cl_command_queue queue, cl_mem buffer, size_t bufferSize) {

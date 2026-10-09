@@ -20,30 +20,41 @@
 namespace VerificationHelper {
 
 inline constexpr size_t chunkSize = 64 * MemoryConstants::megaByte;
+inline constexpr uint8_t poisonByte = 0xFF;
 
 inline void reportMismatch(size_t element) {
     std::cerr << "Verification failed at element " << element << std::endl;
 }
 
-template <typename GetExpectedChunk, typename ReadChunk>
-inline TestResult verifyOutput(size_t size, size_t elementSize, GetExpectedChunk &&getExpectedChunk, ReadChunk &&readChunk) {
-    std::vector<uint8_t> expectedChunk(std::min(size, chunkSize));
-    for (size_t offset = 0; offset < size; offset += chunkSize) {
-        const size_t length = std::min(chunkSize, size - offset);
-        const uint8_t *output = readChunk(offset, length);
-        if (output == nullptr) {
-            return TestResult::Error;
+class OutputVerifier {
+  public:
+    OutputVerifier(const size_t size, const size_t elementSize)
+        : size(size), elementSize(elementSize), expectedChunk(std::min(size, chunkSize)) {}
+
+    template <typename GetExpectedChunk, typename ReadChunk>
+    TestResult verify(GetExpectedChunk &&getExpectedChunk, ReadChunk &&readChunk) {
+        for (size_t offset = 0; offset < this->size; offset += chunkSize) {
+            const size_t length = std::min(chunkSize, this->size - offset);
+            const uint8_t *output = readChunk(offset, length);
+            if (output == nullptr) {
+                return TestResult::Error;
+            }
+            getExpectedChunk(offset, length, this->expectedChunk.data());
+            const std::span<const uint8_t> expectedBytes(this->expectedChunk.data(), length);
+            const auto [expectedIt, outputIt] = std::ranges::mismatch(expectedBytes, std::span<const uint8_t>(output, length));
+            if (expectedIt != expectedBytes.end()) {
+                reportMismatch((offset + static_cast<size_t>(expectedIt - expectedBytes.begin())) / this->elementSize);
+                return TestResult::VerificationFail;
+            }
         }
-        getExpectedChunk(offset, length, expectedChunk.data());
-        const std::span<const uint8_t> expectedBytes(expectedChunk.data(), length);
-        const auto [expectedIt, outputIt] = std::ranges::mismatch(expectedBytes, std::span<const uint8_t>(output, length));
-        if (expectedIt != expectedBytes.end()) {
-            reportMismatch((offset + static_cast<size_t>(expectedIt - expectedBytes.begin())) / elementSize);
-            return TestResult::VerificationFail;
-        }
+        return TestResult::Success;
     }
-    return TestResult::Success;
-}
+
+  private:
+    const size_t size;
+    const size_t elementSize;
+    std::vector<uint8_t> expectedChunk;
+};
 
 template <typename T, typename ReadChunk>
 inline TestResult verifyUniformOutput(size_t size, T expected, ReadChunk &&readChunk) {

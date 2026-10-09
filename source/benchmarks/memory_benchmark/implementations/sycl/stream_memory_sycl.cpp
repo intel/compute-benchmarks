@@ -9,12 +9,13 @@
 #include "framework/sycl/utility/buffer_contents_helper_sycl.h"
 #include "framework/sycl/utility/usm_helper.h"
 #include "framework/test_case/register_test_case.h"
+#include "framework/utility/stream_memory_helper.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/stream_memory.h"
-#include "stream_memory_verification.h"
 
 #include <algorithm>
+#include <optional>
 #include <vector>
 
 using namespace SYCL;
@@ -44,7 +45,7 @@ class StreamMemoryBenchmark {
     using StreamT = StreamTypeT<vectorSize>;
 
     StreamMemoryBenchmark(Sycl &sycl, const StreamMemoryArguments &arguments, const StreamMemoryDispatch &dispatch)
-        : sycl(sycl), arguments(arguments), bufferSize(dispatch.bufferSize),
+        : sycl(sycl), arguments(arguments), verifyEnabled(Configuration::get().verify), bufferSize(dispatch.bufferSize),
           ndRange(sycl::range<1>{dispatch.globalSize}, sycl::range<1>{dispatch.groupSize}) {
         for (int lane = 0; lane < vectorSize; lane++) {
             scalarValue[lane] = streamMemoryScalarValue;
@@ -60,20 +61,18 @@ class StreamMemoryBenchmark {
             buffers.push_back(buffer);
         }
 
-        // Poisoning catches a kernel that writes nothing. Triad needs its second input to hold
-        // the inverted pattern getExpected() assumes.
-        const bool verify = Configuration::get().verify;
-        const size_t outputIndex = outputBufferIndex();
-        const bool poisonOutput = verify && (arguments.type == StreamMemoryType::Scale || arguments.type == StreamMemoryType::Triad);
         for (auto i = 0u; i < buffers.size(); i++) {
-            if (poisonOutput && i == outputIndex) {
-                BufferContentsHelperSycl::fillBufferWithPattern(sycl, buffers[i], bufferSize, StreamMemoryVerification::outputPoison);
-            } else if (verify && arguments.type == StreamMemoryType::Triad && i == 1 && arguments.contents == BufferContents::Random) {
-                const auto y = StreamMemoryVerification::getInput(arguments.contents, bufferSize, 1);
+            if (this->verifyEnabled && this->arguments.type == StreamMemoryType::Triad && i == 1 && this->arguments.contents == BufferContents::Random) {
+                const auto y = StreamMemoryHelper::getInput(this->arguments.contents, 1);
                 BufferContentsHelperSycl::fillBufferWithData(sycl, buffers[i], bufferSize, [&](uint8_t *data) { y.copy(data, 0, bufferSize); });
             } else {
                 BufferContentsHelperSycl::fillBuffer(sycl, buffers[i], bufferSize, arguments.contents);
             }
+        }
+
+        if (this->verifyEnabled) {
+            this->outputChunk.resize(std::min(this->bufferSize, VerificationHelper::chunkSize));
+            this->verifier.emplace(this->arguments.type, this->arguments.contents, this->bufferSize, sizeof(StreamT), this->arguments.partialMultiplier, streamMemoryScalarValue);
         }
         return TestResult::Success;
     }
@@ -87,7 +86,7 @@ class StreamMemoryBenchmark {
     sycl::event run() {
         switch (arguments.type) {
         case StreamMemoryType::Read:
-            return runRead();
+            return this->verifyEnabled ? runReadStore() : runRead();
         case StreamMemoryType::Write:
             return arguments.contents == BufferContents::Random ? runWriteRandom() : runWrite();
         case StreamMemoryType::Scale:
@@ -100,25 +99,23 @@ class StreamMemoryBenchmark {
         FATAL_ERROR("Unknown StreamMemoryType");
     }
 
+    void poisonOutput() {
+        BufferContentsHelperSycl::fillBufferWithPattern(this->sycl, this->buffers.back(), this->bufferSize, VerificationHelper::poisonByte);
+    }
+
     TestResult verify() {
-        std::vector<uint8_t> output(std::min(bufferSize, VerificationHelper::chunkSize));
-        const auto readChunk = [&](size_t offset, size_t size) -> const uint8_t * {
-            BufferContentsHelperSycl::copyToHost(sycl, output.data(), static_cast<const uint8_t *>(buffers[outputBufferIndex()]) + offset, size);
-            return output.data();
+        const auto readChunk = [this](size_t offset, size_t size) -> const uint8_t * {
+            BufferContentsHelperSycl::copyToHost(this->sycl, this->outputChunk.data(), static_cast<const uint8_t *>(this->buffers.back()) + offset, size);
+            return this->outputChunk.data();
         };
-        const auto expected = StreamMemoryVerification::getExpected(arguments.type, arguments.contents, bufferSize,
-                                                                    sizeof(StreamT), arguments.partialMultiplier, streamMemoryScalarValue);
-        return StreamMemoryVerification::verifyOutput(expected, bufferSize, readChunk);
+        return this->verifier->verify(readChunk);
     }
 
   private:
-    size_t outputBufferIndex() const {
-        return arguments.type == StreamMemoryType::Read ? 0u : buffers.size() - 1;
-    }
-
     size_t bufferCount() const {
         switch (arguments.type) {
         case StreamMemoryType::Read:
+            return this->verifyEnabled ? 2 : 1;
         case StreamMemoryType::Write:
             return 1;
         case StreamMemoryType::Scale:
@@ -147,6 +144,22 @@ class StreamMemoryBenchmark {
         });
     }
 
+    sycl::event runReadStore() {
+        const StreamT *x = static_cast<const StreamT *>(this->buffers[0]);
+        StreamT *output = static_cast<StreamT *>(this->buffers[1]);
+        const uint32_t multiplier = this->arguments.partialMultiplier;
+
+        return this->sycl.queue.submit([&](sycl::handler &cgh) {
+            cgh.parallel_for(this->ndRange, [=](sycl::nd_item<1> item) {
+                uint32_t i = {};
+                if (!multipliedIndex(item, multiplier, i)) {
+                    return;
+                }
+                output[i] = x[i];
+            });
+        });
+    }
+
     sycl::event runWrite() {
         StreamT *x = static_cast<StreamT *>(buffers[0]);
         const StreamT scalar = scalarValue;
@@ -170,11 +183,11 @@ class StreamMemoryBenchmark {
 
         return sycl.queue.submit([&](sycl::handler &cgh) {
             cgh.parallel_for(ndRange, [=](sycl::nd_item<1> item) {
-                constexpr uint32_t patternSize = sizeof(StreamMemoryVerification::writeRandomPattern);
+                constexpr uint32_t patternSize = sizeof(StreamMemoryHelper::writeRandomPattern);
                 const uint32_t i = static_cast<uint32_t>(item.get_global_id(0));
                 const uint32_t dataIndex = i % (patternSize / sizeof(StreamT));
                 StreamT value;
-                __builtin_memcpy(&value, StreamMemoryVerification::writeRandomPattern + dataIndex * sizeof(StreamT), sizeof(StreamT));
+                __builtin_memcpy(&value, StreamMemoryHelper::writeRandomPattern + dataIndex * sizeof(StreamT), sizeof(StreamT));
                 x[i] = value;
             });
         });
@@ -209,10 +222,13 @@ class StreamMemoryBenchmark {
 
     Sycl &sycl;
     const StreamMemoryArguments &arguments;
+    const bool verifyEnabled;
     size_t bufferSize;
     sycl::nd_range<1> ndRange;
     StreamT scalarValue = {};
     std::vector<void *> buffers;
+    std::vector<uint8_t> outputChunk;
+    std::optional<StreamMemoryHelper::Verifier> verifier;
 };
 
 } // namespace
@@ -251,6 +267,9 @@ static TestResult runImpl(const StreamMemoryArguments &arguments, Statistics &st
     const size_t transferSize = getStreamMemoryTransferSize(arguments, dispatch.bufferSize);
 
     for (auto i = 0u; i < arguments.iterations; i++) {
+        if (verify) {
+            benchmark.poisonOutput();
+        }
         timer.measureStart();
         sycl::event event = benchmark.run();
         event.wait();

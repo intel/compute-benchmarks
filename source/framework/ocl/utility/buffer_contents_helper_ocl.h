@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,14 @@
 #include "framework/ocl/cl.h"
 #include "framework/utility/buffer_contents_helper.h"
 
+#include <functional>
+
 class BufferContentsHelperOcl : public BufferContentsHelper {
   public:
+    using GenerateData = std::function<void(uint8_t *)>;
+
     static cl_int fillBuffer(cl_command_queue queue, cl_mem buffer, size_t bufferSize, BufferContents contents);
+    static cl_int fillBufferWithData(cl_command_queue queue, cl_mem buffer, size_t bufferSize, const GenerateData &generateData);
     static cl_int fillUsmBufferOrHostPtr(cl_command_queue queue, void *ptr, size_t ptrSize, UsmMemoryPlacement placement, BufferContents contents);
     static cl_int fillUsmBufferOrHostPtr(cl_command_queue queue, void *ptr, size_t ptrSize, HostptrReuseMode reuseMode, BufferContents contents);
 

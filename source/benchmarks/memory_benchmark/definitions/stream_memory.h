@@ -13,8 +13,8 @@
 #include "framework/argument/enum/usm_runtime_memory_placement_argument.h"
 #include "framework/test_case/test_case.h"
 #include "framework/utility/error.h"
+#include "framework/utility/stream_memory_helper.h"
 
-#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <iostream>
@@ -53,7 +53,7 @@ struct StreamMemory : TestCase<StreamMemoryArguments> {
         return "Streams memory inside of kernel in a fashion described by 'type'. Copy means one "
                "memory location is read from and the second one is written to. Triad means two "
                "buffers are read and one is written to. In read and write memory is only read or "
-               "written to.";
+               "written to. With --verify, Read stores what it reads so the output can be checked.";
     }
 };
 
@@ -85,17 +85,17 @@ struct StreamMemoryDispatch {
 
 inline TestResult getStreamMemoryDispatch(const StreamMemoryArguments &arguments, StreamMemoryDispatch &dispatch) {
     dispatch.elementSize = arguments.vectorSize * sizeof(uint32_t);
-    const size_t elementCount = arguments.size / dispatch.elementSize;
-    if (elementCount == 0) {
+    const auto workSize = StreamMemoryHelper::getWorkSize(arguments.size, dispatch.elementSize, arguments.lws);
+    if (!workSize) {
         std::cerr << "size " << static_cast<size_t>(arguments.size) << " is smaller than one "
                   << dispatch.elementSize << "-byte element" << std::endl;
         return TestResult::InvalidArgs;
     }
 
-    dispatch.groupSize = std::min<size_t>(arguments.lws, elementCount);
-    dispatch.groupCount = elementCount / dispatch.groupSize;
-    dispatch.globalSize = dispatch.groupCount * dispatch.groupSize;
-    dispatch.bufferSize = dispatch.globalSize * dispatch.elementSize;
+    dispatch.groupSize = workSize->groupSize;
+    dispatch.groupCount = workSize->globalSize / workSize->groupSize;
+    dispatch.globalSize = workSize->globalSize;
+    dispatch.bufferSize = workSize->bufferSize;
 
     const size_t highestIndex = dispatch.globalSize * arguments.partialMultiplier;
     if (highestIndex > std::numeric_limits<int32_t>::max()) {
@@ -120,10 +120,10 @@ inline size_t getStreamMemoryTransferSize(const StreamMemoryArguments &arguments
     return transferSize;
 }
 
-inline const char *getStreamMemoryKernelName(const StreamMemoryArguments &arguments) {
+inline const char *getStreamMemoryKernelName(const StreamMemoryArguments &arguments, const bool verify) {
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        return "readWithMultiplier";
+        return verify ? "readWithMultiplierStore" : "readWithMultiplier";
     case StreamMemoryType::Write:
         return arguments.contents == BufferContents::Random ? "write_random" : "writeWithMultiplier";
     case StreamMemoryType::Scale:

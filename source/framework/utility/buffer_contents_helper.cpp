@@ -32,10 +32,15 @@ void BufferContentsHelper::fillWithZeros(uint8_t *buffer, size_t size) {
 }
 
 void BufferContentsHelper::fillWithRandomBytes(uint8_t *buffer, size_t size) {
-    std::memcpy(buffer, getRandomBytes(size), size);
+    copyRandomBytes(buffer, 0, size);
 }
 
-const uint8_t *BufferContentsHelper::getRandomBytes(size_t size) {
+void BufferContentsHelper::copyRandomBytes(uint8_t *destination, size_t offset, size_t size) {
+    generateRandomBytes(offset + size);
+    std::memcpy(destination, cachedRandomData.data() + offset, size);
+}
+
+void BufferContentsHelper::generateRandomBytes(size_t size) {
     // We randomize OWORDS instead of BYTES, because it's faster. Size of the cachedRandomData must be
     // aligned to sizeof(OWORD), so we don't have to handle generation of the dangling bytes.
     const auto randomizationChunkSize = sizeof(uint64_t);
@@ -54,8 +59,6 @@ const uint8_t *BufferContentsHelper::getRandomBytes(size_t size) {
             bufferIterator += sizeof(uint64_t);
         }
     }
-
-    return cachedRandomData.data();
 }
 
 void BufferContentsHelper::fillWithIncreasingBytes(uint8_t *buffer, size_t size) {

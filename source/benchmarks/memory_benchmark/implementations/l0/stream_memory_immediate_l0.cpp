@@ -7,15 +7,16 @@
 
 #include "framework/l0/levelzero.h"
 #include "framework/l0/utility/kernel_helper_l0.h"
+#include "framework/l0/utility/verification_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/compiler_options_builder.h"
 #include "framework/utility/memory_constants.h"
+#include "framework/utility/stream_memory_helper.h"
 #include "framework/utility/timer.h"
+#include "framework/utility/verification_helper.h"
 
 #include "definitions/stream_memory_immediate.h"
-#include "stream_memory_verification.h"
 
-#include <algorithm>
 #include <gtest/gtest.h>
 
 using namespace L0;
@@ -66,14 +67,17 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     const void *fillValue = useDoubles ? static_cast<const void *>(&doubleValues[0]) : &floatValues[0];
     const void *secondFillValue = useDoubles ? static_cast<const void *>(&doubleValues[1]) : &floatValues[1];
     const void *scalarValue = useDoubles ? static_cast<const void *>(&doubleValues[2]) : &floatValues[2];
-    const uint32_t groupSizeX = static_cast<uint32_t>(std::min<size_t>(levelzero.getDeviceComputeProperties().maxGroupSizeX, arguments.size / elementSize));
-    if (groupSizeX == 0) {
+    const auto workSize = StreamMemoryHelper::getWorkSize(arguments.size, elementSize, levelzero.getDeviceComputeProperties().maxGroupSizeX);
+    if (!workSize) {
         return TestResult::InvalidArgs;
     }
-    const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize / groupSizeX * groupSizeX);
+    const uint32_t groupSizeX = static_cast<uint32_t>(workSize->groupSize);
+    const uint32_t gws = static_cast<uint32_t>(workSize->globalSize);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
+    const bool verify = Configuration::get().verify;
+    const size_t readOutputSize = verify ? workSize->bufferSize : StreamMemoryHelper::dummyOutputSize;
 
-    size_t bufferSize = static_cast<size_t>(gws) * elementSize;
+    const size_t bufferSize = workSize->bufferSize;
     void *buffers[3] = {};
     size_t buffersCount = {};
     size_t bufferSizes[3] = {bufferSize, bufferSize, bufferSize};
@@ -82,10 +86,10 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     const char *pKernelName = nullptr;
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        pKernelName = "read";
+        pKernelName = verify ? "readStore" : "read";
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffers[buffersCount++]));
-        bufferSizes[buffersCount] = 16u;
-        ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, 16u, 0, levelzero.device, &buffers[buffersCount++]));
+        bufferSizes[buffersCount] = readOutputSize;
+        ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, readOutputSize, 0, levelzero.device, &buffers[buffersCount++]));
         break;
     case StreamMemoryType::Write:
         pKernelName = "write";
@@ -139,7 +143,6 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
-    const bool verify = Configuration::get().verify;
     for (auto i = 0u; i < buffersCount; i++) {
         const void *pattern = verify && arguments.type == StreamMemoryType::Triad && i == 1 ? secondFillValue : fillValue;
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffers[i], pattern, elementSize, bufferSizes[i], event, 0, nullptr));
@@ -149,21 +152,18 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     }
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), elementSize, scalarValue));
 
-    const size_t outputIndex = arguments.type == StreamMemoryType::Read ? 0u : buffersCount - 1;
-    void *staging{};
+    const size_t outputIndex = buffersCount - 1;
+    VerificationHelperL0 verification(levelzero);
     if (verify) {
-        ze_host_mem_alloc_desc_t hostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-        ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostDesc, std::min(bufferSize, VerificationHelper::chunkSize), 0, &staging));
+        ASSERT_ZE_RESULT_SUCCESS(verification.initialize(bufferSize));
     }
-    const auto readChunk = [&](size_t offset, size_t size) -> const void * {
-        ZE_RESULT_SUCCESS_OR_RETURN_VALUE(zeCommandListAppendMemoryCopy(cmdList, staging, static_cast<uint8_t *>(buffers[outputIndex]) + offset, size, event, 0, nullptr), nullptr);
-        ZE_RESULT_SUCCESS_OR_RETURN_VALUE(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()), nullptr);
-        ZE_RESULT_SUCCESS_OR_RETURN_VALUE(zeEventHostReset(event), nullptr);
-        return staging;
-    };
+    const auto readChunk = [&](size_t offset, size_t size) -> const void * { return verification.read(buffers[outputIndex], offset, size); };
     TestResult result = TestResult::Success;
 
     for (auto i = 0u; i < arguments.iterations; i++) {
+        if (verify) {
+            ASSERT_ZE_RESULT_SUCCESS(verification.poison(buffers[outputIndex], bufferSizes[outputIndex]));
+        }
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
@@ -205,9 +205,6 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     for (size_t i = 0; i < buffersCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffers[i]));
-    }
-    if (verify) {
-        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, staging));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));

@@ -9,17 +9,19 @@
 #include "framework/l0/utility/buffer_contents_helper_l0.h"
 #include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/l0/utility/usm_helper.h"
+#include "framework/l0/utility/verification_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/compiler_options_builder.h"
 #include "framework/utility/file_helper.h"
 #include "framework/utility/memory_constants.h"
+#include "framework/utility/stream_memory_helper.h"
 #include "framework/utility/timer.h"
 
-#include "benchmarks/memory_benchmark/stream_memory_verification.h"
 #include "definitions/non_usm_stream_memory.h"
 
 #include <algorithm>
 #include <gtest/gtest.h>
+#include <optional>
 
 using namespace L0;
 
@@ -70,14 +72,17 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     uint32_t scalarValue[16];
     std::fill(std::begin(scalarValue), std::end(scalarValue), static_cast<uint32_t>(-999));
     bool setScalarArgument = true;
-    const uint32_t groupSizeX = static_cast<uint32_t>(std::min<size_t>(arguments.lws, arguments.size / elementSize));
-    if (groupSizeX == 0) {
+    const auto workSize = StreamMemoryHelper::getWorkSize(arguments.size, elementSize, arguments.lws);
+    if (!workSize) {
         return TestResult::InvalidArgs;
     }
-    const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize / groupSizeX * groupSizeX);
+    const uint32_t groupSizeX = static_cast<uint32_t>(workSize->groupSize);
+    const uint32_t gws = static_cast<uint32_t>(workSize->globalSize);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
+    const bool verify = Configuration::get().verify;
+    const size_t readOutputSize = verify ? workSize->bufferSize : StreamMemoryHelper::dummyOutputSize;
 
-    size_t bufferSize = static_cast<size_t>(gws) * elementSize;
+    const size_t bufferSize = workSize->bufferSize;
     void *buffers[3] = {};
     size_t buffersCount = {};
     size_t bufferSizes[3] = {bufferSize, bufferSize, bufferSize};
@@ -85,10 +90,10 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
 
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        pKernelName = "readWithMultiplier";
+        pKernelName = verify ? "readWithMultiplierStore" : "readWithMultiplier";
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
-        bufferSizes[buffersCount] = 16u;
-        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, 16u, &buffers[buffersCount++]));
+        bufferSizes[buffersCount] = readOutputSize;
+        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, readOutputSize, &buffers[buffersCount++]));
         break;
     case StreamMemoryType::Write:
         if (BufferContents::Random == arguments.contents) {
@@ -122,7 +127,7 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
         streamType += std::to_string(arguments.vectorSize);
     }
     compilerOptions.addDefinitionKeyValue("STREAM_TYPE", streamType.c_str());
-    compilerOptions.addDefinitionKeyValue("WRITE_RANDOM_PATTERN", StreamMemoryVerification::getWriteRandomPatternDefinition());
+    compilerOptions.addDefinitionKeyValue("WRITE_RANDOM_PATTERN", StreamMemoryHelper::getWriteRandomPatternDefinition());
 
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "memory_benchmark_stream_memory.cl", pKernelName, &kernel, &module, compilerOptions.str().c_str());
     if (kernelLoadRes != TestResult::Success) {
@@ -133,7 +138,7 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     const ze_group_count_t dispatchTraits{gws / groupSizeX, 1u, 1u};
 
     ze_command_list_handle_t cmdList;
-    ze_command_list_desc_t cmdListDesc{};
+    ze_command_list_desc_t cmdListDesc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
@@ -153,31 +158,28 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(eventPool, &eventDesc, &event));
 
-    const bool verify = Configuration::get().verify;
-    const size_t outputIndex = arguments.type == StreamMemoryType::Read ? 0u : buffersCount - 1;
-    const bool poisonOutput = verify && (arguments.type == StreamMemoryType::Scale || arguments.type == StreamMemoryType::Triad);
+    const bool systemMemory = isSharedSystemPointer(arguments.memoryPlacement);
+    const size_t outputIndex = buffersCount - 1;
     const bool invertSecondInput = verify && arguments.type == StreamMemoryType::Triad && arguments.contents == BufferContents::Random;
     uint8_t systemFillBytes[3] = {};
     auto fillSystemBuffers = [&]() {
         for (auto id = 0u; id < buffersCount; id++) {
             systemFillBytes[id] = arguments.contents == BufferContents::Zeros ? 0u : static_cast<uint8_t>(rand() & 0xff);
-            if (poisonOutput && id == outputIndex) {
-                systemFillBytes[id] = StreamMemoryVerification::outputPoison;
+            if (verify && id == outputIndex) {
+                systemFillBytes[id] = VerificationHelper::poisonByte;
             } else if (invertSecondInput && id == 1) {
                 systemFillBytes[id] = static_cast<uint8_t>(~systemFillBytes[0]);
             }
             memset(buffers[id], systemFillBytes[id], bufferSizes[id]);
         }
     };
-    if (isSharedSystemPointer(arguments.memoryPlacement)) {
+    if (systemMemory) {
         fillSystemBuffers();
     }
     for (auto i = 0u; i < buffersCount; i++) {
-        if (!isSharedSystemPointer(arguments.memoryPlacement)) {
-            if (poisonOutput && i == outputIndex) {
-                ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(cmdList, buffers[i], &StreamMemoryVerification::outputPoison, 1u, bufferSizes[i], nullptr, 0, nullptr));
-            } else if (invertSecondInput && i == 1) {
-                const auto y = StreamMemoryVerification::getInput(arguments.contents, bufferSizes[i], 1);
+        if (!systemMemory) {
+            if (invertSecondInput && i == 1) {
+                const auto y = StreamMemoryHelper::getInput(arguments.contents, 1);
                 ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBufferWithData(levelzero, buffers[i], bufferSizes[i], [&](uint8_t *data) { y.copy(data, 0, bufferSizes[i]); }, false));
             } else {
                 ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(levelzero, buffers[i], bufferSizes[i], arguments.contents, false));
@@ -208,26 +210,27 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    ze_command_list_handle_t copyCmdList{};
-    void *staging{};
-    if (verify && !isSharedSystemPointer(arguments.memoryPlacement)) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &copyCmdList));
-        ze_host_mem_alloc_desc_t hostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-        ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostDesc, std::min(bufferSize, VerificationHelper::chunkSize), 0, &staging));
+    VerificationHelperL0 verification(levelzero);
+    std::optional<StreamMemoryHelper::Verifier> verifier;
+    if (verify) {
+        if (!systemMemory) {
+            ASSERT_ZE_RESULT_SUCCESS(verification.initialize(bufferSize));
+        }
+        verifier.emplace(arguments.type, arguments.contents, bufferSize, elementSize, arguments.partialMultiplier, scalarValue[0]);
     }
     const auto readChunk = [&](size_t offset, size_t size) -> const uint8_t * {
-        const uint8_t *source = static_cast<const uint8_t *>(buffers[outputIndex]) + offset;
-        if (staging == nullptr) {
-            return source;
+        if (systemMemory) {
+            return static_cast<const uint8_t *>(buffers[outputIndex]) + offset;
         }
-        ZE_RESULT_SUCCESS_OR_RETURN_VALUE(BufferContentsHelperL0::copyToHost(levelzero, copyCmdList, staging, source, size), nullptr);
-        return static_cast<const uint8_t *>(staging);
+        return verification.read(buffers[outputIndex], offset, size);
     };
     TestResult result = TestResult::Success;
 
     for (auto i = 0u; i < arguments.iterations; i++) {
-        if (isSharedSystemPointer(arguments.memoryPlacement)) {
+        if (systemMemory) {
             fillSystemBuffers();
+        } else if (verify) {
+            ASSERT_ZE_RESULT_SUCCESS(verification.poison(buffers[outputIndex], bufferSizes[outputIndex]));
         }
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, 0));
@@ -262,10 +265,10 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
 
         if (verify) {
-            const auto expected = isSharedSystemPointer(arguments.memoryPlacement)
-                                      ? StreamMemoryVerification::Expected{arguments.type, arguments.contents, {nullptr, systemFillBytes[0]}, {nullptr, systemFillBytes[1]}, elementSize, arguments.partialMultiplier, scalarValue[0]}
-                                      : StreamMemoryVerification::getExpected(arguments.type, arguments.contents, bufferSize, elementSize, arguments.partialMultiplier, scalarValue[0]);
-            result = StreamMemoryVerification::verifyOutput(expected, bufferSize, readChunk);
+            if (systemMemory) {
+                verifier->setInputs({.fill = systemFillBytes[0]}, {.fill = systemFillBytes[1]});
+            }
+            result = verifier->verify(readChunk);
             if (result != TestResult::Success) {
                 break;
             }
@@ -276,10 +279,6 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     for (size_t i = 0; i < buffersCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.memoryPlacement, levelzero, buffers[i]));
-    }
-    if (staging) {
-        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, staging));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(copyCmdList));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));
