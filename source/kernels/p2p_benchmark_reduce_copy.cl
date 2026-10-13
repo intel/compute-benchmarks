@@ -35,7 +35,7 @@ __attribute__((intel_reqd_sub_group_size(16))) kernel void p2p_barrier(global at
     if (get_global_id(0) == 0) {
         const uint count = atomic_fetch_add_explicit(&sync[0], 1u, memory_order_relaxed, memory_scope_device) + 1u;
         atomic_work_item_fence(CLK_GLOBAL_MEM_FENCE, memory_order_release, memory_scope_all_svm_devices);
-        ((volatile global uint *)peerSync)[1] = count;
+        __builtin_nontemporal_store(count, &peerSync[1]);
         atomic_work_item_fence(CLK_GLOBAL_MEM_FENCE, memory_order_release, memory_scope_all_svm_devices);
         while (atomic_load_explicit(&sync[1], memory_order_relaxed, memory_scope_all_svm_devices) < count) {
         }
