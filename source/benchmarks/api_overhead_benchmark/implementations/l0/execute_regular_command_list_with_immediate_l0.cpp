@@ -125,6 +125,10 @@ static TestResult run(const ExecuteRegularCommandListWithImmediateArguments &arg
             timer.measureEnd();
             statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         }
+
+        if (arguments.useEvent && !arguments.counterBasedEvents) {
+            ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(events[1]));
+        }
     }
 
     if (arguments.useEvent) {

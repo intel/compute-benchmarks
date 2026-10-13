@@ -74,6 +74,7 @@ static TestResult run(const MemOpenIpcHandleArguments &arguments, Statistics &st
         timer.measureEnd();
 
         for (int64_t j = 0; j < arguments.AllocationsCount; j++) {
+            ASSERT_ZE_RESULT_SUCCESS(zeMemCloseIpcHandle(levelzero.context, ipcPointers[j]));
             ASSERT_ZE_RESULT_SUCCESS(zeMemPutIpcHandle(levelzero.context, ipcHandles[j]));
             ipcPointers[j] = nullptr;
         }
