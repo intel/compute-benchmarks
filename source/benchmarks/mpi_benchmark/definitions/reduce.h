@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,5 +46,9 @@ struct MpiReduce : public TestCase<MpiReduceArguments> {
 
     std::string getHelp() const override {
         return "Measures the performance of the reduction operation in an MPI+X application.";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

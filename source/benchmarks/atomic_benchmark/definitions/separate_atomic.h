@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,5 +50,9 @@ struct SeparateAtomics : TestCase<SeparateAtomicsArguments> {
 
     std::string getHelp() const override {
         return "enqueues kernel performing an atomic operation on different addresses";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

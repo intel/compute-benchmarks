@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,5 +34,9 @@ struct CreateBuffer : TestCase<CreateBufferArguments> {
 
     std::string getHelp() const override {
         return "measures time spent in clCreateBuffer on CPU.";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

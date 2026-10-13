@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,5 +37,9 @@ struct MultiProcessCompute : TestCase<MultiProcessComputeArguments> {
         return "Creates a number of separate processes for each tile specified performing a "
                "compute workload and measures average time to complete all of them. Processes "
                "will use affinity mask to select specific sub-devices for the execution";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

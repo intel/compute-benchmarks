@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,5 +39,9 @@ struct DoMathOperation : TestCase<DoMathOperationArguments> {
 
     std::string getHelp() const override {
         return "enqueues kernel performing a math operation";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

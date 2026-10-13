@@ -9,6 +9,7 @@
 #include "framework/configuration.h"
 #include "framework/utility/statistics.h"
 
+#include <chrono>
 #include <map>
 #include <memory>
 #include <string>
@@ -28,6 +29,8 @@ class TestCaseStatistics : public Statistics {
     using SamplesMap = std::map<std::string, Samples, std::less<>>;
 
     explicit TestCaseStatistics(size_t maxSamplesCount, Configuration::PrintType printType);
+
+    void enableTimedWarmup(size_t *iterationCount, const std::chrono::milliseconds warmupDuration);
 
     using Statistics::pushPercentage;
     using Statistics::pushValue;
@@ -53,6 +56,8 @@ class TestCaseStatistics : public Statistics {
     void printStatisticsString(const std::string &testCaseName, const std::string &message, char lineEnding) const;
 
   private:
+    static constexpr size_t maxStalledWarmupSamples = 100;
+
     struct BufferedLine {
         std::string name;
         std::string results;
@@ -61,6 +66,8 @@ class TestCaseStatistics : public Statistics {
 
     static void overrideMeasurementUnit(MeasurementUnit &unit);
     void pushValue(Value value, std::string_view description, MeasurementUnit unit, MeasurementType type);
+    void extendWarmup(const std::string_view description, const size_t sampleCount);
+    size_t getWarmupSampleCount(const size_t sampleCount) const;
     void printStatisticsDefault(const std::string &testCaseName) const;
     void printStatisticsNoop(const std::string &testCaseName) const;
     void printStatisticsCsv(const std::string &testCaseName) const;
@@ -72,6 +79,14 @@ class TestCaseStatistics : public Statistics {
     SamplesMap samplesMap = {};
     Samples noopSample = {};
     bool reachedInfinity = false;
+    size_t *iterations = nullptr;
+    size_t warmupIterations = 0;
+    size_t warmupSamples = 0;
+    std::chrono::milliseconds warmupTime{};
+    std::string warmupSamplesName{};
+    std::chrono::steady_clock::time_point warmupStart{};
+    std::chrono::steady_clock::time_point lastWarmupSampleTime{};
+    size_t stalledWarmupSamples = 0;
 
     static std::vector<BufferedLine> testResults;
     static std::vector<std::string> histograms;

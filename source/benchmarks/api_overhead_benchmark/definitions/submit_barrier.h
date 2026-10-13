@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,5 +34,10 @@ struct SubmitBarrier : TestCase<SubmitBarrierArguments> {
 
     std::string getHelp() const override {
         return "measures time spent in submitting a barrier to a SYCL (or SYCL-like) queue on CPU and getting last event.";
+    }
+
+    // The iterations submit GPU work without waiting for it, so a longer warmup only deepens the queue.
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

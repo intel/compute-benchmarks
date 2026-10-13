@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,5 +37,9 @@ struct UsmRandomMemoryAllocation : TestCase<UsmRandomMemoryAllocationArguments> 
 
     std::string getHelp() const override {
         return "measures time spent in USM memory allocation APIs, with a randomized scenario. ";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

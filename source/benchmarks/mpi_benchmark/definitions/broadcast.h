@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,5 +43,9 @@ struct MpiBroadcast : public TestCase<MpiBroadcastArguments> {
 
     std::string getHelp() const override {
         return "Measures the performance of the broadcast operation in an MPI+X application.";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

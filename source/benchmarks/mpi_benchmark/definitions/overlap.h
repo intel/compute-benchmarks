@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,5 +45,9 @@ struct MpiOverlap : public TestCase<MpiOverlapArguments> {
 
     std::string getHelp() const override {
         return "Measures the computation-communication overlap efficency when using non-blocking message transfers in an MPI+X application.";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

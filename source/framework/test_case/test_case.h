@@ -37,7 +37,7 @@ class TestCase : public TestCaseBase {
     static_assert(std::is_base_of_v<TestCaseArgumentContainer, ArgumentContainerT>, "Arguments class should derive from TestCaseArgumentContainer");
 
     struct BenchmarkImplementation {
-        using Function = std::function<TestResult(ArgumentContainerT, Statistics &)>;
+        using Function = std::function<TestResult(const ArgumentContainerT &, Statistics &)>;
         Function function = {};
         bool requiresIntelExtensions = false;
     };
@@ -94,6 +94,9 @@ class TestCase : public TestCaseBase {
 
         const auto testCaseNameWithConfig = getTestCaseNameWithConfig(arguments, Configuration::get().dumpCommandLines);
         TestCaseStatistics statistics{arguments.iterations, Configuration::get().printType};
+        if (!this->hasFixedIterationCount()) {
+            statistics.enableTimedWarmup(&arguments.iterations, std::chrono::milliseconds(Configuration::get().warmupTime));
+        }
 
         const auto testResult = runImpl(statistics, arguments, testCaseNameWithConfig);
         if (testResult == TestResult::Success) {

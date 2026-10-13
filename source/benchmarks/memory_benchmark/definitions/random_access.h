@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,5 +40,9 @@ struct RandomAccess : TestCase<RandomAccessArguments> {
     std::string getHelp() const override {
         return "Measures device-memory random access bandwidth for different allocation sizes, alignments and access modes."
                "The benchmark uses 10 million accesses to memory.";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

@@ -34,6 +34,7 @@ Configuration::Configuration()
       interactivePrints(*this, "interactivePrints", "display test name before running it. May cause unexcpected results when redirecting output to files."),
       iterations(*this, "iterations", "select how many times each test will be run"),
       warmupIterations(*this, "warmupIterations", "select how many warmup iterations will be run before actual test iterations"),
+      warmupTime(*this, "warmupTime", "minimum time in milliseconds the warmup iterations take; warmup iterations are repeated until both warmupIterations and warmupTime are reached; 0 runs exactly warmupIterations"),
       trimOutliers(*this, "trimOutliers", "percentage of samples to trim from each end before computing statistics (0-49)"),
       sleepFor(*this, "sleepFor", "sleep for specified amount of time after running each test, in milliseconds"),
       cpuAffinityMask(*this, "cpuAffinityMask", "pin the benchmark to the given logical CPUs (up to 64, bit i = CPU i), as a bitmask - decimal or 0x-prefixed hex (e.g. 5 or 0x5 = CPU0+CPU2), a CPU list (e.g. 0,2,4-7), or a core-type keyword on Intel hybrid CPUs: p-cores / e-cores for every CPU of that type. Core types are detected via CPUID and intersected with the CPUs this process may run on; on a non-hybrid CPU a core-type keyword is a no-op rather than an error. Threads and child processes inherit the mask; 0 (default) leaves CPU affinity untouched, so use 1 to pin to CPU0 alone"),
@@ -87,6 +88,7 @@ Configuration::Configuration()
     verbose = false;
     interactivePrints = false;
     warmupIterations = 10;
+    warmupTime = 50;
     trimOutliers = 0;
     iterations = 100;
     sleepFor = 20;

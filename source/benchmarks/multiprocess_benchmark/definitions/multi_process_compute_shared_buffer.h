@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,5 +37,9 @@ struct MultiProcessComputeSharedBuffer : TestCase<MultiProcessComputeSharedBuffe
                "will use affinity mask to select specific sub-devices for the execution. A single "
                "buffer for each tile is created by parent process. All processes executing on a "
                "given tile will share it via IPC calls. ";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

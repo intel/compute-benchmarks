@@ -31,4 +31,9 @@ struct InOrderWaitAppend : TestCase<InOrderWaitAppendArguments> {
     std::string getHelp() const override {
         return "Measures time spent to append wait on event command to in-order command list.";
     }
+
+    // The measured appends depend on the kernel submitted once before the loop still running.
+    bool hasFixedIterationCount() const override {
+        return true;
+    }
 };

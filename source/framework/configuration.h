@@ -72,6 +72,7 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument interactivePrints;
     PositiveIntegerArgument iterations;
     NonNegativeIntegerArgument warmupIterations;
+    NonNegativeIntegerArgument warmupTime;
     NonNegativeIntegerArgument trimOutliers;
     IntegerArgument sleepFor;
     CpuAffinityMaskArgument cpuAffinityMask;

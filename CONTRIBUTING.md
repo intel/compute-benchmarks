@@ -119,6 +119,13 @@ A good way to add new benchmarks is to mimic the existing ones and tweak them to
 5. Add an implementation file as `source/benchmarks/memory_benchmark/implementations/ocl/two_way_transfer_ocl.cpp`. This file contains the actual implementation of your test. Replace *ocl* with *l0* for LevelZero implementation. Each test *can* be implemented in more than one API.
 6. Regenerate documentation (see below).
 
+The framework repeats the warmup iterations until both `--warmupIterations` and `--warmupTime` are reached: until `--warmupTime` has passed, each warmup value pushed to `statistics` increases `arguments.iterations` by one. A benchmark therefore has to read `arguments.iterations` as its loop bound and push its values inside that loop, once per iteration for each series. Override `hasFixedIterationCount()` in the definition file to return `true` when the test case:
+- uses the iteration count outside of its loop bound, for example to allocate one resource per iteration, to compute an expected result, to copy it into a local variable or to start child processes,
+- submits GPU work in its iterations without waiting for it, or
+- measures its iterations against GPU work submitted once before the loop.
+
+Such a test case runs exactly `--warmupIterations` warmup iterations.
+
 ### 2.2 Test configurations and permutations <a id="test-permutations"></a>
 Each test case is expanded into a separate GoogleTest test for every combination of its predefined parameter values. The number of generated test cases therefore grows multiplicatively with the number of parameters and the number of values per parameter, and can quickly reach thousands for a single test case.
 

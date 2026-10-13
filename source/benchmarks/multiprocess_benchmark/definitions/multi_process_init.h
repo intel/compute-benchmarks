@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,5 +30,9 @@ struct MultiProcessInit : TestCase<MultiProcessInitArguments> {
     std::string getHelp() const override {
         return "Measures the initialization overhead in a multi-process application."
                "For Level Zero we only measure the first invocation of zeInit() per process execution.";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

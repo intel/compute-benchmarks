@@ -37,4 +37,8 @@ struct Decoder2Graph : TestCase<Decoder2GraphArguments> {
     std::string getHelp() const override {
         return "LLM decode proxy benchmark to simulate graph execution with host CPU coordination.";
     }
+
+    bool hasFixedIterationCount() const override {
+        return true;
+    }
 };

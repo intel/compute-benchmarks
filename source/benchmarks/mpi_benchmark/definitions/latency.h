@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,5 +43,9 @@ struct MpiLatency : public TestCase<MpiLatencyArguments> {
 
     std::string getHelp() const override {
         return "Measures the point-to-point message transfer latency in an MPI+X application.";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

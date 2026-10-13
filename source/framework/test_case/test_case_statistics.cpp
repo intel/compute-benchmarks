@@ -27,7 +27,16 @@
 
 TestCaseStatistics::TestCaseStatistics(size_t maxSamplesCount, Configuration::PrintType printType)
     : Statistics(maxSamplesCount),
-      printType(printType) {
+      printType(printType),
+      warmupIterations(Configuration::get().warmupIterations),
+      warmupSamples(Configuration::get().warmupIterations) {
+}
+
+void TestCaseStatistics::enableTimedWarmup(size_t *iterationCount, const std::chrono::milliseconds warmupDuration) {
+    if (this->warmupIterations > 0 && warmupDuration.count() > 0) {
+        this->iterations = iterationCount;
+        this->warmupTime = warmupDuration;
+    }
 }
 
 void TestCaseStatistics::pushPercentage(double value, MeasurementUnit unit, MeasurementType type, std::string_view description) {
@@ -180,11 +189,11 @@ void TestCaseStatistics::pushValue(Value value, std::string_view description, Me
     auto it = this->samplesMap.find(description);
     if (it == this->samplesMap.end()) {
         it = this->samplesMap.emplace(std::string(description), Samples{}).first;
+        it->second.vector.reserve(this->maxSamplesCount);
     }
     auto &samples = it->second;
 
     FATAL_ERROR_IF(samples.vector.size() == maxSamplesCount, "Too many values pushed by the test");
-    samples.vector.reserve(maxSamplesCount);
 
     if (samples.unit != unit) {
         FATAL_ERROR_IF(samples.unit != MeasurementUnit::Unknown, "Different units used for the same measurement");
@@ -199,6 +208,48 @@ void TestCaseStatistics::pushValue(Value value, std::string_view description, Me
     if (value >= std::numeric_limits<double>::max()) {
         this->reachedInfinity = true;
     }
+
+    if (this->iterations != nullptr) {
+        this->extendWarmup(description, samples.vector.size());
+    }
+}
+
+void TestCaseStatistics::extendWarmup(const std::string_view description, const size_t sampleCount) {
+    if (this->warmupSamplesName.empty() && sampleCount == 1) {
+        this->warmupSamplesName = description;
+    }
+    if (description != this->warmupSamplesName || sampleCount > this->warmupSamples) {
+        return;
+    }
+
+    const auto now = std::chrono::steady_clock::now();
+    if (sampleCount == 1) {
+        this->warmupStart = now;
+        this->lastWarmupSampleTime = now;
+    } else if (now > this->lastWarmupSampleTime) {
+        this->lastWarmupSampleTime = now;
+        this->stalledWarmupSamples = 0;
+    } else {
+        this->stalledWarmupSamples++;
+        if (this->stalledWarmupSamples == maxStalledWarmupSamples) {
+            printMessageLine("WARNING", "warmup time did not advance during ", maxStalledWarmupSamples, " warmup iterations, warmupTime is ignored");
+            this->iterations = nullptr;
+            return;
+        }
+    }
+
+    if (sampleCount == this->warmupSamples && now - this->warmupStart < this->warmupTime) {
+        this->warmupSamples++;
+        this->maxSamplesCount++;
+        (*this->iterations)++;
+    }
+}
+
+size_t TestCaseStatistics::getWarmupSampleCount(const size_t sampleCount) const {
+    if (sampleCount > this->warmupSamples) {
+        return this->warmupSamples;
+    }
+    return std::min(this->warmupIterations, sampleCount);
 }
 
 struct ColumnInfo {
@@ -355,7 +406,7 @@ void TestCaseStatistics::printStatisticsDefault(const std::string &testCaseName)
     for (const auto &samplesEntry : this->samplesMap) {
         const std::string &samplesName = samplesEntry.first;
         const Samples &samples = samplesEntry.second;
-        const MetricsStrings metricsStrings{samplesName, samples, this->reachedInfinity, Configuration::get().warmupIterations, Configuration::get().trimOutliers};
+        const MetricsStrings metricsStrings{samplesName, samples, this->reachedInfinity, this->getWarmupSampleCount(samples.vector.size()), Configuration::get().trimOutliers};
 
         int column = 1; // skip name column -- handled separately
         std::ostringstream results;
@@ -394,7 +445,7 @@ void TestCaseStatistics::printStatisticsCsv(const std::string &testCaseName) con
     for (const auto &samplesEntry : this->samplesMap) {
         const std::string &samplesName = samplesEntry.first;
         const Samples &samples = samplesEntry.second;
-        const MetricsStrings metricsStrings{samplesName, samples, this->reachedInfinity, Configuration::get().warmupIterations, Configuration::get().trimOutliers};
+        const MetricsStrings metricsStrings{samplesName, samples, this->reachedInfinity, this->getWarmupSampleCount(samples.vector.size()), Configuration::get().trimOutliers};
 
         std::cout << testCaseName << ",";
         std::cout << metricsStrings.mean << ",";
@@ -438,7 +489,7 @@ std::string TestCaseStatistics::renderHistogram(const std::string &testCaseName,
     constexpr size_t maxBins = 20;
     constexpr size_t barWidth = 50;
 
-    const size_t skip = std::min(static_cast<size_t>(Configuration::get().warmupIterations), samples.vector.size());
+    const size_t skip = this->getWarmupSampleCount(samples.vector.size());
     if (skip >= samples.vector.size()) {
         return {};
     }
@@ -800,7 +851,7 @@ void TestCaseStatistics::writeHtmlResults(const std::string &filePath) {
              << "</style>\n</head>\n<body>\n"
              << "<h1>" << htmlEscape(benchmarkName) << "</h1>\n"
              << "<p class=\"meta\">Iterations: " << cfg.iterations
-             << " &nbsp;|&nbsp; Warmup: " << cfg.warmupIterations
+             << " &nbsp;|&nbsp; Warmup: " << cfg.warmupIterations << " iterations, " << cfg.warmupTime << " ms"
              << " &nbsp;|&nbsp; " << currentTimestamp() << "</p>\n";
 
     if (!deviceInfo.empty()) {
@@ -865,7 +916,7 @@ void TestCaseStatistics::writeMdResults(const std::string &filePath) {
 
     mdFile << "# " << benchmarkName << "\n\n"
            << "- **Iterations:** " << cfg.iterations << "\n"
-           << "- **Warmup:** " << cfg.warmupIterations << "\n"
+           << "- **Warmup:** " << cfg.warmupIterations << " iterations, " << cfg.warmupTime << " ms\n"
            << "- **Date:** " << currentTimestamp() << "\n\n";
 
     if (!deviceInfo.empty()) {

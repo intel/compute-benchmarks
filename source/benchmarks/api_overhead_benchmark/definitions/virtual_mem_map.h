@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,5 +30,9 @@ struct VirtualMemMap : TestCase<VirtualMemMapArguments> {
 
     std::string getHelp() const override {
         return "measures time spent in zeVirtualMemMap on CPU.";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

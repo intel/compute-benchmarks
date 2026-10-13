@@ -42,7 +42,7 @@ class Statistics {
     }
 
   protected:
-    const size_t maxSamplesCount = 0;
+    size_t maxSamplesCount = 0;
 };
 
 class MeasurementFields {

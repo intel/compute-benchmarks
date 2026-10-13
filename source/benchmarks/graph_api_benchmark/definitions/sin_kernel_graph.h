@@ -40,4 +40,8 @@ struct SinKernelGraph : TestCase<SinKernelGraphArguments> {
     std::string getHelp() const override {
         return "Benchmark running memory copy and kernel runs, with graphs and without graphs";
     }
+
+    bool hasFixedIterationCount() const override {
+        return true;
+    }
 };

@@ -42,4 +42,8 @@ struct MultiProcessImmediateCmdlistCompletion : TestCase<MultiProcessImmediateCm
                "assigned to selected engines one each, in a round-robin method."
                "if selected engineCount == 1, then all processes are assigned to that engine.";
     }
+
+    bool hasFixedIterationCount() const override {
+        return true;
+    }
 };

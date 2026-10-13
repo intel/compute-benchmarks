@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,5 +42,9 @@ struct MpiStartup : public TestCase<MpiStartupArguments> {
 
     std::string getHelp() const override {
         return "Measures the initialization overhead in an MPI+X application.";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

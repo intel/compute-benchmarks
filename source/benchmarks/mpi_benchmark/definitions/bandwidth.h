@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,5 +46,9 @@ struct MpiBandwidth : public TestCase<MpiBandwidthArguments> {
 
     std::string getHelp() const override {
         return "Measures the point-to-point uni-directional message passing bandwidth in an MPI+X application.";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

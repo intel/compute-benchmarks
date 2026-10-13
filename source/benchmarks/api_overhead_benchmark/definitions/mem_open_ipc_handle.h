@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,5 +29,10 @@ struct MemOpenIpcHandle : TestCase<MemOpenIpcHandleArguments> {
 
     std::string getHelp() const override {
         return "measures time spent in zeMemOpenIpcHandle on CPU.";
+    }
+
+    // Opening an IPC handle of the same device allocation fails after about 2000 open and close cycles.
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,5 +37,9 @@ struct OneAtomic : TestCase<OneAtomicArguments> {
 
     std::string getHelp() const override {
         return "enqueues kernel performing an atomic operation on a single address";
+    }
+
+    bool hasFixedIterationCount() const override {
+        return true;
     }
 };

@@ -27,6 +27,13 @@ ComputeBenchmarks is divided into multiple binaries. Every binary tests a specif
 
 
 
+### How many warmup iterations are run?
+Each test case first runs warmup iterations, whose results are not included in the statistics. After an idle period the GPU frequency reaches its maximum only after tens of milliseconds of continuous work, so a fixed number of short iterations can end before the GPU is fully clocked. The warmup iterations are therefore repeated until both conditions are met: at least `--warmupIterations` iterations (default 10) have run, and at least `--warmupTime` milliseconds (default 50) have passed since the first warmup iteration finished, measured on the CPU. The measured iterations (`--iterations`) follow.
+
+With `--warmupTime=0` the warmup runs exactly `--warmupIterations` iterations; with `--warmupIterations=0` no warmup runs. Some test cases ignore `--warmupTime`, for example those that use the iteration count before their loop starts, run their iterations in child processes, or submit GPU work without waiting for it.
+
+
+
 ### How do I run all tests?
 Select binary you want, for example memory_benchmark_ocl.exe and run it without any parameters.
 

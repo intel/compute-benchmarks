@@ -13,6 +13,9 @@
 struct TestCaseArgumentContainer;
 
 class TestCaseBase : public TestCaseInterface {
+  public:
+    virtual bool hasFixedIterationCount() const { return false; }
+
   protected:
     static bool parseArguments(TestCaseArgumentContainer &arguments, CommandLineArguments &commandLineArguments);
     std::vector<Api> getApisWithImplementation() const override;
