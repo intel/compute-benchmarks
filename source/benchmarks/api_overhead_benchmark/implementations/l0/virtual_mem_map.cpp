@@ -71,7 +71,7 @@ static TestResult cleanupVirtualMemoryMaps(LevelZero &levelzero,
 }
 
 static TestResult run(const VirtualMemMapArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

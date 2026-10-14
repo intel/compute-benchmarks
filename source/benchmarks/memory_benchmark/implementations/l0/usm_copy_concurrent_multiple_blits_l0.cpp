@@ -119,7 +119,7 @@ uint64_t gettotalBytesTransferred(std::vector<PerBlitterWorkInfo> &blitterWorkIn
 }
 
 static TestResult run(const UsmCopyConcurrentMultipleBlitsArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+    const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
 
     auto result = TestResult::Success;
 

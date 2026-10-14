@@ -31,7 +31,7 @@ double getCpuUtilizationPercent(std::chrono::nanoseconds cpuTime, Timer::Clock::
 } // namespace
 
 static TestResult run(const EventHostSynchronizeArguments &arguments, Statistics &statistics) {
-    MeasurementFields latencySelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields latencySelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(latencySelector.getUnit(), latencySelector.getType());

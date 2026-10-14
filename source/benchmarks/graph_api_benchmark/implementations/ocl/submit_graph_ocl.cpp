@@ -87,7 +87,7 @@ typedef clCommandNDRangeKernelKHR_t *
 #endif // #ifndef cl_khr_command_buffer
 
 static TestResult run(const SubmitGraphArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
     if (!arguments.emulateGraphs || arguments.useHostTasks || arguments.useExplicit) {
         return TestResult::ApiNotCapable;
     } else if (isNoopRun()) {

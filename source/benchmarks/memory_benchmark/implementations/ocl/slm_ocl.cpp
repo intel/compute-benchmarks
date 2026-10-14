@@ -25,7 +25,7 @@
 using namespace OCL;
 
 static TestResult run(const SlmTrafficArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Latency, MeasurementType::Gpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Latency, MeasurementType::Gpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

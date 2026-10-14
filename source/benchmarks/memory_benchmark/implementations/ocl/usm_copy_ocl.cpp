@@ -19,7 +19,7 @@
 using namespace OCL;
 
 static TestResult run(const UsmCopyArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (arguments.reuseCommandList == true ||
         requiresImport(arguments.sourcePlacement) ||

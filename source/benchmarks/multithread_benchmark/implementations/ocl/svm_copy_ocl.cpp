@@ -26,7 +26,7 @@ void enqueueSvmCopy(cl_command_queue queue, void *src, void *dst, size_t size, s
 }
 
 static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

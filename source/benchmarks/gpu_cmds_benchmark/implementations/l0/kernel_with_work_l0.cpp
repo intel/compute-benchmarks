@@ -30,7 +30,7 @@ static auto selectKernel(WorkItemIdUsage usedIds) {
 }
 
 static TestResult run(const KernelWithWorkArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

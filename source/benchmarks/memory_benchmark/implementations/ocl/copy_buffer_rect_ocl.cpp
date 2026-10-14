@@ -17,7 +17,7 @@
 using namespace OCL;
 
 static TestResult run(const CopyBufferRectArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

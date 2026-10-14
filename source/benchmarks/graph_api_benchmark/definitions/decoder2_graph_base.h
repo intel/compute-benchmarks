@@ -123,7 +123,7 @@ class Decoder2GraphBase {
     }
 
     TestResult run(Statistics &statistics) {
-        MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
         if (isUnsupported()) {
             return TestResult::ApiNotCapable;

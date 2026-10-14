@@ -15,7 +15,7 @@
 using namespace OCL;
 
 TestResult run(const ReductionArguments3 &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

@@ -27,7 +27,7 @@ void enqueueSvmCopy(ze_command_queue_handle_t queue, ze_command_list_handle_t cm
 }
 
 static TestResult run(const SvmCopyArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

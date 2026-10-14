@@ -25,8 +25,8 @@ namespace {
 struct TestEnv {
     ze_group_count_t groupCount{64u, 1u, 1u};
     const uint32_t size = 65536;
-    MeasurementFields typeSelector = MeasurementFields(MeasurementUnit::Microseconds,
-                                                       MeasurementType::Cpu);
+    const MeasurementFields typeSelector = MeasurementFields(MeasurementUnit::Microseconds,
+                                                             MeasurementType::Cpu);
     std::shared_ptr<LevelZero> levelzero;
     ze_kernel_handle_t kernelSum = nullptr;
     ze_kernel_handle_t kernelMul = nullptr;

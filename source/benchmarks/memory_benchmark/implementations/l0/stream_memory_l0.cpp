@@ -26,7 +26,7 @@ using namespace L0;
 using namespace MemoryConstants;
 
 static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (arguments.partialMultiplier > 1u) {
         if (arguments.type == StreamMemoryType::Scale || arguments.type == StreamMemoryType::Triad) {

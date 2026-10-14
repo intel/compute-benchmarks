@@ -19,7 +19,7 @@
 using namespace L0;
 
 static TestResult run(const ExecuteCommandListImmediateCopyQueueArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (arguments.isCopyOnly && arguments.withCopyOffload) {
         return TestResult::InvalidArgs;

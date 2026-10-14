@@ -52,7 +52,7 @@ static TestResult isAsyncSupported(ur_device_handle_t device, const UsmMemoryAll
 }
 
 static TestResult run(const UsmMemoryAllocationArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

@@ -30,7 +30,7 @@ static TestResult run(const RandomAccessMultiResourceArguments &arguments, Stati
     const size_t secondSize = arguments.secondSize;
     const MeasurementType measurementType = MeasurementType::Gpu;
 
-    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, measurementType);
+    const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, measurementType);
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;

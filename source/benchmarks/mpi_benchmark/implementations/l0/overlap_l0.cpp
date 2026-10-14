@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@
 #include <vector>
 
 static TestResult run(const MpiOverlapArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Percentage, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Percentage, MeasurementType::Cpu);
 
     std::stringstream workloadArgs;
     workloadArgs << "--testType=" << static_cast<int>(MpiTestType::Overlap) << ' '

@@ -65,7 +65,7 @@ TestResult scenario(UrState &ur, ur_kernel_handle_t kernel, ur_queue_handle_t qu
 } // namespace
 
 static TestResult run(const TmpBufferFixedSizeArguments &arguments, Statistics &statistics) {
-    MeasurementFields timerTypeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields timerTypeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(timerTypeSelector.getUnit(), timerTypeSelector.getType());

@@ -17,7 +17,7 @@
 using namespace L0;
 
 static TestResult run(const ExecuteRegularCommandListWithImmediateArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (arguments.counterBasedEvents && !arguments.inOrder) {
         return TestResult::ApiNotCapable;

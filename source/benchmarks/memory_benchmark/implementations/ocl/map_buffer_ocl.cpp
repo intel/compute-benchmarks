@@ -24,7 +24,7 @@ static TestResult run(const MapBufferArguments &arguments, Statistics &statistic
     if (arguments.mapFlags == MapFlags::WriteInvalidate) {
         measurementUnit = MeasurementUnit::Microseconds;
     }
-    MeasurementFields typeSelector(measurementUnit, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
+    const MeasurementFields typeSelector(measurementUnit, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

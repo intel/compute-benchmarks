@@ -18,7 +18,7 @@
 using namespace L0;
 
 static TestResult run(const UsmImmediateCopyCopyMultipleBlitsArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
+    const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, MeasurementType::Gpu);
 
     if (arguments.sourcePlacement == UsmMemoryPlacement::NonUsmMapped ||
         arguments.destinationPlacement == UsmMemoryPlacement::NonUsmMapped) {

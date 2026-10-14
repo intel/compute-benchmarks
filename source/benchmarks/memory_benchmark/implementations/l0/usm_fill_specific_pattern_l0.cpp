@@ -23,7 +23,7 @@ bool validateMemoryFillPatternSize(const size_t patternSize, const size_t maxMem
 }
 
 static TestResult run(const UsmFillSpecificPatternArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (arguments.usmMemoryPlacement == UsmMemoryPlacement::NonUsmMapped) {
         return TestResult::ApiNotCapable;

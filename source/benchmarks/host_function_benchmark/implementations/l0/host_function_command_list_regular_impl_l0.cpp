@@ -18,7 +18,7 @@
 using namespace L0;
 
 static TestResult run(const HostFunctionCommandListRegularArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Nanoseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Nanoseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

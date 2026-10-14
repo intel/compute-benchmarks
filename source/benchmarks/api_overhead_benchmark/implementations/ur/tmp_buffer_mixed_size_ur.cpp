@@ -87,7 +87,7 @@ TestResult scenario(UrState &ur, ur_kernel_handle_t kernel, QueueData queueDataA
 } // namespace
 
 static TestResult run(const TmpBufferMixedSizeArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

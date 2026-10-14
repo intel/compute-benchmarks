@@ -18,7 +18,7 @@
 using namespace OCL;
 
 static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (arguments.useL0NewArgApi) {
         return TestResult::ApiNotCapable;

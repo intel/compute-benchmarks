@@ -17,7 +17,7 @@
 using namespace OCL;
 
 static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
 
     if (arguments.counterBasedEvents) {
         return TestResult::ApiNotCapable;

@@ -18,7 +18,7 @@
 using namespace L0;
 
 static TestResult run(const VirtualMemQueryPageSizeArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     static_cast<void>(arguments);
 

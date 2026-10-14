@@ -11,7 +11,7 @@
 
 static TestResult run(const EventHostSynchronizeArguments &, Statistics &statistics) {
     if (isNoopRun()) {
-        MeasurementFields latencySelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        const MeasurementFields latencySelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
         statistics.pushUnitAndType(latencySelector.getUnit(), latencySelector.getType());
         return TestResult::Nooped;
     }

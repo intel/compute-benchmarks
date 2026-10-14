@@ -21,7 +21,7 @@ using namespace L0;
 using Clock = std::chrono::high_resolution_clock;
 
 static TestResult run(const WalkerSubmissionEventsArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

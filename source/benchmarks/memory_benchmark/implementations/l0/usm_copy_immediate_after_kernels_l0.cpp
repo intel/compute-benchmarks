@@ -20,7 +20,7 @@
 using namespace L0;
 
 static TestResult run(const UsmCopyImmediateAfterKernelsArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (!isUsmMemoryType(arguments.sourcePlacement) || !isUsmMemoryType(arguments.destinationPlacement)) {
         return TestResult::ApiNotCapable;

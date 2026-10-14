@@ -23,7 +23,7 @@
 
 static TestResult run([[maybe_unused]] const FinalizeGraphArguments &arguments, Statistics &statistics) {
     try {
-        MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+        const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
         if (isNoopRun()) {
             statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

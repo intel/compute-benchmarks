@@ -45,7 +45,7 @@ static TestResult doPhysicalMemCreate(LevelZero &levelzero, const PhysicalMemCre
 }
 
 static TestResult run(const PhysicalMemCreateArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());

@@ -17,7 +17,7 @@
 using namespace L0;
 
 static TestResult run(const KernelSwitchLatencyArguments &arguments, Statistics &statistics) {
-    MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
 
     if (arguments.counterBasedEvents && !arguments.inOrder) {
         return TestResult::ApiNotCapable;
