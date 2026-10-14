@@ -15,19 +15,19 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<UsmFillImmediate> registerTestCase{};
 
-class UsmFillImmediateTest : public ::testing::TestWithParam<std::tuple<UsmMemoryPlacement, size_t, BufferContents, size_t, BufferContents, bool, bool>> {
+class UsmFillImmediateTest : public ::testing::TestWithParam<std::tuple<Api, UsmMemoryPlacement, size_t, BufferContents, size_t, BufferContents, bool, bool>> {
 };
 
 TEST_P(UsmFillImmediateTest, Test) {
     UsmFillImmediateArguments args;
-    args.api = Api::L0;
-    args.usmMemoryPlacement = std::get<0>(GetParam());
-    args.bufferSize = std::get<1>(GetParam());
-    args.contents = std::get<2>(GetParam());
-    args.patternSize = std::get<3>(GetParam());
-    args.patternContents = std::get<4>(GetParam());
-    args.forceBlitter = std::get<5>(GetParam());
-    args.useEvents = std::get<6>(GetParam());
+    args.api = std::get<0>(GetParam());
+    args.usmMemoryPlacement = std::get<1>(GetParam());
+    args.bufferSize = std::get<2>(GetParam());
+    args.contents = std::get<3>(GetParam());
+    args.patternSize = std::get<4>(GetParam());
+    args.patternContents = std::get<5>(GetParam());
+    args.forceBlitter = std::get<6>(GetParam());
+    args.useEvents = std::get<7>(GetParam());
 
     UsmFillImmediate test;
     test.run(args);
@@ -38,6 +38,7 @@ INSTANTIATE_TEST_SUITE_P(
     UsmFillImmediateTest,
     UsmFillImmediateTest,
     ::testing::Combine(
+        ::testing::Values(Api::L0),
         ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared),
         ::testing::Values(512 * megaByte),
         ::testing::Values(BufferContents::Zeros),
@@ -50,6 +51,7 @@ INSTANTIATE_TEST_SUITE_P(
     UsmFillImmediateTestLIMITED,
     UsmFillImmediateTest,
     ::testing::Combine(
+        ::testing::Values(Api::L0),
         ::testing::Values(UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared),
         ::testing::Values(512 * megaByte),
         ::testing::Values(BufferContents::Zeros),
@@ -57,3 +59,29 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(BufferContents::Random),
         ::testing::Values(false),
         ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    UsmFillImmediateTestOL,
+    UsmFillImmediateTest,
+    ::testing::Combine(
+        ::testing::Values(Api::OL),
+        ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(BufferContents::Zeros),
+        ::testing::Values(1, 4, 16),
+        ::testing::Values(BufferContents::Random),
+        ::testing::Values(false),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(
+    UsmFillImmediateTestOLPattern3,
+    UsmFillImmediateTest,
+    ::testing::Combine(
+        ::testing::Values(Api::OL),
+        ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared),
+        ::testing::Values((512 * megaByte + 2) / 3 * 3),
+        ::testing::Values(BufferContents::Zeros),
+        ::testing::Values(3),
+        ::testing::Values(BufferContents::Random),
+        ::testing::Values(false),
+        ::testing::Values(false)));
