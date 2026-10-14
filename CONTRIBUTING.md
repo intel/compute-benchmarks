@@ -124,8 +124,6 @@ Each test case is expanded into a separate GoogleTest test for every combination
 
 Keep the number of permutations per test case reasonable. A test case that generates an excessive number of configurations increases execution time and makes the results harder to interpret. When broader coverage is desired, prefer defining separate, well-named test suites for the additional scenarios instead of adding more parameters or values to a single test case.
 
-You can review the current per-suite test case counts - including an outliers section that lists suites exceeding a configurable threshold (default 50) - by running [list_test_suites.sh](scripts/list_test_suites.sh) against a directory of built benchmark binaries.
-
 ### 2.3 Comments <a id="comments"></a>
 The rules for comments are in the [Comments](GUIDELINES.md#comments) section of the coding guidelines.
 
