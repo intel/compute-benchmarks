@@ -6,292 +6,289 @@
  */
 
 #include "framework/sycl/sycl.h"
+#include "framework/sycl/utility/buffer_contents_helper_sycl.h"
+#include "framework/sycl/utility/usm_helper.h"
 #include "framework/test_case/register_test_case.h"
-#include "framework/utility/memory_constants.h"
 #include "framework/utility/timer.h"
 
 #include "definitions/stream_memory.h"
 #include "stream_memory_verification.h"
 
 #include <algorithm>
-#include <gtest/gtest.h>
 #include <vector>
 
 using namespace SYCL;
 
-using namespace MemoryConstants;
+// The kernels below must stay in sync with source/kernels/memory_benchmark_stream_memory.cl,
+// which the L0 and OpenCL implementations run.
 
-template <typename T>
-TestResult verifyBuffer(sycl::queue &queue, sycl::buffer<T, 1> &buffer, T expected) {
-    std::vector<T> output(std::min(buffer.size(), VerificationHelper::chunkSize / sizeof(T)));
-    const auto readChunk = [&](size_t offset, size_t size) -> const void * {
-        queue.submit([&](sycl::handler &cgh) {
-                 auto source = buffer.template get_access<sycl::access_mode::read>(cgh, sycl::range<1>{size / sizeof(T)}, sycl::id<1>{offset / sizeof(T)});
-                 cgh.copy(source, output.data());
-             })
-            .wait();
-        return output.data();
-    };
-    return VerificationHelper::verifyUniformOutput(buffer.size() * sizeof(T), expected, readChunk);
+namespace {
+
+// STREAM_TYPE of the .cl kernel. A native vector, not sycl::vec, because sycl::vec cannot be read
+// through the volatile pointer runRead() uses.
+template <int vectorSize>
+using StreamTypeT = uint32_t __attribute__((vector_size(vectorSize * sizeof(uint32_t))));
+
+inline bool multipliedIndex(const sycl::nd_item<1> &item, uint32_t multiplier, uint32_t &index) {
+    index = static_cast<uint32_t>(item.get_global_id(0));
+    if (multiplier > 1) {
+        index *= multiplier;
+        return index < item.get_global_range(0);
+    }
+    return true;
 }
 
+template <int vectorSize>
 class StreamMemoryBenchmark {
   public:
-    virtual ~StreamMemoryBenchmark() = default;
-    virtual sycl::event run(sycl::queue &) = 0;
-    virtual size_t transferSize() const = 0;
-    virtual TestResult verify(sycl::queue &) = 0;
-};
+    using StreamT = StreamTypeT<vectorSize>;
 
-template <typename FloatingPointType>
-class ReadKernel;
+    StreamMemoryBenchmark(Sycl &sycl, const StreamMemoryArguments &arguments, const StreamMemoryDispatch &dispatch)
+        : sycl(sycl), arguments(arguments), bufferSize(dispatch.bufferSize),
+          ndRange(sycl::range<1>{dispatch.globalSize}, sycl::range<1>{dispatch.groupSize}) {
+        for (int lane = 0; lane < vectorSize; lane++) {
+            scalarValue[lane] = streamMemoryScalarValue;
+        }
+    }
 
-template <typename FloatingPointType>
-class ReadBenchmark : public StreamMemoryBenchmark {
-  public:
-    ReadBenchmark(size_t bufferSize, FloatingPointType fillValue)
-        : buffer(bufferSize, fillValue), fillValue(fillValue), deviceBuffer(this->buffer.data(), sycl::range<1>{bufferSize}), dummyOutputBuf(&dummyOutputVar, sycl::range<1>{1u}) {}
+    TestResult initBuffers() {
+        for (size_t i = 0; i < bufferCount(); i++) {
+            void *buffer = UsmHelper::allocate(arguments.memoryPlacement, sycl, bufferSize);
+            if (buffer == nullptr) {
+                return TestResult::Error;
+            }
+            buffers.push_back(buffer);
+        }
 
-    sycl::event run(sycl::queue &queue) override {
-        auto commandList = [&](sycl::handler &cgh) {
-            const size_t bufferSize = this->buffer.size();
-            auto x = this->deviceBuffer.template get_access<sycl::access_mode::read>(cgh);
-            auto dummyOutput = this->dummyOutputBuf.template get_access<sycl::access_mode::discard_write>(cgh);
-            FloatingPointType dummyValue = 0.37221;
+        // Poisoning catches a kernel that writes nothing. Triad needs its second input to hold
+        // the inverted pattern getExpected() assumes.
+        const bool verify = Configuration::get().verify;
+        const size_t outputIndex = outputBufferIndex();
+        const bool poisonOutput = verify && (arguments.type == StreamMemoryType::Scale || arguments.type == StreamMemoryType::Triad);
+        for (auto i = 0u; i < buffers.size(); i++) {
+            if (poisonOutput && i == outputIndex) {
+                BufferContentsHelperSycl::fillBufferWithPattern(sycl, buffers[i], bufferSize, StreamMemoryVerification::outputPoison);
+            } else if (verify && arguments.type == StreamMemoryType::Triad && i == 1 && arguments.contents == BufferContents::Random) {
+                const auto y = StreamMemoryVerification::getInput(arguments.contents, bufferSize, 1);
+                BufferContentsHelperSycl::fillBufferWithData(sycl, buffers[i], bufferSize, [&](uint8_t *data) { y.copy(data, 0, bufferSize); });
+            } else {
+                BufferContentsHelperSycl::fillBuffer(sycl, buffers[i], bufferSize, arguments.contents);
+            }
+        }
+        return TestResult::Success;
+    }
 
-            cgh.parallel_for<ReadKernel<FloatingPointType>>(
-                sycl::range<1>{bufferSize},
-                [=](sycl::item<1> item) {
-                    FloatingPointType value = x[item];
+    ~StreamMemoryBenchmark() {
+        for (void *buffer : buffers) {
+            UsmHelper::deallocate(arguments.memoryPlacement, sycl, buffer);
+        }
+    }
 
-                    // A trick to ensure compiler won't optimize away the read
-                    if (value == dummyValue) {
-                        dummyOutput[0] = value;
-                    }
-                });
+    sycl::event run() {
+        switch (arguments.type) {
+        case StreamMemoryType::Read:
+            return runRead();
+        case StreamMemoryType::Write:
+            return arguments.contents == BufferContents::Random ? runWriteRandom() : runWrite();
+        case StreamMemoryType::Scale:
+            return runScale();
+        case StreamMemoryType::Triad:
+            return runTriad();
+        case StreamMemoryType::Unknown:
+            break;
+        }
+        FATAL_ERROR("Unknown StreamMemoryType");
+    }
+
+    TestResult verify() {
+        std::vector<uint8_t> output(std::min(bufferSize, VerificationHelper::chunkSize));
+        const auto readChunk = [&](size_t offset, size_t size) -> const uint8_t * {
+            BufferContentsHelperSycl::copyToHost(sycl, output.data(), static_cast<const uint8_t *>(buffers[outputBufferIndex()]) + offset, size);
+            return output.data();
         };
-        return queue.submit(commandList);
-    }
-
-    size_t transferSize() const override {
-        return this->buffer.size() * sizeof(FloatingPointType);
-    }
-
-    TestResult verify(sycl::queue &queue) override {
-        return verifyBuffer(queue, this->deviceBuffer, this->fillValue);
+        const auto expected = StreamMemoryVerification::getExpected(arguments.type, arguments.contents, bufferSize,
+                                                                    sizeof(StreamT), arguments.partialMultiplier, streamMemoryScalarValue);
+        return StreamMemoryVerification::verifyOutput(expected, bufferSize, readChunk);
     }
 
   private:
-    FloatingPointType dummyOutputVar = {};
-    std::vector<FloatingPointType> buffer;
-    const FloatingPointType fillValue;
-    sycl::buffer<FloatingPointType, 1> deviceBuffer;
-    sycl::buffer<FloatingPointType, 1> dummyOutputBuf;
+    size_t outputBufferIndex() const {
+        return arguments.type == StreamMemoryType::Read ? 0u : buffers.size() - 1;
+    }
+
+    size_t bufferCount() const {
+        switch (arguments.type) {
+        case StreamMemoryType::Read:
+        case StreamMemoryType::Write:
+            return 1;
+        case StreamMemoryType::Scale:
+            return 2;
+        case StreamMemoryType::Triad:
+            return 3;
+        case StreamMemoryType::Unknown:
+            break;
+        }
+        FATAL_ERROR("Unknown StreamMemoryType");
+    }
+
+    sycl::event runRead() {
+        const volatile StreamT *x = static_cast<const StreamT *>(buffers[0]);
+        const uint32_t multiplier = arguments.partialMultiplier;
+
+        return sycl.queue.submit([&](sycl::handler &cgh) {
+            cgh.parallel_for(ndRange, [=](sycl::nd_item<1> item) {
+                uint32_t i = {};
+                if (!multipliedIndex(item, multiplier, i)) {
+                    return;
+                }
+                // Without volatile the load is dead code and the kernel measures nothing.
+                [[maybe_unused]] const StreamT value = x[i];
+            });
+        });
+    }
+
+    sycl::event runWrite() {
+        StreamT *x = static_cast<StreamT *>(buffers[0]);
+        const StreamT scalar = scalarValue;
+        const uint32_t multiplier = arguments.partialMultiplier;
+
+        return sycl.queue.submit([&](sycl::handler &cgh) {
+            cgh.parallel_for(ndRange, [=](sycl::nd_item<1> item) {
+                uint32_t i = {};
+                if (!multipliedIndex(item, multiplier, i)) {
+                    return;
+                }
+                x[i] = scalar;
+            });
+        });
+    }
+
+    // Incompressible data, so this measures raw write bandwidth rather than memory compression.
+    // The pattern has to be read with one vector load; a per-lane copy costs 75% of the bandwidth.
+    sycl::event runWriteRandom() {
+        StreamT *x = static_cast<StreamT *>(buffers[0]);
+
+        return sycl.queue.submit([&](sycl::handler &cgh) {
+            cgh.parallel_for(ndRange, [=](sycl::nd_item<1> item) {
+                constexpr uint32_t patternSize = sizeof(StreamMemoryVerification::writeRandomPattern);
+                const uint32_t i = static_cast<uint32_t>(item.get_global_id(0));
+                const uint32_t dataIndex = i % (patternSize / sizeof(StreamT));
+                StreamT value;
+                __builtin_memcpy(&value, StreamMemoryVerification::writeRandomPattern + dataIndex * sizeof(StreamT), sizeof(StreamT));
+                x[i] = value;
+            });
+        });
+    }
+
+    sycl::event runScale() {
+        const StreamT *x = static_cast<const StreamT *>(buffers[0]);
+        StreamT *y = static_cast<StreamT *>(buffers[1]);
+        const StreamT scalar = scalarValue;
+
+        return sycl.queue.submit([&](sycl::handler &cgh) {
+            cgh.parallel_for(ndRange, [=](sycl::nd_item<1> item) {
+                const uint32_t i = static_cast<uint32_t>(item.get_global_id(0));
+                y[i] = x[i] * scalar;
+            });
+        });
+    }
+
+    sycl::event runTriad() {
+        const StreamT *x = static_cast<const StreamT *>(buffers[0]);
+        const StreamT *y = static_cast<const StreamT *>(buffers[1]);
+        StreamT *z = static_cast<StreamT *>(buffers[2]);
+        const StreamT scalar = scalarValue;
+
+        return sycl.queue.submit([&](sycl::handler &cgh) {
+            cgh.parallel_for(ndRange, [=](sycl::nd_item<1> item) {
+                const uint32_t i = static_cast<uint32_t>(item.get_global_id(0));
+                z[i] = x[i] + y[i] * scalar;
+            });
+        });
+    }
+
+    Sycl &sycl;
+    const StreamMemoryArguments &arguments;
+    size_t bufferSize;
+    sycl::nd_range<1> ndRange;
+    StreamT scalarValue = {};
+    std::vector<void *> buffers;
 };
 
-template <typename FloatingPointType>
-class WriteKernel;
+} // namespace
 
-template <typename FloatingPointType>
-class WriteBenchmark : public StreamMemoryBenchmark {
-  public:
-    WriteBenchmark(size_t bufferSize, FloatingPointType fillValue, FloatingPointType scalarValue)
-        : buffer(bufferSize, fillValue), scalarValue(scalarValue), deviceBuffer(this->buffer.data(), sycl::range<1>{bufferSize}) {}
-
-    sycl::event run(sycl::queue &queue) override {
-        auto commandList = [&](sycl::handler &cgh) {
-            const size_t bufferSize = this->buffer.size();
-            const FloatingPointType scalarValue = this->scalarValue;
-            auto x = this->deviceBuffer.template get_access<sycl::access_mode::discard_write>(cgh);
-
-            cgh.parallel_for<WriteKernel<FloatingPointType>>(
-                sycl::range<1>{bufferSize},
-                [=](sycl::item<1> item) {
-                    x[item] = scalarValue;
-                });
-        };
-        return queue.submit(commandList);
-    }
-
-    size_t transferSize() const override {
-        return this->buffer.size() * sizeof(FloatingPointType);
-    }
-
-    TestResult verify(sycl::queue &queue) override {
-        return verifyBuffer(queue, this->deviceBuffer, this->scalarValue);
-    }
-
-  private:
-    std::vector<FloatingPointType> buffer;
-    const FloatingPointType scalarValue;
-    sycl::buffer<FloatingPointType, 1> deviceBuffer;
-};
-
-template <typename FloatingPointType>
-class ScaleKernel;
-
-template <typename FloatingPointType>
-class ScaleBenchmark : public StreamMemoryBenchmark {
-  public:
-    ScaleBenchmark(size_t bufferSize, FloatingPointType fillValue, FloatingPointType scalarValue)
-        : bufferX(bufferSize, fillValue), bufferY(bufferSize, fillValue), fillValue(fillValue), scalarValue(scalarValue), deviceBufferX(this->bufferX.data(), sycl::range<1>{bufferSize}), deviceBufferY(this->bufferY.data(), sycl::range<1>{bufferSize}) {}
-
-    sycl::event run(sycl::queue &queue) override {
-        auto commandList = [&](sycl::handler &cgh) {
-            const size_t bufferSize = this->bufferX.size();
-            const FloatingPointType scalarValue = this->scalarValue;
-            auto x = this->deviceBufferX.template get_access<sycl::access_mode::discard_write>(cgh);
-            auto y = this->deviceBufferY.template get_access<sycl::access_mode::read>(cgh);
-
-            cgh.parallel_for<ScaleKernel<FloatingPointType>>(
-                sycl::range<1>{bufferSize},
-                [=](sycl::item<1> item) {
-                    x[item] = y[item] * scalarValue;
-                });
-        };
-        return queue.submit(commandList);
-    }
-
-    size_t transferSize() const override {
-        return this->bufferX.size() * sizeof(FloatingPointType) * 2;
-    }
-
-    TestResult verify(sycl::queue &queue) override {
-        return verifyBuffer(queue, this->deviceBufferX, this->fillValue * this->scalarValue);
-    }
-
-  private:
-    std::vector<FloatingPointType> bufferX;
-    std::vector<FloatingPointType> bufferY;
-    const FloatingPointType fillValue;
-    const FloatingPointType scalarValue;
-    sycl::buffer<FloatingPointType, 1> deviceBufferX;
-    sycl::buffer<FloatingPointType, 1> deviceBufferY;
-};
-
-template <typename FloatingPointType>
-class TriadKernel;
-
-template <typename FloatingPointType>
-class TriadBenchmark : public StreamMemoryBenchmark {
-  public:
-    TriadBenchmark(size_t bufferSize, FloatingPointType fillValue, FloatingPointType secondFillValue, FloatingPointType scalarValue)
-        : bufferX(bufferSize, fillValue), bufferY(bufferSize, secondFillValue), bufferZ(bufferSize, fillValue), fillValue(fillValue), secondFillValue(secondFillValue), scalarValue(scalarValue), deviceBufferX(this->bufferX.data(), sycl::range<1>{bufferSize}), deviceBufferY(this->bufferY.data(), sycl::range<1>{bufferSize}), deviceBufferZ(this->bufferZ.data(), sycl::range<1>{bufferSize}) {}
-
-    sycl::event run(sycl::queue &queue) override {
-        auto commandList = [&](sycl::handler &cgh) {
-            const size_t bufferSize = this->bufferX.size();
-            const FloatingPointType scalarValue = this->scalarValue;
-            auto x = this->deviceBufferX.template get_access<sycl::access_mode::read>(cgh);
-            auto y = this->deviceBufferY.template get_access<sycl::access_mode::read>(cgh);
-            auto z = this->deviceBufferZ.template get_access<sycl::access_mode::discard_write>(cgh);
-
-            cgh.parallel_for<TriadKernel<FloatingPointType>>(
-                sycl::range<1>{bufferSize},
-                [=](sycl::item<1> item) {
-                    z[item] = x[item] + y[item] * scalarValue;
-                });
-        };
-        return queue.submit(commandList);
-    }
-
-    size_t transferSize() const override {
-        return this->bufferX.size() * sizeof(FloatingPointType) * 3;
-    }
-
-    TestResult verify(sycl::queue &queue) override {
-        return verifyBuffer(queue, this->deviceBufferZ, this->fillValue + this->secondFillValue * this->scalarValue);
-    }
-
-  private:
-    std::vector<FloatingPointType> bufferX;
-    std::vector<FloatingPointType> bufferY;
-    std::vector<FloatingPointType> bufferZ;
-    const FloatingPointType fillValue;
-    const FloatingPointType secondFillValue;
-    const FloatingPointType scalarValue;
-    sycl::buffer<FloatingPointType, 1> deviceBufferX;
-    sycl::buffer<FloatingPointType, 1> deviceBufferY;
-    sycl::buffer<FloatingPointType, 1> deviceBufferZ;
-};
-
-static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {
+template <int vectorSize>
+static TestResult runImpl(const StreamMemoryArguments &arguments, Statistics &statistics) {
     const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
+
+    if (isStreamMemoryUnsupported(arguments)) {
+        return TestResult::NoImplementation;
+    }
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;
     }
 
-    Sycl sycl{sycl::property::queue::enable_profiling{}};
-
-    Timer timer;
-    bool useDoubles = sycl.device.has(sycl::aspect::fp64);
-
-    const size_t elementSize = useDoubles ? sizeof(double) : sizeof(float);
-    const size_t fillValue = 313u;
-    const bool verify = Configuration::get().verify;
-    const size_t secondFillValue = verify ? 17u : fillValue;
-    const int32_t scalarValue = -999;
-
-    std::unique_ptr<StreamMemoryBenchmark> benchmark = {};
-    switch (arguments.type) {
-    case StreamMemoryType::Read:
-        if (useDoubles) {
-            benchmark = std::make_unique<ReadBenchmark<double>>(arguments.size / elementSize, static_cast<double>(fillValue));
-        } else {
-            benchmark = std::make_unique<ReadBenchmark<float>>(arguments.size / elementSize, static_cast<float>(fillValue));
-        }
-        break;
-    case StreamMemoryType::Write:
-        if (useDoubles) {
-            benchmark = std::make_unique<WriteBenchmark<double>>(arguments.size / elementSize, static_cast<double>(fillValue), static_cast<double>(scalarValue));
-        } else {
-            benchmark = std::make_unique<WriteBenchmark<float>>(arguments.size / elementSize, static_cast<float>(fillValue), static_cast<float>(scalarValue));
-        }
-        break;
-    case StreamMemoryType::Scale:
-        if (useDoubles) {
-            benchmark = std::make_unique<ScaleBenchmark<double>>(arguments.size / elementSize, static_cast<double>(fillValue), static_cast<double>(scalarValue));
-        } else {
-            benchmark = std::make_unique<ScaleBenchmark<float>>(arguments.size / elementSize, static_cast<float>(fillValue), static_cast<float>(scalarValue));
-        }
-        break;
-    case StreamMemoryType::Triad:
-        if (useDoubles) {
-            benchmark = std::make_unique<TriadBenchmark<double>>(arguments.size / elementSize, static_cast<double>(fillValue), static_cast<double>(secondFillValue), static_cast<double>(scalarValue));
-        } else {
-            benchmark = std::make_unique<TriadBenchmark<float>>(arguments.size / elementSize, static_cast<float>(fillValue), static_cast<float>(secondFillValue), static_cast<float>(scalarValue));
-        }
-        break;
-    default:
-        FATAL_ERROR("Unknown StreamMemoryType");
+    StreamMemoryDispatch dispatch{};
+    if (const TestResult result = getStreamMemoryDispatch(arguments, dispatch); result != TestResult::Success) {
+        return result;
     }
 
-    auto event = benchmark->run(sycl.queue);
-    event.wait();
+    Sycl sycl{sycl::property::queue::enable_profiling{}};
+
+    if (arguments.lws > sycl.device.get_info<sycl::info::device::max_work_group_size>()) {
+        return TestResult::DeviceNotCapable;
+    }
+
+    StreamMemoryBenchmark<vectorSize> benchmark{sycl, arguments, dispatch};
+    if (const TestResult result = benchmark.initBuffers(); result != TestResult::Success) {
+        return result;
+    }
+
+    Timer timer;
+    const bool verify = Configuration::get().verify;
+    const size_t transferSize = getStreamMemoryTransferSize(arguments, dispatch.bufferSize);
 
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
-        auto event = benchmark->run(sycl.queue);
+        sycl::event event = benchmark.run();
         event.wait();
         timer.measureEnd();
+
         if (arguments.useEvents) {
             auto startTime = event.get_profiling_info<sycl::info::event_profiling::command_start>();
             auto endTime = event.get_profiling_info<sycl::info::event_profiling::command_end>();
             auto timeNs = endTime - startTime;
-            statistics.pushValue(std::chrono::nanoseconds(timeNs), benchmark->transferSize(), typeSelector.getUnit(), typeSelector.getType());
+            statistics.pushValue(std::chrono::nanoseconds(timeNs), transferSize, typeSelector.getUnit(), typeSelector.getType());
         } else {
-            statistics.pushValue(timer.get(), benchmark->transferSize(), typeSelector.getUnit(), typeSelector.getType());
+            statistics.pushValue(timer.get(), transferSize, typeSelector.getUnit(), typeSelector.getType());
         }
 
         if (verify) {
-            if (const TestResult result = benchmark->verify(sycl.queue); result != TestResult::Success) {
+            if (const TestResult result = benchmark.verify(); result != TestResult::Success) {
                 return result;
             }
         }
     }
     return TestResult::Success;
+}
+
+static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {
+    switch (arguments.vectorSize) {
+    case 1:
+        return runImpl<1>(arguments, statistics);
+    case 2:
+        return runImpl<2>(arguments, statistics);
+    case 4:
+        return runImpl<4>(arguments, statistics);
+    case 8:
+        return runImpl<8>(arguments, statistics);
+    case 16:
+        return runImpl<16>(arguments, statistics);
+    default:
+        return TestResult::InvalidArgs;
+    }
 }
 
 [[maybe_unused]] static RegisterTestCaseImplementation<StreamMemory> registerTestCase(run, Api::SYCL);

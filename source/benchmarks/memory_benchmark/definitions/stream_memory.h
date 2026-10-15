@@ -12,6 +12,14 @@
 #include "framework/argument/enum/stream_memory_type_argument.h"
 #include "framework/argument/enum/usm_runtime_memory_placement_argument.h"
 #include "framework/test_case/test_case.h"
+#include "framework/utility/error.h"
+
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <iostream>
+#include <limits>
+#include <string>
 
 struct StreamMemoryArguments : TestCaseArgumentContainer {
     StreamMemoryTypeArgument type;
@@ -48,3 +56,95 @@ struct StreamMemory : TestCase<StreamMemoryArguments> {
                "written to.";
     }
 };
+
+inline constexpr uint32_t streamMemoryScalarValue = 2u;
+
+inline std::array<uint32_t, 16> getStreamMemoryScalarValue() {
+    std::array<uint32_t, 16> value{};
+    value.fill(streamMemoryScalarValue);
+    return value;
+}
+
+inline bool isStreamMemoryUnsupported(const StreamMemoryArguments &arguments) {
+    if (arguments.partialMultiplier <= 1u) {
+        return false;
+    }
+    return arguments.type == StreamMemoryType::Scale ||
+           arguments.type == StreamMemoryType::Triad ||
+           (arguments.type == StreamMemoryType::Write && arguments.contents != BufferContents::Zeros);
+}
+
+struct StreamMemoryDispatch {
+    size_t elementSize;
+    size_t groupSize;
+    size_t groupCount;
+    size_t globalSize;
+    // Requested size rounded down to a whole number of work groups.
+    size_t bufferSize;
+};
+
+inline TestResult getStreamMemoryDispatch(const StreamMemoryArguments &arguments, StreamMemoryDispatch &dispatch) {
+    dispatch.elementSize = arguments.vectorSize * sizeof(uint32_t);
+    const size_t elementCount = arguments.size / dispatch.elementSize;
+    if (elementCount == 0) {
+        std::cerr << "size " << static_cast<size_t>(arguments.size) << " is smaller than one "
+                  << dispatch.elementSize << "-byte element" << std::endl;
+        return TestResult::InvalidArgs;
+    }
+
+    dispatch.groupSize = std::min<size_t>(arguments.lws, elementCount);
+    dispatch.groupCount = elementCount / dispatch.groupSize;
+    dispatch.globalSize = dispatch.groupCount * dispatch.groupSize;
+    dispatch.bufferSize = dispatch.globalSize * dispatch.elementSize;
+
+    const size_t highestIndex = dispatch.globalSize * arguments.partialMultiplier;
+    if (highestIndex > std::numeric_limits<int32_t>::max()) {
+        std::cerr << "size " << static_cast<size_t>(arguments.size) << " with vectorSize " << static_cast<size_t>(arguments.vectorSize)
+                  << " and multiplier " << static_cast<size_t>(arguments.partialMultiplier)
+                  << " needs index " << highestIndex << ", which exceeds the 32-bit index range of the stream kernels" << std::endl;
+        return TestResult::InvalidArgs;
+    }
+    return TestResult::Success;
+}
+
+inline size_t getStreamMemoryTransferSize(const StreamMemoryArguments &arguments, size_t bufferSize) {
+    size_t transferSize = bufferSize;
+    if (arguments.type == StreamMemoryType::Scale) {
+        transferSize *= 2;
+    } else if (arguments.type == StreamMemoryType::Triad) {
+        transferSize *= 3;
+    }
+    if (arguments.partialMultiplier > 1u) {
+        transferSize /= arguments.partialMultiplier;
+    }
+    return transferSize;
+}
+
+inline const char *getStreamMemoryKernelName(const StreamMemoryArguments &arguments) {
+    switch (arguments.type) {
+    case StreamMemoryType::Read:
+        return "readWithMultiplier";
+    case StreamMemoryType::Write:
+        return arguments.contents == BufferContents::Random ? "write_random" : "writeWithMultiplier";
+    case StreamMemoryType::Scale:
+        return "scale";
+    case StreamMemoryType::Triad:
+        return "triad";
+    case StreamMemoryType::Unknown:
+        break;
+    }
+    FATAL_ERROR("Unknown StreamMemoryType");
+}
+
+// write_random has the value to write embedded in the kernel code.
+inline bool streamMemoryHasScalarArgument(const StreamMemoryArguments &arguments) {
+    return arguments.type != StreamMemoryType::Write || arguments.contents != BufferContents::Random;
+}
+
+inline std::string getStreamMemoryTypeDefinition(size_t vectorSize) {
+    std::string streamType = "uint";
+    if (vectorSize > 1) {
+        streamType += std::to_string(vectorSize);
+    }
+    return streamType;
+}

@@ -26,4 +26,6 @@ void *allocateAligned(UsmRuntimeMemoryPlacement placement, const Sycl &sycl, siz
 
 void deallocate(UsmMemoryPlacement placement, const Sycl &sycl, void *buffer);
 
+void deallocate(UsmRuntimeMemoryPlacement runtimePlacement, const Sycl &sycl, void *buffer);
+
 } // namespace SYCL::UsmHelper

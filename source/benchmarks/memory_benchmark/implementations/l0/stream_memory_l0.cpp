@@ -28,13 +28,8 @@ using namespace MemoryConstants;
 static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {
     const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
-    if (arguments.partialMultiplier > 1u) {
-        if (arguments.type == StreamMemoryType::Scale || arguments.type == StreamMemoryType::Triad) {
-            return TestResult::NoImplementation;
-        }
-        if (arguments.type == StreamMemoryType::Write && arguments.contents != BufferContents::Zeros) {
-            return TestResult::NoImplementation;
-        }
+    if (isStreamMemoryUnsupported(arguments)) {
+        return TestResult::NoImplementation;
     }
 
     if (isNoopRun()) {
@@ -56,49 +51,34 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     Timer timer;
 
-    unsigned int scalarValue[16] = {2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u};
+    const auto scalarValue = getStreamMemoryScalarValue();
 
-    bool setScalarArgument = true;
-    size_t elementSize = arguments.vectorSize * sizeof(uint32_t);
-    const uint32_t groupSizeX = static_cast<uint32_t>(std::min<size_t>(arguments.lws, arguments.size / elementSize));
-    if (groupSizeX == 0) {
-        return TestResult::InvalidArgs;
+    StreamMemoryDispatch dispatch{};
+    if (const TestResult result = getStreamMemoryDispatch(arguments, dispatch); result != TestResult::Success) {
+        return result;
     }
-    const uint32_t gws = static_cast<uint32_t>(arguments.size / elementSize / groupSizeX * groupSizeX);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
 
-    size_t bufferSize = static_cast<size_t>(gws) * elementSize;
     void *buffers[3] = {};
     size_t buffersCount = {};
-    size_t bufferSizes[3] = {bufferSize, bufferSize, bufferSize};
-    const char *pKernelName;
+    size_t bufferSizes[3] = {dispatch.bufferSize, dispatch.bufferSize, dispatch.bufferSize};
+    const char *pKernelName = getStreamMemoryKernelName(arguments);
+    const bool setScalarArgument = streamMemoryHasScalarArgument(arguments);
 
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        pKernelName = "readWithMultiplier";
-        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
+        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, dispatch.bufferSize, &buffers[buffersCount++]));
         bufferSizes[buffersCount] = 16u;
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, 16u, &buffers[buffersCount++]));
         break;
-    case StreamMemoryType::Write:
-        if (BufferContents::Random == arguments.contents) {
-            pKernelName = "write_random";
-            setScalarArgument = false; // value to write is embedded in kernel code
-        } else {
-            pKernelName = "writeWithMultiplier";
-        }
-        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
-        break;
-    case StreamMemoryType::Scale:
-        pKernelName = "scale";
-        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
-        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
-        break;
     case StreamMemoryType::Triad:
-        pKernelName = "triad";
-        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
-        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
-        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
+        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, dispatch.bufferSize, &buffers[buffersCount++]));
+        [[fallthrough]];
+    case StreamMemoryType::Scale:
+        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, dispatch.bufferSize, &buffers[buffersCount++]));
+        [[fallthrough]];
+    case StreamMemoryType::Write:
+        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, dispatch.bufferSize, &buffers[buffersCount++]));
         break;
     default:
         FATAL_ERROR("Unknown StreamMemoryType");
@@ -107,11 +87,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     ze_kernel_handle_t kernel{};
     ze_module_handle_t module{};
     CompilerOptionsBuilder compilerOptions;
-    std::string streamType = "uint";
-    if (arguments.vectorSize > 1) {
-        streamType += std::to_string(arguments.vectorSize);
-    }
-    compilerOptions.addDefinitionKeyValue("STREAM_TYPE", streamType.c_str());
+    compilerOptions.addDefinitionKeyValue("STREAM_TYPE", getStreamMemoryTypeDefinition(arguments.vectorSize));
     compilerOptions.addDefinitionKeyValue("WRITE_RANDOM_PATTERN", StreamMemoryVerification::getWriteRandomPatternDefinition());
 
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "memory_benchmark_stream_memory.cl", pKernelName, &kernel, &module, compilerOptions.str().c_str());
@@ -119,8 +95,8 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         return kernelLoadRes;
     }
 
-    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, groupSizeX, 1u, 1u));
-    const ze_group_count_t dispatchTraits{gws / groupSizeX, 1u, 1u};
+    ASSERT_ZE_RESULT_SUCCESS(zeKernelSetGroupSize(kernel, static_cast<uint32_t>(dispatch.groupSize), 1u, 1u));
+    const ze_group_count_t dispatchTraits{static_cast<uint32_t>(dispatch.groupCount), 1u, 1u};
 
     ze_command_list_handle_t cmdList;
     ze_command_list_desc_t cmdListDesc{};
@@ -158,7 +134,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<int>(i), sizeof(buffers[i]), &buffers[i]));
     }
     if (setScalarArgument) {
-        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), elementSize, &scalarValue));
+        ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), dispatch.elementSize, scalarValue.data()));
     }
 
     int multiplier = static_cast<int>(arguments.partialMultiplier);
@@ -179,13 +155,13 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     if (verify) {
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &copyCmdList));
         ze_host_mem_alloc_desc_t hostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-        ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostDesc, std::min(bufferSize, VerificationHelper::chunkSize), 0, &staging));
+        ASSERT_ZE_RESULT_SUCCESS(zeMemAllocHost(levelzero.context, &hostDesc, std::min(dispatch.bufferSize, VerificationHelper::chunkSize), 0, &staging));
     }
     const auto readChunk = [&](size_t offset, size_t size) -> const uint8_t * {
         ZE_RESULT_SUCCESS_OR_RETURN_VALUE(BufferContentsHelperL0::copyToHost(levelzero, copyCmdList, staging, static_cast<uint8_t *>(buffers[outputIndex]) + offset, size), nullptr);
         return static_cast<const uint8_t *>(staging);
     };
-    const auto expected = StreamMemoryVerification::getExpected(arguments.type, arguments.contents, bufferSize, elementSize, arguments.partialMultiplier, scalarValue[0]);
+    const auto expected = StreamMemoryVerification::getExpected(arguments.type, arguments.contents, dispatch.bufferSize, dispatch.elementSize, arguments.partialMultiplier, scalarValue[0]);
     TestResult result = TestResult::Success;
 
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -194,21 +170,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
 
-        size_t transferSize = bufferSize;
-        switch (arguments.type) {
-        case StreamMemoryType::Scale:
-            transferSize *= 2;
-            break;
-        case StreamMemoryType::Triad:
-            transferSize *= 3;
-            break;
-        default:
-            break;
-        }
-
-        if (arguments.partialMultiplier > 1u) {
-            transferSize = transferSize / arguments.partialMultiplier;
-        }
+        const size_t transferSize = getStreamMemoryTransferSize(arguments, dispatch.bufferSize);
 
         if (arguments.useEvents) {
             ze_kernel_timestamp_result_t timestampResult{};
@@ -222,7 +184,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
 
         if (verify) {
-            result = StreamMemoryVerification::verifyOutput(expected, bufferSize, readChunk);
+            result = StreamMemoryVerification::verifyOutput(expected, dispatch.bufferSize, readChunk);
             if (result != TestResult::Success) {
                 break;
             }

@@ -28,13 +28,8 @@ using namespace MemoryConstants;
 static TestResult run(const StreamMemoryArguments &arguments, Statistics &statistics) {
     const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
-    if (arguments.partialMultiplier > 1u) {
-        if (arguments.type == StreamMemoryType::Scale || arguments.type == StreamMemoryType::Triad) {
-            return TestResult::NoImplementation;
-        }
-        if (arguments.type == StreamMemoryType::Write && arguments.contents != BufferContents::Zeros) {
-            return TestResult::NoImplementation;
-        }
+    if (isStreamMemoryUnsupported(arguments)) {
+        return TestResult::NoImplementation;
     }
 
     if (isNoopRun()) {
@@ -53,21 +48,18 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         return TestResult::DeviceNotCapable;
     }
 
-    size_t elementSize = arguments.vectorSize * sizeof(uint32_t);
-    unsigned int scalarValue[16] = {2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u};
-    bool setScalarArgument = true;
+    const auto scalarValue = getStreamMemoryScalarValue();
     const bool printBuildInfo = true;
 
-    const char *kernelName = {};
-    const size_t localWorkSize = std::min<size_t>(arguments.lws, arguments.size / elementSize);
-    if (localWorkSize == 0) {
-        return TestResult::InvalidArgs;
+    StreamMemoryDispatch dispatch{};
+    if (const TestResult result = getStreamMemoryDispatch(arguments, dispatch); result != TestResult::Success) {
+        return result;
     }
-    const size_t globalWorkSize = arguments.size / elementSize / localWorkSize * localWorkSize;
-    size_t bufferSize = globalWorkSize * elementSize;
+    const char *kernelName = getStreamMemoryKernelName(arguments);
+    const bool setScalarArgument = streamMemoryHasScalarArgument(arguments);
     cl_mem buffers[3] = {};
     size_t buffersCount = {};
-    size_t bufferSizes[3] = {bufferSize, bufferSize, bufferSize};
+    size_t bufferSizes[3] = {dispatch.bufferSize, dispatch.bufferSize, dispatch.bufferSize};
 
     auto bufferFlags = CL_MEM_READ_WRITE;
     if (arguments.memoryPlacement == UsmRuntimeMemoryPlacement::Host) {
@@ -76,41 +68,25 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        kernelName = "readWithMultiplier";
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
+        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, dispatch.bufferSize, nullptr, &retVal);
         bufferSizes[buffersCount] = 16u;
         buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, 16u, nullptr, &retVal);
         break;
-    case StreamMemoryType::Write:
-        if (BufferContents::Random == arguments.contents) {
-            kernelName = "write_random";
-            setScalarArgument = false; // value to write is embedded in kernel code
-        } else {
-            kernelName = "writeWithMultiplier";
-        }
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
-        break;
-    case StreamMemoryType::Scale:
-        kernelName = "scale";
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
-        break;
     case StreamMemoryType::Triad:
-        kernelName = "triad";
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
-        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, bufferSize, nullptr, &retVal);
+        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, dispatch.bufferSize, nullptr, &retVal);
+        [[fallthrough]];
+    case StreamMemoryType::Scale:
+        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, dispatch.bufferSize, nullptr, &retVal);
+        [[fallthrough]];
+    case StreamMemoryType::Write:
+        buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, dispatch.bufferSize, nullptr, &retVal);
         break;
     default:
         FATAL_ERROR("Unknown StreamMemoryType");
     }
 
     CompilerOptionsBuilder compilerOptions;
-    std::string streamType = "uint";
-    if (arguments.vectorSize > 1) {
-        streamType += std::to_string(arguments.vectorSize);
-    }
-    compilerOptions.addDefinitionKeyValue("STREAM_TYPE", streamType.c_str());
+    compilerOptions.addDefinitionKeyValue("STREAM_TYPE", getStreamMemoryTypeDefinition(arguments.vectorSize));
     compilerOptions.addDefinitionKeyValue("WRITE_RANDOM_PATTERN", StreamMemoryVerification::getWriteRandomPatternDefinition());
     const char *programName = "memory_benchmark_stream_memory.cl";
     cl_program program{};
@@ -146,7 +122,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(i), sizeof(buffers[i]), &buffers[i]))
     }
     if (setScalarArgument) {
-        ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount), elementSize, &scalarValue));
+        ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(buffersCount), dispatch.elementSize, scalarValue.data()));
     }
 
     int multiplier = static_cast<int>(arguments.partialMultiplier);
@@ -154,15 +130,15 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         ASSERT_CL_SUCCESS(clSetKernelArg(kernel, static_cast<cl_uint>(setScalarArgument ? buffersCount + 1 : buffersCount), 4u, &multiplier));
     }
 
-    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr));
+    ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &dispatch.globalSize, &dispatch.groupSize, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
-    std::vector<uint8_t> outputChunk(verify ? std::min(bufferSize, VerificationHelper::chunkSize) : 0u);
+    std::vector<uint8_t> outputChunk(verify ? std::min(dispatch.bufferSize, VerificationHelper::chunkSize) : 0u);
     const auto readChunk = [&](size_t offset, size_t size) -> const uint8_t * {
         CL_SUCCESS_OR_RETURN_VALUE(clEnqueueReadBuffer(opencl.commandQueue, buffers[outputIndex], CL_BLOCKING, offset, size, outputChunk.data(), 0, nullptr, nullptr), nullptr);
         return outputChunk.data();
     };
-    const auto expected = StreamMemoryVerification::getExpected(arguments.type, arguments.contents, bufferSize, elementSize, arguments.partialMultiplier, scalarValue[0]);
+    const auto expected = StreamMemoryVerification::getExpected(arguments.type, arguments.contents, dispatch.bufferSize, dispatch.elementSize, arguments.partialMultiplier, scalarValue[0]);
     TestResult result = TestResult::Success;
 
     for (auto i = 0u; i < arguments.iterations; i++) {
@@ -170,25 +146,11 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         cl_event *eventForEnqueue = arguments.useEvents ? &profilingEvent : nullptr;
 
         timer.measureStart();
-        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, eventForEnqueue));
+        ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &dispatch.globalSize, &dispatch.groupSize, 0, nullptr, eventForEnqueue));
         ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
         timer.measureEnd();
 
-        size_t transferSize = bufferSize;
-        switch (arguments.type) {
-        case StreamMemoryType::Scale:
-            transferSize *= 2;
-            break;
-        case StreamMemoryType::Triad:
-            transferSize *= 3;
-            break;
-        default:
-            break;
-        }
-
-        if (arguments.partialMultiplier > 1u) {
-            transferSize = transferSize / arguments.partialMultiplier;
-        }
+        const size_t transferSize = getStreamMemoryTransferSize(arguments, dispatch.bufferSize);
 
         if (eventForEnqueue) {
             cl_ulong timeNs{};
@@ -201,7 +163,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
         }
 
         if (verify) {
-            result = StreamMemoryVerification::verifyOutput(expected, bufferSize, readChunk);
+            result = StreamMemoryVerification::verifyOutput(expected, dispatch.bufferSize, readChunk);
             if (result != TestResult::Success) {
                 break;
             }

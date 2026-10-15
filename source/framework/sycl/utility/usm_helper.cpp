@@ -11,6 +11,23 @@
 
 namespace SYCL::UsmHelper {
 
+namespace {
+
+UsmMemoryPlacement toUsmMemoryPlacement(UsmRuntimeMemoryPlacement runtimePlacement) {
+    switch (runtimePlacement) {
+    case UsmRuntimeMemoryPlacement::Device:
+        return UsmMemoryPlacement::Device;
+    case UsmRuntimeMemoryPlacement::Host:
+        return UsmMemoryPlacement::Host;
+    case UsmRuntimeMemoryPlacement::Shared:
+        return UsmMemoryPlacement::Shared;
+    default:
+        FATAL_ERROR("Unknown placement");
+    }
+}
+
+} // namespace
+
 void *allocate(UsmMemoryPlacement placement, const Sycl &sycl, size_t size) {
     switch (placement) {
     case UsmMemoryPlacement::Device:
@@ -33,21 +50,7 @@ void *allocate(UsmMemoryPlacement placement, const Sycl &sycl, size_t size) {
 }
 
 void *allocate(UsmRuntimeMemoryPlacement runtimePlacement, const Sycl &sycl, size_t size) {
-    UsmMemoryPlacement placement{};
-    switch (runtimePlacement) {
-    case UsmRuntimeMemoryPlacement::Device:
-        placement = UsmMemoryPlacement::Device;
-        break;
-    case UsmRuntimeMemoryPlacement::Host:
-        placement = UsmMemoryPlacement::Host;
-        break;
-    case UsmRuntimeMemoryPlacement::Shared:
-        placement = UsmMemoryPlacement::Shared;
-        break;
-    default:
-        FATAL_ERROR("Unknown placement");
-    }
-    return allocate(placement, sycl, size);
+    return allocate(toUsmMemoryPlacement(runtimePlacement), sycl, size);
 }
 
 void *allocateAligned(UsmMemoryPlacement placement, const Sycl &sycl, size_t alignment, size_t size) {
@@ -66,21 +69,7 @@ void *allocateAligned(UsmMemoryPlacement placement, const Sycl &sycl, size_t ali
 }
 
 void *allocateAligned(UsmRuntimeMemoryPlacement runtimePlacement, const Sycl &sycl, size_t alignment, size_t size) {
-    UsmMemoryPlacement placement{};
-    switch (runtimePlacement) {
-    case UsmRuntimeMemoryPlacement::Device:
-        placement = UsmMemoryPlacement::Device;
-        break;
-    case UsmRuntimeMemoryPlacement::Host:
-        placement = UsmMemoryPlacement::Host;
-        break;
-    case UsmRuntimeMemoryPlacement::Shared:
-        placement = UsmMemoryPlacement::Shared;
-        break;
-    default:
-        FATAL_ERROR("Unknown placement");
-    }
-    return allocateAligned(placement, sycl, alignment, size);
+    return allocateAligned(toUsmMemoryPlacement(runtimePlacement), sycl, alignment, size);
 }
 
 void deallocate(UsmMemoryPlacement placement, const Sycl &sycl, void *buffer) {
@@ -99,6 +88,10 @@ void deallocate(UsmMemoryPlacement placement, const Sycl &sycl, void *buffer) {
         sycl::free(buffer, sycl.queue);
         break;
     }
+}
+
+void deallocate(UsmRuntimeMemoryPlacement runtimePlacement, const Sycl &sycl, void *buffer) {
+    deallocate(toUsmMemoryPlacement(runtimePlacement), sycl, buffer);
 }
 
 } // namespace SYCL::UsmHelper
