@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -139,6 +139,10 @@ constexpr inline size_t getSize(DataType dataType) {
     default:
         FATAL_ERROR("Unkown data type")
     }
+}
+
+constexpr inline bool isIntegerType(const DataType dataType) {
+    return dataType == DataType::Int32 || dataType == DataType::Int64;
 }
 
 inline std::string toOpenclC(DataType dataType) {

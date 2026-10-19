@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,8 +35,19 @@ INSTANTIATE_TEST_SUITE_P(
     DoMathOperationTest,
     DoMathOperationTest,
     ::testing::Combine(
-        ::testing::Values(DataType::Float, DataType::Int32),
+        ::testing::Values(DataType::Float),
         ::testing::ValuesIn(NormalMathOperationArgument::enumValues),
+        ::CommonGtestArgs::enqueueSizesForAtomics(),
+        ::testing::Values(true),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(
+    DoMathOperationTestInt32,
+    DoMathOperationTest,
+    ::testing::Combine(
+        ::testing::Values(DataType::Int32),
+        ::testing::Values(MathOperation::Add, MathOperation::Sub, MathOperation::Div, MathOperation::Modulo, MathOperation::Min,
+                          MathOperation::Max, MathOperation::And, MathOperation::Or, MathOperation::Xor),
         ::CommonGtestArgs::enqueueSizesForAtomics(),
         ::testing::Values(true),
         ::testing::Values(false)));

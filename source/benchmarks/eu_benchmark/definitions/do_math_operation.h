@@ -38,10 +38,6 @@ struct DoMathOperation : TestCase<DoMathOperationArguments> {
     }
 
     std::string getHelp() const override {
-        return "enqueues kernel performing a math operation";
-    }
-
-    bool hasFixedIterationCount() const override {
-        return true;
+        return "enqueues kernel performing a math operation. Min, Max, Modulo, And, Or and Xor are each followed by an addition, a subtraction for Max, that makes the next operand depend on the result, so their results include that operation. Integer Inc and Dec are not implemented";
     }
 };

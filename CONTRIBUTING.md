@@ -120,7 +120,7 @@ A good way to add new benchmarks is to mimic the existing ones and tweak them to
 6. Regenerate documentation (see below).
 
 The framework repeats the warmup iterations until both `--warmupIterations` and `--warmupTime` are reached: until `--warmupTime` has passed, each warmup value pushed to `statistics` increases `arguments.iterations` by one. A benchmark therefore has to read `arguments.iterations` as its loop bound and push its values inside that loop, once per iteration for each series. Override `hasFixedIterationCount()` in the definition file to return `true` when the test case:
-- uses the iteration count outside of its loop bound, for example to allocate one resource per iteration, to compute an expected result, to copy it into a local variable or to start child processes,
+- uses the iteration count outside of its loop bound, for example to allocate one resource per iteration, to compute an expected result before the loop, to copy it into a local variable or to start child processes,
 - submits GPU work in its iterations without waiting for it, or
 - measures its iterations against GPU work submitted once before the loop.
 
