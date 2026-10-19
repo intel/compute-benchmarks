@@ -135,7 +135,7 @@ int BenchmarkMain::generateDocs() {
                 return 1;
             }
             const std::string argumentHelp = argument->getExtraHelp();
-            if (containsIllegalCharacters(argumentKey, ";")) {
+            if (containsIllegalCharacters(argumentHelp, ";")) {
                 std::cerr << "ERROR: help message of argument \"" << argumentKey << "\" in test case\"" << testCaseName << "\" contains illegal characters.";
                 return 1;
             }
