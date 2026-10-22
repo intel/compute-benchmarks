@@ -9,6 +9,7 @@
 
 #include "framework/enum/buffer_contents.h"
 #include "framework/enum/stream_memory_type.h"
+#include "framework/enum/verification_mode.h"
 #include "framework/test_case/test_result.h"
 #include "framework/utility/buffer_contents_helper.h"
 #include "framework/utility/error.h"
@@ -18,6 +19,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -26,6 +28,65 @@
 namespace StreamMemoryHelper {
 
 inline constexpr size_t dummyOutputSize = 16u;
+
+enum class Verification {
+    None,
+    Light,
+    Complete,
+};
+
+inline Verification getVerification(bool verify, VerificationMode mode) {
+    if (!verify) {
+        return Verification::None;
+    }
+    return mode == VerificationMode::Complete ? Verification::Complete : Verification::Light;
+}
+
+// One sample per work group measurably lowers the Read bandwidth, one per 256 does not.
+inline constexpr size_t sampleGroupStride = 256u;
+
+inline size_t getSampleCount(size_t elementCount, size_t groupSize) {
+    return (elementCount / groupSize + sampleGroupStride - 1) / sampleGroupStride;
+}
+
+inline size_t getSampleElement(size_t sample, size_t groupSize, size_t multiplier) {
+    return (sample * sampleGroupStride * groupSize + sample % groupSize) * multiplier;
+}
+
+inline size_t getSamplesSize(size_t bufferSize, size_t elementSize, size_t groupSize) {
+    return getSampleCount(bufferSize / elementSize, groupSize) * elementSize;
+}
+
+inline std::string getSampleGroupStrideDefinition() {
+    return std::to_string(sampleGroupStride);
+}
+
+template <typename ReadChunk>
+inline auto getChunkedSamples(size_t elementSize, size_t samplesSize, ReadChunk readChunk) {
+    return [=, chunk = static_cast<const uint8_t *>(nullptr), chunkOffset = size_t{0}, chunkLength = size_t{0}](size_t sample) mutable -> const uint8_t * {
+        const size_t offset = sample * elementSize;
+        if (chunk == nullptr || offset < chunkOffset || offset >= chunkOffset + chunkLength) {
+            chunkOffset = offset / VerificationHelper::chunkSize * VerificationHelper::chunkSize;
+            chunkLength = std::min(VerificationHelper::chunkSize, samplesSize - chunkOffset);
+            chunk = readChunk(chunkOffset, chunkLength);
+            if (chunk == nullptr) {
+                return nullptr;
+            }
+        }
+        return chunk + offset - chunkOffset;
+    };
+}
+
+inline size_t getReadOutputSize(Verification verification, size_t bufferSize, size_t samplesSize) {
+    switch (verification) {
+    case Verification::Light:
+        return samplesSize;
+    case Verification::Complete:
+        return bufferSize;
+    default:
+        return dummyOutputSize;
+    }
+}
 
 inline constexpr uint8_t writeRandomPattern[256] = {
     0xFF, 0xEE, 0xFE, 0x01, 0xE0, 0xD0, 0xF2, 0x0F, 0x1C, 0xF1, 0xEF, 0xE3,
@@ -66,6 +127,11 @@ struct WorkSize {
     size_t bufferSize;
 };
 
+// The stream kernels index elements with a 32-bit int.
+inline bool fitsKernelIndexRange(size_t globalSize, size_t multiplier) {
+    return globalSize * multiplier <= static_cast<size_t>(std::numeric_limits<int32_t>::max());
+}
+
 inline std::optional<WorkSize> getWorkSize(size_t size, size_t elementSize, size_t maxGroupSize) {
     const size_t elementCount = size / elementSize;
     const size_t groupSize = std::min(maxGroupSize, elementCount);
@@ -104,9 +170,9 @@ inline Input getInput(BufferContents contents, size_t inputIndex) {
 class Verifier {
   public:
     Verifier(StreamMemoryType type, BufferContents contents, size_t size, size_t elementSize, size_t multiplier, uint32_t scalar)
-        : type(type), contents(contents), elementSize(elementSize), multiplier(multiplier), scalar(scalar),
+        : type(type), contents(contents), elementSize(elementSize), elementCount(size / elementSize), multiplier(multiplier), scalar(scalar),
           firstInput(getInput(contents, 0)), secondInput(getInput(contents, 1)), outputVerifier(size, elementSize),
-          scratch(type == StreamMemoryType::Triad ? std::min(size, VerificationHelper::chunkSize) : 0u) {}
+          scratch(type == StreamMemoryType::Triad ? std::min(size, VerificationHelper::chunkSize) : 0u), expectedSample(elementSize) {}
 
     void setInputs(const Input &firstContents, const Input &secondContents) {
         this->firstInput = firstContents;
@@ -117,6 +183,27 @@ class Verifier {
     TestResult verify(ReadChunk &&readChunk) {
         const auto getExpectedChunk = [this](size_t offset, size_t length, uint8_t *destination) { this->getExpectedChunk(offset, length, destination); };
         return this->outputVerifier.verify(getExpectedChunk, readChunk);
+    }
+
+    template <typename GetSample>
+    TestResult verifySamples(size_t groupSize, GetSample &&getSample) {
+        const size_t sampleCount = getSampleCount(this->elementCount, groupSize);
+        for (size_t sample = 0; sample < sampleCount; sample++) {
+            const size_t element = getSampleElement(sample, groupSize, this->multiplier);
+            if (element >= this->elementCount) {
+                continue;
+            }
+            const uint8_t *output = getSample(sample);
+            if (output == nullptr) {
+                return TestResult::Error;
+            }
+            this->getExpectedChunk(element * this->elementSize, this->elementSize, this->expectedSample.data());
+            if (std::memcmp(output, this->expectedSample.data(), this->elementSize) != 0) {
+                VerificationHelper::reportMismatch(element);
+                return TestResult::VerificationFail;
+            }
+        }
+        return TestResult::Success;
     }
 
   private:
@@ -183,12 +270,14 @@ class Verifier {
     const StreamMemoryType type;
     const BufferContents contents;
     const size_t elementSize;
+    const size_t elementCount;
     const size_t multiplier;
     const uint32_t scalar;
     Input firstInput;
     Input secondInput;
     VerificationHelper::OutputVerifier outputVerifier;
     std::vector<uint8_t> scratch;
+    std::vector<uint8_t> expectedSample;
 };
 
 } // namespace StreamMemoryHelper

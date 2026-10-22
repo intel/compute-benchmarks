@@ -45,8 +45,10 @@ class StreamMemoryBenchmark {
     using StreamT = StreamTypeT<vectorSize>;
 
     StreamMemoryBenchmark(Sycl &sycl, const StreamMemoryArguments &arguments, const StreamMemoryDispatch &dispatch)
-        : sycl(sycl), arguments(arguments), verifyEnabled(Configuration::get().verify), bufferSize(dispatch.bufferSize),
-          ndRange(sycl::range<1>{dispatch.globalSize}, sycl::range<1>{dispatch.groupSize}) {
+        : sycl(sycl), arguments(arguments), verifyMode(StreamMemoryHelper::getVerification(Configuration::get().verify, Configuration::get().verificationMode)),
+          verifyEnabled(verifyMode != StreamMemoryHelper::Verification::None), lightVerification(verifyMode == StreamMemoryHelper::Verification::Light),
+          bufferSize(dispatch.bufferSize), samplesSize(StreamMemoryHelper::getSamplesSize(dispatch.bufferSize, sizeof(StreamT), dispatch.groupSize)),
+          elementCount(dispatch.globalSize), groupSize(dispatch.groupSize), ndRange(sycl::range<1>{dispatch.globalSize}, sycl::range<1>{dispatch.groupSize}) {
         for (int lane = 0; lane < vectorSize; lane++) {
             scalarValue[lane] = streamMemoryScalarValue;
         }
@@ -70,8 +72,14 @@ class StreamMemoryBenchmark {
             }
         }
 
+        if (this->lightVerification) {
+            this->samples = sycl::malloc_device(this->samplesSize, this->sycl.queue);
+            if (this->samples == nullptr) {
+                return TestResult::Error;
+            }
+        }
         if (this->verifyEnabled) {
-            this->outputChunk.resize(std::min(this->bufferSize, VerificationHelper::chunkSize));
+            this->outputChunk.resize(std::min(this->lightVerification ? this->samplesSize : this->bufferSize, VerificationHelper::chunkSize));
             this->verifier.emplace(this->arguments.type, this->arguments.contents, this->bufferSize, sizeof(StreamT), this->arguments.partialMultiplier, streamMemoryScalarValue);
         }
         return TestResult::Success;
@@ -81,11 +89,17 @@ class StreamMemoryBenchmark {
         for (void *buffer : buffers) {
             UsmHelper::deallocate(arguments.memoryPlacement, sycl, buffer);
         }
+        if (this->samples != nullptr) {
+            sycl::free(this->samples, this->sycl.queue);
+        }
     }
 
     sycl::event run() {
         switch (arguments.type) {
         case StreamMemoryType::Read:
+            if (this->lightVerification) {
+                return this->runReadSample();
+            }
             return this->verifyEnabled ? runReadStore() : runRead();
         case StreamMemoryType::Write:
             return arguments.contents == BufferContents::Random ? runWriteRandom() : runWrite();
@@ -100,22 +114,40 @@ class StreamMemoryBenchmark {
     }
 
     void poisonOutput() {
-        BufferContentsHelperSycl::fillBufferWithPattern(this->sycl, this->buffers.back(), this->bufferSize, VerificationHelper::poisonByte);
+        if (!this->lightVerification) {
+            BufferContentsHelperSycl::fillBufferWithPattern(this->sycl, this->buffers.back(), this->bufferSize, VerificationHelper::poisonByte);
+        } else if (this->gathersSamples()) {
+            this->resetSamples().wait();
+        } else {
+            BufferContentsHelperSycl::fillBufferWithPattern(this->sycl, this->samples, this->samplesSize, VerificationHelper::poisonByte);
+        }
     }
 
     TestResult verify() {
-        const auto readChunk = [this](size_t offset, size_t size) -> const uint8_t * {
-            BufferContentsHelperSycl::copyToHost(this->sycl, this->outputChunk.data(), static_cast<const uint8_t *>(this->buffers.back()) + offset, size);
-            return this->outputChunk.data();
+        const auto readFrom = [this](const void *buffer) {
+            return [this, buffer](size_t offset, size_t size) -> const uint8_t * {
+                BufferContentsHelperSycl::copyToHost(this->sycl, this->outputChunk.data(), static_cast<const uint8_t *>(buffer) + offset, size);
+                return this->outputChunk.data();
+            };
         };
-        return this->verifier->verify(readChunk);
+        if (this->lightVerification) {
+            if (this->gathersSamples()) {
+                this->gather().wait();
+            }
+            return this->verifier->verifySamples(this->groupSize, StreamMemoryHelper::getChunkedSamples(sizeof(StreamT), this->samplesSize, readFrom(this->samples)));
+        }
+        return this->verifier->verify(readFrom(this->buffers.back()));
     }
 
   private:
+    bool gathersSamples() const {
+        return this->arguments.type != StreamMemoryType::Read;
+    }
+
     size_t bufferCount() const {
         switch (arguments.type) {
         case StreamMemoryType::Read:
-            return this->verifyEnabled ? 2 : 1;
+            return this->verifyMode == StreamMemoryHelper::Verification::Complete ? 2 : 1;
         case StreamMemoryType::Write:
             return 1;
         case StreamMemoryType::Scale:
@@ -140,6 +172,64 @@ class StreamMemoryBenchmark {
                 }
                 // Without volatile the load is dead code and the kernel measures nothing.
                 [[maybe_unused]] const StreamT value = x[i];
+            });
+        });
+    }
+
+    sycl::event runReadSample() {
+        const volatile StreamT *x = static_cast<const StreamT *>(this->buffers[0]);
+        StreamT *samples = static_cast<StreamT *>(this->samples);
+        const uint32_t multiplier = this->arguments.partialMultiplier;
+
+        return this->sycl.queue.submit([&](sycl::handler &cgh) {
+            cgh.parallel_for(this->ndRange, [=](sycl::nd_item<1> item) {
+                uint32_t i = {};
+                if (!multipliedIndex(item, multiplier, i)) {
+                    return;
+                }
+                const StreamT value = x[i];
+                const size_t group = item.get_group(0);
+                if (group % StreamMemoryHelper::sampleGroupStride == 0) {
+                    const size_t sample = group / StreamMemoryHelper::sampleGroupStride;
+                    if (item.get_local_id(0) == sample % item.get_local_range(0)) {
+                        samples[sample] = value;
+                    }
+                }
+            });
+        });
+    }
+
+    sycl::event resetSamples() {
+        StreamT *output = static_cast<StreamT *>(this->buffers.back());
+        StreamT *samples = static_cast<StreamT *>(this->samples);
+        const size_t elementCount = this->elementCount;
+        const size_t groupSize = this->groupSize;
+        const size_t multiplier = this->arguments.partialMultiplier;
+
+        return this->sycl.queue.submit([&](sycl::handler &cgh) {
+            cgh.parallel_for(sycl::range<1>{StreamMemoryHelper::getSampleCount(elementCount, groupSize)}, [=](sycl::id<1> id) {
+                __builtin_memset(samples + id[0], VerificationHelper::poisonByte, sizeof(StreamT));
+                const size_t element = StreamMemoryHelper::getSampleElement(id[0], groupSize, multiplier);
+                if (element < elementCount) {
+                    __builtin_memset(output + element, VerificationHelper::poisonByte, sizeof(StreamT));
+                }
+            });
+        });
+    }
+
+    sycl::event gather() {
+        const StreamT *output = static_cast<const StreamT *>(this->buffers.back());
+        StreamT *samples = static_cast<StreamT *>(this->samples);
+        const size_t elementCount = this->elementCount;
+        const size_t groupSize = this->groupSize;
+        const size_t multiplier = this->arguments.partialMultiplier;
+
+        return this->sycl.queue.submit([&](sycl::handler &cgh) {
+            cgh.parallel_for(sycl::range<1>{StreamMemoryHelper::getSampleCount(elementCount, groupSize)}, [=](sycl::id<1> id) {
+                const size_t element = StreamMemoryHelper::getSampleElement(id[0], groupSize, multiplier);
+                if (element < elementCount) {
+                    samples[id[0]] = output[element];
+                }
             });
         });
     }
@@ -222,8 +312,14 @@ class StreamMemoryBenchmark {
 
     Sycl &sycl;
     const StreamMemoryArguments &arguments;
+    const StreamMemoryHelper::Verification verifyMode;
     const bool verifyEnabled;
+    const bool lightVerification;
     size_t bufferSize;
+    const size_t samplesSize;
+    const size_t elementCount;
+    const size_t groupSize;
+    void *samples = nullptr;
     sycl::nd_range<1> ndRange;
     StreamT scalarValue = {};
     std::vector<void *> buffers;

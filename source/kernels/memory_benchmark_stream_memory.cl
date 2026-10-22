@@ -38,6 +38,71 @@ __kernel void read(const __global volatile STREAM_TYPE *restrict x, __global STR
     STREAM_TYPE value = x[i];
 }
 
+#ifdef SAMPLE_GROUP_STRIDE
+void storeSample(__global STREAM_TYPE *restrict samples, STREAM_TYPE value) {
+    const int group = get_group_id(0);
+    if (group % SAMPLE_GROUP_STRIDE == 0) {
+        const int sample = group / SAMPLE_GROUP_STRIDE;
+        if (get_local_id(0) == sample % get_local_size(0)) {
+            samples[sample] = value;
+        }
+    }
+}
+
+__kernel void readWithMultiplierSample(const __global volatile STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict samples, STREAM_TYPE scalar, int multiplier) {
+    int i = get_global_id(0);
+    if (multiplier > 1) {
+        i = i * multiplier;
+        if (i >= get_global_size(0)) {
+            return;
+        }
+    }
+    storeSample(samples, x[i]);
+}
+
+__kernel void readSample(const __global volatile STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict samples, STREAM_TYPE scalar) {
+    storeSample(samples, x[get_global_id(0)]);
+}
+
+int sampleCount(int elementCount, int groupSize) {
+    return (elementCount / groupSize + SAMPLE_GROUP_STRIDE - 1) / SAMPLE_GROUP_STRIDE;
+}
+
+long sampleElement(int sample, int groupSize, int multiplier) {
+    return ((long)sample * SAMPLE_GROUP_STRIDE * groupSize + sample % groupSize) * multiplier;
+}
+
+void poisonElement(__global STREAM_TYPE *element, uchar poison) {
+    __global uchar *bytes = (__global uchar *)element;
+    for (int byte = 0; byte < sizeof(STREAM_TYPE); byte++) {
+        bytes[byte] = poison;
+    }
+}
+
+__kernel void poisonSamples(__global STREAM_TYPE *restrict output, __global STREAM_TYPE *restrict samples, int elementCount, int groupSize, int multiplier, uchar poison) {
+    const int sample = get_global_id(0);
+    if (sample >= sampleCount(elementCount, groupSize)) {
+        return;
+    }
+    poisonElement(samples + sample, poison);
+    const long element = sampleElement(sample, groupSize, multiplier);
+    if (element < elementCount) {
+        poisonElement(output + element, poison);
+    }
+}
+
+__kernel void gatherSamples(const __global STREAM_TYPE *restrict output, __global STREAM_TYPE *restrict samples, int elementCount, int groupSize, int multiplier) {
+    const int sample = get_global_id(0);
+    if (sample >= sampleCount(elementCount, groupSize)) {
+        return;
+    }
+    const long element = sampleElement(sample, groupSize, multiplier);
+    if (element < elementCount) {
+        samples[sample] = output[element];
+    }
+}
+#endif
+
 __kernel void writeWithMultiplier(__global STREAM_TYPE *restrict x, STREAM_TYPE scalar, int multiplier) {
     int i = get_global_id(0);
     if (multiplier > 1) {

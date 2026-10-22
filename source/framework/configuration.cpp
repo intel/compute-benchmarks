@@ -55,7 +55,8 @@ Configuration::Configuration()
       returnSubmissionTimeInsteadOfWorkloadTime(*this, "forceSubmissionProfiling", "Overrides profiling to return submission time instead of workload time"),
       markTimers(*this, "markTimers", "Provides prints around Timer Start & End"),
       measurePower(*this, "measurePower", "Measures power and energy in supported benchmarks"),
-      verify(*this, "verify", "Verifies results after every iteration in supported benchmarks, outside of the timed region. A benchmark may then run a different kernel whose output can be checked, so results are not comparable with runs without --verify. Use for correctness checks, not for performance measurements"),
+      verify(*this, "verify", "Verifies results after every iteration in supported benchmarks, outside of the timed region. --verificationMode selects how much is checked"),
+      verificationMode(*this, "verificationMode", "How much --verify checks. light checks one element per 256 work groups and barely changes the measured result. complete checks every element; a benchmark may then run a different kernel, so results are not comparable with runs without --verify"),
       printAllResults(*this, "printAllResults", "Prints all test results"),
       printHistogram(*this, "printHistogram", "Prints a histogram of the result distribution across all iterations for each benchmark (default/verbose output only; ignored for --csv and --noop)"),
       profilerType(*this, "profilerType", "If supported by the benchmark, dictates the profiler/statistic used/reported by the benchmark"),
@@ -111,6 +112,7 @@ Configuration::Configuration()
     returnSubmissionTimeInsteadOfWorkloadTime = false;
     profilerType = ProfilerType::Timer;
     verify = false;
+    verificationMode = VerificationMode::Light;
 
     extended = false;
 }

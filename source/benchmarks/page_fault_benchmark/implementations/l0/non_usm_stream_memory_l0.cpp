@@ -73,14 +73,18 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     std::fill(std::begin(scalarValue), std::end(scalarValue), static_cast<uint32_t>(-999));
     bool setScalarArgument = true;
     const auto workSize = StreamMemoryHelper::getWorkSize(arguments.size, elementSize, arguments.lws);
-    if (!workSize) {
+    if (!workSize || !StreamMemoryHelper::fitsKernelIndexRange(workSize->globalSize, arguments.partialMultiplier)) {
         return TestResult::InvalidArgs;
     }
     const uint32_t groupSizeX = static_cast<uint32_t>(workSize->groupSize);
     const uint32_t gws = static_cast<uint32_t>(workSize->globalSize);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
-    const bool verify = Configuration::get().verify;
-    const size_t readOutputSize = verify ? workSize->bufferSize : StreamMemoryHelper::dummyOutputSize;
+    const auto verifyMode = StreamMemoryHelper::getVerification(Configuration::get().verify, Configuration::get().verificationMode);
+    const bool verify = verifyMode != StreamMemoryHelper::Verification::None;
+    const bool lightVerification = verifyMode == StreamMemoryHelper::Verification::Light;
+    const bool gatherSamples = lightVerification && arguments.type != StreamMemoryType::Read;
+    const size_t samplesSize = StreamMemoryHelper::getSamplesSize(workSize->bufferSize, elementSize, workSize->groupSize);
+    const size_t readOutputSize = StreamMemoryHelper::getReadOutputSize(verifyMode, workSize->bufferSize, samplesSize);
 
     const size_t bufferSize = workSize->bufferSize;
     void *buffers[3] = {};
@@ -90,7 +94,7 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
 
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        pKernelName = verify ? "readWithMultiplierStore" : "readWithMultiplier";
+        pKernelName = lightVerification ? "readWithMultiplierSample" : (verify ? "readWithMultiplierStore" : "readWithMultiplier");
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, bufferSize, &buffers[buffersCount++]));
         bufferSizes[buffersCount] = readOutputSize;
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, readOutputSize, &buffers[buffersCount++]));
@@ -128,6 +132,7 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     }
     compilerOptions.addDefinitionKeyValue("STREAM_TYPE", streamType.c_str());
     compilerOptions.addDefinitionKeyValue("WRITE_RANDOM_PATTERN", StreamMemoryHelper::getWriteRandomPatternDefinition());
+    compilerOptions.addDefinitionKeyValue("SAMPLE_GROUP_STRIDE", StreamMemoryHelper::getSampleGroupStrideDefinition());
 
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "memory_benchmark_stream_memory.cl", pKernelName, &kernel, &module, compilerOptions.str().c_str());
     if (kernelLoadRes != TestResult::Success) {
@@ -210,14 +215,29 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
+    void *samples = arguments.type == StreamMemoryType::Read ? buffers[outputIndex] : nullptr;
     VerificationHelperL0 verification(levelzero);
     std::optional<StreamMemoryHelper::Verifier> verifier;
     if (verify) {
         if (!systemMemory) {
-            ASSERT_ZE_RESULT_SUCCESS(verification.initialize(bufferSize));
+            ASSERT_ZE_RESULT_SUCCESS(verification.initialize(lightVerification ? samplesSize : bufferSize));
         }
         verifier.emplace(arguments.type, arguments.contents, bufferSize, elementSize, arguments.partialMultiplier, scalarValue[0]);
     }
+    if (gatherSamples && !systemMemory) {
+        ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, samplesSize, &samples));
+        if (const TestResult gatherResult = verification.initializeSampling("memory_benchmark_stream_memory.cl", compilerOptions.str().c_str(), buffers[outputIndex], samples,
+                                                                            samplesSize / elementSize, gws, groupSizeX, arguments.partialMultiplier);
+            gatherResult != TestResult::Success) {
+            return gatherResult;
+        }
+    }
+    const auto getSystemSample = [&](size_t sample) -> const uint8_t * {
+        if (arguments.type == StreamMemoryType::Read) {
+            return static_cast<const uint8_t *>(samples) + sample * elementSize;
+        }
+        return static_cast<const uint8_t *>(buffers[outputIndex]) + StreamMemoryHelper::getSampleElement(sample, groupSizeX, arguments.partialMultiplier) * elementSize;
+    };
     const auto readChunk = [&](size_t offset, size_t size) -> const uint8_t * {
         if (systemMemory) {
             return static_cast<const uint8_t *>(buffers[outputIndex]) + offset;
@@ -229,8 +249,14 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     for (auto i = 0u; i < arguments.iterations; i++) {
         if (systemMemory) {
             fillSystemBuffers();
-        } else if (verify) {
-            ASSERT_ZE_RESULT_SUCCESS(verification.poison(buffers[outputIndex], bufferSizes[outputIndex]));
+        } else {
+            if (verifyMode == StreamMemoryHelper::Verification::Complete) {
+                ASSERT_ZE_RESULT_SUCCESS(verification.poison(buffers[outputIndex], bufferSizes[outputIndex]));
+            } else if (gatherSamples) {
+                ASSERT_ZE_RESULT_SUCCESS(verification.resetSamples());
+            } else if (lightVerification) {
+                ASSERT_ZE_RESULT_SUCCESS(verification.poison(samples, samplesSize));
+            }
         }
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, 0));
@@ -268,7 +294,16 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
             if (systemMemory) {
                 verifier->setInputs({.fill = systemFillBytes[0]}, {.fill = systemFillBytes[1]});
             }
-            result = verifier->verify(readChunk);
+            if (lightVerification && systemMemory) {
+                result = verifier->verifySamples(groupSizeX, getSystemSample);
+            } else if (lightVerification) {
+                if (gatherSamples) {
+                    ASSERT_ZE_RESULT_SUCCESS(verification.gather());
+                }
+                result = verifier->verifySamples(groupSizeX, StreamMemoryHelper::getChunkedSamples(elementSize, samplesSize, [&](size_t offset, size_t size) { return verification.read(samples, offset, size); }));
+            } else {
+                result = verifier->verify(readChunk);
+            }
             if (result != TestResult::Success) {
                 break;
             }
@@ -279,6 +314,9 @@ static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     for (size_t i = 0; i < buffersCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::deallocate(arguments.memoryPlacement, levelzero, buffers[i]));
+    }
+    if (gatherSamples && !systemMemory) {
+        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, samples));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));

@@ -18,7 +18,6 @@
 #include <array>
 #include <cstdint>
 #include <iostream>
-#include <limits>
 #include <string>
 
 struct StreamMemoryArguments : TestCaseArgumentContainer {
@@ -53,7 +52,8 @@ struct StreamMemory : TestCase<StreamMemoryArguments> {
         return "Streams memory inside of kernel in a fashion described by 'type'. Copy means one "
                "memory location is read from and the second one is written to. Triad means two "
                "buffers are read and one is written to. In read and write memory is only read or "
-               "written to. With --verify, Read stores what it reads so the output can be checked.";
+               "written to. With --verify, Read also stores one element per 256 work groups (--verificationMode=light) "
+               "or every element (--verificationMode=complete) so the output can be checked.";
     }
 };
 
@@ -97,11 +97,10 @@ inline TestResult getStreamMemoryDispatch(const StreamMemoryArguments &arguments
     dispatch.globalSize = workSize->globalSize;
     dispatch.bufferSize = workSize->bufferSize;
 
-    const size_t highestIndex = dispatch.globalSize * arguments.partialMultiplier;
-    if (highestIndex > std::numeric_limits<int32_t>::max()) {
+    if (!StreamMemoryHelper::fitsKernelIndexRange(dispatch.globalSize, arguments.partialMultiplier)) {
         std::cerr << "size " << static_cast<size_t>(arguments.size) << " with vectorSize " << static_cast<size_t>(arguments.vectorSize)
                   << " and multiplier " << static_cast<size_t>(arguments.partialMultiplier)
-                  << " needs index " << highestIndex << ", which exceeds the 32-bit index range of the stream kernels" << std::endl;
+                  << " needs index " << dispatch.globalSize * arguments.partialMultiplier << ", which exceeds the 32-bit index range of the stream kernels" << std::endl;
         return TestResult::InvalidArgs;
     }
     return TestResult::Success;
@@ -120,10 +119,17 @@ inline size_t getStreamMemoryTransferSize(const StreamMemoryArguments &arguments
     return transferSize;
 }
 
-inline const char *getStreamMemoryKernelName(const StreamMemoryArguments &arguments, const bool verify) {
+inline const char *getStreamMemoryKernelName(const StreamMemoryArguments &arguments, StreamMemoryHelper::Verification verification) {
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        return verify ? "readWithMultiplierStore" : "readWithMultiplier";
+        switch (verification) {
+        case StreamMemoryHelper::Verification::Light:
+            return "readWithMultiplierSample";
+        case StreamMemoryHelper::Verification::Complete:
+            return "readWithMultiplierStore";
+        default:
+            return "readWithMultiplier";
+        }
     case StreamMemoryType::Write:
         return arguments.contents == BufferContents::Random ? "write_random" : "writeWithMultiplier";
     case StreamMemoryType::Scale:

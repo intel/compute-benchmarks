@@ -74,8 +74,12 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     const uint32_t groupSizeX = static_cast<uint32_t>(workSize->groupSize);
     const uint32_t gws = static_cast<uint32_t>(workSize->globalSize);
     const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
-    const bool verify = Configuration::get().verify;
-    const size_t readOutputSize = verify ? workSize->bufferSize : StreamMemoryHelper::dummyOutputSize;
+    const auto verifyMode = StreamMemoryHelper::getVerification(Configuration::get().verify, Configuration::get().verificationMode);
+    const bool verify = verifyMode != StreamMemoryHelper::Verification::None;
+    const bool lightVerification = verifyMode == StreamMemoryHelper::Verification::Light;
+    const bool gatherSamples = lightVerification && arguments.type != StreamMemoryType::Read;
+    const size_t samplesSize = StreamMemoryHelper::getSamplesSize(workSize->bufferSize, elementSize, workSize->groupSize);
+    const size_t readOutputSize = StreamMemoryHelper::getReadOutputSize(verifyMode, workSize->bufferSize, samplesSize);
 
     const size_t bufferSize = workSize->bufferSize;
     void *buffers[3] = {};
@@ -86,7 +90,7 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     const char *pKernelName = nullptr;
     switch (arguments.type) {
     case StreamMemoryType::Read:
-        pKernelName = verify ? "readStore" : "read";
+        pKernelName = lightVerification ? "readSample" : (verify ? "readStore" : "read");
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferSize, 0, levelzero.device, &buffers[buffersCount++]));
         bufferSizes[buffersCount] = readOutputSize;
         ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, readOutputSize, 0, levelzero.device, &buffers[buffersCount++]));
@@ -114,6 +118,7 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     ze_module_handle_t module{};
     CompilerOptionsBuilder compilerOptions;
     compilerOptions.addDefinitionKeyValue("STREAM_TYPE", useDoubles ? "double" : "float");
+    compilerOptions.addDefinitionKeyValue("SAMPLE_GROUP_STRIDE", StreamMemoryHelper::getSampleGroupStrideDefinition());
     auto kernelLoadRes = L0::KernelHelper::loadKernel(levelzero, "memory_benchmark_stream_memory.cl", pKernelName, &kernel, &module, compilerOptions.str().c_str());
     if (kernelLoadRes != TestResult::Success) {
         return kernelLoadRes;
@@ -153,16 +158,31 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, static_cast<uint32_t>(buffersCount), elementSize, scalarValue));
 
     const size_t outputIndex = buffersCount - 1;
+    void *samples = arguments.type == StreamMemoryType::Read ? buffers[outputIndex] : nullptr;
     VerificationHelperL0 verification(levelzero);
     if (verify) {
-        ASSERT_ZE_RESULT_SUCCESS(verification.initialize(bufferSize));
+        ASSERT_ZE_RESULT_SUCCESS(verification.initialize(lightVerification ? samplesSize : bufferSize));
     }
-    const auto readChunk = [&](size_t offset, size_t size) -> const void * { return verification.read(buffers[outputIndex], offset, size); };
+    if (gatherSamples) {
+        ASSERT_ZE_RESULT_SUCCESS(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, samplesSize, 0, levelzero.device, &samples));
+        if (const TestResult gatherResult = verification.initializeSampling("memory_benchmark_stream_memory.cl", compilerOptions.str().c_str(), buffers[outputIndex], samples,
+                                                                            samplesSize / elementSize, gws, groupSizeX, 1u);
+            gatherResult != TestResult::Success) {
+            return gatherResult;
+        }
+    }
+    const void *checkedBuffer = lightVerification ? samples : buffers[outputIndex];
+    const size_t checkedSize = lightVerification ? samplesSize : bufferSize;
+    const auto readChunk = [&](size_t offset, size_t size) -> const void * { return verification.read(checkedBuffer, offset, size); };
     TestResult result = TestResult::Success;
 
     for (auto i = 0u; i < arguments.iterations; i++) {
-        if (verify) {
+        if (verifyMode == StreamMemoryHelper::Verification::Complete) {
             ASSERT_ZE_RESULT_SUCCESS(verification.poison(buffers[outputIndex], bufferSizes[outputIndex]));
+        } else if (gatherSamples) {
+            ASSERT_ZE_RESULT_SUCCESS(verification.resetSamples());
+        } else if (lightVerification) {
+            ASSERT_ZE_RESULT_SUCCESS(verification.poison(samples, samplesSize));
         }
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, event, 0, nullptr));
@@ -192,9 +212,12 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
         }
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(event));
 
+        if (gatherSamples) {
+            ASSERT_ZE_RESULT_SUCCESS(verification.gather());
+        }
         if (verify) {
-            result = useDoubles ? VerificationHelper::verifyUniformOutput(bufferSize, getExpectedValue(arguments.type, doubleValues), readChunk)
-                                : VerificationHelper::verifyUniformOutput(bufferSize, getExpectedValue(arguments.type, floatValues), readChunk);
+            result = useDoubles ? VerificationHelper::verifyUniformOutput(checkedSize, getExpectedValue(arguments.type, doubleValues), readChunk)
+                                : VerificationHelper::verifyUniformOutput(checkedSize, getExpectedValue(arguments.type, floatValues), readChunk);
             if (result != TestResult::Success) {
                 break;
             }
@@ -205,6 +228,9 @@ static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistic
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolDestroy(eventPool));
     for (size_t i = 0; i < buffersCount; i++) {
         ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, buffers[i]));
+    }
+    if (gatherSamples) {
+        ASSERT_ZE_RESULT_SUCCESS(zeMemFree(levelzero.context, samples));
     }
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListDestroy(cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelDestroy(kernel));

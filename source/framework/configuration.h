@@ -14,6 +14,7 @@
 #include "framework/argument/enum/api_argument.h"
 #include "framework/argument/enum/device_selection_argument.h"
 #include "framework/argument/enum/profiler_type_argument.h"
+#include "framework/argument/enum/verification_mode_argument.h"
 #include "framework/argument/string_argument.h"
 #include "framework/argument/string_list_argument.h"
 #include "framework/utility/command_line_argument.h"
@@ -94,6 +95,7 @@ struct Configuration : ArgumentContainer {
     BooleanFlagArgument markTimers;
     BooleanFlagArgument measurePower;
     BooleanFlagArgument verify;
+    VerificationModeArgument verificationMode;
     BooleanFlagArgument printAllResults;
     BooleanFlagArgument printHistogram;
     ProfilerTypeArgument profilerType;
