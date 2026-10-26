@@ -10,6 +10,7 @@
 #include "framework/test_case/test_case.h"
 #include "framework/vk/utility/error.h"
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -31,6 +32,7 @@ struct Vulkan {
     VkDevice device{};
     VkQueue queue{};
     uint32_t queueFamilyIndex{};
+    uint32_t timestampValidBits{};
     VkCommandPool commandPool{};
 
     Vulkan();
@@ -48,6 +50,7 @@ struct Vulkan {
     bool supportsStorageBuffersInOneSet(const size_t storageBufferCount) const;
     bool supportsStorageBufferArrayDynamicIndexing() const;
     bool supportsPushConstantsSize(const size_t pushConstantsSize) const;
+    bool supportsTimestamps() const { return this->timestampValidBits > 0; }
 };
 
 void recordInOrderExecutionBarrier(const VkCommandBuffer commandBuffer);
@@ -129,6 +132,19 @@ class VulkanFence : NoCopyOrMove {
   private:
     Vulkan &vulkan_;
     VkFence fence_ = VK_NULL_HANDLE;
+};
+
+class VulkanGpuTimer : NoCopyOrMove {
+  public:
+    explicit VulkanGpuTimer(Vulkan &vulkan);
+    ~VulkanGpuTimer() noexcept;
+    void recordBegin(const VkCommandBuffer commandBuffer) const;
+    void recordEnd(const VkCommandBuffer commandBuffer) const;
+    VkResult getElapsedTime(std::chrono::nanoseconds &elapsedTime) const;
+
+  private:
+    Vulkan &vulkan_;
+    VkQueryPool queryPool_ = VK_NULL_HANDLE;
 };
 
 class VulkanBuffer : NoCopyOrMove {

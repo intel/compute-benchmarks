@@ -19,7 +19,7 @@
 using namespace L0;
 
 static TestResult run(const UniqueKernelSwitchLatencyArguments &arguments, Statistics &statistics) {
-    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Gpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, arguments.profiling ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
@@ -101,7 +101,7 @@ static TestResult run(const UniqueKernelSwitchLatencyArguments &arguments, Stati
         if (arguments.profiling) {
             auto totalTime = std::chrono::nanoseconds(*endTimestamp - *beginTimestamp);
             totalTime *= timerResolution;
-            statistics.pushValue(totalTime, typeSelector.getUnit(), MeasurementType::Gpu);
+            statistics.pushValue(totalTime, typeSelector.getUnit(), typeSelector.getType());
         } else {
             statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
         }

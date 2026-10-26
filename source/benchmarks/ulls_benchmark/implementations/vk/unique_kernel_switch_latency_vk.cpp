@@ -14,20 +14,17 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
 using namespace VK;
 
 static TestResult run(const UniqueKernelSwitchLatencyArguments &arguments, Statistics &statistics) {
-    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, MeasurementType::Cpu);
+    const MeasurementFields typeSelector(MeasurementUnit::Microseconds, arguments.profiling ? MeasurementType::Gpu : MeasurementType::Cpu);
 
     if (arguments.kernelCount < 2) {
         return TestResult::InvalidArgs;
-    }
-
-    if (arguments.profiling) {
-        return TestResult::NoImplementation;
     }
 
     if (isNoopRun()) {
@@ -38,7 +35,8 @@ static TestResult run(const UniqueKernelSwitchLatencyArguments &arguments, Stati
     Vulkan vulkan;
     Timer timer;
 
-    if (!vulkan.supportsDispatch1D(arguments.workgroupSize, arguments.workgroupCount)) {
+    if (!vulkan.supportsDispatch1D(arguments.workgroupSize, arguments.workgroupCount) ||
+        (arguments.profiling && !vulkan.supportsTimestamps())) {
         return TestResult::DeviceNotCapable;
     }
 
@@ -63,9 +61,17 @@ static TestResult run(const UniqueKernelSwitchLatencyArguments &arguments, Stati
     const VulkanBuffer buffer(vulkan, argumentBufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     descriptorSets.writeWholeBuffer(0, buffer);
 
+    std::optional<VulkanGpuTimer> gpuTimer;
+    if (arguments.profiling) {
+        gpuTimer.emplace(vulkan);
+    }
+
     const VkCommandBuffer commandBuffer = vulkan.allocateCommandBuffer();
     const VkCommandBufferBeginInfo commandBufferBeginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     ASSERT_VK_SUCCESS(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
+    if (gpuTimer) {
+        gpuTimer->recordBegin(commandBuffer);
+    }
     for (auto kernelIndex = 0u; kernelIndex < kernelCount; kernelIndex++) {
         if (kernelIndex > 0) {
             recordInOrderExecutionBarrier(commandBuffer);
@@ -74,6 +80,9 @@ static TestResult run(const UniqueKernelSwitchLatencyArguments &arguments, Stati
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.layout(), 0, 1, descriptorSets.address(0), 0, nullptr);
         vkCmdDispatch(commandBuffer, static_cast<uint32_t>(arguments.workgroupCount), 1u, 1u);
+    }
+    if (gpuTimer) {
+        gpuTimer->recordEnd(commandBuffer);
     }
     ASSERT_VK_SUCCESS(vkEndCommandBuffer(commandBuffer));
 
@@ -88,7 +97,13 @@ static TestResult run(const UniqueKernelSwitchLatencyArguments &arguments, Stati
         ASSERT_VK_SUCCESS(vkQueueSubmit(vulkan.queue, 1, &submitInfo, VK_NULL_HANDLE));
         ASSERT_VK_SUCCESS(vkQueueWaitIdle(vulkan.queue));
         timer.measureEnd();
-        statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        if (gpuTimer) {
+            std::chrono::nanoseconds gpuTime{};
+            ASSERT_VK_SUCCESS(gpuTimer->getElapsedTime(gpuTime));
+            statistics.pushValue(gpuTime, typeSelector.getUnit(), typeSelector.getType());
+        } else {
+            statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        }
     }
 
     return TestResult::Success;

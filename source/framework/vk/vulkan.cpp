@@ -84,6 +84,7 @@ Vulkan::Vulkan() {
     } else {
         FATAL_ERROR("No compute capable queue family found on Vulkan device ", this->physicalDeviceProperties.deviceName);
     }
+    this->timestampValidBits = queueFamilies[this->queueFamilyIndex].timestampValidBits;
 
     const float queuePriority = 1.0f;
     VkDeviceQueueCreateInfo queueCreateInfo{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
@@ -311,6 +312,44 @@ VulkanFence::~VulkanFence() noexcept {
     if (this->fence_ != VK_NULL_HANDLE) {
         vkDestroyFence(vulkan_.device, this->fence_, nullptr);
     }
+}
+
+VulkanGpuTimer::VulkanGpuTimer(Vulkan &vulkan) : vulkan_(vulkan) {
+    VkQueryPoolCreateInfo queryPoolCreateInfo{VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO};
+    queryPoolCreateInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
+    queryPoolCreateInfo.queryCount = 2;
+    VK_RESULT_SUCCESS_OR_ERROR(vkCreateQueryPool(vulkan_.device, &queryPoolCreateInfo, nullptr, &this->queryPool_));
+}
+
+VulkanGpuTimer::~VulkanGpuTimer() noexcept {
+    if (this->queryPool_ != VK_NULL_HANDLE) {
+        vkDestroyQueryPool(vulkan_.device, this->queryPool_, nullptr);
+    }
+}
+
+void VulkanGpuTimer::recordBegin(const VkCommandBuffer commandBuffer) const {
+    vkCmdResetQueryPool(commandBuffer, this->queryPool_, 0, 2);
+    vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, this->queryPool_, 0);
+}
+
+void VulkanGpuTimer::recordEnd(const VkCommandBuffer commandBuffer) const {
+    vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, this->queryPool_, 1);
+}
+
+VkResult VulkanGpuTimer::getElapsedTime(std::chrono::nanoseconds &elapsedTime) const {
+    uint64_t timestamps[2]{};
+    const VkResult result = vkGetQueryPoolResults(vulkan_.device, this->queryPool_, 0, 2, sizeof(timestamps), timestamps, sizeof(uint64_t),
+                                                  VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+    if (result != VK_SUCCESS) {
+        return result;
+    }
+
+    const uint32_t validBits = vulkan_.timestampValidBits;
+    const uint64_t validBitsMask = validBits >= 64 ? std::numeric_limits<uint64_t>::max() : (uint64_t{1} << validBits) - 1;
+    const uint64_t elapsedTicks = (timestamps[1] - timestamps[0]) & validBitsMask;
+    const std::chrono::duration<double, std::nano> elapsedTimeInNanoseconds(static_cast<double>(elapsedTicks) * vulkan_.physicalDeviceProperties.limits.timestampPeriod);
+    elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTimeInNanoseconds);
+    return VK_SUCCESS;
 }
 
 VulkanBuffer::VulkanBuffer(Vulkan &vulkan, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperties) : vulkan_(vulkan) {
