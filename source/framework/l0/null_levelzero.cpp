@@ -8,6 +8,7 @@
 #ifdef NULL_L0
 
 #include "level_zero/zes_api.h"
+#include "level_zero/zet_api.h"
 #include "level_zero/zex_event.h"
 #include "levelzero.h"
 
@@ -361,6 +362,21 @@ ZE_MOCK_SUCCESS(zeDeviceImportExternalSemaphoreExt, ze_device_handle_t, const ze
 ZE_MOCK_SUCCESS(zeDeviceReleaseExternalSemaphoreExt, ze_external_semaphore_ext_handle_t)
 ZE_MOCK_SUCCESS(zeCommandListAppendSignalExternalSemaphoreExt, ze_command_list_handle_t, uint32_t, ze_external_semaphore_ext_handle_t *, ze_external_semaphore_signal_params_ext_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *)
 ZE_MOCK_SUCCESS(zeCommandListAppendWaitExternalSemaphoreExt, ze_command_list_handle_t, uint32_t, ze_external_semaphore_ext_handle_t *, ze_external_semaphore_wait_params_ext_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *)
+ZE_MOCK_SUCCESS(zetMetricGroupGet, zet_device_handle_t, uint32_t *, zet_metric_group_handle_t *)
+ZE_MOCK_SUCCESS(zetMetricGroupGetProperties, zet_metric_group_handle_t, zet_metric_group_properties_t *)
+ZE_MOCK_SUCCESS(zetContextActivateMetricGroups, zet_context_handle_t, zet_device_handle_t, uint32_t, zet_metric_group_handle_t *)
+ZE_MOCK_SUCCESS(zetMetricStreamerOpen, zet_context_handle_t, zet_device_handle_t, zet_metric_group_handle_t, zet_metric_streamer_desc_t *, ze_event_handle_t, zet_metric_streamer_handle_t *)
+ZE_MOCK_SUCCESS(zetMetricStreamerClose, zet_metric_streamer_handle_t)
+ZE_MOCK_SUCCESS(zetCommandListAppendMetricStreamerMarker, zet_command_list_handle_t, zet_metric_streamer_handle_t, uint32_t)
+ZE_MOCK_SUCCESS(zetMetricQueryPoolCreate, zet_context_handle_t, zet_device_handle_t, zet_metric_group_handle_t, const zet_metric_query_pool_desc_t *, zet_metric_query_pool_handle_t *)
+ZE_MOCK_SUCCESS(zetMetricQueryPoolDestroy, zet_metric_query_pool_handle_t)
+ZE_MOCK_SUCCESS(zetMetricQueryCreate, zet_metric_query_pool_handle_t, uint32_t, zet_metric_query_handle_t *)
+ZE_MOCK_SUCCESS(zetMetricQueryDestroy, zet_metric_query_handle_t)
+ZE_MOCK_SUCCESS(zetMetricQueryReset, zet_metric_query_handle_t)
+ZE_MOCK_SUCCESS(zetCommandListAppendMetricQueryBegin, zet_command_list_handle_t, zet_metric_query_handle_t)
+ZE_MOCK_SUCCESS(zetCommandListAppendMetricQueryEnd, zet_command_list_handle_t, zet_metric_query_handle_t, ze_event_handle_t, uint32_t, ze_event_handle_t *)
+ZE_MOCK_SUCCESS(zetCommandListAppendMetricMemoryBarrier, zet_command_list_handle_t)
+ZE_MOCK_SUCCESS(zetCommandListAppendMarkerExp, zet_command_list_handle_t, zet_metric_group_handle_t, uint32_t)
 ZE_MOCK_SUCCESS(zeDeviceReserveCacheExt, ze_device_handle_t, size_t, size_t)
 ZE_MOCK_SUCCESS(zeDeviceSetCacheAdviceExt, ze_device_handle_t, void *, size_t, ze_cache_ext_region_t)
 ZE_MOCK_SUCCESS(zeEventQueryTimestampsExp, ze_event_handle_t, ze_device_handle_t, uint32_t *, ze_kernel_timestamp_result_t *)
