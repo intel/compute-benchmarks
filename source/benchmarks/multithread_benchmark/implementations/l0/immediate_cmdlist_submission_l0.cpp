@@ -70,7 +70,7 @@ static TestResult getComputeEngineInfo(std::vector<EngineInfo> &supportedEngineI
             insertToEngineInfoList(queueGroupProperties[i].numQueues, i);
         }
     }
-    return supportedEngineInfo.size() > 0 ? TestResult::Success : TestResult::Error;
+    return supportedEngineInfo.size() > 0 ? TestResult::Success : TestResult::DeviceNotCapable;
 }
 
 static TestResult run(const ImmediateCommandListSubmissionArguments &arguments, Statistics &statistics) {

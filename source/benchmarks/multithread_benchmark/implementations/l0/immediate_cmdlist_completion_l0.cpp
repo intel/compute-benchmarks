@@ -83,7 +83,7 @@ static TestResult getEngineInfo(std::vector<EngineInfo> &supportedEngineInfo, Le
         }
         engineMaskPosition++;
     }
-    return supportedEngineInfo.size() > 0 ? TestResult::Success : TestResult::Error;
+    return supportedEngineInfo.size() > 0 ? TestResult::Success : TestResult::DeviceNotCapable;
 }
 
 static TestResult run(const ImmediateCommandListCompletionArguments &arguments, Statistics &statistics) {
