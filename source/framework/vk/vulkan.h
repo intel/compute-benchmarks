@@ -20,6 +20,11 @@
 
 namespace VK {
 
+enum class VulkanQueueType {
+    Compute,
+    CopyOnly,
+};
+
 struct Vulkan {
     static constexpr uint32_t invalidMemoryTypeIndex = std::numeric_limits<uint32_t>::max();
 
@@ -35,7 +40,10 @@ struct Vulkan {
     uint32_t timestampValidBits{};
     VkCommandPool commandPool{};
 
-    Vulkan();
+    Vulkan() : Vulkan(VulkanQueueType::Compute) {}
+
+    // With CopyOnly, device and queue stay VK_NULL_HANDLE when the device exposes no transfer-only queue family.
+    explicit Vulkan(const VulkanQueueType queueType);
     Vulkan(const Vulkan &) = delete;
     Vulkan &operator=(const Vulkan &) = delete;
     ~Vulkan();

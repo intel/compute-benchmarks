@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,6 @@ struct LifecycleCommandList : TestCase<LifecycleCommandListArguments> {
     }
 
     std::string getHelp() const override {
-        return "measures time spent in zeCommandListCreate + Close + Execute on CPU.";
+        return "measures time spent on CPU to create, close, execute, synchronize and destroy CmdListCount command lists, one at a time.";
     }
 };

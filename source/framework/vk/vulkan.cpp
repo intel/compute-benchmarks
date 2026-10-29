@@ -14,7 +14,42 @@
 
 namespace VK {
 
-Vulkan::Vulkan() {
+namespace {
+
+constexpr uint32_t invalidQueueFamilyIndex = std::numeric_limits<uint32_t>::max();
+
+uint32_t findComputeQueueFamily(const std::vector<VkQueueFamilyProperties> &queueFamilies) {
+    uint32_t computeOnlyFamily = invalidQueueFamilyIndex;
+    uint32_t anyComputeFamily = invalidQueueFamilyIndex;
+    for (uint32_t familyIndex = 0; familyIndex < queueFamilies.size(); familyIndex++) {
+        const VkQueueFlags flags = queueFamilies[familyIndex].queueFlags;
+        if ((flags & VK_QUEUE_COMPUTE_BIT) == 0) {
+            continue;
+        }
+        if (anyComputeFamily == invalidQueueFamilyIndex) {
+            anyComputeFamily = familyIndex;
+        }
+        if ((flags & VK_QUEUE_GRAPHICS_BIT) == 0 && computeOnlyFamily == invalidQueueFamilyIndex) {
+            computeOnlyFamily = familyIndex;
+        }
+    }
+    return computeOnlyFamily != invalidQueueFamilyIndex ? computeOnlyFamily : anyComputeFamily;
+}
+
+uint32_t findCopyOnlyQueueFamily(const std::vector<VkQueueFamilyProperties> &queueFamilies) {
+    constexpr VkQueueFlags nonCopyEngineFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_VIDEO_DECODE_BIT_KHR | VK_QUEUE_VIDEO_ENCODE_BIT_KHR;
+    for (uint32_t familyIndex = 0; familyIndex < queueFamilies.size(); familyIndex++) {
+        const VkQueueFlags flags = queueFamilies[familyIndex].queueFlags;
+        if ((flags & VK_QUEUE_TRANSFER_BIT) != 0 && (flags & nonCopyEngineFlags) == 0) {
+            return familyIndex;
+        }
+    }
+    return invalidQueueFamilyIndex;
+}
+
+} // namespace
+
+Vulkan::Vulkan(const VulkanQueueType queueType) {
     VkApplicationInfo applicationInfo{VK_STRUCTURE_TYPE_APPLICATION_INFO};
     applicationInfo.pApplicationName = "compute_benchmarks";
     applicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -55,35 +90,19 @@ Vulkan::Vulkan() {
         this->bufferDeviceAddressSupported = supportedBufferDeviceAddressFeatures.bufferDeviceAddress == VK_TRUE;
     }
 
-    // Queue families have to be selected before the device is created, because Vulkan requests queues
-    // at vkCreateDevice time and only retrieves their handles afterwards.
     uint32_t queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(this->physicalDevice, &queueFamilyCount, nullptr);
     std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(this->physicalDevice, &queueFamilyCount, queueFamilies.data());
 
-    constexpr uint32_t invalidQueueFamilyIndex = std::numeric_limits<uint32_t>::max();
-    uint32_t computeOnlyFamily = invalidQueueFamilyIndex;
-    uint32_t anyComputeFamily = invalidQueueFamilyIndex;
-    for (uint32_t familyIndex = 0; familyIndex < queueFamilyCount; familyIndex++) {
-        const VkQueueFlags flags = queueFamilies[familyIndex].queueFlags;
-        if ((flags & VK_QUEUE_COMPUTE_BIT) == 0) {
-            continue;
+    const uint32_t selectedQueueFamilyIndex = queueType == VulkanQueueType::CopyOnly ? findCopyOnlyQueueFamily(queueFamilies) : findComputeQueueFamily(queueFamilies);
+    if (selectedQueueFamilyIndex == invalidQueueFamilyIndex) {
+        if (queueType == VulkanQueueType::CopyOnly) {
+            return;
         }
-        if (anyComputeFamily == invalidQueueFamilyIndex) {
-            anyComputeFamily = familyIndex;
-        }
-        if ((flags & VK_QUEUE_GRAPHICS_BIT) == 0 && computeOnlyFamily == invalidQueueFamilyIndex) {
-            computeOnlyFamily = familyIndex;
-        }
-    }
-    if (computeOnlyFamily != invalidQueueFamilyIndex) {
-        this->queueFamilyIndex = computeOnlyFamily;
-    } else if (anyComputeFamily != invalidQueueFamilyIndex) {
-        this->queueFamilyIndex = anyComputeFamily;
-    } else {
         FATAL_ERROR("No compute capable queue family found on Vulkan device ", this->physicalDeviceProperties.deviceName);
     }
+    this->queueFamilyIndex = selectedQueueFamilyIndex;
     this->timestampValidBits = queueFamilies[this->queueFamilyIndex].timestampValidBits;
 
     const float queuePriority = 1.0f;
