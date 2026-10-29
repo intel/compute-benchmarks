@@ -70,6 +70,7 @@ static TestResult run(const FullRemoteAccessMemoryArguments &arguments, Statisti
         break;
     case StreamMemoryType::Triad:
     case StreamMemoryType::Scale:
+    case StreamMemoryType::ReadConstant:
         return TestResult::NoImplementation;
     default:
         FATAL_ERROR("Unknown StreamMemoryType");

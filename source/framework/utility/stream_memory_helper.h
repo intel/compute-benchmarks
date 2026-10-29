@@ -179,6 +179,10 @@ class Verifier {
         this->secondInput = secondContents;
     }
 
+    void setBlockElementCount(size_t count) {
+        this->blockElementCount = count;
+    }
+
     template <typename ReadChunk>
     TestResult verify(ReadChunk &&readChunk) {
         const auto getExpectedChunk = [this](size_t offset, size_t length, uint8_t *destination) { this->getExpectedChunk(offset, length, destination); };
@@ -232,6 +236,12 @@ class Verifier {
         case StreamMemoryType::Read:
             this->firstInput.copy(destination, offset, length);
             break;
+        case StreamMemoryType::ReadConstant:
+            FATAL_ERROR_IF(this->blockElementCount == 0, "ReadConstant verification needs the block element count");
+            for (size_t element = offset / this->elementSize; element < (offset + length) / this->elementSize; element++) {
+                this->firstInput.copy(destination + element * this->elementSize - offset, element % this->blockElementCount * this->elementSize, this->elementSize);
+            }
+            break;
         case StreamMemoryType::Write:
             if (this->contents == BufferContents::Random) {
                 copyWriteRandomPattern(destination, offset, length);
@@ -278,6 +288,7 @@ class Verifier {
     VerificationHelper::OutputVerifier outputVerifier;
     std::vector<uint8_t> scratch;
     std::vector<uint8_t> expectedSample;
+    size_t blockElementCount = 0;
 };
 
 } // namespace StreamMemoryHelper

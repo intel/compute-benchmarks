@@ -40,7 +40,7 @@ INSTANTIATE_TEST_SUITE_P(
     NonUsmStreamMemoryDeviceTest,
     NonUsmStreamMemoryTest,
     ::testing::Combine(
-        ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
+        ::testing::ValuesIn(StreamMemoryTypeArgument::withoutReadConstant),
         ::testing::Values(1 * megaByte, 32 * megaByte, 256 * megaByte),
         ::testing::Values(true),
         // Zeros vs Random measures compression impact on device memory
@@ -55,7 +55,7 @@ INSTANTIATE_TEST_SUITE_P(
     NonUsmStreamMemoryHostTest,
     NonUsmStreamMemoryTest,
     ::testing::Combine(
-        ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
+        ::testing::ValuesIn(StreamMemoryTypeArgument::withoutReadConstant),
         ::testing::Values(1 * megaByte, 32 * megaByte, 256 * megaByte),
         ::testing::Values(true),
         // host memory migrates to device on access and can be compressed there
@@ -70,7 +70,7 @@ INSTANTIATE_TEST_SUITE_P(
     NonUsmStreamMemoryPrefetchTest,
     NonUsmStreamMemoryTest,
     ::testing::Combine(
-        ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
+        ::testing::ValuesIn(StreamMemoryTypeArgument::withoutReadConstant),
         ::testing::Values(1 * megaByte, 32 * megaByte, 256 * megaByte),
         ::testing::Values(true),
         // non-USM memory migrates to device (page-fault or explicit prefetch) and can be compressed there

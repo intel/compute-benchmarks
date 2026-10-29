@@ -53,7 +53,9 @@ struct StreamMemory : TestCase<StreamMemoryArguments> {
                "memory location is read from and the second one is written to. Triad means two "
                "buffers are read and one is written to. In read and write memory is only read or "
                "written to. With --verify, Read also stores one element per 256 work groups (--verificationMode=light) "
-               "or every element (--verificationMode=complete) so the output can be checked.";
+               "or every element (--verificationMode=complete) so the output can be checked. "
+               "ReadConstant is Read in which every work group reads the elements of the first work group, "
+               "so all work groups read the same 'lws' elements.";
     }
 };
 
@@ -71,6 +73,7 @@ inline bool isStreamMemoryUnsupported(const StreamMemoryArguments &arguments) {
     }
     return arguments.type == StreamMemoryType::Scale ||
            arguments.type == StreamMemoryType::Triad ||
+           arguments.type == StreamMemoryType::ReadConstant ||
            (arguments.type == StreamMemoryType::Write && arguments.contents != BufferContents::Zeros);
 }
 
@@ -136,10 +139,23 @@ inline const char *getStreamMemoryKernelName(const StreamMemoryArguments &argume
         return "scale";
     case StreamMemoryType::Triad:
         return "triad";
+    case StreamMemoryType::ReadConstant:
+        switch (verification) {
+        case StreamMemoryHelper::Verification::Light:
+            return "readConstantSample";
+        case StreamMemoryHelper::Verification::Complete:
+            return "readConstantStore";
+        default:
+            return "readConstant";
+        }
     case StreamMemoryType::Unknown:
         break;
     }
     FATAL_ERROR("Unknown StreamMemoryType");
+}
+
+inline bool isStreamMemoryRead(const StreamMemoryArguments &arguments) {
+    return arguments.type == StreamMemoryType::Read || arguments.type == StreamMemoryType::ReadConstant;
 }
 
 // write_random has the value to write embedded in the kernel code.

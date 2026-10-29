@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,4 +17,5 @@ enum class StreamMemoryType {
     Write,
     Scale,
     Triad,
+    ReadConstant,
 };

@@ -107,6 +107,7 @@ class StreamMemoryBenchmark {
             return runScale();
         case StreamMemoryType::Triad:
             return runTriad();
+        case StreamMemoryType::ReadConstant:
         case StreamMemoryType::Unknown:
             break;
         }
@@ -154,6 +155,7 @@ class StreamMemoryBenchmark {
             return 2;
         case StreamMemoryType::Triad:
             return 3;
+        case StreamMemoryType::ReadConstant:
         case StreamMemoryType::Unknown:
             break;
         }
@@ -333,7 +335,7 @@ template <int vectorSize>
 static TestResult runImpl(const StreamMemoryArguments &arguments, Statistics &statistics) {
     const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
-    if (isStreamMemoryUnsupported(arguments)) {
+    if (isStreamMemoryUnsupported(arguments) || arguments.type == StreamMemoryType::ReadConstant) {
         return TestResult::NoImplementation;
     }
 

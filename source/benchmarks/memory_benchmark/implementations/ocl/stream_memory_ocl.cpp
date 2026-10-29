@@ -59,7 +59,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     const auto verifyMode = StreamMemoryHelper::getVerification(Configuration::get().verify, Configuration::get().verificationMode);
     const bool verify = verifyMode != StreamMemoryHelper::Verification::None;
     const bool lightVerification = verifyMode == StreamMemoryHelper::Verification::Light;
-    const bool gatherSamples = lightVerification && arguments.type != StreamMemoryType::Read;
+    const bool gatherSamples = lightVerification && !isStreamMemoryRead(arguments);
     const size_t samplesSize = StreamMemoryHelper::getSamplesSize(dispatch.bufferSize, dispatch.elementSize, dispatch.groupSize);
     const size_t readOutputSize = StreamMemoryHelper::getReadOutputSize(verifyMode, dispatch.bufferSize, samplesSize);
     const char *kernelName = getStreamMemoryKernelName(arguments, verifyMode);
@@ -75,6 +75,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     switch (arguments.type) {
     case StreamMemoryType::Read:
+    case StreamMemoryType::ReadConstant:
         buffers[buffersCount++] = clCreateBuffer(opencl.context, bufferFlags, dispatch.bufferSize, nullptr, &retVal);
         ASSERT_CL_SUCCESS(retVal);
         bufferSizes[buffersCount] = readOutputSize;
@@ -134,7 +135,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     ASSERT_CL_SUCCESS(clEnqueueNDRangeKernel(opencl.commandQueue, kernel, 1, nullptr, &dispatch.globalSize, &dispatch.groupSize, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
-    cl_mem samples = arguments.type == StreamMemoryType::Read ? buffers[outputIndex] : nullptr;
+    cl_mem samples = isStreamMemoryRead(arguments) ? buffers[outputIndex] : nullptr;
     cl_kernel gatherKernel{};
     cl_kernel resetKernel{};
     const size_t sampleCount = samplesSize / dispatch.elementSize;
@@ -143,6 +144,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     if (verify) {
         outputChunk.resize(std::min(lightVerification ? samplesSize : dispatch.bufferSize, VerificationHelper::chunkSize));
         verifier.emplace(arguments.type, arguments.contents, dispatch.bufferSize, dispatch.elementSize, arguments.partialMultiplier, scalarValue[0]);
+        verifier->setBlockElementCount(dispatch.groupSize);
     }
     if (gatherSamples) {
         samples = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, samplesSize, nullptr, &retVal);

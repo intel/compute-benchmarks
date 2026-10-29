@@ -31,6 +31,7 @@ static TestResult run(const HostMappedMemoryArguments &arguments, Statistics &st
         break;
     case StreamMemoryType::Scale:
     case StreamMemoryType::Triad:
+    case StreamMemoryType::ReadConstant:
         return TestResult::NoImplementation;
     default:
         FATAL_ERROR("Unknown StreamMemoryType");

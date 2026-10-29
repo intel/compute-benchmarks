@@ -42,6 +42,10 @@ static T getExpectedValue(StreamMemoryType type, const T *values) {
 static TestResult run(const StreamMemoryImmediateArguments &arguments, Statistics &statistics) {
     const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
+    if (arguments.type == StreamMemoryType::ReadConstant) {
+        return TestResult::NoImplementation;
+    }
+
     if (isNoopRun()) {
         statistics.pushUnitAndType(typeSelector.getUnit(), typeSelector.getType());
         return TestResult::Nooped;

@@ -72,6 +72,7 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
 
     switch (arguments.type) {
     case StreamMemoryType::Read:
+    case StreamMemoryType::ReadConstant:
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, dispatch.bufferSize, &buffers[buffersCount++]));
         bufferSizes[buffersCount] = readOutputSize;
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(arguments.memoryPlacement, levelzero, readOutputSize, &buffers[buffersCount++]));
@@ -153,13 +154,14 @@ static TestResult run(const StreamMemoryArguments &arguments, Statistics &statis
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
     const bool lightVerification = verifyMode == StreamMemoryHelper::Verification::Light;
-    const bool gatherSamples = lightVerification && arguments.type != StreamMemoryType::Read;
-    void *samples = arguments.type == StreamMemoryType::Read ? buffers[outputIndex] : nullptr;
+    const bool gatherSamples = lightVerification && !isStreamMemoryRead(arguments);
+    void *samples = isStreamMemoryRead(arguments) ? buffers[outputIndex] : nullptr;
     VerificationHelperL0 verification(levelzero);
     std::optional<StreamMemoryHelper::Verifier> verifier;
     if (verify) {
         ASSERT_ZE_RESULT_SUCCESS(verification.initialize(lightVerification ? samplesSize : dispatch.bufferSize));
         verifier.emplace(arguments.type, arguments.contents, dispatch.bufferSize, dispatch.elementSize, arguments.partialMultiplier, scalarValue[0]);
+        verifier->setBlockElementCount(dispatch.groupSize);
     }
     if (gatherSamples) {
         ASSERT_ZE_RESULT_SUCCESS(UsmHelper::allocate(UsmMemoryPlacement::Device, levelzero, samplesSize, &samples));

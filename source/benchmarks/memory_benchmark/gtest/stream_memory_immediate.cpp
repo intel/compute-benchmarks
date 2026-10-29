@@ -34,7 +34,7 @@ INSTANTIATE_TEST_SUITE_P(
     StreamMemoryImmediateTest,
     StreamMemoryImmediateTest,
     ::testing::Combine(
-        ::testing::ValuesIn(StreamMemoryTypeArgument::enumValues),
+        ::testing::ValuesIn(StreamMemoryTypeArgument::withoutReadConstant),
         ::testing::Values(1 * megaByte, 8 * megaByte, 16 * megaByte, 32 * megaByte, 64 * megaByte, 128 * megaByte, 256 * megaByte, 512 * megaByte),
         ::testing::Values(false, true)));
 

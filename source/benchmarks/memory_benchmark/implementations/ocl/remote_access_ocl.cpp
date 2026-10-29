@@ -72,6 +72,7 @@ static TestResult run(const RemoteAccessMemoryArguments &arguments, Statistics &
         buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
         break;
     case StreamMemoryType::Scale:
+    case StreamMemoryType::ReadConstant:
         return TestResult::NoImplementation;
     default:
         FATAL_ERROR("Unknown StreamMemoryType");

@@ -30,6 +30,10 @@ using namespace MemoryConstants;
 static TestResult run(const NonUsmStreamMemoryArguments &arguments, Statistics &statistics) {
     const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, arguments.useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
+    if (arguments.type == StreamMemoryType::ReadConstant) {
+        return TestResult::NoImplementation;
+    }
+
     if (arguments.partialMultiplier > 1u) {
         if (arguments.type == StreamMemoryType::Scale || arguments.type == StreamMemoryType::Triad) {
             return TestResult::NoImplementation;

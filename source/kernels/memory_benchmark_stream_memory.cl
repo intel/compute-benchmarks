@@ -38,6 +38,14 @@ __kernel void read(const __global volatile STREAM_TYPE *restrict x, __global STR
     STREAM_TYPE value = x[i];
 }
 
+__kernel void readConstant(const __global volatile STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict dummyOutput, STREAM_TYPE scalar) {
+    STREAM_TYPE value = x[get_local_id(0)];
+}
+
+__kernel void readConstantStore(const __global STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict output, STREAM_TYPE scalar) {
+    output[get_global_id(0)] = x[get_local_id(0)];
+}
+
 #ifdef SAMPLE_GROUP_STRIDE
 void storeSample(__global STREAM_TYPE *restrict samples, STREAM_TYPE value) {
     const int group = get_group_id(0);
@@ -62,6 +70,10 @@ __kernel void readWithMultiplierSample(const __global volatile STREAM_TYPE *rest
 
 __kernel void readSample(const __global volatile STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict samples, STREAM_TYPE scalar) {
     storeSample(samples, x[get_global_id(0)]);
+}
+
+__kernel void readConstantSample(const __global volatile STREAM_TYPE *restrict x, __global STREAM_TYPE *restrict samples, STREAM_TYPE scalar) {
+    storeSample(samples, x[get_local_id(0)]);
 }
 
 int sampleCount(int elementCount, int groupSize) {

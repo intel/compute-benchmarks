@@ -68,6 +68,8 @@ static TestResult run(const StreamAfterTransferArguments &arguments, Statistics 
         buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
         buffers[buffersCount++] = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
         break;
+    case StreamMemoryType::ReadConstant:
+        return TestResult::NoImplementation;
     default:
         FATAL_ERROR("Unknown StreamMemoryType");
     }
