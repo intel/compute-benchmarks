@@ -8,12 +8,8 @@
 #pragma once
 
 #include "framework/argument/basic_argument.h"
-#include "framework/argument/bitmap_argument.h"
-#include "framework/enum/engine.h"
+#include "framework/argument/engine_bitmask_argument.h"
 #include "framework/test_case/test_case.h"
-
-using CcsBitmaskArgument = BitmaskArgument<EngineHelper::maxNumberOfComputeEngines, true>;
-using BcsBitmaskArgument = BitmaskArgument<EngineHelper::maxNumberOfCopyEngines, true>;
 
 struct ZMultiEngineSubmissionEventsArguments : TestCaseArgumentContainer {
     CcsBitmaskArgument ccsMask;

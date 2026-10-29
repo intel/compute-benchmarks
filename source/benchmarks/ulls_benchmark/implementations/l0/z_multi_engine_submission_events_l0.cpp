@@ -44,28 +44,13 @@ static TestResult run(const ZMultiEngineSubmissionEventsArguments &arguments, St
     constexpr static auto copySize = 4096u;
 
     std::vector<EngineTarget> engines{};
-    for (const size_t index : arguments.ccsMask.getEnabledBits()) {
-        const auto engine = EngineHelper::getComputeEngineFromIndex(index);
-        const auto queueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, engine);
+    for (const auto &selectedEngine : EngineBitmaskHelper::getSelectedEngines(arguments.ccsMask, arguments.bcsMask, arguments.useHpCopyEngine)) {
+        const auto queueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, selectedEngine.engine);
         if (queueDesc != nullptr) {
-            engines.push_back({queueDesc->desc, EngineHelper::getEngineName(engine), false});
-        }
-    }
-
-    for (const size_t index : arguments.bcsMask.getEnabledBits()) {
-        const auto engine = EngineHelper::getBlitterEngineFromIndex(index);
-        const auto queueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, engine);
-        if (queueDesc != nullptr) {
-            engines.push_back({queueDesc->desc, EngineHelper::getEngineName(engine), true});
-        }
-    }
-
-    if (arguments.useHpCopyEngine) {
-        const auto queueDesc = QueueFamiliesHelper::getPropertiesForSelectingEngine(levelzero.device, Engine::Bcs);
-        if (queueDesc != nullptr) {
-            auto desc = queueDesc->desc;
-            desc.priority = QueueProperties::create().setPriority(PriorityLevel::High).priority;
-            engines.push_back({desc, "BCS-HP", true});
+            engines.push_back({queueDesc->desc, selectedEngine.label, selectedEngine.isCopyEngine});
+            if (selectedEngine.isHighPriority) {
+                engines.back().desc.priority = QueueProperties::create().setPriority(PriorityLevel::High).priority;
+            }
         }
     }
 
