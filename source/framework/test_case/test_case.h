@@ -87,13 +87,13 @@ class TestCase : public TestCaseBase {
     }
 
     void run(ArgumentContainerT &arguments) const {
-        arguments.iterations = Configuration::get().iterations;
+        arguments.iterations = this->getIterationCount();
         arguments.noIntelExtensions = Configuration::get().noIntelExtensions;
-        arguments.warmupIterations = Configuration::get().warmupIterations;
+        arguments.warmupIterations = this->getWarmupIterationCount();
         arguments.iterations += arguments.warmupIterations;
 
         const auto testCaseNameWithConfig = getTestCaseNameWithConfig(arguments, Configuration::get().dumpCommandLines);
-        TestCaseStatistics statistics{arguments.iterations, Configuration::get().printType};
+        TestCaseStatistics statistics{arguments.iterations, arguments.warmupIterations, Configuration::get().printType};
         if (!this->hasFixedIterationCount()) {
             statistics.enableTimedWarmup(&arguments.iterations, std::chrono::milliseconds(Configuration::get().warmupTime));
         }

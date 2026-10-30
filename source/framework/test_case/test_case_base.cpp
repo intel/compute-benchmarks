@@ -20,6 +20,22 @@ bool TestCaseBase::parseArguments(TestCaseArgumentContainer &arguments, CommandL
     return true;
 }
 
+size_t TestCaseBase::getIterationCount() const {
+    const auto &iterations = Configuration::get().iterations;
+    if (const auto testCaseIterations = this->getDefaultIterations(); testCaseIterations.has_value() && !iterations.wasParsed()) {
+        return testCaseIterations.value();
+    }
+    return iterations;
+}
+
+size_t TestCaseBase::getWarmupIterationCount() const {
+    const auto &warmupIterations = Configuration::get().warmupIterations;
+    if (const auto testCaseWarmupIterations = this->getDefaultWarmupIterations(); testCaseWarmupIterations.has_value() && !warmupIterations.wasParsed()) {
+        return testCaseWarmupIterations.value();
+    }
+    return warmupIterations;
+}
+
 std::vector<Api> TestCaseBase::getApisWithImplementation() const {
     std::vector<Api> apis = {};
     for (int apiIndex = static_cast<int>(Api::FIRST); apiIndex <= static_cast<int>(Api::LAST); apiIndex++) {

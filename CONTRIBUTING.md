@@ -126,6 +126,8 @@ The framework repeats the warmup iterations until both `--warmupIterations` and 
 
 Such a test case runs exactly `--warmupIterations` warmup iterations.
 
+Override `getDefaultIterations()` and `getDefaultWarmupIterations()` in the definition file when the test case needs other default iteration counts than the rest of the benchmark, for example because it holds one resource per iteration and the default count does not fit in device memory. These values take precedence over the defaults of the benchmark and apply only when `--iterations` or `--warmupIterations` is not given on the command line.
+
 ### 2.2 Test configurations and permutations <a id="test-permutations"></a>
 Each test case is expanded into a separate GoogleTest test for every combination of its predefined parameter values. The number of generated test cases therefore grows multiplicatively with the number of parameters and the number of values per parameter, and can quickly reach thousands for a single test case.
 

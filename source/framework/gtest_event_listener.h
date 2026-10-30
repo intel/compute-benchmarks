@@ -75,7 +75,7 @@ class AllTestsGtestListener : public ::testing::EmptyTestEventListener {
     void OnTestProgramStart(const ::testing::UnitTest &unitTest) override {
         totalTests = unitTest.total_test_count();
         if (!Configuration::get().noHeaders && Configuration::get().printType != Configuration::PrintType::Csv) {
-            std::cout << "Running " << Configuration::get().iterations << " iterations of each benchmark\n\n";
+            std::cout << "Running " << Configuration::get().iterations << " iterations of each benchmark by default\n\n";
         }
         // For CSV, print the header immediately (no alignment needed).
         // For fixed-width modes, the header is deferred to OnTestProgramEnd so the

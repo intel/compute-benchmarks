@@ -28,7 +28,7 @@ class TestCaseStatistics : public Statistics {
     };
     using SamplesMap = std::map<std::string, Samples, std::less<>>;
 
-    explicit TestCaseStatistics(size_t maxSamplesCount, Configuration::PrintType printType);
+    explicit TestCaseStatistics(size_t maxSamplesCount, size_t warmupIterationCount, Configuration::PrintType printType);
 
     void enableTimedWarmup(size_t *iterationCount, const std::chrono::milliseconds warmupDuration);
 

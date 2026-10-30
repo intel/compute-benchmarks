@@ -25,11 +25,11 @@
 #include <sstream>
 #include <type_traits>
 
-TestCaseStatistics::TestCaseStatistics(size_t maxSamplesCount, Configuration::PrintType printType)
+TestCaseStatistics::TestCaseStatistics(size_t maxSamplesCount, size_t warmupIterationCount, Configuration::PrintType printType)
     : Statistics(maxSamplesCount),
       printType(printType),
-      warmupIterations(Configuration::get().warmupIterations),
-      warmupSamples(Configuration::get().warmupIterations) {
+      warmupIterations(warmupIterationCount),
+      warmupSamples(warmupIterationCount) {
 }
 
 void TestCaseStatistics::enableTimedWarmup(size_t *iterationCount, const std::chrono::milliseconds warmupDuration) {
@@ -850,8 +850,8 @@ void TestCaseStatistics::writeHtmlResults(const std::string &filePath) {
              << "tr:hover{background:#fffbe6;}\n"
              << "</style>\n</head>\n<body>\n"
              << "<h1>" << htmlEscape(benchmarkName) << "</h1>\n"
-             << "<p class=\"meta\">Iterations: " << cfg.iterations
-             << " &nbsp;|&nbsp; Warmup: " << cfg.warmupIterations << " iterations, " << cfg.warmupTime << " ms"
+             << "<p class=\"meta\">Default iterations: " << cfg.iterations
+             << " &nbsp;|&nbsp; Default warmup: " << cfg.warmupIterations << " iterations, " << cfg.warmupTime << " ms"
              << " &nbsp;|&nbsp; " << currentTimestamp() << "</p>\n";
 
     if (!deviceInfo.empty()) {
@@ -915,8 +915,8 @@ void TestCaseStatistics::writeMdResults(const std::string &filePath) {
     const auto &cfg = Configuration::get();
 
     mdFile << "# " << benchmarkName << "\n\n"
-           << "- **Iterations:** " << cfg.iterations << "\n"
-           << "- **Warmup:** " << cfg.warmupIterations << " iterations, " << cfg.warmupTime << " ms\n"
+           << "- **Default iterations:** " << cfg.iterations << "\n"
+           << "- **Default warmup:** " << cfg.warmupIterations << " iterations, " << cfg.warmupTime << " ms\n"
            << "- **Date:** " << currentTimestamp() << "\n\n";
 
     if (!deviceInfo.empty()) {

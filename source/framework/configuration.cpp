@@ -154,11 +154,13 @@ void Configuration::applyBenchmarkIterationDefaults() {
     if (!iterations.wasParsed()) {
         if (const auto benchmarkIterations = benchmarkInfo.getDefaultIterations(); benchmarkIterations.has_value()) {
             iterations = benchmarkIterations.value();
+            iterations.markAsUnparsed();
         }
     }
     if (!warmupIterations.wasParsed()) {
         if (const auto benchmarkWarmup = benchmarkInfo.getDefaultWarmupIterations(); benchmarkWarmup.has_value()) {
             warmupIterations = benchmarkWarmup.value();
+            warmupIterations.markAsUnparsed();
         }
     }
 }
