@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,12 @@ unsigned int shuffleIds(unsigned int id,
                         __local unsigned int *localMemCounter,
                         __local unsigned int *localMem) {
     if (get_local_id(0) == 0) {
-        localMemCounter = 0;
+        *localMemCounter = 0;
     }
     barrier(CLK_LOCAL_MEM_FENCE);
     localMem[atomic_inc(localMemCounter)] = id;
     barrier(CLK_LOCAL_MEM_FENCE);
-    return atomic_dec(localMemCounter);
+    return localMem[atomic_dec(localMemCounter) - 1];
 }
 
 __kernel void read_after_atomic_write(__global unsigned int *buffer,
