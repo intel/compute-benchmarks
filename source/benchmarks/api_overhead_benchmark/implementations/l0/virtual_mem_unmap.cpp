@@ -27,12 +27,12 @@ static size_t getPageAlignedSize(size_t requestedSize, size_t pageSize) {
 static TestResult prepareVirtualMemoryMaps(LevelZero &levelzero, const size_t reserveSize,
                                            std::vector<void *> &reservedMemlist,
                                            std::vector<ze_physical_mem_handle_t> &physicalMemoryHandleList,
-                                           const uint32_t iterationCount) {
+                                           const uint32_t poolSize) {
 
     reservedMemlist.clear();
     physicalMemoryHandleList.clear();
 
-    for (uint32_t i = 0; i < iterationCount; i++) {
+    for (uint32_t i = 0; i < poolSize; i++) {
         void *virtualMem = nullptr;
         ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemReserve(levelzero.context, nullptr, reserveSize, &virtualMem));
         EXPECT_NE(virtualMem, static_cast<void *>(nullptr));
@@ -54,6 +54,10 @@ static TestResult cleanupVirtualMemoryMaps(LevelZero &levelzero,
                                            std::vector<void *> &reservedMemlist,
                                            std::vector<ze_physical_mem_handle_t> &physicalMemoryHandleList,
                                            const size_t reserveSize) {
+
+    for (auto &virtualMem : reservedMemlist) {
+        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemUnmap(levelzero.context, virtualMem, reserveSize));
+    }
 
     for (auto &virtualMem : reservedMemlist) {
         ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemFree(levelzero.context, virtualMem, reserveSize));
@@ -88,16 +92,21 @@ static TestResult run(const VirtualMemUnMapArguments &arguments, Statistics &sta
 
     Timer timer;
 
-    auto status = prepareVirtualMemoryMaps(levelzero, reserveSize, reservedMemlist, physicalMemoryHandleList, static_cast<uint32_t>(arguments.iterations));
+    const auto poolSize = static_cast<uint32_t>(arguments.poolSize);
+    auto status = prepareVirtualMemoryMaps(levelzero, reserveSize, reservedMemlist, physicalMemoryHandleList, poolSize);
     if (status != TestResult::Success) {
         return status;
     }
 
     for (auto i = 0u; i < arguments.iterations; i++) {
+        const auto slot = i % poolSize;
         timer.measureStart();
-        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemUnmap(levelzero.context, reservedMemlist[i], reserveSize));
+        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemUnmap(levelzero.context, reservedMemlist[slot], reserveSize));
         timer.measureEnd();
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
+        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemMap(levelzero.context, reservedMemlist[slot], reserveSize,
+                                                 physicalMemoryHandleList[slot], 0,
+                                                 ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
     }
 
     status = cleanupVirtualMemoryMaps(levelzero, reservedMemlist, physicalMemoryHandleList, reserveSize);

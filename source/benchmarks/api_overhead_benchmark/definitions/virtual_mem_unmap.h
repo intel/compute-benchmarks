@@ -12,9 +12,13 @@
 
 struct VirtualMemUnMapArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument reserveSize;
+    PositiveIntegerArgument poolSize;
 
     VirtualMemUnMapArguments()
-        : reserveSize(*this, "reserveSize", "Size in bytes to be unmapped") {}
+        : reserveSize(*this, "reserveSize", "Size in bytes to be unmapped"),
+          poolSize(*this, "poolSize", "Number of virtual/physical memory reservations to pool and cycle through") {
+        poolSize = 1;
+    }
 };
 
 struct VirtualMemUnMap : TestCase<VirtualMemUnMapArguments> {
@@ -26,9 +30,5 @@ struct VirtualMemUnMap : TestCase<VirtualMemUnMapArguments> {
 
     std::string getHelp() const override {
         return "measures time spent in zeVirtualMemUnMap on CPU.";
-    }
-
-    bool hasFixedIterationCount() const override {
-        return true;
     }
 };

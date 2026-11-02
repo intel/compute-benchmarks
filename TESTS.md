@@ -79,11 +79,11 @@ SubmitKernel|measures time spent in submitting a kernel to a SYCL (or SYCL-like)
 UsmMemoryAllocation|measures time spent in USM memory allocation APIs using the specified strategy.|<ul><li>--measureMode Specifies which APIs to measure (Allocate or Free or Both)</li><li>--size Size to allocate</li><li>--strategy Strategy used to allocate memory (Static is not applicable here, Async is supported only by UR and SYCL) (async or static or sync)</li><li>--type Type of memory being allocated (Device or Host or Shared)</li></ul>|:heavy_check_mark:|:x:|
 VirtualMemFree|measures time spent in zeVirtualMemFree on CPU.|<ul><li>--freeSize Size in bytes to be freed</li></ul>|:heavy_check_mark:|:x:|
 VirtualMemGetAccessAttrib|measures time spent in zeVirtualMemGetAccessAttribute on CPU.|<ul><li>--size Size in bytes to get the access attribute</li></ul>|:heavy_check_mark:|:x:|
-VirtualMemMap|measures time spent in zeVirtualMemMap on CPU.|<ul><li>--accessType Access type. Either 'ReadWrite' or 'ReadOnly'</li><li>--reserveSize Size in bytes to be reserved</li><li>--useOffset Use offset to map into physical memory (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
+VirtualMemMap|measures time spent in zeVirtualMemMap on CPU.|<ul><li>--accessType Access type. Either 'ReadWrite' or 'ReadOnly'</li><li>--poolSize Upper bound on virtual/physical memory reservations held at once. Each iteration, warmup included, maps its own reservation, so iterations plus warmup iterations must not exceed it</li><li>--reserveSize Size in bytes to be reserved</li><li>--useOffset Use offset to map into physical memory (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
 VirtualMemQueryPageSize|measures time spent in zeVirtualMemQueryPageSize on CPU.|<ul></ul>|:heavy_check_mark:|:x:|
 VirtualMemReserve|measures time spent in zeVirtualMemReserve on CPU.|<ul><li>--reserveSize Size in bytes to be reserved</li><li>--useNull Flag to decide whether Null to be used for start of region (0 or 1)</li></ul>|:heavy_check_mark:|:x:|
 VirtualMemSetAccessAttrib|measures time spent in zeVirtualMemSetAccessAttribute on CPU.|<ul><li>--accessType Access type to set. Either 'ReadWrite', 'ReadOnly' or 'None'</li><li>--size Size in bytes to set the access attribute</li></ul>|:heavy_check_mark:|:x:|
-VirtualMemUnMap|measures time spent in zeVirtualMemUnMap on CPU.|<ul><li>--reserveSize Size in bytes to be unmapped</li></ul>|:heavy_check_mark:|:x:|
+VirtualMemUnMap|measures time spent in zeVirtualMemUnMap on CPU.|<ul><li>--poolSize Number of virtual/physical memory reservations to pool and cycle through</li><li>--reserveSize Size in bytes to be unmapped</li></ul>|:heavy_check_mark:|:x:|
 
 
 

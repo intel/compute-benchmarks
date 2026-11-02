@@ -14,7 +14,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<VirtualMemMap> registerTestCase{};
 
-class VirtualMemMapTest : public ::testing::TestWithParam<std::tuple<size_t, bool, std::string>> {
+class VirtualMemMapTest : public ::testing::TestWithParam<std::tuple<size_t, bool, std::string, size_t>> {
 };
 
 TEST_P(VirtualMemMapTest, Test) {
@@ -23,6 +23,7 @@ TEST_P(VirtualMemMapTest, Test) {
     args.reserveSize = std::get<0>(GetParam());
     args.useOffset = std::get<1>(GetParam());
     args.accessType = std::get<2>(GetParam());
+    args.poolSize = std::get<3>(GetParam());
 
     VirtualMemMap test;
     test.run(args);
@@ -35,4 +36,5 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(2 * megaByte, 64 * megaByte),
         ::testing::Values(false, true),
-        ::testing::Values("ReadWrite", "ReadOnly", "None")));
+        ::testing::Values("ReadWrite", "ReadOnly", "None"),
+        ::testing::Values(32)));

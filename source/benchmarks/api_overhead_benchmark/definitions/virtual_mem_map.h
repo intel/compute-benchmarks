@@ -14,11 +14,15 @@ struct VirtualMemMapArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument reserveSize;
     BooleanArgument useOffset;
     StringArgument accessType;
+    PositiveIntegerArgument poolSize;
 
     VirtualMemMapArguments()
         : reserveSize(*this, "reserveSize", "Size in bytes to be reserved"),
           useOffset(*this, "useOffset", "Use offset to map into physical memory"),
-          accessType(*this, "accessType", "Access type. Either 'ReadWrite' or 'ReadOnly'") {}
+          accessType(*this, "accessType", "Access type. Either 'ReadWrite' or 'ReadOnly'"),
+          poolSize(*this, "poolSize", "Upper bound on virtual/physical memory reservations held at once. Each iteration, warmup included, maps its own reservation, so iterations plus warmup iterations must not exceed it") {
+        poolSize = 32;
+    }
 };
 
 struct VirtualMemMap : TestCase<VirtualMemMapArguments> {
@@ -34,5 +38,13 @@ struct VirtualMemMap : TestCase<VirtualMemMapArguments> {
 
     bool hasFixedIterationCount() const override {
         return true;
+    }
+
+    std::optional<size_t> getDefaultIterations() const override {
+        return 10u;
+    }
+
+    std::optional<size_t> getDefaultWarmupIterations() const override {
+        return 3u;
     }
 };

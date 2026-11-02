@@ -24,49 +24,26 @@ static size_t getPageAlignedSize(size_t requestedSize, size_t pageSize) {
     }
 }
 
-static TestResult prepareVirtualMemoryMaps(LevelZero &levelzero, const size_t reserveSize,
-                                           std::vector<void *> &reservedMemlist,
-                                           std::vector<ze_physical_mem_handle_t> &physicalMemoryHandleList,
-                                           const uint32_t iterationCount) {
+static TestResult createPoolSlot(LevelZero &levelzero, const size_t mapSize, const size_t physicalSize,
+                                 void *&virtualMem, ze_physical_mem_handle_t &physicalMemoryHandle) {
 
-    reservedMemlist.clear();
-    physicalMemoryHandleList.clear();
+    ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemReserve(levelzero.context, nullptr, mapSize, &virtualMem));
+    EXPECT_NE(virtualMem, static_cast<void *>(nullptr));
 
-    for (uint32_t i = 0; i < iterationCount; i++) {
-        void *virtualMem = nullptr;
-        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemReserve(levelzero.context, nullptr, reserveSize, &virtualMem));
-        EXPECT_NE(virtualMem, static_cast<void *>(nullptr));
-        reservedMemlist.push_back(virtualMem);
-
-        ze_physical_mem_desc_t physDesc = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr};
-        physDesc.size = reserveSize;
-        ze_physical_mem_handle_t physicalMemoryHandle{};
-        ASSERT_ZE_RESULT_SUCCESS(zePhysicalMemCreate(levelzero.context, levelzero.device, &physDesc, &physicalMemoryHandle));
-        physicalMemoryHandleList.push_back(physicalMemoryHandle);
-    }
+    ze_physical_mem_desc_t physDesc = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr};
+    physDesc.size = physicalSize;
+    ASSERT_ZE_RESULT_SUCCESS(zePhysicalMemCreate(levelzero.context, levelzero.device, &physDesc, &physicalMemoryHandle));
 
     return TestResult::Success;
 }
 
-static TestResult cleanupVirtualMemoryMaps(LevelZero &levelzero,
-                                           std::vector<void *> &reservedMemlist,
-                                           std::vector<ze_physical_mem_handle_t> &physicalMemoryHandleList,
-                                           const size_t reserveSize) {
+static TestResult destroyPoolSlot(LevelZero &levelzero, const size_t mapSize,
+                                  void *virtualMem, ze_physical_mem_handle_t physicalMemoryHandle) {
 
-    for (auto &virtualMem : reservedMemlist) {
-        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemUnmap(levelzero.context, virtualMem, reserveSize));
-    }
+    ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemUnmap(levelzero.context, virtualMem, mapSize));
+    ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemFree(levelzero.context, virtualMem, mapSize));
+    ASSERT_ZE_RESULT_SUCCESS(zePhysicalMemDestroy(levelzero.context, physicalMemoryHandle));
 
-    for (auto &virtualMem : reservedMemlist) {
-        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemFree(levelzero.context, virtualMem, reserveSize));
-    }
-
-    for (auto &physicalMemoryHandle : physicalMemoryHandleList) {
-        ASSERT_ZE_RESULT_SUCCESS(zePhysicalMemDestroy(levelzero.context, physicalMemoryHandle));
-    }
-
-    reservedMemlist.clear();
-    physicalMemoryHandleList.clear();
     return TestResult::Success;
 }
 
@@ -85,10 +62,12 @@ static TestResult run(const VirtualMemMapArguments &arguments, Statistics &stati
                                                        arguments.reserveSize, &pageSize));
     reserveSize = getPageAlignedSize(reserveSize, pageSize);
 
+    const size_t mapSize = reserveSize;
     uint64_t alignedOffset = 0;
+    size_t physicalSize = mapSize;
     if (arguments.useOffset != 0) {
-        alignedOffset = reserveSize;
-        reserveSize *= 2;
+        alignedOffset = pageSize;
+        physicalSize = mapSize + pageSize;
     }
 
     ze_memory_access_attribute_t accessType = ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE;
@@ -99,25 +78,38 @@ static TestResult run(const VirtualMemMapArguments &arguments, Statistics &stati
         accessType = ZE_MEMORY_ACCESS_ATTRIBUTE_NONE;
     }
 
-    std::vector<void *> reservedMemlist{};
-    std::vector<ze_physical_mem_handle_t> physicalMemoryHandleList{};
+    // A recycled slot measures a remap, which is much cheaper than a first map, so every iteration (warmup
+    // included) needs its own slot.
+    const auto poolSize = static_cast<uint32_t>(arguments.poolSize);
+    if (arguments.iterations > poolSize) {
+        return TestResult::InvalidArgs;
+    }
+
+    const auto slotCount = static_cast<uint32_t>(arguments.iterations);
+    std::vector<void *> reservedMemlist(slotCount, nullptr);
+    std::vector<ze_physical_mem_handle_t> physicalMemoryHandleList(slotCount, nullptr);
+    for (uint32_t slot = 0; slot < slotCount; slot++) {
+        const auto status = createPoolSlot(levelzero, mapSize, physicalSize, reservedMemlist[slot], physicalMemoryHandleList[slot]);
+        if (status != TestResult::Success) {
+            return status;
+        }
+    }
 
     Timer timer;
-    auto status = prepareVirtualMemoryMaps(levelzero, reserveSize, reservedMemlist, physicalMemoryHandleList, static_cast<uint32_t>(arguments.iterations));
-    if (status != TestResult::Success) {
-        return status;
-    }
-    for (auto i = 0u; i < arguments.iterations; i++) {
+    for (uint32_t slot = 0; slot < slotCount; slot++) {
         timer.measureStart();
-        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemMap(levelzero.context, reservedMemlist[i], reserveSize,
-                                                 physicalMemoryHandleList[i], alignedOffset,
+        ASSERT_ZE_RESULT_SUCCESS(zeVirtualMemMap(levelzero.context, reservedMemlist[slot], mapSize,
+                                                 physicalMemoryHandleList[slot], alignedOffset,
                                                  accessType));
         timer.measureEnd();
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }
-    status = cleanupVirtualMemoryMaps(levelzero, reservedMemlist, physicalMemoryHandleList, reserveSize);
-    if (status != TestResult::Success) {
-        return status;
+
+    for (uint32_t slot = 0; slot < slotCount; slot++) {
+        const auto status = destroyPoolSlot(levelzero, mapSize, reservedMemlist[slot], physicalMemoryHandleList[slot]);
+        if (status != TestResult::Success) {
+            return status;
+        }
     }
 
     return TestResult::Success;

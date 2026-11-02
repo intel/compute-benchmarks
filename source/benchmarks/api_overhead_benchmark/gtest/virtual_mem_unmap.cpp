@@ -14,13 +14,14 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<VirtualMemUnMap> registerTestCase{};
 
-class VirtualMemUnMapTest : public ::testing::TestWithParam<size_t> {
+class VirtualMemUnMapTest : public ::testing::TestWithParam<std::tuple<size_t, size_t>> {
 };
 
 TEST_P(VirtualMemUnMapTest, Test) {
     VirtualMemUnMapArguments args{};
     args.api = Api::L0;
-    args.reserveSize = GetParam();
+    args.reserveSize = std::get<0>(GetParam());
+    args.poolSize = std::get<1>(GetParam());
     VirtualMemUnMap test;
     test.run(args);
 }
@@ -29,4 +30,6 @@ using namespace MemoryConstants;
 INSTANTIATE_TEST_SUITE_P(
     VirtualMemUnMapTest,
     VirtualMemUnMapTest,
-    ::testing::Values(2 * megaByte, 64 * megaByte));
+    ::testing::Combine(
+        ::testing::Values(2 * megaByte, 64 * megaByte),
+        ::testing::Values(1)));
