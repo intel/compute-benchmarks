@@ -89,11 +89,11 @@ static TestResult run(const OneAtomicExplicitArguments &arguments, Statistics &s
             cl_ulong timeNs{};
             ASSERT_CL_SUCCESS(ProfilingHelper::getEventDurationInNanoseconds(profilingEvent, timeNs));
             ASSERT_CL_SUCCESS(clReleaseEvent(profilingEvent));
-            auto timePerAtomicOperation = timeNs / totalAtomicOperations;
-            statistics.pushValue(std::chrono::nanoseconds(timePerAtomicOperation), typeSelector.getUnit(), typeSelector.getType());
+            const auto timePerAtomicOperation = Statistics::FractionalDuration(timeNs) / totalAtomicOperations;
+            statistics.pushFractionalValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
         } else {
-            auto timePerAtomicOperation = timer.get() / totalAtomicOperations;
-            statistics.pushValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
+            const auto timePerAtomicOperation = Statistics::FractionalDuration(timer.get()) / totalAtomicOperations;
+            statistics.pushFractionalValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
         }
     }
 

@@ -89,7 +89,6 @@ static TestResult run(const OneAtomicArguments &arguments, Statistics &statistic
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 2, sizeof(iterations), &iterations));
     const ze_group_count_t groupCount{static_cast<uint32_t>(gws / lws), 1u, 1u};
 
-    const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     ze_command_list_handle_t cmdList{};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, arguments.useEvents ? perfEvent : nullptr, 0, nullptr));
@@ -105,14 +104,13 @@ static TestResult run(const OneAtomicArguments &arguments, Statistics &statistic
         if (arguments.useEvents) {
             ze_kernel_timestamp_result_t kernelTimestamp{};
             ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(perfEvent, &kernelTimestamp));
-            auto timeNs = std::chrono::nanoseconds(kernelTimestamp.global.kernelEnd - kernelTimestamp.global.kernelStart);
-            timeNs *= timerResolution;
-            auto timePerAtomicOperation = timeNs / totalAtomicOperations;
-            statistics.pushValue(std::chrono::nanoseconds(timePerAtomicOperation), typeSelector.getUnit(), typeSelector.getType());
+            const auto timeNs = levelzero.getAbsoluteKernelExecutionTime(kernelTimestamp.global);
+            const auto timePerAtomicOperation = Statistics::FractionalDuration(timeNs) / totalAtomicOperations;
+            statistics.pushFractionalValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(perfEvent));
         } else {
-            auto timePerAtomicOperation = timer.get() / totalAtomicOperations;
-            statistics.pushValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
+            const auto timePerAtomicOperation = Statistics::FractionalDuration(timer.get()) / totalAtomicOperations;
+            statistics.pushFractionalValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
         }
     }
 

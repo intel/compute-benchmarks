@@ -28,7 +28,6 @@ static TestResult run(const OneLocalAtomicExplicitArguments &arguments, Statisti
     }
 
     LevelZero levelzero;
-    const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     Timer timer{};
 
     if (!MathOperationHelper::isSupportedAsAtomic(arguments.atomicOperation, arguments.dataType, levelzero.isGlobalFloatAtomicsSupported(), true)) {
@@ -106,14 +105,13 @@ static TestResult run(const OneLocalAtomicExplicitArguments &arguments, Statisti
         if (arguments.useEvents) {
             ze_kernel_timestamp_result_t kernelTimestamp{};
             ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(perfEvent, &kernelTimestamp));
-            auto timeNs = std::chrono::nanoseconds(kernelTimestamp.global.kernelEnd - kernelTimestamp.global.kernelStart);
-            timeNs *= timerResolution;
-            auto timePerAtomicOperation = timeNs / totalAtomicOperations;
-            statistics.pushValue(std::chrono::nanoseconds(timePerAtomicOperation), typeSelector.getUnit(), typeSelector.getType());
+            const auto timeNs = levelzero.getAbsoluteKernelExecutionTime(kernelTimestamp.global);
+            const auto timePerAtomicOperation = Statistics::FractionalDuration(timeNs) / totalAtomicOperations;
+            statistics.pushFractionalValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(perfEvent));
         } else {
-            auto timePerAtomicOperation = timer.get() / totalAtomicOperations;
-            statistics.pushValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
+            const auto timePerAtomicOperation = Statistics::FractionalDuration(timer.get()) / totalAtomicOperations;
+            statistics.pushFractionalValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
         }
     }
 

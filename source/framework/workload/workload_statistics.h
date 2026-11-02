@@ -21,11 +21,13 @@ class WorkloadStatistics : public Statistics {
 
     void printStatistics(WorkloadIo &io);
 
+    using Statistics::pushFractionalValue;
     using Statistics::pushPercentage;
     using Statistics::pushValue;
     void pushPercentage(double value, MeasurementUnit unit, MeasurementType type, std::string_view description) override;
     void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, std::string_view description) override;
     void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, std::string_view description) override;
+    void pushFractionalValue(FractionalDuration time, MeasurementUnit unit, MeasurementType type, std::string_view description) override;
     void pushCpuCounter(uint64_t count, MeasurementUnit unit, MeasurementType type, std::string_view description) override;
     virtual void pushEnergy(size_t microJoules, MeasurementUnit unit, MeasurementType type, std::string_view description) override;
     virtual void pushEnergy(double watts, MeasurementUnit unit, MeasurementType type, std::string_view description) override;

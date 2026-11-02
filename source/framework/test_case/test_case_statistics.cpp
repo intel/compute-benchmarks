@@ -51,6 +51,10 @@ void TestCaseStatistics::pushPercentage(double value, MeasurementUnit unit, Meas
 }
 
 void TestCaseStatistics::pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, std::string_view description) {
+    pushFractionalValue(std::chrono::duration_cast<FractionalDuration>(time), unit, type, description);
+}
+
+void TestCaseStatistics::pushFractionalValue(FractionalDuration time, MeasurementUnit unit, MeasurementType type, std::string_view description) {
     static_assert(std::is_floating_point_v<Value>, "Need floating point type for the below cast to work properly");
     const Value timeSeconds = std::chrono::duration_cast<std::chrono::duration<Value>>(time).count();
 

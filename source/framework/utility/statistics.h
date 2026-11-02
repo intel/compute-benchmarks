@@ -17,12 +17,14 @@
 class Statistics {
   public:
     using Clock = std::chrono::high_resolution_clock;
+    using FractionalDuration = std::chrono::duration<double, std::nano>;
 
     Statistics(size_t maxSamplesCount) : maxSamplesCount(maxSamplesCount) {}
 
     virtual void pushPercentage(double value, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
     virtual void pushValue(Clock::duration time, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
     virtual void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
+    virtual void pushFractionalValue(FractionalDuration time, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
     virtual void pushCpuCounter(uint64_t count, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
     virtual void pushEnergy(size_t microJoules, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
     virtual void pushEnergy(double watts, MeasurementUnit unit, MeasurementType type, std::string_view description) = 0;
@@ -39,6 +41,9 @@ class Statistics {
     }
     void pushValue(Clock::duration time, uint64_t size, MeasurementUnit unit, MeasurementType type) {
         this->pushValue(time, size, unit, type, "");
+    }
+    void pushFractionalValue(FractionalDuration time, MeasurementUnit unit, MeasurementType type) {
+        this->pushFractionalValue(time, unit, type, "");
     }
 
   protected:

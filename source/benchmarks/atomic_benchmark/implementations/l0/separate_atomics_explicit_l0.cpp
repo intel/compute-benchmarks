@@ -114,11 +114,11 @@ static TestResult run(const SeparateAtomicsExplicitArguments &arguments, Statist
             ze_kernel_timestamp_result_t kernelTimestamp{};
             ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(perfEvent, &kernelTimestamp));
             auto commandTime = levelzero.getAbsoluteKernelExecutionTime(kernelTimestamp.global);
-            auto timePerAtomicOperation = commandTime / totalAtomicOperations;
-            statistics.pushValue(std::chrono::nanoseconds(timePerAtomicOperation), typeSelector.getUnit(), typeSelector.getType());
+            const auto timePerAtomicOperation = Statistics::FractionalDuration(commandTime) / totalAtomicOperations;
+            statistics.pushFractionalValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
         } else {
-            auto timePerAtomicOperation = timer.get() / totalAtomicOperations;
-            statistics.pushValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
+            const auto timePerAtomicOperation = Statistics::FractionalDuration(timer.get()) / totalAtomicOperations;
+            statistics.pushFractionalValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
         }
     }
 

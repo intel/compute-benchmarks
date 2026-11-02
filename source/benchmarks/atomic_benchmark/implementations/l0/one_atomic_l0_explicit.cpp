@@ -109,7 +109,6 @@ static TestResult run(const OneAtomicExplicitArguments &arguments, Statistics &s
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, arguments.useEvents ? perfEvent : nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
 
-    const uint64_t timerResolution = levelzero.getTimerResolution(levelzero.device);
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
         ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
@@ -120,14 +119,13 @@ static TestResult run(const OneAtomicExplicitArguments &arguments, Statistics &s
         if (arguments.useEvents) {
             ze_kernel_timestamp_result_t kernelTimestamp{};
             ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(perfEvent, &kernelTimestamp));
-            auto timeNs = std::chrono::nanoseconds(kernelTimestamp.global.kernelEnd - kernelTimestamp.global.kernelStart);
-            timeNs *= timerResolution;
-            auto timePerAtomicOperation = timeNs / totalAtomicOperations;
-            statistics.pushValue(std::chrono::nanoseconds(timePerAtomicOperation), typeSelector.getUnit(), typeSelector.getType());
+            const auto timeNs = levelzero.getAbsoluteKernelExecutionTime(kernelTimestamp.global);
+            const auto timePerAtomicOperation = Statistics::FractionalDuration(timeNs) / totalAtomicOperations;
+            statistics.pushFractionalValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(perfEvent));
         } else {
-            auto timePerAtomicOperation = timer.get() / totalAtomicOperations;
-            statistics.pushValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
+            const auto timePerAtomicOperation = Statistics::FractionalDuration(timer.get()) / totalAtomicOperations;
+            statistics.pushFractionalValue(timePerAtomicOperation, typeSelector.getUnit(), typeSelector.getType());
         }
     }
 
