@@ -8,6 +8,7 @@
 #pragma once
 
 #include "framework/l0/levelzero.h"
+#include "framework/l0/utility/usm_helper.h"
 #include "framework/utility/hex_helper.h"
 
 #include "utility/multi_process_helper.h"
@@ -34,7 +35,12 @@ struct MultiProcessHelperL0 : MultiProcessHelper {
         void *buffer = {};
         size_t sizeForOneProcess = {};
         size_t totalSize = {};
+        ze_ipc_mem_handle_t ipcHandle = {};
         int fileDescriptor;
+
+        std::string getSerializedIpcHandle() const {
+            return HexHelper::toHex(reinterpret_cast<const uint8_t *>(this->ipcHandle.data), ZE_MAX_IPC_HANDLE_SIZE);
+        }
 
         size_t getNextOffset() {
             return sizeForOneProcess * (currentProcessesCount++);
@@ -55,12 +61,10 @@ struct MultiProcessHelperL0 : MultiProcessHelper {
             bufferForSubDevice.sizeForOneProcess = workgroupsPerProcess * threadsPerWorkgroup * sizeof(uint32_t);
             bufferForSubDevice.totalSize = bufferForSubDevice.sizeForOneProcess * processesPerSubDevice;
 
-            const ze_device_mem_alloc_desc_t deviceAllocationDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-            ZE_RESULT_SUCCESS_OR_RETURN(zeMemAllocDevice(levelzero.context, &deviceAllocationDesc, bufferForSubDevice.totalSize, 0, levelzero.getDevice(subDevice), &bufferForSubDevice.buffer));
+            ZE_RESULT_SUCCESS_OR_RETURN(L0::UsmHelper::allocateIpcExportable(UsmMemoryPlacement::Device, levelzero, levelzero.getDevice(subDevice), bufferForSubDevice.totalSize, &bufferForSubDevice.buffer));
 
-            ze_ipc_mem_handle_t ipcHandle = {};
-            ZE_RESULT_SUCCESS_OR_RETURN(zeMemGetIpcHandle(levelzero.context, bufferForSubDevice.buffer, &ipcHandle));
-            bufferForSubDevice.fileDescriptor = *reinterpret_cast<int *>(ipcHandle.data);
+            ZE_RESULT_SUCCESS_OR_RETURN(zeMemGetIpcHandle(levelzero.context, bufferForSubDevice.buffer, &bufferForSubDevice.ipcHandle));
+            bufferForSubDevice.fileDescriptor = *reinterpret_cast<int *>(bufferForSubDevice.ipcHandle.data);
 
             outBuffersForSubDevices[subDevice] = std::move(bufferForSubDevice);
         }

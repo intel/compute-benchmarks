@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,8 @@ ze_result_t allocate(UsmMemoryPlacement placement, LevelZero &levelZero, size_t 
 ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &levelZero, size_t size, void **buffer);
 
 ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &levelZero, ze_device_handle_t device, size_t size, void **buffer);
+
+ze_result_t allocateIpcExportable(UsmMemoryPlacement placement, LevelZero &levelZero, ze_device_handle_t device, size_t size, void **buffer);
 
 ze_result_t deallocate(UsmMemoryPlacement placement, LevelZero &levelZero, void *buffer);
 

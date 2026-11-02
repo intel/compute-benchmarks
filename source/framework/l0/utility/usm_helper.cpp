@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,6 +84,32 @@ ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &leve
     default:
         FATAL_ERROR("Unknown placement");
     }
+}
+
+ze_result_t allocateIpcExportable(UsmMemoryPlacement placement, LevelZero &levelZero, ze_device_handle_t device, size_t size, void **buffer) {
+    ze_ipc_mem_handle_type_ext_desc_t ipcHandleTypeDesc{ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC};
+    ipcHandleTypeDesc.typeFlags = ZE_IPC_MEM_HANDLE_TYPE_FLAG_DEFAULT;
+    ze_host_mem_alloc_desc_t hostAllocDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    ze_device_mem_alloc_desc_t deviceAllocDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+
+    const auto allocateWithExtension = [&](void *extension) {
+        switch (placement) {
+        case UsmMemoryPlacement::Device:
+            deviceAllocDesc.pNext = extension;
+            return zeMemAllocDevice(levelZero.context, &deviceAllocDesc, size, 0, device, buffer);
+        case UsmMemoryPlacement::Host:
+            hostAllocDesc.pNext = extension;
+            return zeMemAllocHost(levelZero.context, &hostAllocDesc, size, 0, buffer);
+        default:
+            FATAL_ERROR("Placement does not support IPC memory handles");
+        }
+    };
+
+    const ze_result_t result = allocateWithExtension(&ipcHandleTypeDesc);
+    if (result != ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION) {
+        return result;
+    }
+    return allocateWithExtension(nullptr);
 }
 
 ze_result_t deallocate(UsmMemoryPlacement placement, LevelZero &levelZero, void *buffer) {

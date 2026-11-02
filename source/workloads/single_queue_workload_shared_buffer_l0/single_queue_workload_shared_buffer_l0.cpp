@@ -5,6 +5,7 @@
  *
  */
 
+#include "framework/argument/long_hex_argument.h"
 #include "framework/l0/levelzero.h"
 #include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/utility/timer.h"
@@ -18,14 +19,14 @@ struct SingleQueueWorkloadSharedBufferArguments : WorkloadArgumentContainer {
     PositiveIntegerArgument operationsCount;
     PositiveIntegerArgument workgroupCount;
     PositiveIntegerArgument workgroupSize;
-    IntegerArgument bufferIpcHandle;
+    LongHexArgument bufferIpcHandle;
     NonNegativeIntegerArgument offsetWithinBuffer;
 
     SingleQueueWorkloadSharedBufferArguments()
         : operationsCount(*this, "operationsCount", "Number of redundant operations performed in kernel to make it take longer"),
           workgroupCount(*this, "wgc", "Number of workgroups enqueued"),
           workgroupSize(*this, "wgs", "Size of workgroups enqueued"),
-          bufferIpcHandle(*this, "bufferIpcHandle", "Handle of the LevelZero buffer acquired from zeMemGetIpcHandle"),
+          bufferIpcHandle(*this, "bufferIpcHandle", "Hex-encoded LevelZero IPC handle of the buffer, acquired from zeMemGetIpcHandle"),
           offsetWithinBuffer(*this, "bufferOffset", "Offset within the buffer described by IPC handle") {}
 };
 
@@ -47,8 +48,12 @@ TestResult run(const SingleQueueWorkloadSharedBufferArguments &arguments, Statis
     const auto operationsCount = static_cast<uint32_t>(arguments.operationsCount);
     const auto bufferSizeInBytes = totalThreadsCount * sizeof(uint32_t);
 
+    const std::vector<uint8_t> &ipcHandleBytes = arguments.bufferIpcHandle;
+    if (ipcHandleBytes.size() != ZE_MAX_IPC_HANDLE_SIZE) {
+        return TestResult::InvalidArgs;
+    }
     ze_ipc_mem_handle_t ipcHandle = {};
-    std::memcpy(ipcHandle.data, arguments.bufferIpcHandle.getAddressOf(), arguments.bufferIpcHandle.getSizeOf());
+    std::memcpy(ipcHandle.data, ipcHandleBytes.data(), ZE_MAX_IPC_HANDLE_SIZE);
 
     void *bufferBase = nullptr;
     ZE_RESULT_SUCCESS_OR_RETURN_ERROR(zeMemOpenIpcHandle(levelzero.context, levelzero.device, ipcHandle, 0, &bufferBase));

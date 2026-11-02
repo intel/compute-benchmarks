@@ -54,7 +54,7 @@ static TestResult run(const MultiProcessComputeSharedBufferArguments &arguments,
     for (auto i = 0u; i < processes.size(); i++) {
         MultiProcessHelperL0::BufferForSubDevice &buffer = buffersForSubDevices[subDevicesForExecution[i]];
         processes[i].addHandleForInheritance(buffer.fileDescriptor);
-        processes[i].addArgument("bufferIpcHandle", std::to_string(buffer.fileDescriptor));
+        processes[i].addArgument("bufferIpcHandle", buffer.getSerializedIpcHandle());
         processes[i].addArgument("bufferOffset", std::to_string(buffer.getNextOffset()));
         processes[i].addEnvVariable("ZE_AFFINITY_MASK", MultiProcessHelperL0::createAffinityMask(levelzero.rootDeviceIndex, subDevicesForExecution[i]));
         processes[i].setName(MultiProcessHelperL0::createProcessName(subDevicesForExecution, i));
