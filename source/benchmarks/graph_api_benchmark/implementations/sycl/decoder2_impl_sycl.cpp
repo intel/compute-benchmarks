@@ -10,6 +10,8 @@
 #include "framework/sycl/sycl.h"
 #include "framework/test_case/test_case.h"
 
+#include "native_recording_sycl.h"
+
 #include <memory>
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
 #include <sycl/sycl.hpp>
@@ -39,6 +41,10 @@ TestResult Decoder2GraphSYCL::init() {
     if (!queue->get_device().has(sycl::aspect::usm_host_allocations) &&
         !queue->get_device().has(sycl::aspect::usm_device_allocations)) {
         return TestResult::DeviceNotCapable;
+    }
+
+    if (useGraphs && useNativeRecording) {
+        ASSERT_TEST_RESULT_SUCCESS(GraphHelpers::checkNativeRecordingSupport(*queue));
     }
 
     if ((useGraphs && useNativeRecording && useHostTasks)) {

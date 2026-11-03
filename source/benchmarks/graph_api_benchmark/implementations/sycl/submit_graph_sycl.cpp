@@ -16,6 +16,8 @@
 #include <sycl/sycl.hpp>
 #include <variant>
 #if __has_include(<sycl/ext/oneapi/experimental/graph.hpp>)
+#include "native_recording_sycl.h"
+
 #include <sycl/ext/oneapi/experimental/graph.hpp>
 #define HAS_SYCL_GRAPH
 #endif
@@ -71,6 +73,9 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
         namespace sycl_ext = sycl::ext::oneapi::experimental;
         const bool canUseNativeRecording = !arguments.useExplicit && arguments.inOrderQueue;
         const bool useNativeRecording = arguments.useNativeRecording && canUseNativeRecording;
+        if (useNativeRecording) {
+            ASSERT_TEST_RESULT_SUCCESS(GraphHelpers::checkNativeRecordingSupport(queue));
+        }
 
         // When native recording is combined with host tasks, replace SYCL host_task with
         // zeCommandListAppendHostFunction on the queue's native immediate command list.
@@ -156,11 +161,6 @@ static TestResult run([[maybe_unused]] const SubmitGraphArguments &arguments, St
 
 #endif
     } catch (sycl::exception &e) {
-        // A device without graph record-and-replay support throws feature_not_supported
-        // when enable_native_recording is requested; treat that as a skip, not a failure.
-        if (e.code() == sycl::errc::feature_not_supported) {
-            return TestResult::DeviceNotCapable;
-        }
         std::cerr << "Caught SYCL exception: " << e.what() << "\n";
         return TestResult::Error;
     }

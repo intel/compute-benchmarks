@@ -10,6 +10,8 @@
 #include "framework/sycl/sycl.h"
 #include "framework/test_case/test_case.h"
 
+#include "native_recording_sycl.h"
+
 #include <iostream>
 #include <math.h>
 #include <sycl/sycl.hpp>
@@ -40,6 +42,10 @@ TestResult SinKernelGraphSYCL::init() {
     if (!queue->get_device().has(sycl::aspect::usm_host_allocations) &&
         !queue->get_device().has(sycl::aspect::usm_device_allocations)) {
         return TestResult::DeviceNotCapable;
+    }
+
+    if (withGraphs && useNativeRecording) {
+        ASSERT_TEST_RESULT_SUCCESS(GraphHelpers::checkNativeRecordingSupport(*queue));
     }
 
     return TestResult::Success;
