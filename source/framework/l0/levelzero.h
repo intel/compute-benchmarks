@@ -218,7 +218,11 @@ struct LevelZero {
     }
 
     std::chrono::nanoseconds getAbsoluteKernelExecutionTime(const ze_kernel_timestamp_data_t &timestampResult) const {
-        const auto deviceProperties = getDeviceProperties(device);
+        return this->getAbsoluteKernelExecutionTime(timestampResult, this->device);
+    }
+
+    std::chrono::nanoseconds getAbsoluteKernelExecutionTime(const ze_kernel_timestamp_data_t &timestampResult, ze_device_handle_t deviceHandle) const {
+        const auto deviceProperties = this->getDeviceProperties(deviceHandle);
         uint64_t timerResolution = 0;
 
         switch (deviceProperties.stype) {
@@ -236,7 +240,7 @@ struct LevelZero {
         const auto kernelStart = BitHelper::isolateLowerNBits(timestampResult.kernelStart, deviceProperties.kernelTimestampValidBits);
         const auto kernelEnd = BitHelper::isolateLowerNBits(timestampResult.kernelEnd, deviceProperties.kernelTimestampValidBits);
 
-        return getAbsoluteTimestampTime(kernelStart, kernelEnd, timerResolution, getKernelTimestampValidBitsMask(device));
+        return this->getAbsoluteTimestampTime(kernelStart, kernelEnd, timerResolution, this->getKernelTimestampValidBitsMask(deviceHandle));
     }
 
     void initializeExtension(const ExtensionProperties &extensionProperties);
