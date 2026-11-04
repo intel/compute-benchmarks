@@ -8,8 +8,8 @@
 #include "framework/l0/levelzero.h"
 #include "framework/l0/utility/kernel_helper_l0.h"
 #include "framework/test_case/register_test_case.h"
+#include "framework/utility/cpu_time_timer.h"
 #include "framework/utility/timer.h"
-#include "framework/utility/windows/cpu_time_timer.h"
 
 #include "definitions/event_host_synchronize.h"
 

@@ -5,8 +5,7 @@
  *
  */
 
-#include "framework/utility/windows/cpu_time_timer.h"
-
+#include "framework/utility/cpu_time_timer.h"
 #include "framework/utility/error.h"
 #include "framework/utility/windows/windows.h"
 
@@ -18,23 +17,6 @@ std::chrono::nanoseconds fileTimeToDuration(const FILETIME &fileTime) {
     return std::chrono::nanoseconds(static_cast<std::chrono::nanoseconds::rep>(value.QuadPart * 100ull));
 }
 } // namespace
-
-CpuTimeTimer::CpuTimeTimer(Scope scope) : scope(scope) {}
-
-void CpuTimeTimer::measureStart() {
-    start = getCpuTime(scope);
-}
-
-void CpuTimeTimer::measureEnd() {
-    end = getCpuTime(scope);
-}
-
-std::chrono::nanoseconds CpuTimeTimer::get() const {
-    if (end <= start) {
-        return std::chrono::nanoseconds(0);
-    }
-    return end - start;
-}
 
 std::chrono::nanoseconds CpuTimeTimer::getCpuTime(Scope scope) {
     FILETIME creationTime{};
