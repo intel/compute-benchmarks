@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ struct QueueProperties {
     }
 
     QueueProperties &setForceBlitter(bool bcs) {
-        this->selectedEngine = bcs ? Engine::Bcs : Engine::Unknown;
+        this->selectedEngine = bcs ? Engine::Bcs0 : Engine::Unknown;
         return *this;
     }
 

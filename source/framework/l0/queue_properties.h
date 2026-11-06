@@ -31,7 +31,7 @@ struct QueueProperties {
     }
 
     QueueProperties &setForceBlitter(bool bcs) {
-        this->selectedEngine = bcs ? Engine::Bcs : Engine::Ccs0;
+        this->selectedEngine = bcs ? Engine::Bcs0 : Engine::Ccs0;
         return *this;
     }
 

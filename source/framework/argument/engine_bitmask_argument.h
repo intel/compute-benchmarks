@@ -35,7 +35,7 @@ struct EngineBitmaskHelper {
             result.push_back({engine, EngineHelper::getEngineName(engine), true, false});
         }
         if (useHpCopyEngine) {
-            result.push_back({Engine::Bcs, "BCS-HP", true, true});
+            result.push_back({Engine::Bcs0, "BCS-HP", true, true});
         }
         return result;
     }

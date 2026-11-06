@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ INSTANTIATE_TEST_SUITE_P(
     CopySubmissionEventsTest,
     ::testing::Combine(
         ::CommonGtestArgs::allApis(),
-        ::testing::Values(Engine::Ccs0, Engine::Ccs1, Engine::Ccs2, Engine::Ccs3, Engine::Bcs, Engine::Bcs1, Engine::Bcs2, Engine::Bcs3, Engine::Bcs4, Engine::Bcs5, Engine::Bcs6, Engine::Bcs7, Engine::Bcs8)));
+        ::testing::Values(Engine::Ccs0, Engine::Ccs1, Engine::Ccs2, Engine::Ccs3, Engine::Bcs0, Engine::Bcs1, Engine::Bcs2, Engine::Bcs3, Engine::Bcs4, Engine::Bcs5, Engine::Bcs6, Engine::Bcs7, Engine::Bcs8)));
 
 INSTANTIATE_TEST_SUITE_P(
     CopySubmissionEventsTestLIMITED,

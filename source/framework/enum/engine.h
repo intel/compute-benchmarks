@@ -24,7 +24,7 @@ enum class Engine {
     Ccs3,
 
     // Copy / LinkCopy group
-    Bcs,
+    Bcs0,
     Bcs1,
     Bcs2,
     Bcs3,
@@ -72,7 +72,7 @@ struct EngineHelper {
         case Engine::Ccs2:
         case Engine::Ccs3:
             return EngineGroup::Compute;
-        case Engine::Bcs:
+        case Engine::Bcs0:
         case Engine::Bcs1:
         case Engine::Bcs2:
         case Engine::Bcs3:
@@ -81,7 +81,7 @@ struct EngineHelper {
         case Engine::Bcs6:
         case Engine::Bcs7:
         case Engine::Bcs8: {
-            auto copyEngineIndex = static_cast<size_t>(engine) - static_cast<size_t>(Engine::Bcs);
+            auto copyEngineIndex = static_cast<size_t>(engine) - static_cast<size_t>(Engine::Bcs0);
             if (copyEngineIndex >= copyEnginesCount) {
                 return EngineGroup::LinkCopy;
             }
@@ -101,7 +101,7 @@ struct EngineHelper {
         case Engine::Ccs2:
         case Engine::Ccs3:
             return static_cast<size_t>(engine) - static_cast<size_t>(Engine::Ccs0);
-        case Engine::Bcs:
+        case Engine::Bcs0:
         case Engine::Bcs1:
         case Engine::Bcs2:
         case Engine::Bcs3:
@@ -110,7 +110,7 @@ struct EngineHelper {
         case Engine::Bcs6:
         case Engine::Bcs7:
         case Engine::Bcs8: {
-            auto engineIndex = static_cast<size_t>(engine) - static_cast<size_t>(Engine::Bcs);
+            auto engineIndex = static_cast<size_t>(engine) - static_cast<size_t>(Engine::Bcs0);
             if (engineIndex >= copyEnginesCount) {
                 return engineIndex - copyEnginesCount;
             }
@@ -132,7 +132,7 @@ struct EngineHelper {
 
     static Engine getBlitterEngineFromIndex(size_t index) {
         if (index == 0) {
-            return Engine::Bcs;
+            return Engine::Bcs0;
         }
 
         if (index <= 8) {
@@ -155,8 +155,8 @@ struct EngineHelper {
             return "CCS2";
         case Engine::Ccs3:
             return "CCS3";
-        case Engine::Bcs:
-            return "BCS";
+        case Engine::Bcs0:
+            return "BCS0";
         case Engine::Bcs1:
             return "BCS1";
         case Engine::Bcs2:

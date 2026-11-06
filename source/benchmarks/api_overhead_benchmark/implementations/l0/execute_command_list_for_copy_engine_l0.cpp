@@ -57,7 +57,7 @@ static TestResult run(const ExecuteCommandListArguments &arguments, Statistics &
     }
 
     Timer timer;
-    auto queueProperties = QueueProperties::create().setForceEngine(Engine::Bcs);
+    auto queueProperties = QueueProperties::create().setForceEngine(Engine::Bcs0);
     auto levelzero = LevelZero{queueProperties};
 
     ze_fence_handle_t fence{};
