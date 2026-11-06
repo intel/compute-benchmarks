@@ -70,3 +70,17 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(true),
         ::testing::Values(false),
         ::testing::Values(false, true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    UsmCopySmallSizesTest,
+    UsmCopyTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Device),
+        ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Device),
+        ::testing::Values(16 * kiloByte),
+        ::testing::Values(BufferContents::Zeros),
+        ::testing::Values(false),
+        ::testing::Values(true),
+        ::testing::Values(false),
+        ::testing::Values(false)));

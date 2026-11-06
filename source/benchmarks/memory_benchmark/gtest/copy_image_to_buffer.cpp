@@ -65,3 +65,17 @@ INSTANTIATE_TEST_SUITE_P(
             ImageSize(16384, 1, 1)),
         ::testing::Values(false),
         ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    CopyImageToBufferNonUsmTest,
+    CopyImageToBufferTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(UsmMemoryPlacement::NonUsm4KBAligned),
+        ::testing::Values(512 * megaByte),
+        ::testing::Values(
+            ImageSize(512, 512, 1),
+            ImageSize(512, 512, 2),
+            ImageSize(512, 512, 64)),
+        ::testing::Values(false),
+        ::testing::Values(true)));
