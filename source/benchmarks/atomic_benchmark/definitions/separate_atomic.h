@@ -21,6 +21,7 @@ struct SeparateAtomicsArguments : TestCaseArgumentContainer {
     PositiveIntegerArgument workgroupCount;
     PositiveIntegerArgument workgroupSize;
     BooleanArgument useEvents;
+    BooleanArgument zeroOperand;
 
     SeparateAtomicsArguments()
         : dataType(*this, "type", CommonHelpMessage::atomicDataType()),
@@ -28,7 +29,10 @@ struct SeparateAtomicsArguments : TestCaseArgumentContainer {
           atomicsPerCacheline(*this, "atomicsPerCacheline", "Number of used addresses occupying a single cacheline (this causes operations to be serialized)"),
           workgroupCount(*this, "wgc", "Work group count"),
           workgroupSize(*this, "wgs", "Work group size"),
-          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()) {}
+          useEvents(*this, "useEvents", CommonHelpMessage::useEvents()),
+          zeroOperand(*this, "zeroOperand", "Use zero as the atomic operand in every lane. Requires an integer type and an operation for which zero is the identity (Add, Sub, Or, Xor, or Max with an unsigned type)") {
+        zeroOperand = false;
+    }
 
     bool validateArgumentsExtra() const override {
         if (atomicsPerCacheline > workgroupCount * workgroupSize) {
@@ -37,7 +41,27 @@ struct SeparateAtomicsArguments : TestCaseArgumentContainer {
         if (atomicsPerCacheline > MemoryConstants::cachelineSize / DataTypeHelper::getSize(dataType)) {
             return false;
         }
+        if (zeroOperand && !isZeroOperandSupported(atomicOperation, dataType)) {
+            return false;
+        }
         return true;
+    }
+
+    static bool isZeroOperandSupported(MathOperation operation, DataType type) {
+        if (!DataTypeHelper::isIntegerType(type)) {
+            return false;
+        }
+        switch (operation) {
+        case MathOperation::Add:
+        case MathOperation::Sub:
+        case MathOperation::Or:
+        case MathOperation::Xor:
+            return true;
+        case MathOperation::Max:
+            return DataTypeHelper::isUnsignedIntegerType(type);
+        default:
+            return false;
+        }
     }
 };
 

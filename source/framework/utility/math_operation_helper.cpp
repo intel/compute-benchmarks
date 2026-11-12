@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ bool MathOperationHelper::requiresIntelGlobalAtomicsExtension(MathOperation oper
     return isFloat && isAdditionOrSubtraction;
 }
 
-bool MathOperationHelper::isSupportedAsAtomic(MathOperation operation, DataType type, bool globalAtomicFloatsSupported, bool usesSlm) {
+bool MathOperationHelper::isSupportedAsAtomic(MathOperation operation, DataType type, bool globalAtomicFloatsSupported, bool int64AtomicsSupported, bool usesSlm) {
     if (operation == MathOperation::Div || operation == MathOperation::Modulo) {
         return false;
     }
@@ -48,7 +48,11 @@ bool MathOperationHelper::isSupportedAsAtomic(MathOperation operation, DataType 
             return false;
         }
     case DataType::Int32:
+    case DataType::Uint32:
         return true;
+    case DataType::Int64:
+    case DataType::Uint64:
+        return int64AtomicsSupported;
     default:
         FATAL_ERROR("Unknown data type");
     }
@@ -78,6 +82,10 @@ MathOperationTestData MathOperationHelper::generateTestData(DataType dataType, M
         return MathOperationHelper::generateTestData<float>(operation, loopIterations, operationsPerLoop, totalThreadsCount);
     case DataType::Int32:
         return MathOperationHelper::generateTestData<int32_t>(operation, loopIterations, operationsPerLoop, totalThreadsCount);
+    case DataType::Uint32:
+        return MathOperationHelper::generateTestData<uint32_t>(operation, loopIterations, operationsPerLoop, totalThreadsCount);
+    case DataType::Uint64:
+        return MathOperationHelper::generateTestData<uint64_t>(operation, loopIterations, operationsPerLoop, totalThreadsCount);
     case DataType::Int64:
         return MathOperationHelper::generateTestData<int64_t>(operation, loopIterations, operationsPerLoop, totalThreadsCount);
     default:

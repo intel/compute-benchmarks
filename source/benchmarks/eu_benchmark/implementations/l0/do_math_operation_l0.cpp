@@ -31,6 +31,9 @@ static TestResult run(const DoMathOperationArguments &arguments, Statistics &sta
     if (!MathOperationHelper::isSupportedAsNormal(arguments.operation, arguments.dataType)) {
         return TestResult::DeviceNotCapable;
     }
+    if (DataTypeHelper::isUnsignedIntegerType(arguments.dataType)) {
+        return TestResult::NoImplementation;
+    }
     if (DataTypeHelper::isIntegerType(arguments.dataType) && MathOperationHelper::getArgumentsCount(arguments.operation) == 1) {
         return TestResult::NoImplementation;
     }

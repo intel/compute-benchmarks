@@ -115,6 +115,8 @@ enum class DataType {
     Unknown,
     Int32,
     Int64,
+    Uint32,
+    Uint64,
     Float,
     Double,
     CopyableObject,
@@ -127,6 +129,10 @@ constexpr inline size_t getSize(DataType dataType) {
     case DataType::Int32:
         return 4u;
     case DataType::Int64:
+        return 8u;
+    case DataType::Uint32:
+        return 4u;
+    case DataType::Uint64:
         return 8u;
     case DataType::Float:
         return sizeof(float);
@@ -141,8 +147,12 @@ constexpr inline size_t getSize(DataType dataType) {
     }
 }
 
+constexpr inline bool isUnsignedIntegerType(const DataType dataType) {
+    return dataType == DataType::Uint32 || dataType == DataType::Uint64;
+}
+
 constexpr inline bool isIntegerType(const DataType dataType) {
-    return dataType == DataType::Int32 || dataType == DataType::Int64;
+    return dataType == DataType::Int32 || dataType == DataType::Int64 || dataType == DataType::Uint32 || dataType == DataType::Uint64;
 }
 
 inline std::string toOpenclC(DataType dataType) {
@@ -155,6 +165,10 @@ inline std::string toOpenclC(DataType dataType) {
         return "int";
     case DataType::Int64:
         return "long";
+    case DataType::Uint32:
+        return "uint";
+    case DataType::Uint64:
+        return "ulong";
     case DataType::CopyableObject:
         FATAL_ERROR("CopyableObject does not have OpenCL C representation");
     case DataType::Mixed:
@@ -174,6 +188,10 @@ inline std::string toExplicitAtomicOpenclC(DataType dataType) {
         return "atomic_int";
     case DataType::Int64:
         return "atomic_long";
+    case DataType::Uint32:
+        return "atomic_uint";
+    case DataType::Uint64:
+        return "atomic_ulong";
     case DataType::CopyableObject:
         FATAL_ERROR("CopyableObject does not have OpenCL C representation");
     case DataType::Mixed:

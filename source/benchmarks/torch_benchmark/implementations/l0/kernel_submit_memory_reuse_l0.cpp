@@ -72,6 +72,9 @@ static TestResult run(const KernelSubmitMemoryReuseArguments &args, Statistics &
     case DataType::Float:
         ASSERT_TEST_RESULT_SUCCESS(runBenchmark<float>(args, profiler, statistics));
         break;
+    case DataType::Uint32:
+    case DataType::Uint64:
+        return TestResult::NoImplementation;
     default:
         return TestResult::InvalidArgs;
     }

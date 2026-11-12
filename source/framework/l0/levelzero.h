@@ -141,6 +141,11 @@ struct LevelZero {
     bool isGlobalFloatAtomicsSupported() {
         return isExtensionSupported("cl_intel_global_float_atomics");
     }
+    bool isInt64AtomicsSupported() {
+        ze_device_module_properties_t moduleProperties{ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES};
+        EXPECT_ZE_RESULT_SUCCESS(zeDeviceGetModuleProperties(this->device, &moduleProperties));
+        return (moduleProperties.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) != 0;
+    }
     bool isMclExtensionAvailable(uint32_t major, uint32_t minor) const;
 
     uint64_t getTimerResolution(DeviceSelection deviceSelection) const { return getDeviceProperties(deviceSelection).timerResolution; }

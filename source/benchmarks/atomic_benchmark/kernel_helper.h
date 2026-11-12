@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,8 @@ struct KernelHelper {
                                                   AtomicScope scope, size_t otherArgumentBufferSize);
 
   private:
-    static void addAtomicOpMacro(CompilerOptionsBuilder &options, MathOperation operation);
+    static void addAtomicOpMacro(CompilerOptionsBuilder &options, MathOperation operation, DataType dataType);
+    static bool isInt64Atomic(DataType dataType);
+    static void addInt64AtomicsDefinition(CompilerOptionsBuilder &options, DataType dataType);
     static void addExplicitAtomicOpMacro(CompilerOptionsBuilder &options, MathOperation operation, AtomicMemoryOrder order, AtomicScope scope);
 };

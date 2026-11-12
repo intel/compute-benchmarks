@@ -35,7 +35,7 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
     Timer timer{};
     cl_int retVal{};
 
-    if (!MathOperationHelper::isSupportedAsAtomic(arguments.atomicOperation, arguments.dataType, opencl.getExtensions().isGlobalFloatAtomicsSupported(), false)) {
+    if (!MathOperationHelper::isSupportedAsAtomic(arguments.atomicOperation, arguments.dataType, opencl.getExtensions().isGlobalFloatAtomicsSupported(), opencl.getExtensions().isInt64AtomicsSupported(), false)) {
         return TestResult::DeviceNotCapable;
     }
 
@@ -53,7 +53,9 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
     const size_t otherArgumentsBufferSize = 32u;
     cl_mem otherArgumentsBuffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, data.sizeOfDataType * otherArgumentsBufferSize, nullptr, &retVal);
     ASSERT_CL_SUCCESS(retVal);
-    ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, otherArgumentsBuffer, data.otherArgument, data.sizeOfDataType, 0, data.sizeOfDataType * otherArgumentsBufferSize, 0, nullptr, nullptr));
+    const std::byte zero[sizeof(data.otherArgument)] = {};
+    const std::byte *otherArgument = arguments.zeroOperand ? zero : data.otherArgument;
+    ASSERT_CL_SUCCESS(clEnqueueFillBuffer(opencl.commandQueue, otherArgumentsBuffer, otherArgument, data.sizeOfDataType, 0, data.sizeOfDataType * otherArgumentsBufferSize, 0, nullptr, nullptr));
     ASSERT_CL_SUCCESS(clFinish(opencl.commandQueue));
 
     cl_program program = nullptr;
@@ -95,8 +97,8 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
     ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, totalBufferSize, result.get(), 0, nullptr, nullptr));
     for (auto cachelineIndex = 0u; cachelineIndex < cachelinesCount; cachelineIndex++) {
         for (auto atomicIndex = 0u; atomicIndex < MemoryConstants::cachelineSize / data.sizeOfDataType; atomicIndex++) {
-            const bool wasTouched = atomicIndex < arguments.atomicsPerCacheline;
-            const std::byte *expectedValue = wasTouched ? data.expectedValue : data.initialValue;
+            const bool wasModified = atomicIndex < arguments.atomicsPerCacheline && !arguments.zeroOperand;
+            const std::byte *expectedValue = wasModified ? data.expectedValue : data.initialValue;
             const std::byte *actualValue = result.get() + cachelineIndex * MemoryConstants::cachelineSize + atomicIndex * data.sizeOfDataType;
             if (std::memcmp(actualValue, expectedValue, data.sizeOfDataType) != 0) {
                 return TestResult::VerificationFail;

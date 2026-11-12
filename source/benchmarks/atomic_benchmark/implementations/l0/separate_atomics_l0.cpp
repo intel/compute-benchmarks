@@ -30,7 +30,7 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
     LevelZero levelzero;
     Timer timer{};
 
-    if (!MathOperationHelper::isSupportedAsAtomic(arguments.atomicOperation, arguments.dataType, levelzero.isGlobalFloatAtomicsSupported(), false)) {
+    if (!MathOperationHelper::isSupportedAsAtomic(arguments.atomicOperation, arguments.dataType, levelzero.isGlobalFloatAtomicsSupported(), levelzero.isInt64AtomicsSupported(), false)) {
         return TestResult::DeviceNotCapable;
     }
 
@@ -63,7 +63,9 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
     ze_command_list_handle_t tmpCmdList{};
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &tmpCmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(tmpCmdList, buffer, data.initialValue, data.sizeOfDataType, totalBufferSize, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(tmpCmdList, otherArgumentsBuffer, data.otherArgument, data.sizeOfDataType, data.sizeOfDataType * otherArgumentsBufferSize, nullptr, 0, nullptr));
+    const std::byte zero[sizeof(data.otherArgument)] = {};
+    const std::byte *otherArgument = arguments.zeroOperand ? zero : data.otherArgument;
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryFill(tmpCmdList, otherArgumentsBuffer, otherArgument, data.sizeOfDataType, data.sizeOfDataType * otherArgumentsBufferSize, nullptr, 0, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(tmpCmdList));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &tmpCmdList, nullptr));
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
@@ -126,8 +128,8 @@ static TestResult run(const SeparateAtomicsArguments &arguments, Statistics &sta
     ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
     for (auto cachelineIndex = 0u; cachelineIndex < cachelinesCount; cachelineIndex++) {
         for (auto atomicIndex = 0u; atomicIndex < MemoryConstants::cachelineSize / data.sizeOfDataType; atomicIndex++) {
-            const bool wasTouched = atomicIndex < arguments.atomicsPerCacheline;
-            const std::byte *expectedValue = wasTouched ? data.expectedValue : data.initialValue;
+            const bool wasModified = atomicIndex < arguments.atomicsPerCacheline && !arguments.zeroOperand;
+            const std::byte *expectedValue = wasModified ? data.expectedValue : data.initialValue;
             const std::byte *actualValue = result.get() + cachelineIndex * MemoryConstants::cachelineSize + atomicIndex * data.sizeOfDataType;
             if (std::memcmp(actualValue, expectedValue, data.sizeOfDataType) != 0) {
                 return TestResult::VerificationFail;

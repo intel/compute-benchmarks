@@ -35,7 +35,7 @@ static TestResult run(const OneLocalAtomicArguments &arguments, Statistics &stat
     Timer timer{};
     cl_int retVal{};
 
-    if (!MathOperationHelper::isSupportedAsAtomic(arguments.atomicOperation, arguments.dataType, opencl.getExtensions().isGlobalFloatAtomicsSupported(), true)) {
+    if (!MathOperationHelper::isSupportedAsAtomic(arguments.atomicOperation, arguments.dataType, opencl.getExtensions().isGlobalFloatAtomicsSupported(), opencl.getExtensions().isInt64AtomicsSupported(), true)) {
         return TestResult::DeviceNotCapable;
     }
 

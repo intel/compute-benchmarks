@@ -30,7 +30,7 @@ static TestResult run(const OneLocalAtomicExplicitArguments &arguments, Statisti
     LevelZero levelzero;
     Timer timer{};
 
-    if (!MathOperationHelper::isSupportedAsAtomic(arguments.atomicOperation, arguments.dataType, levelzero.isGlobalFloatAtomicsSupported(), true)) {
+    if (!MathOperationHelper::isSupportedAsAtomic(arguments.atomicOperation, arguments.dataType, levelzero.isGlobalFloatAtomicsSupported(), levelzero.isInt64AtomicsSupported(), true)) {
         return TestResult::DeviceNotCapable;
     }
 

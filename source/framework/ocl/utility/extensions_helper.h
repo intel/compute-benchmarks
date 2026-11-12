@@ -46,6 +46,10 @@ class ExtensionsHelper {
         return isSupported("cl_intel_global_float_atomics", false);
     }
 
+    bool isInt64AtomicsSupported() const {
+        return isSupported("cl_khr_int64_base_atomics", false) && isSupported("cl_khr_int64_extended_atomics", false);
+    }
+
     bool isCommandQueueFamiliesSupported() const {
         return isSupported("cl_intel_command_queue_families", true);
     }

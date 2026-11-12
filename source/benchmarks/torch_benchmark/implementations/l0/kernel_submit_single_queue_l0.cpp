@@ -324,6 +324,9 @@ static TestResult run(const KernelSubmitSingleQueueArguments &args, Statistics &
     case DataType::CopyableObject:
         ASSERT_TEST_RESULT_SUCCESS(runBenchmark<CopyableObject>(args, profiler, statistics));
         break;
+    case DataType::Uint32:
+    case DataType::Uint64:
+        return TestResult::NoImplementation;
     default:
         return TestResult::InvalidArgs;
     }

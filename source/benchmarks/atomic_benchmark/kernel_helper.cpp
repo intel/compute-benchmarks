@@ -22,7 +22,8 @@ MathOperationTestData KernelHelper::getDataForKernel(DataType dataType,
 
 std::string KernelHelper::getCompilerOptions(DataType dataType, MathOperation operation, size_t otherArgumentBufferSize) {
     CompilerOptionsBuilder options{};
-    addAtomicOpMacro(options, operation);
+    addAtomicOpMacro(options, operation, dataType);
+    addInt64AtomicsDefinition(options, dataType);
     if (MathOperationHelper::requiresIntelGlobalAtomicsExtension(operation, dataType)) {
         options.addOptionOpenCl30();
         options.addDefinition("cl_intel_global_float_atomics");
@@ -38,6 +39,7 @@ std::string KernelHelper::getCompilerOptionsExplicit(DataType dataType, MathOper
                                                      AtomicScope scope, size_t otherArgumentBufferSize) {
     CompilerOptionsBuilder options{};
     addExplicitAtomicOpMacro(options, operation, order, scope);
+    addInt64AtomicsDefinition(options, dataType);
     options.addOptionOpenCl30();
     options.addDefinition("OCL_20");
     if (MathOperationHelper::requiresIntelGlobalAtomicsExtension(operation, dataType)) {
@@ -50,17 +52,28 @@ std::string KernelHelper::getCompilerOptionsExplicit(DataType dataType, MathOper
     return options.str();
 }
 
-void KernelHelper::addAtomicOpMacro(CompilerOptionsBuilder &options, MathOperation operation) {
-    const static char *functionNames[] = {"ERROR",
-                                          "atomic_add", "atomic_sub",
-                                          "atomic_xchg", "atomic_cmpxchg",
-                                          "atomic_inc", "atomic_dec",
-                                          "atomic_min", "atomic_max",
-                                          "atomic_and", "atomic_or",
-                                          "atomic_xor"};
+bool KernelHelper::isInt64Atomic(DataType dataType) {
+    return dataType == DataType::Int64 || dataType == DataType::Uint64;
+}
 
+void KernelHelper::addInt64AtomicsDefinition(CompilerOptionsBuilder &options, DataType dataType) {
+    if (isInt64Atomic(dataType)) {
+        options.addDefinition("USE_INT64_ATOMICS");
+    }
+}
+
+void KernelHelper::addAtomicOpMacro(CompilerOptionsBuilder &options, MathOperation operation, DataType dataType) {
+    const static char *functionNames[] = {"ERROR",
+                                          "add", "sub",
+                                          "xchg", "cmpxchg",
+                                          "inc", "dec",
+                                          "min", "max",
+                                          "and", "or",
+                                          "xor"};
+
+    const char *functionPrefix = isInt64Atomic(dataType) ? "atom_" : "atomic_";
     std::ostringstream macroBody{};
-    macroBody << functionNames[static_cast<int>(operation)] << "(address";
+    macroBody << functionPrefix << functionNames[static_cast<int>(operation)] << "(address";
     switch (operation) {
     case MathOperation::Add:
     case MathOperation::Sub:
@@ -110,7 +123,7 @@ void KernelHelper::addExplicitAtomicOpMacro(CompilerOptionsBuilder &options, Mat
         break;
     case MathOperation::Inc:
     case MathOperation::Dec:
-        macroBody << ",1";
+        macroBody << ",(DATATYPE)1";
         break;
     case MathOperation::CmpXchg:
         macroBody << ",&other,other," << AtomicMemoryOrderHelper::toOpenclC(order);

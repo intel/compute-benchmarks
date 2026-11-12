@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<SeparateAtomics> registerTestCase{};
 
-class SeparateAtomicsTest : public ::testing::TestWithParam<std::tuple<Api, DataType, MathOperation, size_t, CommonGtestArgs::EnqueueSize, bool, TestType>> {
+class SeparateAtomicsTest : public ::testing::TestWithParam<std::tuple<Api, DataType, MathOperation, size_t, CommonGtestArgs::EnqueueSize, bool, bool, TestType>> {
 };
 
 TEST_P(SeparateAtomicsTest, Test) {
@@ -28,12 +28,16 @@ TEST_P(SeparateAtomicsTest, Test) {
     args.workgroupCount = std::get<4>(GetParam()).workgroupCount;
     args.workgroupSize = std::get<4>(GetParam()).workgroupSize;
     args.useEvents = std::get<5>(GetParam());
+    args.zeroOperand = std::get<6>(GetParam());
 
     if (args.atomicsPerCacheline > args.workgroupCount * args.workgroupSize) {
         GTEST_SKIP();
     }
+    if (args.zeroOperand && !SeparateAtomicsArguments::isZeroOperandSupported(args.atomicOperation, args.dataType)) {
+        GTEST_SKIP();
+    }
 
-    const auto testType = std::get<6>(GetParam());
+    const auto testType = std::get<7>(GetParam());
     if (isTestSkipped(Configuration::get().extended, testType)) {
         GTEST_SKIP();
     }
@@ -52,6 +56,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1, 4),
         ::CommonGtestArgs::reducedEnqueueSizesForAtomics(),
         ::testing::Values(true),
+        ::testing::Values(false, true),
         ::testing::Values(TestType::Regular)));
 
 INSTANTIATE_TEST_SUITE_P(
@@ -64,6 +69,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1, 4),
         ::CommonGtestArgs::enqueueSizesForAtomics(),
         ::testing::Values(true),
+        ::testing::Values(false),
         ::testing::Values(TestType::Extended)));
 
 INSTANTIATE_TEST_SUITE_P(
@@ -76,4 +82,18 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(1, 4),
         ::testing::Values(CommonGtestArgs::EnqueueSize{32, 64}),
         ::testing::Values(true),
+        ::testing::Values(false),
+        ::testing::Values(TestType::Regular)));
+
+INSTANTIATE_TEST_SUITE_P(
+    SeparateAtomicsZeroOperandTestLIMITED,
+    SeparateAtomicsTest,
+    ::testing::Combine(
+        ::testing::Values(Api::OpenCL, Api::L0),
+        ::testing::Values(DataType::Uint32, DataType::Uint64),
+        ::testing::Values(MathOperation::Add, MathOperation::Sub, MathOperation::Or, MathOperation::Xor, MathOperation::Max),
+        ::testing::Values(8),
+        ::testing::Values(CommonGtestArgs::EnqueueSize{1, 32}),
+        ::testing::Values(true),
+        ::testing::Values(false, true),
         ::testing::Values(TestType::Regular)));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,11 @@
 
 #ifdef USE_GLOBAL_FLOAT_ATOMICS
 #pragma OPENCL EXTENSION cl_intel_global_float_atomics : enable
+#endif
+
+#ifdef USE_INT64_ATOMICS
+#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
+#pragma OPENCL EXTENSION cl_khr_int64_extended_atomics : enable
 #endif
 
 #ifndef ATOMIC_OP
