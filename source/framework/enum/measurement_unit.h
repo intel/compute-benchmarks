@@ -17,6 +17,7 @@ enum class MeasurementUnit {
     Nanoseconds,
     GigabytesPerSecond,
     GigaFLOPS,
+    GigaIOPS,
     Latency,
     Percentage,
     MicroJoules,
@@ -35,6 +36,8 @@ inline std::string to_string(MeasurementUnit unit) {
         return "[GB/s]";
     case MeasurementUnit::GigaFLOPS:
         return "[GFLOPS]";
+    case MeasurementUnit::GigaIOPS:
+        return "[GIOPS]";
     case MeasurementUnit::Latency:
         return "[clk]";
     case MeasurementUnit::Percentage:

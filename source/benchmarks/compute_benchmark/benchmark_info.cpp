@@ -11,6 +11,6 @@
 
 EXECUTE_AT_APP_INIT {
     const std::string name = "compute_benchmark";
-    const std::string description = "Compute Benchmark is a set of tests aimed at measuring floating point compute throughput of GPU kernels.";
+    const std::string description = "Compute Benchmark is a set of tests aimed at measuring floating point and integer compute throughput of GPU kernels.";
     BenchmarkInfo::initialize(name, description);
 };

@@ -115,10 +115,14 @@ SeparateAtomicsExplicit|enqueues kernel performing an atomic operation on differ
 
 
 # compute_benchmark
-Compute Benchmark is a set of tests aimed at measuring floating point compute throughput of GPU kernels.
+Compute Benchmark is a set of tests aimed at measuring floating point and integer compute throughput of GPU kernels.
 | Test name | Description | Params | L0 | OCL |
 |-----------|-------------|--------|----|-----|
+DoublePrecisionPerformance|measures double precision floating point throughput in GFLOPS by executing chains of mad operations on double or doubleN vectors in a kernel, dispatch size is determined automatically from device capabilities|<ul><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li><li>--vectorWidth Number of lanes of the vector type the kernel computes on (1 or 2 or 4 or 8 or 16)</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
+HalfPrecisionPerformance|measures half precision floating point throughput in GFLOPS by executing chains of mad operations on half or halfN vectors in a kernel, dispatch size is determined automatically from device capabilities|<ul><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li><li>--vectorWidth Number of lanes of the vector type the kernel computes on (1 or 2 or 4 or 8 or 16)</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
+IntegerPerformance|measures 32-bit integer throughput in GIOPS by executing chains of multiply and add operations on int or intN vectors in a kernel, dispatch size is determined automatically from device capabilities|<ul><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li><li>--vectorWidth Number of lanes of the vector type the kernel computes on (1 or 2 or 4 or 8 or 16)</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
 SinglePrecisionPerformance|measures single precision floating point throughput in GFLOPS by executing FMA operations in a kernel, dispatch size is determined automatically from device capabilities|<ul><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
+SinglePrecisionVectorPerformance|measures single precision floating point throughput in GFLOPS by executing chains of mad operations on floatN vectors in a kernel, dispatch size is determined automatically from device capabilities|<ul><li>--useEvents Perform GPU-side measurements using events (0 or 1)</li><li>--vectorWidth Number of lanes of the vector type the kernel computes on (2 or 4 or 8 or 16)</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
 
 
 
