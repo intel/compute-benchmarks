@@ -100,6 +100,7 @@ static TestResult run(const CopyPriorityPreemptionArguments &arguments, Statisti
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(highCmdList, shortDst, shortSrc, arguments.shortCopySize, hpEvent, 1, &npStartEvent));
 
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(highCmdList, std::numeric_limits<uint64_t>::max()));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(normalCmdList, std::numeric_limits<uint64_t>::max()));
 
         ze_kernel_timestamp_result_t npTimestamp{};
         ze_kernel_timestamp_result_t hpTimestamp{};
@@ -108,8 +109,6 @@ static TestResult run(const CopyPriorityPreemptionArguments &arguments, Statisti
 
         auto gpuTime = std::chrono::nanoseconds((hpTimestamp.global.kernelEnd - npTimestamp.global.kernelStart) * timerResolution);
         statistics.pushValue(gpuTime, typeSelector.getUnit(), typeSelector.getType());
-
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(normalCmdList, std::numeric_limits<uint64_t>::max()));
     }
 
     ASSERT_ZE_RESULT_SUCCESS(zeEventDestroy(npEvent));
