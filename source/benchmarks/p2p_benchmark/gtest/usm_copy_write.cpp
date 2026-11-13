@@ -52,3 +52,25 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(256 * megaByte),
         ::testing::Values(Engine::Bcs0),
         ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    UsmCopyWriteDevice0PairsTest,
+    UsmCopyWriteTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(0),
+        ::testing::Values(2, 3),
+        ::testing::Values(256 * megaByte),
+        ::testing::Values(Engine::Bcs0),
+        ::testing::Values(true)));
+
+INSTANTIATE_TEST_SUITE_P(
+    UsmCopyWriteDevice2PairsTest,
+    UsmCopyWriteTest,
+    ::testing::Combine(
+        ::testing::Values(Api::L0),
+        ::testing::Values(2),
+        ::testing::Values(3),
+        ::testing::Values(256 * megaByte),
+        ::testing::Values(Engine::Bcs0),
+        ::testing::Values(true)));
