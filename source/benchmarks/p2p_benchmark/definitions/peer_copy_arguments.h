@@ -8,11 +8,14 @@
 #pragma once
 
 #include "framework/argument/basic_argument.h"
+#include "framework/argument/bitmap_argument.h"
 #include "framework/enum/engine.h"
 #include "framework/test_case/test_case_argument_container.h"
 #include "framework/utility/common_help_message.h"
 
 #include <limits>
+
+using PeerCopyBlittersArgument = BitmaskArgument<EngineHelper::maxNumberOfCopyEngines, false>;
 
 struct PeerCopyArguments : TestCaseArgumentContainer {
     static constexpr size_t reduceCopyElementSize = 16u;

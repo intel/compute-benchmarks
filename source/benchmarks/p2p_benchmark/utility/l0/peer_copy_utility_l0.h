@@ -22,6 +22,8 @@
 
 #include <algorithm>
 #include <level_zero/ze_api.h>
+#include <limits>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -57,6 +59,9 @@ struct PeerCopy {
     size_t localDeviceId = 0;
     size_t peerDeviceId = 0;
     std::string label{};
+    std::string group{};
+    size_t size = 0;
+    ze_kernel_timestamp_data_t span{};
 
     bool isSubmittedByLocal() const {
         return this->submitter == PeerCopySubmitter::Local;
@@ -150,6 +155,15 @@ inline TestResult appendPeerCopy(const PeerCopy &copy, const PeerCopyOptions &op
     return TestResult::Success;
 }
 
+inline size_t getPeerCopyChunkSize(const PeerCopy &copy, const PeerCopyOptions &options) {
+    return options.chunkSize == 0 ? copy.size : std::min(options.chunkSize, copy.size);
+}
+
+inline size_t getPeerCopyChunkCount(const PeerCopy &copy, const PeerCopyOptions &options) {
+    const size_t chunkSize = getPeerCopyChunkSize(copy, options);
+    return (copy.size + chunkSize - 1) / chunkSize;
+}
+
 inline TestResult measurePeerCopiesBetweenDevices(const TestCaseArgumentContainer &arguments, size_t copySize, bool useEvents, std::vector<PeerCopy> copies, const PeerCopyOptions &options, Statistics &statistics) {
     const MeasurementFields typeSelector(MeasurementUnit::GigabytesPerSecond, useEvents ? MeasurementType::Gpu : MeasurementType::Cpu);
 
@@ -160,12 +174,11 @@ inline TestResult measurePeerCopiesBetweenDevices(const TestCaseArgumentContaine
 
     L0::LevelZero levelzero(L0::QueueProperties::create().disable(), L0::ContextProperties::create());
 
-    const size_t chunkSize = options.chunkSize == 0 ? copySize : std::min(options.chunkSize, copySize);
-    const size_t chunkCount = (copySize + chunkSize - 1) / chunkSize;
-    const bool measureChunkSpan = useEvents && chunkCount > 1;
-
     const size_t deviceCount = levelzero.rootDevices.size();
     for (PeerCopy &copy : copies) {
+        if (copy.size == 0) {
+            copy.size = copySize;
+        }
         if (copy.localDeviceId >= deviceCount || copy.peerDeviceId >= deviceCount) {
             return TestResult::DeviceNotCapable;
         }
@@ -187,7 +200,7 @@ inline TestResult measurePeerCopiesBetweenDevices(const TestCaseArgumentContaine
             return TestResult::DeviceNotCapable;
         }
         copy.queueDesc = queueDesc->desc;
-        if (chunkCount > 1) {
+        if (getPeerCopyChunkCount(copy, options) > 1) {
             copy.queueDesc.flags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
         }
 
@@ -220,7 +233,7 @@ inline TestResult measurePeerCopiesBetweenDevices(const TestCaseArgumentContaine
     if (useEvents) {
         completionEventPoolDesc.flags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
     }
-    const size_t eventsPerCopy = measureChunkSpan ? 2 : 1;
+    constexpr size_t eventsPerCopy = 2;
     completionEventPoolDesc.count = static_cast<uint32_t>(eventsPerCopy * copies.size());
     ASSERT_ZE_RESULT_SUCCESS(zeEventPoolCreate(levelzero.context, &completionEventPoolDesc, 0, nullptr, &completionEventPool));
 
@@ -228,13 +241,13 @@ inline TestResult measurePeerCopiesBetweenDevices(const TestCaseArgumentContaine
         PeerCopy &copy = copies[i];
         ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, copy.submittingDevice, &copy.queueDesc, &copy.cmdList));
 
-        ASSERT_TEST_RESULT_SUCCESS(allocatePeerCopyBuffer(levelzero, copy.copySourceDevice, copySize, &copy.source));
-        ASSERT_TEST_RESULT_SUCCESS(allocatePeerCopyBuffer(levelzero, copy.copyDestinationDevice, copySize, &copy.destination));
-        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(copy.copySourceDevice, levelzero.context, nullptr, 0, copy.source, copySize, BufferContents::Random, true));
+        ASSERT_TEST_RESULT_SUCCESS(allocatePeerCopyBuffer(levelzero, copy.copySourceDevice, copy.size, &copy.source));
+        ASSERT_TEST_RESULT_SUCCESS(allocatePeerCopyBuffer(levelzero, copy.copyDestinationDevice, copy.size, &copy.destination));
+        ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(copy.copySourceDevice, levelzero.context, nullptr, 0, copy.source, copy.size, BufferContents::Random, true));
         if (isReduceCopyKernel(options.kernel)) {
-            ASSERT_TEST_RESULT_SUCCESS(allocatePeerCopyBuffer(levelzero, copy.submittingDevice, copySize, &copy.reduceInput));
-            ASSERT_TEST_RESULT_SUCCESS(allocatePeerCopyBuffer(levelzero, copy.submittingDevice, copySize, &copy.reduceOutput));
-            ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(copy.submittingDevice, levelzero.context, nullptr, 0, copy.reduceInput, copySize, BufferContents::Random, true));
+            ASSERT_TEST_RESULT_SUCCESS(allocatePeerCopyBuffer(levelzero, copy.submittingDevice, copy.size, &copy.reduceInput));
+            ASSERT_TEST_RESULT_SUCCESS(allocatePeerCopyBuffer(levelzero, copy.submittingDevice, copy.size, &copy.reduceOutput));
+            ASSERT_ZE_RESULT_SUCCESS(BufferContentsHelperL0::fillBuffer(copy.submittingDevice, levelzero.context, nullptr, 0, copy.reduceInput, copy.size, BufferContents::Random, true));
         }
 
         ze_event_desc_t completionEventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
@@ -242,15 +255,30 @@ inline TestResult measurePeerCopiesBetweenDevices(const TestCaseArgumentContaine
         completionEventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
         completionEventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
         ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(completionEventPool, &completionEventDesc, &copy.completionEvent));
-        if (measureChunkSpan) {
+        if (useEvents && getPeerCopyChunkCount(copy, options) > 1) {
             completionEventDesc.index++;
             ASSERT_ZE_RESULT_SUCCESS(zeEventCreate(completionEventPool, &completionEventDesc, &copy.startEvent));
+        }
+    }
+
+    std::vector<std::string> groups;
+    size_t totalBytes = 0;
+    size_t logicalCopyCount = 0;
+    for (const PeerCopy &copy : copies) {
+        totalBytes += copy.size;
+        if (copy.group.empty()) {
+            logicalCopyCount++;
+        } else if (std::find(groups.begin(), groups.end(), copy.group) == groups.end()) {
+            groups.push_back(copy.group);
+            logicalCopyCount++;
         }
     }
 
     Timer timer;
     for (auto i = 0u; i < arguments.iterations; i++) {
         for (PeerCopy &copy : copies) {
+            const size_t chunkSize = getPeerCopyChunkSize(copy, options);
+            const size_t chunkCount = getPeerCopyChunkCount(copy, options);
             for (size_t chunk = 0; chunk < chunkCount; chunk++) {
                 const size_t offset = chunk * chunkSize;
                 const bool firstChunk = chunk == 0;
@@ -260,7 +288,7 @@ inline TestResult measurePeerCopiesBetweenDevices(const TestCaseArgumentContaine
                 } else if (firstChunk) {
                     signalEvent = copy.startEvent;
                 }
-                ASSERT_TEST_RESULT_SUCCESS(appendPeerCopy(copy, options, offset, std::min(chunkSize, copySize - offset),
+                ASSERT_TEST_RESULT_SUCCESS(appendPeerCopy(copy, options, offset, std::min(chunkSize, copy.size - offset),
                                                           signalEvent, firstChunk ? 1u : 0u, firstChunk ? &gateEvent : nullptr));
             }
             copy.done = false;
@@ -289,29 +317,56 @@ inline TestResult measurePeerCopiesBetweenDevices(const TestCaseArgumentContaine
         }
         timer.measureEnd();
 
-        if (copies.size() > 1) {
+        if (logicalCopyCount > 1) {
             // Rows print sorted by label and CI tracks the first row, so this label sorts before the per-copy ones.
-            statistics.pushValue(timer.get(), copySize * copies.size(), typeSelector.getUnit(), MeasurementType::Cpu, options.totalLabel);
+            statistics.pushValue(timer.get(), totalBytes, typeSelector.getUnit(), MeasurementType::Cpu, options.totalLabel);
         }
         for (PeerCopy &copy : copies) {
             std::chrono::nanoseconds copyTime = copy.timer.get();
             if (useEvents) {
                 ze_kernel_timestamp_result_t timestamp{};
                 ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(copy.completionEvent, &timestamp));
-                ze_kernel_timestamp_data_t copySpan = timestamp.global;
-                if (measureChunkSpan) {
+                copy.span = timestamp.global;
+                if (copy.startEvent != nullptr) {
                     ASSERT_ZE_RESULT_SUCCESS(zeEventQueryKernelTimestamp(copy.startEvent, &timestamp));
-                    copySpan.kernelStart = timestamp.global.kernelStart;
+                    copy.span.kernelStart = timestamp.global.kernelStart;
                     ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(copy.startEvent));
                 }
-                copyTime = levelzero.getAbsoluteKernelExecutionTime(copySpan, copy.submittingDevice);
+                copyTime = levelzero.getAbsoluteKernelExecutionTime(copy.span, copy.submittingDevice);
             }
-            if (copies.size() > 1) {
-                statistics.pushValue(copyTime, copySize, typeSelector.getUnit(), typeSelector.getType(), copy.getLabel());
-            } else {
-                statistics.pushValue(copyTime, copySize, typeSelector.getUnit(), typeSelector.getType());
-            }
+            const std::string label = copies.size() > 1 || !copy.group.empty() ? copy.getLabel() : "";
+            statistics.pushValue(copyTime, copy.size, typeSelector.getUnit(), typeSelector.getType(), label);
             ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(copy.completionEvent));
+        }
+        for (const std::string &group : groups) {
+            std::optional<uint64_t> anchor;
+            uint64_t mask = 0;
+            int64_t startOffset = std::numeric_limits<int64_t>::max();
+            int64_t endOffset = std::numeric_limits<int64_t>::min();
+            std::chrono::nanoseconds groupCpuTime{};
+            size_t groupBytes = 0;
+            ze_device_handle_t groupDevice{};
+            for (const PeerCopy &copy : copies) {
+                if (copy.group != group) {
+                    continue;
+                }
+                if (!anchor) {
+                    anchor = copy.span.kernelStart;
+                    mask = levelzero.getKernelTimestampValidBitsMask(copy.submittingDevice);
+                }
+                const auto offsetFromAnchor = [&](uint64_t timestamp) {
+                    const uint64_t offset = (timestamp - *anchor) & mask;
+                    return offset > mask / 2 ? -static_cast<int64_t>(mask - offset + 1) : static_cast<int64_t>(offset);
+                };
+                startOffset = std::min(startOffset, offsetFromAnchor(copy.span.kernelStart));
+                endOffset = std::max(endOffset, offsetFromAnchor(copy.span.kernelEnd));
+                groupCpuTime = std::max(groupCpuTime, std::chrono::duration_cast<std::chrono::nanoseconds>(copy.timer.get()));
+                groupBytes += copy.size;
+                groupDevice = copy.submittingDevice;
+            }
+            const ze_kernel_timestamp_data_t groupSpan{(*anchor + startOffset) & mask, (*anchor + endOffset) & mask};
+            const std::chrono::nanoseconds groupTime = useEvents ? levelzero.getAbsoluteKernelExecutionTime(groupSpan, groupDevice) : groupCpuTime;
+            statistics.pushValue(groupTime, groupBytes, typeSelector.getUnit(), typeSelector.getType(), group);
         }
         ASSERT_ZE_RESULT_SUCCESS(zeEventHostReset(gateEvent));
     }
