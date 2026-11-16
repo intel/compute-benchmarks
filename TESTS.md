@@ -2,7 +2,11 @@
 Algorithm Benchmark is a set of benchmarks aimed at measuring the performance of realistic worloads.
 | Test name | Description | Params | L0 | OCL |
 |-----------|-------------|--------|----|-----|
+BlackScholes|measures the time of one workload execution: copies three arrays of 1M generated options to the device, launches a kernel that prices call and put options with the Black-Scholes formula 50 times and copies both results to the host|<ul><li>--dataType Floating point type of the options and results, only Float and Double are supported (Int32 or Int64 or Uint32 or Uint64 or Float or Double or CopyableObject or Mixed)</li></ul>|:heavy_check_mark:|:heavy_check_mark:|
 Heat3D|A 3D heat-equation solving benchmark that overlaps IPC data transfers (nearest-neighbor halo exchange) and GPU compute kernels.Measures multi-process concurrent kernel execution and IPC memory transfer performance on a single device. Linux-only.|<ul><li>--meshLength Number of mesh points along each of the X-Y-Z directions</li><li>--subDomainX Number of sub-domains in the X-direction</li><li>--subDomainY Number of sub-domains in the Y-direction</li><li>--subDomainZ Number of sub-domains in the Z-direction</li><li>--timesteps Number of simulation timesteps</li></ul>|:heavy_check_mark:|:x:|
+Mandelbrot|measures the time of one workload execution: launches a kernel that renders a 1024x1024 Mandelbrot fractal with 16x16 work groups 50 times and copies the image to the host|<ul></ul>|:heavy_check_mark:|:heavy_check_mark:|
+SimpleAdd|measures the time of one workload execution: copies 100000 integers to a device buffer, runs a single work item kernel that adds 1 to each of them in a loop and copies the result back to the host|<ul></ul>|:heavy_check_mark:|:heavy_check_mark:|
+Sobel|measures the time of one workload execution: copies a generated 512x512 image to the device, launches a Sobel edge detection kernel with 16x16 work groups 200 times and copies the result to the host|<ul></ul>|:heavy_check_mark:|:heavy_check_mark:|
 
 
 
