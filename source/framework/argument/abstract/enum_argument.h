@@ -11,6 +11,7 @@
 #include "framework/utility/string_utils.h"
 
 #include <cctype>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -73,6 +74,17 @@ struct EnumArgument : Argument {
         return value;
     }
 
+    static std::optional<EnumType> parseName(const std::string &name) {
+        const std::string nameLower = toLower(name);
+        const auto valuesCount = sizeof(DerivedType::enumValues) / sizeof(DerivedType::enumValues[0]);
+        for (auto valueIndex = 0u; valueIndex < valuesCount; valueIndex++) {
+            if (nameLower == toLower(DerivedType::enumValuesNames[valueIndex])) {
+                return DerivedType::enumValues[valueIndex];
+            }
+        }
+        return std::nullopt;
+    }
+
     bool validate() const override {
         const auto valuesCount = sizeof(DerivedType::enumValues) / sizeof(DerivedType::enumValues[0]);
         for (auto valueIndex = 0u; valueIndex < valuesCount; valueIndex++) {
@@ -95,15 +107,7 @@ struct EnumArgument : Argument {
     }
 
     void parseImpl(const std::string &valueToParse) override {
-        const std::string valueToParseLower = toLower(valueToParse);
-        const auto valuesCount = sizeof(DerivedType::enumValues) / sizeof(DerivedType::enumValues[0]);
-        for (auto valueIndex = 0u; valueIndex < valuesCount; valueIndex++) {
-            if (valueToParseLower == toLower(DerivedType::enumValuesNames[valueIndex])) {
-                this->value = DerivedType::enumValues[valueIndex];
-                return;
-            }
-        }
-        this->value = DerivedType::invalidEnumValue;
+        this->value = parseName(valueToParse).value_or(DerivedType::invalidEnumValue);
     }
 
     EnumType value{};

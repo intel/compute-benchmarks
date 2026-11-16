@@ -12,7 +12,6 @@
 #include "framework/argument/string_argument.h"
 #include "framework/test_case/test_case_argument_container.h"
 #include "framework/utility/common_help_message.h"
-#include "framework/utility/string_utils.h"
 
 #include <algorithm>
 #include <optional>
@@ -62,22 +61,15 @@ struct PeerCopyPairsArguments : TestCaseArgumentContainer {
     }
 
     static std::optional<std::vector<Engine>> parseEngines(const std::string &text) {
-        constexpr size_t engineCount = sizeof(EngineArgument::enumValues) / sizeof(EngineArgument::enumValues[0]);
         std::vector<Engine> result;
         size_t start = 0;
         while (start <= text.size()) {
             const size_t end = std::min(text.find(engineSeparator, start), text.size());
-            const std::string name = toLower(text.substr(start, end - start));
-            const auto *const nameEnd = EngineArgument::enumValuesNames + engineCount;
-            const auto *const match = std::find_if(EngineArgument::enumValuesNames, nameEnd, [&name](const char *engineName) { return name == toLower(engineName); });
-            if (match == nameEnd) {
+            const std::optional<Engine> engine = EngineArgument::parseName(text.substr(start, end - start));
+            if (!engine || std::find(result.begin(), result.end(), *engine) != result.end()) {
                 return std::nullopt;
             }
-            const Engine engine = EngineArgument::enumValues[match - EngineArgument::enumValuesNames];
-            if (std::find(result.begin(), result.end(), engine) != result.end()) {
-                return std::nullopt;
-            }
-            result.push_back(engine);
+            result.push_back(*engine);
             start = end + 1;
         }
         return result;
