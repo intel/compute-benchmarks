@@ -37,6 +37,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(Api::SYCL, Api::SYCLPREVIEW, Api::L0),
         ::testing::Values(512),           // kernelWGCount
         ::testing::Values(256),           // kernelWGSize
-        ::testing::Values(1),             // kernelsPerQueue
+        ::testing::Values(1, 100),        // kernelsPerQueue
         ::testing::Values(false),         // useProfiling
         ::testing::Values(false, true))); // useEvents
