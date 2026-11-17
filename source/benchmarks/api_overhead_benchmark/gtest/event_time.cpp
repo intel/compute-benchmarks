@@ -36,7 +36,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(false, true),
         ::testing::Values(false, true),
-        ::testing::ValuesIn(EventScopeArgument::enumValues),
-        ::testing::ValuesIn(EventScopeArgument::enumValues),
-        ::testing::Values(1000u),
+        ::testing::Values(EventScope::none, EventScope::scopeHost),
+        ::testing::Values(EventScope::none),
+        ::testing::Values(128u),
         ::testing::Values(false, true)));

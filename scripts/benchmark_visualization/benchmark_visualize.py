@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -459,9 +459,9 @@ def main():
             "# Run a test command, save plots to a custom directory, and add x=y line to the scatter plot:\n"
             "$ ./benchmark_visualize --command \"./api_overhead_benchmark_l0 --gtest_filter='*EventCreation*'\" Min Max --output_dir myplots --plot_line\n"
             "# Run a test command and filter by parameters:\n"
-            "$ ./benchmark_visualize --command \"./api_overhead_benchmark_l0 --gtest_filter='*EventCreation*'\" --group_by_type --compare 'signal=device,signal=none'\n"
+            "$ ./benchmark_visualize --command \"./api_overhead_benchmark_l0 --gtest_filter='*EventCreation*'\" --group_by_type --compare 'signal=host,signal=none'\n"
             "# Run a test command, comparing specific parameters across 15 executions:\n"
-            "$ ./benchmark_visualize --command \"./api_overhead_benchmark_l0 --gtest_filter='*EventCreation*' --gtest_repeat=15\" --compare 'signal=device,signal=none'\n"
+            "$ ./benchmark_visualize --command \"./api_overhead_benchmark_l0 --gtest_filter='*EventCreation*' --gtest_repeat=15\" --compare 'signal=host,signal=none'\n"
             "# Plot from an existing CSV file:\n"
             "$ ./benchmark_visualize --csv_file output.csv Mean Median\n"
         ),
