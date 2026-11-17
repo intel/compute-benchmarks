@@ -26,7 +26,7 @@ static TestResult runWorkload(const BlackScholesArguments &arguments, Statistics
         return TestResult::Nooped;
     }
 
-    Opencl opencl{};
+    Opencl opencl(QueueProperties::create().setOoq(false));
     if constexpr (std::is_same_v<ValueType, double>) {
         if (!opencl.getExtensions().areDoublesSupported()) {
             return TestResult::DeviceNotCapable;

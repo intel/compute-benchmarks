@@ -22,7 +22,7 @@ static TestResult run(const SimpleAddArguments &arguments, Statistics &statistic
         return TestResult::Nooped;
     }
 
-    Opencl opencl{};
+    Opencl opencl(QueueProperties::create().setOoq(false));
     cl_int retVal{};
 
     const size_t bufferSize = SimpleAdd::elementCount * sizeof(cl_int);

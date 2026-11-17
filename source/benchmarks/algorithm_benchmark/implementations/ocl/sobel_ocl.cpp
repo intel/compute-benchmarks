@@ -23,7 +23,7 @@ static TestResult run(const SobelArguments &arguments, Statistics &statistics) {
         return TestResult::Nooped;
     }
 
-    Opencl opencl{};
+    Opencl opencl(QueueProperties::create().setOoq(false));
     cl_int retVal{};
 
     const size_t pixelCount = static_cast<size_t>(Sobel::width) * Sobel::height;

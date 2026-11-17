@@ -71,28 +71,25 @@ static TestResult runWorkload(const BlackScholesArguments &arguments, Statistics
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 5, sizeof(callBuffer), &callBuffer));
     ASSERT_ZE_RESULT_SUCCESS(zeKernelSetArgumentValue(kernel, 6, sizeof(putBuffer), &putBuffer));
 
-    ze_command_list_desc_t cmdListDesc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
-    cmdListDesc.commandQueueGroupOrdinal = levelzero.commandQueueDesc.ordinal;
-    ze_command_list_handle_t cmdList{};
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, yearsBuffer, options.years.data(), bufferSize, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, strikeBuffer, options.strike.data(), bufferSize, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, stockPriceBuffer, options.stockPrice.data(), bufferSize, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
     const ze_group_count_t groupCount{BlackScholes::optionCount / BlackScholes::groupSize, 1u, 1u};
-    for (auto launch = 0u; launch < BlackScholes::kernelLaunchCount; launch++) {
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
-    }
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, call.data(), callBuffer, bufferSize, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, put.data(), putBuffer, bufferSize, nullptr, 0, nullptr));
-    ASSERT_ZE_RESULT_SUCCESS(zeCommandListClose(cmdList));
+    ze_command_queue_desc_t cmdListDesc = levelzero.commandQueueDesc;
+    cmdListDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    cmdListDesc.flags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    ze_command_list_handle_t cmdList{};
+    ASSERT_ZE_RESULT_SUCCESS(zeCommandListCreateImmediate(levelzero.context, levelzero.device, &cmdListDesc, &cmdList));
 
     Timer timer{};
     for (auto i = 0u; i < arguments.iterations; i++) {
         timer.measureStart();
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueExecuteCommandLists(levelzero.commandQueue, 1, &cmdList, nullptr));
-        ASSERT_ZE_RESULT_SUCCESS(zeCommandQueueSynchronize(levelzero.commandQueue, std::numeric_limits<uint64_t>::max()));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, yearsBuffer, options.years.data(), bufferSize, nullptr, 0, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, strikeBuffer, options.strike.data(), bufferSize, nullptr, 0, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, stockPriceBuffer, options.stockPrice.data(), bufferSize, nullptr, 0, nullptr));
+        for (auto launch = 0u; launch < BlackScholes::kernelLaunchCount; launch++) {
+            ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
+        }
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, call.data(), callBuffer, bufferSize, nullptr, 0, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListAppendMemoryCopy(cmdList, put.data(), putBuffer, bufferSize, nullptr, 0, nullptr));
+        ASSERT_ZE_RESULT_SUCCESS(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
         timer.measureEnd();
         statistics.pushValue(timer.get(), typeSelector.getUnit(), typeSelector.getType());
     }

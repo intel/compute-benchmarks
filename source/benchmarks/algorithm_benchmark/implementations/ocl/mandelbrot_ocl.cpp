@@ -22,7 +22,7 @@ static TestResult run(const MandelbrotArguments &arguments, Statistics &statisti
         return TestResult::Nooped;
     }
 
-    Opencl opencl{};
+    Opencl opencl(QueueProperties::create().setOoq(false));
     cl_int retVal{};
 
     const size_t pixelCount = static_cast<size_t>(Mandelbrot::width) * Mandelbrot::height;
