@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,6 @@ struct UsmConcurrentCopy : TestCase<UsmConcurrentCopyArguments> {
     }
 
     std::string getHelp() const override {
-        return "allocates four unified shared memory buffers, 2 in device memory and 2 in host memory. Measures concurrent copy bandwidth between them.";
+        return "allocates four USM buffers, 2 in device memory and 2 in host memory. Measures concurrent copy bandwidth between them using regular in-order command lists.";
     }
 };
