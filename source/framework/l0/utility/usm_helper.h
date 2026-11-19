@@ -18,6 +18,8 @@ static constexpr auto misalignedOffset = 4u;
 
 ze_result_t allocate(UsmMemoryPlacement placement, LevelZero &levelZero, size_t size, void **buffer);
 
+ze_result_t allocateWithRelaxedLimits(UsmMemoryPlacement placement, LevelZero &levelZero, size_t size, void **buffer);
+
 ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &levelZero, size_t size, void **buffer);
 
 ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &levelZero, ze_device_handle_t device, size_t size, void **buffer);

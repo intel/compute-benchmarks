@@ -19,6 +19,9 @@ struct AppendMemCopyArguments : TestCaseArgumentContainer {
     UsmMemoryPlacementArgument dst;
     Uint32Argument appendCount;
     BooleanArgument forceBlitter;
+    BooleanArgument useImmediate;
+    NonNegativeIntegerArgument srcOffset;
+    NonNegativeIntegerArgument dstOffset;
 
     AppendMemCopyArguments()
         : size(*this, "size", "Size of memory to copy"),
@@ -26,7 +29,10 @@ struct AppendMemCopyArguments : TestCaseArgumentContainer {
           src(*this, "src", "Placement of source memory"),
           dst(*this, "dst", "Placement of destination memory"),
           appendCount(*this, "appendCount", "Number of appends to run"),
-          forceBlitter(*this, "forceBlitter", CommonHelpMessage::forceBlitter()) {}
+          forceBlitter(*this, "forceBlitter", CommonHelpMessage::forceBlitter()),
+          useImmediate(*this, "immediate", "Append to an immediate command list instead of a regular one"),
+          srcOffset(*this, "srcOffset", "Byte offset added to the source pointer, a non-zero value makes it unaligned"),
+          dstOffset(*this, "dstOffset", "Byte offset added to the destination pointer, a non-zero value makes it unaligned") {}
 };
 
 struct AppendMemCopy : TestCase<AppendMemCopyArguments> {
@@ -37,6 +43,6 @@ struct AppendMemCopy : TestCase<AppendMemCopyArguments> {
     }
 
     std::string getHelp() const override {
-        return "measures time spent in zeCommandListAppendMemoryCopy on CPU.";
+        return "measures time spent in zeCommandListAppendMemoryCopy on CPU, on a regular or an immediate command list.";
     }
 };
