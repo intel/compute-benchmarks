@@ -12,6 +12,7 @@
 
 #include "definitions/event_query_profiling_data.h"
 
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -51,7 +52,8 @@ static TestResult run(const EventQueryProfilingDataArguments &arguments, Statist
 
     const size_t fillSize = totalSize - offset;
 
-    cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE, totalSize, nullptr, &retVal);
+    std::vector<uint8_t> initialData(totalSize, 0u);
+    cl_mem buffer = clCreateBuffer(opencl.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, totalSize, initialData.data(), &retVal);
     ASSERT_CL_SUCCESS(retVal);
 
     const cl_uchar pattern = 0xAB;
@@ -92,14 +94,9 @@ static TestResult run(const EventQueryProfilingDataArguments &arguments, Statist
     std::vector<uint8_t> hostBuffer(totalSize);
     ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, totalSize, hostBuffer.data(), 0, nullptr, nullptr));
 
-    for (size_t i = 0u; i < offset; i++) {
-        if (hostBuffer[i] == pattern) {
-            return TestResult::VerificationFail;
-        }
-    }
-
-    std::vector<uint8_t> expected(fillSize, pattern);
-    if (memcmp(hostBuffer.data() + offset, expected.data(), fillSize) != 0) {
+    std::vector<uint8_t> expected = initialData;
+    std::fill(expected.begin() + offset, expected.end(), pattern);
+    if (memcmp(hostBuffer.data(), expected.data(), totalSize) != 0) {
         return TestResult::VerificationFail;
     }
 
