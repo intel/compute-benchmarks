@@ -30,7 +30,7 @@ struct AppendMemFillArguments : TestCaseArgumentContainer {
           dstOffset(*this, "dstOffset", "Byte offset added to the destination pointer, a non-zero value makes it unaligned"),
           appendCount(*this, "appendCount", "Number of appends to run"),
           forceBlitter(*this, "forceBlitter", CommonHelpMessage::forceBlitter()),
-          useImmediate(*this, "immediate", "Append to an immediate command list instead of a regular one") {}
+          useImmediate(*this, "useImmediate", "Append to an immediate command list instead of a regular one") {}
 };
 
 struct AppendMemFill : TestCase<AppendMemFillArguments> {

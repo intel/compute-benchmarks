@@ -23,16 +23,4 @@ struct UsableMemoryHelper {
         }
         return usableMemProperties.currUsableMemSize;
     }
-
-    static std::optional<uint64_t> queryOrTotal(ze_device_handle_t device) {
-        if (const auto usableMemSize = query(device); usableMemSize.has_value()) {
-            return usableMemSize;
-        }
-        uint32_t memPropertiesCount = 1;
-        ze_device_memory_properties_t memProperties{ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES};
-        if (zeDeviceGetMemoryProperties(device, &memPropertiesCount, &memProperties) != ZE_RESULT_SUCCESS) {
-            return {};
-        }
-        return memProperties.totalSize;
-    }
 };

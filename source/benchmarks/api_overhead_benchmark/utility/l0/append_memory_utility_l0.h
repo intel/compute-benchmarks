@@ -9,13 +9,13 @@
 
 #include "framework/enum/usm_memory_placement.h"
 #include "framework/l0/levelzero.h"
-#include "framework/l0/utility/usable_memory_helper.h"
+#include "framework/l0/utility/error_codes.h"
 #include "framework/l0/utility/usm_helper.h"
 #include "framework/test_case/test_case.h"
 #include "framework/utility/timer.h"
 
 #include <cstddef>
-#include <initializer_list>
+#include <iostream>
 #include <limits>
 #include <utility>
 #include <vector>
@@ -33,19 +33,15 @@ class BigUsmAllocations {
         }
     }
 
-    static bool fitsInDeviceMemory(LevelZero &levelzero, std::initializer_list<std::pair<UsmMemoryPlacement, size_t>> requests) {
-        uint64_t required = 0;
-        for (const auto &[placement, size] : requests) {
-            if (isDeviceMemoryType(placement)) {
-                required += size;
-            }
-        }
-        return required <= UsableMemoryHelper::queryOrTotal(levelzero.device).value_or(0);
-    }
-
     TestResult allocate(UsmMemoryPlacement placement, size_t size, void **buffer) {
-        const ze_result_t result = UsmHelper::allocateWithRelaxedLimits(placement, this->levelzero, size, buffer);
+        const uint64_t maxMemAllocSize = this->levelzero.getDeviceProperties().maxMemAllocSize;
+        if (size > maxMemAllocSize) {
+            std::cerr << "Skipping: not enough memory, allocation of " << size << " bytes exceeds maxMemAllocSize " << maxMemAllocSize << " bytes" << std::endl;
+            return TestResult::DeviceNotCapable;
+        }
+        const ze_result_t result = UsmHelper::allocate(placement, this->levelzero, size, buffer);
         if (result == ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY || result == ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY || result == ZE_RESULT_ERROR_UNSUPPORTED_SIZE) {
+            std::cerr << "Skipping: not enough memory, allocation of " << size << " bytes failed with " << l0ErrorToString(result) << std::endl;
             return TestResult::DeviceNotCapable;
         }
         ASSERT_ZE_RESULT_SUCCESS(result);
@@ -58,9 +54,12 @@ class BigUsmAllocations {
     std::vector<std::pair<UsmMemoryPlacement, void *>> allocations;
 };
 
-template <typename AppendMemory>
-TestResult measureAppendMemory(LevelZero &levelzero, const TestCaseArgumentContainer &arguments, bool useEvent, uint32_t appendCount, bool useImmediate,
-                               Statistics &statistics, const MeasurementFields &typeSelector, AppendMemory &&appendMemory) {
+template <typename Arguments, typename AppendMemory>
+TestResult measureAppendMemory(LevelZero &levelzero, const Arguments &arguments, Statistics &statistics, const MeasurementFields &typeSelector,
+                               AppendMemory &&appendMemory) {
+    const bool useEvent = arguments.useEvent;
+    const bool useImmediate = arguments.useImmediate;
+    const uint32_t appendCount = arguments.appendCount;
     Timer timer;
 
     const ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, appendCount};

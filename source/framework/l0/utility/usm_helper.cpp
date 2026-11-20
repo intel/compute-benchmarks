@@ -11,9 +11,9 @@
 
 namespace L0::UsmHelper {
 
-static ze_result_t allocateWithUsmExtension(UsmMemoryPlacement placement, LevelZero &levelZero, size_t size, void **buffer, const void *usmExtension) {
-    const ze_host_mem_alloc_desc_t hostAllocDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, usmExtension};
-    const ze_device_mem_alloc_desc_t deviceAllocDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, usmExtension};
+ze_result_t allocate(UsmMemoryPlacement placement, LevelZero &levelZero, size_t size, void **buffer) {
+    const ze_host_mem_alloc_desc_t hostAllocDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    const ze_device_mem_alloc_desc_t deviceAllocDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     switch (placement) {
     case UsmMemoryPlacement::Device:
         return zeMemAllocDevice(levelZero.context, &deviceAllocDesc, size, 0, levelZero.device, buffer);
@@ -51,10 +51,6 @@ static ze_result_t allocateWithUsmExtension(UsmMemoryPlacement placement, LevelZ
         return levelZero.importHostPointer.importExternalPointer(levelZero.driver, *buffer, size);
     }
     return ZE_RESULT_ERROR_UNKNOWN;
-}
-
-ze_result_t allocate(UsmMemoryPlacement placement, LevelZero &levelZero, size_t size, void **buffer) {
-    return allocateWithUsmExtension(placement, levelZero, size, buffer, nullptr);
 }
 
 ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &levelZero, size_t size, void **buffer) {
@@ -114,12 +110,6 @@ ze_result_t allocateIpcExportable(UsmMemoryPlacement placement, LevelZero &level
         return result;
     }
     return allocateWithExtension(nullptr);
-}
-
-ze_result_t allocateWithRelaxedLimits(UsmMemoryPlacement placement, LevelZero &levelZero, size_t size, void **buffer) {
-    ze_relaxed_allocation_limits_exp_desc_t relaxedLimitsDesc{ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC};
-    relaxedLimitsDesc.flags = ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE;
-    return allocateWithUsmExtension(placement, levelZero, size, buffer, &relaxedLimitsDesc);
 }
 
 ze_result_t deallocate(UsmMemoryPlacement placement, LevelZero &levelZero, void *buffer) {

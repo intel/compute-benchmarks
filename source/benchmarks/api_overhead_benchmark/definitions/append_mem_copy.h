@@ -30,7 +30,7 @@ struct AppendMemCopyArguments : TestCaseArgumentContainer {
           dst(*this, "dst", "Placement of destination memory"),
           appendCount(*this, "appendCount", "Number of appends to run"),
           forceBlitter(*this, "forceBlitter", CommonHelpMessage::forceBlitter()),
-          useImmediate(*this, "immediate", "Append to an immediate command list instead of a regular one"),
+          useImmediate(*this, "useImmediate", "Append to an immediate command list instead of a regular one"),
           srcOffset(*this, "srcOffset", "Byte offset added to the source pointer, a non-zero value makes it unaligned"),
           dstOffset(*this, "dstOffset", "Byte offset added to the destination pointer, a non-zero value makes it unaligned") {}
 };

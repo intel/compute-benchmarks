@@ -10,6 +10,8 @@
 #include "framework/test_case/register_test_case.h"
 #include "framework/utility/memory_constants.h"
 
+#include "append_memory_test_names.h"
+
 #include <gtest/gtest.h>
 
 [[maybe_unused]] static const inline RegisterTestCase<AppendMemCopy> registerTestCase{};
@@ -69,40 +71,50 @@ TEST_P(AppendMemCopyBigSizeTest, Test) {
     test.run(args);
 }
 
+static std::string appendMemCopyBigSizeTestName(const ::testing::TestParamInfo<AppendMemCopyBigSizeTest::ParamType> &info) {
+    namespace Names = AppendMemoryTestNames;
+    const auto &[size, placements, offsets, forceBlitter, useImmediate] = info.param;
+    return Names::size(size) + "_" + Names::placement(placements.first) + "To" + Names::placement(placements.second) +
+           "_SrcOffset" + std::to_string(offsets.first) + "_DstOffset" + std::to_string(offsets.second) + "_" +
+           Names::engine(forceBlitter) + "_" + Names::commandList(useImmediate);
+}
+
+static const auto bigSizePlacements = ::testing::Values(PlacementPair{UsmMemoryPlacement::Host, UsmMemoryPlacement::Device},
+                                                        PlacementPair{UsmMemoryPlacement::Device, UsmMemoryPlacement::Host},
+                                                        PlacementPair{UsmMemoryPlacement::Shared, UsmMemoryPlacement::Device},
+                                                        PlacementPair{UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared},
+                                                        PlacementPair{UsmMemoryPlacement::Shared, UsmMemoryPlacement::Shared});
+static const auto alignedAndUnalignedOffsets = ::testing::Values(OffsetPair{0, 0}, OffsetPair{1, 1});
+
 INSTANTIATE_TEST_SUITE_P(
     AppendMemCopyBigSizeTest,
     AppendMemCopyBigSizeTest,
     ::testing::Combine(
-        ::testing::Values(MemoryConstants::megaByte, 4 * MemoryConstants::gigaByte, 8 * MemoryConstants::gigaByte, 32 * MemoryConstants::gigaByte),
-        ::testing::Values(PlacementPair{UsmMemoryPlacement::Host, UsmMemoryPlacement::Device},
-                          PlacementPair{UsmMemoryPlacement::Device, UsmMemoryPlacement::Host},
-                          PlacementPair{UsmMemoryPlacement::Shared, UsmMemoryPlacement::Device},
-                          PlacementPair{UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared},
-                          PlacementPair{UsmMemoryPlacement::Shared, UsmMemoryPlacement::Shared}),
-        ::testing::Values(OffsetPair{0, 0}, OffsetPair{1, 1}),
+        ::testing::Values(4 * MemoryConstants::gigaByte, 8 * MemoryConstants::gigaByte, 32 * MemoryConstants::gigaByte),
+        bigSizePlacements,
+        alignedAndUnalignedOffsets,
         ::testing::Values(false, true),
-        ::testing::Values(false)));
+        ::testing::Values(false)),
+    appendMemCopyBigSizeTestName);
 
 INSTANTIATE_TEST_SUITE_P(
     AppendMemCopyBigSizeImmediateTest,
     AppendMemCopyBigSizeTest,
     ::testing::Combine(
-        ::testing::Values(MemoryConstants::megaByte, 4 * MemoryConstants::gigaByte),
-        ::testing::Values(PlacementPair{UsmMemoryPlacement::Host, UsmMemoryPlacement::Device},
-                          PlacementPair{UsmMemoryPlacement::Device, UsmMemoryPlacement::Host},
-                          PlacementPair{UsmMemoryPlacement::Shared, UsmMemoryPlacement::Device},
-                          PlacementPair{UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared},
-                          PlacementPair{UsmMemoryPlacement::Shared, UsmMemoryPlacement::Shared}),
-        ::testing::Values(OffsetPair{0, 0}, OffsetPair{1, 1}),
+        ::testing::Values(4 * MemoryConstants::gigaByte),
+        bigSizePlacements,
+        alignedAndUnalignedOffsets,
         ::testing::Values(false, true),
-        ::testing::Values(true)));
+        ::testing::Values(true)),
+    appendMemCopyBigSizeTestName);
 
 INSTANTIATE_TEST_SUITE_P(
     AppendMemCopyBigSizeDeviceToDeviceTest,
     AppendMemCopyBigSizeTest,
     ::testing::Combine(
-        ::testing::Values(MemoryConstants::megaByte, 4 * MemoryConstants::gigaByte, 8 * MemoryConstants::gigaByte, 32 * MemoryConstants::gigaByte),
+        ::testing::Values(4 * MemoryConstants::gigaByte, 8 * MemoryConstants::gigaByte, 32 * MemoryConstants::gigaByte),
         ::testing::Values(PlacementPair{UsmMemoryPlacement::Device, UsmMemoryPlacement::Device}),
         ::testing::Values(OffsetPair{0, 0}, OffsetPair{1, 1}, OffsetPair{1, 0}),
         ::testing::Values(false, true),
-        ::testing::Values(false, true)));
+        ::testing::Values(false, true)),
+    appendMemCopyBigSizeTestName);

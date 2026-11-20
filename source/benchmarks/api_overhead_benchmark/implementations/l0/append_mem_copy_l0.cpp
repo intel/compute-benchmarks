@@ -31,9 +31,6 @@ static TestResult run(const AppendMemCopyArguments &arguments, Statistics &stati
 
     const size_t srcAllocationSize = arguments.size + arguments.srcOffset;
     const size_t dstAllocationSize = arguments.size + arguments.dstOffset;
-    if (!BigUsmAllocations::fitsInDeviceMemory(levelzero, {{arguments.src, srcAllocationSize}, {arguments.dst, dstAllocationSize}})) {
-        return TestResult::DeviceNotCapable;
-    }
     BigUsmAllocations allocations(levelzero);
     void *srcAllocation{};
     void *dstAllocation{};
@@ -46,10 +43,9 @@ static TestResult run(const AppendMemCopyArguments &arguments, Statistics &stati
     const void *src = static_cast<const char *>(srcAllocation) + arguments.srcOffset;
     void *dst = static_cast<char *>(dstAllocation) + arguments.dstOffset;
 
-    return measureAppendMemory(levelzero, arguments, arguments.useEvent, arguments.appendCount, arguments.useImmediate, statistics, typeSelector,
-                               [&](ze_command_list_handle_t cmdList, ze_event_handle_t event) {
-                                   return zeCommandListAppendMemoryCopy(cmdList, dst, src, arguments.size, event, 0, nullptr);
-                               });
+    return measureAppendMemory(levelzero, arguments, statistics, typeSelector, [&](ze_command_list_handle_t cmdList, ze_event_handle_t event) {
+        return zeCommandListAppendMemoryCopy(cmdList, dst, src, arguments.size, event, 0, nullptr);
+    });
 }
 
 static RegisterTestCaseImplementation<AppendMemCopy> registerTestCase(run, Api::L0);
