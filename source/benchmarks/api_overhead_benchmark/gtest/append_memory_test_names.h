@@ -13,8 +13,6 @@
 
 #include <string>
 
-// Helpers building readable gtest parameter names (alphanumeric and '_' only), so that the
-// scenario, including the engine it runs on, is visible in the gtest name instead of an index.
 namespace AppendMemoryTestNames {
 
 inline std::string size(size_t size) {
