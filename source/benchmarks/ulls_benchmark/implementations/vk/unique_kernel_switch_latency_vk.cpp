@@ -74,7 +74,7 @@ static TestResult run(const UniqueKernelSwitchLatencyArguments &arguments, Stati
     }
     for (auto kernelIndex = 0u; kernelIndex < kernelCount; kernelIndex++) {
         if (kernelIndex > 0) {
-            recordInOrderExecutionBarrier(commandBuffer);
+            recordInOrderBarrier(commandBuffer);
         }
         const VulkanComputePipeline &pipeline = *pipelines[kernelIndex];
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
