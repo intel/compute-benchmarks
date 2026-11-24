@@ -40,6 +40,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(Api::L0),
         ::testing::Values(0),
         ::testing::Values(1),
-        ::testing::Values(16 * megaByte, 256 * megaByte, 1 * gigaByte),
+        ::testing::Values(1 * megaByte, 16 * megaByte, 256 * megaByte, 1 * gigaByte),
         ::testing::Values(std::make_pair(Engine::Bcs0, Engine::Bcs1)),
         ::testing::Values(true)));
