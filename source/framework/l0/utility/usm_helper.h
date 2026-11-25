@@ -22,6 +22,8 @@ ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &leve
 
 ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, LevelZero &levelZero, ze_device_handle_t device, size_t size, void **buffer);
 
+ze_result_t allocate(UsmRuntimeMemoryPlacement runtimePlacement, ze_context_handle_t context, ze_device_handle_t device, size_t size, void **buffer);
+
 ze_result_t allocateIpcExportable(UsmMemoryPlacement placement, LevelZero &levelZero, ze_device_handle_t device, size_t size, void **buffer);
 
 ze_result_t deallocate(UsmMemoryPlacement placement, LevelZero &levelZero, void *buffer);
