@@ -105,6 +105,9 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
             for (auto kernelId = 0u; kernelId < kernelCount; ++kernelId) {
                 vkUpdateDescriptorSets(vulkan.device, argumentCount, &writes[kernelId * argumentCount], 0, nullptr);
                 vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, descriptorSets.address(kernelId), 0, nullptr);
+                if (kernelId > 0) {
+                    recordInOrderBarrier(commandBuffer);
+                }
                 vkCmdDispatch(commandBuffer, groupCount, 1u, 1u);
             }
         } else {
@@ -124,6 +127,9 @@ static TestResult run(const MultiArgumentKernelTimeArguments &arguments, Statist
                     timer.measureStart();
                 }
                 vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, descriptorSets.address(kernelId), 0, nullptr);
+                if (kernelId > 0) {
+                    recordInOrderBarrier(commandBuffer);
+                }
                 vkCmdDispatch(commandBuffer, groupCount, 1u, 1u);
             }
         }

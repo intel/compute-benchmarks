@@ -94,7 +94,7 @@ static TestResult run(const EventQueryProfilingDataArguments &arguments, Statist
     std::vector<uint8_t> hostBuffer(totalSize);
     ASSERT_CL_SUCCESS(clEnqueueReadBuffer(opencl.commandQueue, buffer, CL_BLOCKING, 0, totalSize, hostBuffer.data(), 0, nullptr, nullptr));
 
-    std::vector<uint8_t> expected = initialData;
+    std::vector<uint8_t> expected = std::move(initialData);
     std::fill(expected.begin() + offset, expected.end(), pattern);
     if (memcmp(hostBuffer.data(), expected.data(), totalSize) != 0) {
         return TestResult::VerificationFail;

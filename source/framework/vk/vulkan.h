@@ -61,7 +61,7 @@ struct Vulkan {
     bool supportsTimestamps() const { return this->timestampValidBits > 0; }
 };
 
-void recordInOrderExecutionBarrier(const VkCommandBuffer commandBuffer);
+void recordInOrderBarrier(const VkCommandBuffer commandBuffer);
 
 void recordShaderWriteToHostBarrier(const VkCommandBuffer commandBuffer);
 

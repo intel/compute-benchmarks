@@ -38,7 +38,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(Api::L0),
         ::testing::Values(0),
         ::testing::Values(1),
-        ::testing::Values(16 * megaByte, 256 * megaByte, 1 * gigaByte),
+        ::testing::Values(1 * megaByte, 16 * megaByte, 256 * megaByte, 1 * gigaByte),
         ::testing::Values(Engine::Bcs0, Engine::Ccs0),
         ::testing::Values(true)));
 

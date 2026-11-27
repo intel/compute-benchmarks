@@ -60,7 +60,7 @@ static TestResult run(const MultiKernelExecutionArguments &arguments, Statistics
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
     for (auto kernelIndex = 0u; kernelIndex < arguments.kernelCount; kernelIndex++) {
         if (kernelIndex > 0) {
-            recordInOrderExecutionBarrier(commandBuffer);
+            recordInOrderBarrier(commandBuffer);
         }
         vkCmdDispatch(commandBuffer, static_cast<uint32_t>(arguments.workgroupCount), 1u, 1u);
     }

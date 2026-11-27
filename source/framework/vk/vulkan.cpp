@@ -204,8 +204,13 @@ bool Vulkan::supportsPushConstantsSize(const size_t pushConstantsSize) const {
     return pushConstantsSize <= this->physicalDeviceProperties.limits.maxPushConstantsSize;
 }
 
-void recordInOrderExecutionBarrier(const VkCommandBuffer commandBuffer) {
-    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 0, nullptr);
+void recordInOrderBarrier(const VkCommandBuffer commandBuffer) {
+    const VkMemoryBarrier shaderWriteBarrier{
+        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
+        .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+    };
+    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &shaderWriteBarrier, 0, nullptr, 0, nullptr);
 }
 
 void recordShaderWriteToHostBarrier(const VkCommandBuffer commandBuffer) {

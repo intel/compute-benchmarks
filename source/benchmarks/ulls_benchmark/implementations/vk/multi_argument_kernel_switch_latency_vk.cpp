@@ -74,7 +74,7 @@ static TestResult run(const MultiArgumentKernelSwitchLatencyArguments &arguments
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
     for (auto kernelIndex = 0u; kernelIndex < arguments.kernelCount; kernelIndex++) {
         if (kernelIndex > 0) {
-            recordInOrderExecutionBarrier(commandBuffer);
+            recordInOrderBarrier(commandBuffer);
         }
         vkCmdPushConstants(commandBuffer, pipeline.layout(), VK_SHADER_STAGE_COMPUTE_BIT, 0u, pushConstantsSize, argumentAddresses.data());
         vkCmdDispatch(commandBuffer, static_cast<uint32_t>(arguments.workgroupCount), 1u, 1u);
