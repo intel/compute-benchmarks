@@ -16,52 +16,20 @@
 
 [[maybe_unused]] static const inline RegisterTestCase<AppendMemCopy> registerTestCase{};
 
-class AppendMemCopyTest : public ::testing::TestWithParam<std::tuple<size_t, bool, UsmMemoryPlacement, UsmMemoryPlacement, uint32_t, bool>> {
+using OffsetPair = std::pair<size_t, size_t>;
+
+class AppendMemCopyTest : public ::testing::TestWithParam<std::tuple<size_t, bool, UsmMemoryPlacement, UsmMemoryPlacement, OffsetPair, bool, bool, uint32_t>> {
 };
 
 TEST_P(AppendMemCopyTest, Test) {
-    AppendMemCopyArguments args{};
-    args.api = Api::L0;
-    args.size = std::get<0>(GetParam());
-    args.useEvent = std::get<1>(GetParam());
-    args.src = std::get<2>(GetParam());
-    args.dst = std::get<3>(GetParam());
-    args.appendCount = std::get<4>(GetParam());
-    args.forceBlitter = std::get<5>(GetParam());
-    args.useImmediate = false;
-    args.srcOffset = 0;
-    args.dstOffset = 0;
-
-    AppendMemCopy test;
-    test.run(args);
-}
-
-INSTANTIATE_TEST_SUITE_P(
-    AppendMemCopyTest,
-    AppendMemCopyTest,
-    ::testing::Combine(
-        ::testing::Values(256 * MemoryConstants::megaByte),
-        ::testing::Values(false, true),
-        ::testing::Values(UsmMemoryPlacement::Device, UsmMemoryPlacement::Host),
-        ::testing::Values(UsmMemoryPlacement::Device, UsmMemoryPlacement::Host),
-        ::testing::Values(100),
-        ::testing::Values(false, true)));
-
-using PlacementPair = std::pair<UsmMemoryPlacement, UsmMemoryPlacement>;
-using OffsetPair = std::pair<size_t, size_t>;
-
-class AppendMemCopyBigSizeTest : public ::testing::TestWithParam<std::tuple<size_t, PlacementPair, OffsetPair, bool, bool>> {
-};
-
-TEST_P(AppendMemCopyBigSizeTest, Test) {
-    const auto [size, placements, offsets, forceBlitter, useImmediate] = GetParam();
+    const auto [size, useEvent, src, dst, offsets, forceBlitter, useImmediate, appendCount] = GetParam();
     AppendMemCopyArguments args{};
     args.api = Api::L0;
     args.size = size;
-    args.useEvent = false;
-    args.src = placements.first;
-    args.dst = placements.second;
-    args.appendCount = useImmediate ? 1 : 100;
+    args.useEvent = useEvent;
+    args.src = src;
+    args.dst = dst;
+    args.appendCount = appendCount;
     args.forceBlitter = forceBlitter;
     args.useImmediate = useImmediate;
     args.srcOffset = offsets.first;
@@ -71,50 +39,57 @@ TEST_P(AppendMemCopyBigSizeTest, Test) {
     test.run(args);
 }
 
-static std::string appendMemCopyBigSizeTestName(const ::testing::TestParamInfo<AppendMemCopyBigSizeTest::ParamType> &info) {
+static std::string appendMemCopyTestName(const ::testing::TestParamInfo<AppendMemCopyTest::ParamType> &info) {
     namespace Names = AppendMemoryTestNames;
-    const auto &[size, placements, offsets, forceBlitter, useImmediate] = info.param;
-    return Names::size(size) + "_" + Names::placement(placements.first) + "To" + Names::placement(placements.second) +
+    const auto &[size, useEvent, src, dst, offsets, forceBlitter, useImmediate, appendCount] = info.param;
+    return Names::size(size) + "_Event" + std::to_string(useEvent) + "_" + Names::placement(src) + "To" + Names::placement(dst) +
            "_SrcOffset" + std::to_string(offsets.first) + "_DstOffset" + std::to_string(offsets.second) + "_" +
            Names::engine(forceBlitter) + "_" + Names::commandList(useImmediate);
 }
 
-static const auto bigSizePlacements = ::testing::Values(PlacementPair{UsmMemoryPlacement::Host, UsmMemoryPlacement::Device},
-                                                        PlacementPair{UsmMemoryPlacement::Device, UsmMemoryPlacement::Host},
-                                                        PlacementPair{UsmMemoryPlacement::Shared, UsmMemoryPlacement::Device},
-                                                        PlacementPair{UsmMemoryPlacement::Device, UsmMemoryPlacement::Shared},
-                                                        PlacementPair{UsmMemoryPlacement::Shared, UsmMemoryPlacement::Shared});
-static const auto alignedAndUnalignedOffsets = ::testing::Values(OffsetPair{0, 0}, OffsetPair{1, 1});
+static const auto placementDeviceHost = ::testing::Values(UsmMemoryPlacement::Host, UsmMemoryPlacement::Device);
+
+INSTANTIATE_TEST_SUITE_P(
+    AppendMemCopyTest,
+    AppendMemCopyTest,
+    ::testing::Combine(
+        ::testing::Values(256 * MemoryConstants::megaByte),
+        ::testing::Values(false, true),
+        placementDeviceHost,
+        placementDeviceHost,
+        ::testing::Values(OffsetPair{0, 0}),
+        ::testing::Values(false, true),
+        ::testing::Values(false),
+        ::testing::Values(100)),
+    appendMemCopyTestName);
+
+static const auto placementDeviceHostShared = ::testing::Values(UsmMemoryPlacement::Device, UsmMemoryPlacement::Host, UsmMemoryPlacement::Shared);
+static const auto alignedAndUnalignedOffsets = ::testing::Values(OffsetPair{0, 0}, OffsetPair{1, 0}, OffsetPair{1, 1});
 
 INSTANTIATE_TEST_SUITE_P(
     AppendMemCopyBigSizeTest,
-    AppendMemCopyBigSizeTest,
+    AppendMemCopyTest,
     ::testing::Combine(
         ::testing::Values(4 * MemoryConstants::gigaByte, 8 * MemoryConstants::gigaByte, 32 * MemoryConstants::gigaByte),
-        bigSizePlacements,
+        ::testing::Values(false),
+        placementDeviceHostShared,
+        placementDeviceHostShared,
         alignedAndUnalignedOffsets,
         ::testing::Values(false, true),
-        ::testing::Values(false)),
-    appendMemCopyBigSizeTestName);
+        ::testing::Values(false),
+        ::testing::Values(100)),
+    appendMemCopyTestName);
 
 INSTANTIATE_TEST_SUITE_P(
     AppendMemCopyBigSizeImmediateTest,
-    AppendMemCopyBigSizeTest,
+    AppendMemCopyTest,
     ::testing::Combine(
         ::testing::Values(4 * MemoryConstants::gigaByte),
-        bigSizePlacements,
+        ::testing::Values(false),
+        ::testing::Values(UsmMemoryPlacement::Device),
+        ::testing::Values(UsmMemoryPlacement::Device),
         alignedAndUnalignedOffsets,
         ::testing::Values(false, true),
-        ::testing::Values(true)),
-    appendMemCopyBigSizeTestName);
-
-INSTANTIATE_TEST_SUITE_P(
-    AppendMemCopyBigSizeDeviceToDeviceTest,
-    AppendMemCopyBigSizeTest,
-    ::testing::Combine(
-        ::testing::Values(4 * MemoryConstants::gigaByte, 8 * MemoryConstants::gigaByte, 32 * MemoryConstants::gigaByte),
-        ::testing::Values(PlacementPair{UsmMemoryPlacement::Device, UsmMemoryPlacement::Device}),
-        ::testing::Values(OffsetPair{0, 0}, OffsetPair{1, 1}, OffsetPair{1, 0}),
-        ::testing::Values(false, true),
-        ::testing::Values(false, true)),
-    appendMemCopyBigSizeTestName);
+        ::testing::Values(true),
+        ::testing::Values(1)),
+    appendMemCopyTestName);
